@@ -1,0 +1,81 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, ScrollView } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { useRouter } from 'expo-router';
+import { useTheme } from '../../context/ThemeContext';
+import { listPublicRecipes } from '@chefsbook/db';
+import type { Recipe } from '@chefsbook/db';
+import { RecipeCard, Chip, EmptyState, Loading } from '../../components/UIKit';
+
+const CUISINES = ['Italian', 'Mexican', 'Asian', 'American', 'French', 'Indian', 'Mediterranean'];
+
+export default function DiscoverTab() {
+  const { colors } = useTheme();
+  const router = useRouter();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [cuisine, setCuisine] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const data = await listPublicRecipes({
+      search: search || undefined,
+      cuisine: cuisine ?? undefined,
+    });
+    setRecipes(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [search, cuisine]);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <View style={{ padding: 16, paddingBottom: 8 }}>
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Discover recipes..."
+          placeholderTextColor={colors.textSecondary}
+          style={{
+            backgroundColor: colors.bgBase,
+            borderWidth: 1,
+            borderColor: colors.borderDefault,
+            borderRadius: 10,
+            padding: 12,
+            fontSize: 15,
+            color: colors.textPrimary,
+          }}
+        />
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, maxHeight: 50 }}>
+        <Chip label="All" selected={!cuisine} onPress={() => setCuisine(null)} />
+        {CUISINES.map((c) => (
+          <Chip key={c} label={c} selected={cuisine === c} onPress={() => setCuisine(cuisine === c ? null : c)} />
+        ))}
+      </ScrollView>
+
+      {loading ? (
+        <Loading message="Finding recipes..." />
+      ) : (
+        <FlashList
+          data={recipes}
+          estimatedItemSize={200}
+          contentContainerStyle={{ padding: 16 }}
+          renderItem={({ item }) => (
+            <RecipeCard
+              title={item.title}
+              imageUrl={item.image_url}
+              cuisine={item.cuisine}
+              totalMinutes={item.total_minutes}
+              onPress={() => router.push(`/recipe/${item.id}`)}
+            />
+          )}
+          ListEmptyComponent={
+            <EmptyState icon={'\uD83C\uDF0E'} title="No public recipes" message="Be the first to share a recipe with the community!" />
+          }
+        />
+      )}
+    </View>
+  );
+}

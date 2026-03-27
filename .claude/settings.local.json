@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/seblu/aiproj/chefsbook -type f -exec ls -lh {})",
+      "Bash(find /c/Users/seblu/aiproj/chefsbook -not -path */node_modules/* -type d)",
+      "Bash(npm install:*)",
+      "Bash(npm view:*)",
+      "Bash(npm ls:*)",
+      "Bash(ssh:*)",
+      "Bash(/tmp/kong-entrypoint.sh:*)",
+      "Bash(chmod +x /tmp/kong-entrypoint.sh)",
+      "Read(//tmp/**)",
+      "Bash(scp /tmp/kong-entrypoint.sh rasp@rpi5-eth:/tmp/kong-entrypoint.sh)",
+      "Bash(ssh rasp@rpi5-eth \"sudo docker exec supabase-db psql -U postgres -d postgres -c \"\":*)",
+      "Bash(npx turbo:*)",
+      "Bash(npm --version)",
+      "Bash(npx expo:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(ls:*)",
+      "Bash(node -e \":*)",
+      "Bash(find /c/Users/seblu/aiproj/chefsbook -name *.config.* -o -name *.json -path */supabase/*)"
+    ]
+  }
+}

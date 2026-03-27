@@ -1,0 +1,199 @@
+import { supabase } from '../client';
+import type { Recipe, RecipeIngredient, RecipeStep, RecipeWithDetails, ScannedRecipe } from '../types';
+
+export async function getRecipe(id: string): Promise<RecipeWithDetails | null> {
+  const { data: recipe } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (!recipe) return null;
+
+  const [{ data: ingredients }, { data: steps }] = await Promise.all([
+    supabase
+      .from('recipe_ingredients')
+      .select('*')
+      .eq('recipe_id', id)
+      .order('sort_order'),
+    supabase
+      .from('recipe_steps')
+      .select('*')
+      .eq('recipe_id', id)
+      .order('step_number'),
+  ]);
+
+  return {
+    ...recipe,
+    ingredients: (ingredients ?? []) as RecipeIngredient[],
+    steps: (steps ?? []) as RecipeStep[],
+  } as RecipeWithDetails;
+}
+
+export async function getRecipeByShareToken(token: string): Promise<RecipeWithDetails | null> {
+  const { data: recipe } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('share_token', token)
+    .single();
+
+  if (!recipe) return null;
+
+  const [{ data: ingredients }, { data: steps }] = await Promise.all([
+    supabase
+      .from('recipe_ingredients')
+      .select('*')
+      .eq('recipe_id', recipe.id)
+      .order('sort_order'),
+    supabase
+      .from('recipe_steps')
+      .select('*')
+      .eq('recipe_id', recipe.id)
+      .order('step_number'),
+  ]);
+
+  return {
+    ...recipe,
+    ingredients: (ingredients ?? []) as RecipeIngredient[],
+    steps: (steps ?? []) as RecipeStep[],
+  } as RecipeWithDetails;
+}
+
+export async function listRecipes(params?: {
+  userId?: string;
+  search?: string;
+  cuisine?: string;
+  course?: string;
+  tags?: string[];
+  favouritesOnly?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<Recipe[]> {
+  let query = supabase.from('recipes').select('*');
+
+  if (params?.userId) query = query.eq('user_id', params.userId);
+  if (params?.search) query = query.ilike('title', `%${params.search}%`);
+  if (params?.cuisine) query = query.eq('cuisine', params.cuisine);
+  if (params?.course) query = query.eq('course', params.course);
+  if (params?.tags?.length) query = query.overlaps('tags', params.tags);
+  if (params?.favouritesOnly) query = query.eq('is_favourite', true);
+
+  query = query
+    .order('updated_at', { ascending: false })
+    .range(params?.offset ?? 0, (params?.offset ?? 0) + (params?.limit ?? 50) - 1);
+
+  const { data } = await query;
+  return (data ?? []) as Recipe[];
+}
+
+export async function listPublicRecipes(params?: {
+  search?: string;
+  cuisine?: string;
+  course?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Recipe[]> {
+  let query = supabase
+    .from('recipes')
+    .select('*')
+    .eq('visibility', 'public');
+
+  if (params?.search) query = query.ilike('title', `%${params.search}%`);
+  if (params?.cuisine) query = query.eq('cuisine', params.cuisine);
+  if (params?.course) query = query.eq('course', params.course);
+
+  query = query
+    .order('created_at', { ascending: false })
+    .range(params?.offset ?? 0, (params?.offset ?? 0) + (params?.limit ?? 50) - 1);
+
+  const { data } = await query;
+  return (data ?? []) as Recipe[];
+}
+
+export async function createRecipe(
+  userId: string,
+  recipe: ScannedRecipe & { image_url?: string; source_url?: string; cookbook_id?: string; page_number?: number },
+): Promise<RecipeWithDetails> {
+  const { data: newRecipe, error } = await supabase
+    .from('recipes')
+    .insert({
+      user_id: userId,
+      title: recipe.title,
+      description: recipe.description,
+      servings: recipe.servings ?? 4,
+      prep_minutes: recipe.prep_minutes,
+      cook_minutes: recipe.cook_minutes,
+      cuisine: recipe.cuisine,
+      course: recipe.course,
+      source_type: recipe.source_type,
+      source_url: recipe.source_url,
+      image_url: recipe.image_url,
+      cookbook_id: recipe.cookbook_id,
+      page_number: recipe.page_number,
+      notes: recipe.notes,
+    })
+    .select()
+    .single();
+
+  if (error || !newRecipe) throw error ?? new Error('Failed to create recipe');
+
+  const ingredients = recipe.ingredients.map((ing, i) => ({
+    recipe_id: newRecipe.id,
+    user_id: userId,
+    sort_order: i,
+    quantity: ing.quantity,
+    unit: ing.unit,
+    ingredient: ing.ingredient,
+    preparation: ing.preparation,
+    optional: ing.optional,
+    group_label: ing.group_label,
+  }));
+
+  const steps = recipe.steps.map((step) => ({
+    recipe_id: newRecipe.id,
+    user_id: userId,
+    step_number: step.step_number,
+    instruction: step.instruction,
+    timer_minutes: step.timer_minutes,
+    group_label: step.group_label,
+  }));
+
+  const [{ data: savedIngredients }, { data: savedSteps }] = await Promise.all([
+    ingredients.length
+      ? supabase.from('recipe_ingredients').insert(ingredients).select()
+      : { data: [] },
+    steps.length
+      ? supabase.from('recipe_steps').insert(steps).select()
+      : { data: [] },
+  ]);
+
+  return {
+    ...(newRecipe as Recipe),
+    ingredients: (savedIngredients ?? []) as RecipeIngredient[],
+    steps: (savedSteps ?? []) as RecipeStep[],
+  };
+}
+
+export async function updateRecipe(
+  id: string,
+  updates: Partial<Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'total_minutes' | 'share_token'>>,
+): Promise<Recipe> {
+  const { data, error } = await supabase
+    .from('recipes')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error || !data) throw error ?? new Error('Failed to update recipe');
+  return data as Recipe;
+}
+
+export async function deleteRecipe(id: string): Promise<void> {
+  const { error } = await supabase.from('recipes').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function toggleFavourite(id: string, isFavourite: boolean): Promise<void> {
+  await supabase.from('recipes').update({ is_favourite: isFavourite }).eq('id', id);
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@chefsbook/db": ["../../packages/db/src"],
+      "@chefsbook/db/*": ["../../packages/db/src/*"],
+      "@chefsbook/ai": ["../../packages/ai/src"],
+      "@chefsbook/ai/*": ["../../packages/ai/src/*"],
+      "@chefsbook/ui": ["../../packages/ui/src"],
+      "@chefsbook/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+}

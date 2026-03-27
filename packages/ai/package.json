@@ -1,0 +1,13 @@
+{
+  "name": "@chefsbook/ai",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@chefsbook/db": "*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.2"
+  }
+}

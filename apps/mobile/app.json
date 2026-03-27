@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Chefsbook",
+    "slug": "chefsbook",
+    "scheme": "chefsbook",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0d0b"
+    },
+    "ios": {
+      "bundleIdentifier": "com.chefsbook.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Chefsbook uses your camera to scan recipes from cookbooks, handwritten cards, and printed pages.",
+        "NSPhotoLibraryUsageDescription": "Chefsbook accesses your photo library so you can import recipe images.",
+        "NSPhotoLibraryAddUsageDescription": "Chefsbook saves recipe photos to your photo library.",
+        "NSMicrophoneUsageDescription": "Chefsbook uses your microphone for voice search.",
+        "NSSpeechRecognitionUsageDescription": "Chefsbook uses speech recognition for hands-free recipe search."
+      },
+      "entitlements": {
+        "com.apple.developer.in-app-payments": []
+      }
+    },
+    "android": {
+      "package": "com.chefsbook.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d0d0b"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-camera", { "cameraPermission": "Chefsbook uses your camera to scan recipes." }],
+      ["expo-image-picker", { "photosPermission": "Chefsbook accesses photos to import recipe images." }],
+      "expo-secure-store"
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}

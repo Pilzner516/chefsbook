@@ -1,0 +1,16 @@
+{
+  "name": "chefsbook",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "mobile": "turbo dev --filter=@chefsbook/mobile",
+    "web": "turbo dev --filter=@chefsbook/web"
+  },
+  "packageManager": "npm@11.8.0",
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "5.9.2"
+  }
+}
