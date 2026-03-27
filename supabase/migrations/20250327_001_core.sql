@@ -125,7 +125,7 @@ create table recipes (
   fat_g         numeric(8,2),
   -- Visibility & sharing
   visibility    visibility_level not null default 'private',
-  share_token   text unique default encode(gen_random_bytes(12), 'base64url'),
+  share_token   text unique default translate(encode(gen_random_bytes(12), 'base64'), '+/=', '-_'),
   -- Timestamps
   created_at    timestamptz default now(),
   updated_at    timestamptz default now()

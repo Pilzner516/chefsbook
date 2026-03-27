@@ -1,20 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuthStore } from '../../lib/zustand/authStore';
+import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { getRecipeByShareToken } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity } from '@chefsbook/ui';
-import { Badge, Divider, Loading, EmptyState } from '../../components/UIKit';
+import { Badge, Button, Divider, Loading, EmptyState } from '../../components/UIKit';
 
 export default function SharedRecipe() {
   const { colors } = useTheme();
   const { token } = useLocalSearchParams<{ token: string }>();
+  const router = useRouter();
+  const session = useAuthStore((s) => s.session);
+  const addRecipe = useRecipeStore((s) => s.addRecipe);
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isExternalUrl, setIsExternalUrl] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
-    if (token) loadRecipe();
+    if (!token) return;
+
+    // Check if this looks like an external recipe URL rather than a share token
+    if (token.startsWith('http') || token.includes('.')) {
+      setIsExternalUrl(true);
+      setLoading(false);
+      return;
+    }
+
+    loadRecipe();
   }, [token]);
 
   const loadRecipe = async () => {
@@ -23,7 +39,45 @@ export default function SharedRecipe() {
     setLoading(false);
   };
 
+  const handleImportUrl = async () => {
+    if (!session?.user?.id || !token) return;
+    setImporting(true);
+    try {
+      const url = decodeURIComponent(token);
+      const res = await fetch(url);
+      const html = await res.text();
+      const { importFromUrl } = await import('@chefsbook/ai');
+      const scanned = await importFromUrl(html, url);
+      const imported = await addRecipe(session.user.id, { ...scanned, source_url: url });
+      router.replace(`/recipe/${imported.id}`);
+    } catch (e: any) {
+      Alert.alert('Import failed', e.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (loading) return <Loading message="Loading shared recipe..." />;
+
+  // External URL shared from browser — offer to import
+  if (isExternalUrl) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>{'\uD83D\uDD17'}</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 8 }}>
+          Import this recipe?
+        </Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 24 }} numberOfLines={2}>
+          {decodeURIComponent(token!)}
+        </Text>
+        <View style={{ width: '100%', gap: 10 }}>
+          <Button title="Import Recipe" onPress={handleImportUrl} loading={importing} />
+          <Button title="Cancel" onPress={() => router.back()} variant="ghost" />
+        </View>
+      </View>
+    );
+  }
+
   if (!recipe) return <EmptyState icon="?" title="Recipe not found" message="This share link may have expired." />;
 
   return (

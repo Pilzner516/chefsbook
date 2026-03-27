@@ -64,17 +64,33 @@ export async function listRecipes(params?: {
   search?: string;
   cuisine?: string;
   course?: string;
+  maxTime?: number;
   tags?: string[];
   favouritesOnly?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<Recipe[]> {
+  // Use server-side search_recipes function for trgm-powered search
+  if (params?.userId && params?.search) {
+    const { data } = await supabase.rpc('search_recipes', {
+      p_user_id: params.userId,
+      p_query: params.search,
+      p_cuisine: params.cuisine ?? null,
+      p_course: params.course ?? null,
+      p_max_time: params.maxTime ?? null,
+      p_limit: params.limit ?? 50,
+      p_offset: params.offset ?? 0,
+    });
+    return (data ?? []) as Recipe[];
+  }
+
+  // Fallback to standard query when no search term
   let query = supabase.from('recipes').select('*');
 
   if (params?.userId) query = query.eq('user_id', params.userId);
-  if (params?.search) query = query.ilike('title', `%${params.search}%`);
   if (params?.cuisine) query = query.eq('cuisine', params.cuisine);
   if (params?.course) query = query.eq('course', params.course);
+  if (params?.maxTime) query = query.lte('total_minutes', params.maxTime);
   if (params?.tags?.length) query = query.overlaps('tags', params.tags);
   if (params?.favouritesOnly) query = query.eq('is_favourite', true);
 
@@ -196,4 +212,27 @@ export async function deleteRecipe(id: string): Promise<void> {
 
 export async function toggleFavourite(id: string, isFavourite: boolean): Promise<void> {
   await supabase.from('recipes').update({ is_favourite: isFavourite }).eq('id', id);
+}
+
+export async function cloneRecipe(sourceRecipeId: string, targetUserId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('clone_recipe', {
+    p_source_recipe_id: sourceRecipeId,
+    p_target_user_id: targetUserId,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function getPublicFeed(params?: {
+  limit?: number;
+  offset?: number;
+  cuisineFilter?: string;
+}): Promise<(Recipe & { author_name: string; author_avatar: string | null })[]> {
+  const { data, error } = await supabase.rpc('get_public_feed', {
+    p_limit: params?.limit ?? 20,
+    p_offset: params?.offset ?? 0,
+    p_cuisine_filter: params?.cuisineFilter ?? null,
+  });
+  if (error) throw error;
+  return (data ?? []) as (Recipe & { author_name: string; author_avatar: string | null })[];
 }

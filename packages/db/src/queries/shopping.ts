@@ -86,3 +86,36 @@ export async function clearCheckedItems(listId: string): Promise<void> {
     .eq('list_id', listId)
     .eq('is_checked', true);
 }
+
+export async function generateShoppingListFromMealPlans(
+  userId: string,
+  mealPlanIds: string[],
+  listName?: string,
+): Promise<ShoppingList & { items: ShoppingListItem[] }> {
+  // Aggregate ingredients server-side via the Postgres function
+  const { data: aggregated, error: rpcError } = await supabase.rpc('generate_shopping_list', {
+    p_user_id: userId,
+    p_meal_plan_ids: mealPlanIds,
+  });
+
+  if (rpcError) throw rpcError;
+
+  // Create the shopping list
+  const list = await createShoppingList(userId, listName ?? 'Meal plan shopping list');
+
+  // Insert aggregated items
+  const items = (aggregated ?? []).map((row: any, i: number) => ({
+    ingredient: row.ingredient,
+    quantity: row.total_qty,
+    unit: row.unit,
+    aisle: row.aisle,
+    recipe_ids: row.recipe_ids,
+    sort_order: i,
+  }));
+
+  const savedItems = items.length
+    ? await addShoppingItems(list.id, userId, items)
+    : [];
+
+  return { ...list, items: savedItems };
+}

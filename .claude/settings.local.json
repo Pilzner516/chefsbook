@@ -19,7 +19,25 @@
       "Bash(taskkill //F //IM node.exe)",
       "Bash(ls:*)",
       "Bash(node -e \":*)",
-      "Bash(find /c/Users/seblu/aiproj/chefsbook -name *.config.* -o -name *.json -path */supabase/*)"
+      "Bash(find /c/Users/seblu/aiproj/chefsbook -name *.config.* -o -name *.json -path */supabase/*)",
+      "Bash(npx next:*)",
+      "Bash(taskkill //F //IM node.exe //FI 'WINDOWTITLE eq *expo*')",
+      "Bash(npx --prefix C:/Users/seblu/aiproj/chefsbook/apps/mobile kill-port 8081)",
+      "Bash(lsof -ti:8081)",
+      "Bash(xargs kill:*)",
+      "Bash(netstat -ano)",
+      "Bash(npx tsc:*)",
+      "Bash(tasklist)",
+      "Bash(taskkill:*)",
+      "Bash(npx eas:*)",
+      "Bash(ipconfig)",
+      "Bash(eas whoami:*)",
+      "Bash(eas build:*)",
+      "Bash(eas init:*)",
+      "Bash(echo $ANDROID_HOME)",
+      "Bash(echo $ANDROID_SDK_ROOT)",
+      "Read(//c/Users/seblu/aiproj/chefsbook/apps/mobile/$LOCALAPPDATA/Android/**)",
+      "Bash(git add:*)"
     ]
   }
 }

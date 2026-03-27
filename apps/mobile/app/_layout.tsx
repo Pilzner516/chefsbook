@@ -1,15 +1,19 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
+import { PinnedBar } from '../components/PinnedBar';
+import { ImportBanner } from '../components/ImportBanner';
 
 function RootNav() {
   const { colors } = useTheme();
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
+      <ImportBanner />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.bgScreen },
@@ -26,7 +30,8 @@ function RootNav() {
         <Stack.Screen name="share/[token]" options={{ title: 'Shared Recipe' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Settings' }} />
       </Stack>
-    </>
+      <PinnedBar />
+    </View>
   );
 }
 

@@ -278,10 +278,12 @@ interface RecipeCardProps {
   cuisine?: string | null;
   totalMinutes?: number | null;
   isFavourite?: boolean;
+  sourceUrl?: string | null;
+  sourceType?: string | null;
   onPress: () => void;
 }
 
-export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, onPress }: RecipeCardProps) {
+export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, sourceUrl, sourceType, onPress }: RecipeCardProps) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
@@ -296,10 +298,15 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
             </Text>
             {isFavourite && <Text style={{ fontSize: 16, marginLeft: 8 }}>{'\u2764'}</Text>}
           </View>
-          <View style={{ flexDirection: 'row', marginTop: 6, gap: 8 }}>
+          <View style={{ flexDirection: 'row', marginTop: 6, gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {cuisine && <Badge label={cuisine} />}
             {totalMinutes != null && totalMinutes > 0 && (
               <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{totalMinutes}min</Text>
+            )}
+            {sourceType === 'url' && sourceUrl && (
+              <Text style={{ color: colors.textSecondary, fontSize: 11 }} numberOfLines={1}>
+                {new URL(sourceUrl).hostname.replace('www.', '')}
+              </Text>
             )}
           </View>
         </View>

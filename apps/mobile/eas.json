@@ -14,21 +14,7 @@
     },
     "production": {
       "autoIncrement": true,
-      "ios": { "buildType": "release" },
       "android": { "buildType": "app-bundle" }
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
-      },
-      "android": {
-        "serviceAccountKeyPath": "./google-service-account.json",
-        "track": "production"
-      }
     }
   }
 }

@@ -27,7 +27,15 @@ Rules:
 - Preserve group labels like "For the sauce:" or "Dough:" as group_label on those ingredients/steps
 - If text is partially obscured or unclear, make your best inference and note it in the notes field
 - Temperatures: preserve original units (°F or °C)
-- Use null for any field not visible or not applicable`;
+- Use null for any field not visible or not applicable
+
+Timer extraction (critical for auto-timer feature):
+- Scan each step for ANY time reference: "5 minutes", "1 hour", "30 sec", "2-3 min", "about 10 minutes", "45 min or until golden"
+- Convert ALL durations to minutes as an integer for timer_minutes: "1 hour" → 60, "90 seconds" → 2, "2-3 minutes" → 3 (use upper bound)
+- Common patterns to detect: "cook for X min", "bake X minutes", "simmer X min", "let rest X minutes", "marinate for X hours", "chill X min", "set aside for X"
+- If a step says "until golden" or "until done" with no time, set timer_minutes to null
+- If a step has multiple timers ("cook 5 min, then flip and cook 3 more min"), use the total: 8
+- Implicit timers: "bring to a boil" → null (no specific time), "let cool 10 minutes" → 10`;
 
 export async function scanRecipe(imageBase64: string, mimeType = 'image/jpeg'): Promise<ScannedRecipe> {
   const text = await callClaude({ prompt: SCAN_PROMPT, imageBase64, imageMimeType: mimeType, maxTokens: 3000 });

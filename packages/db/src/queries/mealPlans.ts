@@ -49,6 +49,15 @@ export async function deleteMealPlan(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function getMealPlanWeek(userId: string, weekStartDate: string) {
+  const { data, error } = await supabase.rpc('get_meal_plan_week', {
+    p_user_id: userId,
+    p_week_start_date: weekStartDate,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getRecipeIdsForDateRange(
   userId: string,
   startDate: string,

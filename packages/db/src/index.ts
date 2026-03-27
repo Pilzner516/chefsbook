@@ -4,3 +4,7 @@ export * from './queries/recipes';
 export * from './queries/cookbooks';
 export * from './queries/mealPlans';
 export * from './queries/shopping';
+export * from './queries/cookingNotes';
+export * from './queries/menuTemplates';
+export * from './queries/imports';
+export * from './queries/categories';

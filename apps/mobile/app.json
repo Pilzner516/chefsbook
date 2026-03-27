@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0d0d0b"
+      "backgroundColor": "#faf7f0"
     },
     "ios": {
       "bundleIdentifier": "com.chefsbook.app",
@@ -30,7 +30,7 @@
       "package": "com.chefsbook.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0d0d0b"
+        "backgroundColor": "#faf7f0"
       },
       "permissions": [
         "android.permission.CAMERA",
@@ -40,10 +40,29 @@
     },
     "plugins": [
       "expo-router",
-      ["expo-camera", { "cameraPermission": "Chefsbook uses your camera to scan recipes." }],
-      ["expo-image-picker", { "photosPermission": "Chefsbook accesses photos to import recipe images." }],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Chefsbook uses your camera to scan recipes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Chefsbook accesses photos to import recipe images."
+        }
+      ],
       "expo-secure-store"
     ],
-    "experiments": { "typedRoutes": true }
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0dc9bfa3-1969-412b-afc4-01625a8ec75e"
+      }
+    },
+    "owner": "pilzner"
   }
 }

@@ -134,14 +134,24 @@ export default function DashboardPage() {
                   <h3 className="font-semibold mb-1.5 group-hover:text-cb-primary transition-colors">
                     {recipe.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-cb-muted">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-cb-muted">
                     {recipe.cuisine && (
                       <span className="bg-cb-primary/10 text-cb-primary px-2 py-0.5 rounded">
                         {recipe.cuisine}
                       </span>
                     )}
+                    {recipe.tags && recipe.tags.length > 0 && recipe.tags.map((tag) => (
+                      <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                        {tag}
+                      </span>
+                    ))}
                     {recipe.total_minutes != null && recipe.total_minutes > 0 && (
                       <span>{formatDuration(recipe.total_minutes)}</span>
+                    )}
+                    {recipe.source_url && (
+                      <span className="text-cb-muted truncate max-w-[120px]" title={recipe.source_url}>
+                        &#128279; {(() => { try { return new URL(recipe.source_url).hostname; } catch { return 'link'; } })()}
+                      </span>
                     )}
                     {recipe.is_favourite && (
                       <span className="text-cb-primary ml-auto">&#9829;</span>
