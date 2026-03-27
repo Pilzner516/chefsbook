@@ -223,7 +223,6 @@ export default function ScanPage() {
           await createRecipe(user.id, {
             ...scanned,
             source_url: bm.url,
-            tags: [bm.folder],
           });
           results.push({ ...bm, status: 'imported' });
         }
