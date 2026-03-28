@@ -115,7 +115,7 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 
 ## Last 3 sessions
 
-- **2026-03-28** — Rewrote CLAUDE.md with full architecture docs (DB schema, packages, theming, state mgmt)
+- **2026-03-28** — Rewrote CLAUDE.md with full architecture docs; renamed master→main, pushed to GitHub
 - **2026-03-27** — Backend functions, categories taxonomy, import pipeline, docs
 - **2026-03-27** — Initial scaffold, web postcss fix, createRecipe fix
 
