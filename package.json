@@ -9,6 +9,9 @@
     "web": "turbo dev --filter=@chefsbook/web"
   },
   "packageManager": "npm@11.8.0",
+  "overrides": {
+    "react": "19.1.4"
+  },
   "devDependencies": {
     "turbo": "latest",
     "typescript": "5.9.2"

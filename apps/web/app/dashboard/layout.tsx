@@ -1,7 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { supabase } from '@chefsbook/db';
+import type { User } from '@supabase/supabase-js';
 
 const navItems = [
   {
@@ -63,6 +66,38 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.replace('/auth');
+      } else {
+        setUser(user);
+        setChecking(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.replace('/auth');
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-cb-muted">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -94,13 +129,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="p-3 border-t border-cb-border">
-          <Link
-            href="/pricing"
-            className="block text-center py-2.5 rounded-input text-sm font-semibold bg-cb-primary text-white hover:opacity-90 transition-opacity"
+        <div className="p-3 border-t border-cb-border space-y-2">
+          {user && (
+            <p className="text-xs text-cb-muted truncate px-1" title={user.email}>
+              {user.email}
+            </p>
+          )}
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/auth');
+            }}
+            className="block w-full text-center py-2 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text hover:bg-cb-bg transition-colors"
           >
-            Upgrade to Pro
-          </Link>
+            Sign out
+          </button>
         </div>
       </aside>
 

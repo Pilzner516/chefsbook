@@ -1,7 +1,7 @@
 export type VisibilityLevel = 'private' | 'shared_link' | 'friends' | 'public';
 export type PlanTier = 'free' | 'pro' | 'family';
 export type SourceType = 'url' | 'scan' | 'manual' | 'ai' | 'social' | 'cookbook';
-export type Course = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'starter' | 'main' | 'side' | 'dessert' | 'snack' | 'drink' | 'other';
+export type Course = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'starter' | 'main' | 'side' | 'dessert' | 'snack' | 'drink' | 'bread' | 'other';
 export type MealSlot = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'snack' | 'other';
 
 export interface UserProfile {

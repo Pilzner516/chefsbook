@@ -8,7 +8,7 @@ Multi-tenant SaaS recipe app. Turborepo monorepo with two apps and three shared 
 
 | Workspace | Stack | Purpose |
 |-----------|-------|---------|
-| `apps/mobile` | Expo SDK 54, React Native 0.81, Expo Router v6, Zustand v5 | iOS/Android app |
+| `apps/mobile` | Expo SDK 54, React Native 0.81, Expo Router v6, NativeWind v4, Zustand v5 | iOS/Android app |
 | `apps/web` | Next.js 15, React 19, Tailwind CSS 3 | Web app |
 | `packages/db` | Supabase client, queries, types | All database access |
 | `packages/ai` | Claude Sonnet API wrapper | Recipe scanning, URL import, suggestions |
@@ -33,6 +33,10 @@ cd apps/web && npm run dev
 cd apps/mobile && npx tsc --noEmit
 cd apps/web && npx tsc --noEmit
 cd apps/web && npm run lint                  # next lint (only web has lint)
+
+# EAS builds (local builder on dev PC — cloud quota limited)
+cd apps/mobile && eas build --platform android --profile development --local
+cd apps/mobile && eas build --platform ios --profile development --local
 ```
 
 ## Infrastructure
@@ -54,6 +58,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=<service role key>    # server-side only
 EXPO_PUBLIC_ANTHROPIC_API_KEY=<key>             # mobile + web AI calls
 ANTHROPIC_API_KEY=<key>                         # server-side fallback
+STRIPE_SECRET_KEY=<key>                         # Stripe (web only, not yet configured)
+STRIPE_WEBHOOK_SECRET=<key>
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<key>
+STRIPE_PRO_MONTHLY_PRICE_ID=<price id>
+STRIPE_PRO_YEARLY_PRICE_ID=<price id>
+STRIPE_FAMILY_MONTHLY_PRICE_ID=<price id>
+STRIPE_FAMILY_YEARLY_PRICE_ID=<price id>
 ```
 
 ## Critical patterns
@@ -64,6 +75,22 @@ ANTHROPIC_API_KEY=<key>                         # server-side fallback
 4. ALWAYS use `cb-*` Tailwind tokens in web (e.g. `bg-cb-primary`) — never hardcode hex
 5. ALWAYS follow the Zustand store pattern in `apps/mobile/lib/zustand/authStore.ts`
 6. NEVER commit `.env.local` — all keys stay out of git
+7. Commit style: `type(scope): message` (e.g. `fix(web):`, `feat:`)
+
+### Path aliases
+
+| Alias | Resolves to | Used in |
+|-------|-------------|---------|
+| `@chefsbook/db` | `packages/db/src` | Both apps |
+| `@chefsbook/ai` | `packages/ai/src` | Both apps |
+| `@chefsbook/ui` | `packages/ui/src` | Both apps |
+| `@/*` | app root (`./`) | Web only |
+
+### Monorepo wiring
+
+- Mobile: `metro.config.js` watches the entire monorepo root for shared packages
+- Web: `next.config.ts` uses `transpilePackages` for `@chefsbook/*`
+- Root `package.json` uses npm workspaces (`apps/*`, `packages/*`)
 
 ## Architecture
 
@@ -107,7 +134,7 @@ Zustand v5 stores in `apps/mobile/lib/zustand/`: authStore, recipeStore, mealPla
 
 ### Web architecture
 
-Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav). API routes at `app/api/import/url` (URL fetching) and `app/api/webhooks/stripe` (subscription events). Server-side data fetching — no client state library.
+Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav). API routes at `app/api/import/url` (URL fetching), `app/api/import/bookmarks` (HTML bookmark import), and `app/api/webhooks/stripe` (subscription events). Server-side data fetching — no client state library. Stripe integration for subscriptions (not yet configured).
 
 ### Theming
 
@@ -115,16 +142,18 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 
 ## Last 3 sessions
 
+- **2026-03-28** — Auth page, cookbook modal, Chrome extension, server-side import pipeline, recipe delete/re-import/edit, image extraction, DB fixes
 - **2026-03-28** — Rewrote CLAUDE.md with full architecture docs; renamed master→main, pushed to GitHub
 - **2026-03-27** — Backend functions, categories taxonomy, import pipeline, docs
-- **2026-03-27** — Initial scaffold, web postcss fix, createRecipe fix
 
 ## Known issues
 
-- [ ] EAS free-tier build quota exhausted — resets 2026-04-01
 - [ ] No test suite (unit or integration)
 - [ ] No README.md
-- [ ] stale dark mode refs in mobile theme context (single light palette only)
+- [ ] Stale dark mode refs in mobile theme context (single light palette only)
+- [ ] Stripe env vars not yet configured (subscriptions non-functional)
+- [ ] Cloudflare-protected sites (Serious Eats, some King Arthur pages) return 403 to server-side fetch — extension bypasses this by sending page HTML from browser
+- [ ] No duplicate detection on recipe import
 
 ## Decisions log
 
@@ -133,11 +162,8 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - Single light "Trattoria" theme — no dark mode
 - Supabase client as lazy Proxy singleton — no createClient() in app code
 - Claude Sonnet for all AI features via @chefsbook/ai wrapper
-
-## Conventions
-
-- Commit style: `type(scope): message` (e.g. `fix(web):`, `feat:`)
-- Package imports: `@chefsbook/db`, `@chefsbook/ai`, `@chefsbook/ui` — never bypass
-- Mobile styling: `useTheme().colors` — never hardcode hex
-- Web styling: `cb-*` Tailwind tokens — never hardcode hex
-- Zustand stores follow pattern in `authStore.ts`
+- Local EAS builds on dev PC (cloud quota limited)
+- All AI calls run server-side (Anthropic API blocks browser CORS) — API routes at /api/import/url, /api/import/batch, /api/extension/import
+- Chrome extension sends page HTML from browser to bypass Cloudflare bot protection
+- Re-import preserves user edits (title, tags, notes, custom images) — only updates AI-derived fields
+- "bread" added to Course enum (DB constraint + TypeScript type + AI prompts)

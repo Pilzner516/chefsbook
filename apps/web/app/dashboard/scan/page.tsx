@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, createRecipe } from '@chefsbook/db';
-import { scanRecipe, importFromUrl } from '@chefsbook/ai';
+import { scanRecipe } from '@chefsbook/ai';
 
 // ─── Bookmark types ─────────────────────────────────────────────
 
@@ -58,9 +58,68 @@ export default function ScanPage() {
   const [bmDragOver, setBmDragOver] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [importProgress, setImportProgress] = useState(0);
+  const [importTotal, setImportTotal] = useState(0);
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const [showFailed, setShowFailed] = useState(false);
   const abortRef = useRef(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Resume active import on mount ──
+  useEffect(() => {
+    const activeJobId = localStorage.getItem('chefsbook_import_job');
+    if (activeJobId) {
+      setBmPhase('importing');
+      startPolling(activeJobId);
+    }
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
+
+  const startPolling = (jobId: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/import/batch?jobId=${jobId}`);
+        if (!res.ok) {
+          clearPolling();
+          return;
+        }
+        const { job, urls } = await res.json();
+
+        const total = job.total_urls ?? urls.length;
+        const processed = urls.filter((u: any) => u.status !== 'queued' && u.status !== 'processing');
+        setImportTotal(total);
+        setImportProgress(processed.length);
+        setImportResults(
+          processed.map((u: any) => ({
+            title: u.url,
+            url: u.url,
+            folder: u.folder_name ?? '',
+            status: u.status === 'success' ? 'imported' as const : u.status === 'not_recipe' ? 'skipped' as const : 'failed' as const,
+            error: u.error_message,
+          }))
+        );
+
+        if (job.status === 'complete' || job.status === 'failed') {
+          clearPolling();
+          setBmPhase('done');
+        }
+      } catch {
+        // network error — keep polling
+      }
+    };
+
+    poll(); // immediate first poll
+    pollRef.current = setInterval(poll, 2000);
+  };
+
+  const clearPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    localStorage.removeItem('chefsbook_import_job');
+  };
 
   // ── Image handlers ──
 
@@ -93,9 +152,9 @@ export default function ScanPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       });
-      const { html } = await res.json();
-      const scanned = await importFromUrl(html, url);
-      const recipe = await createRecipe(user.id, { ...scanned, source_url: url });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      const recipe = await createRecipe(user.id, { ...data.recipe, source_url: url, image_url: data.imageUrl || undefined });
       router.push(`/recipe/${recipe.id}`);
     } catch (e: any) {
       setError(e.message);
@@ -188,52 +247,37 @@ export default function ScanPage() {
 
     setBmPhase('importing');
     setImportProgress(0);
+    setImportTotal(selected.length);
     setImportResults([]);
-    abortRef.current = false;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       setError('Not signed in');
       setBmPhase('preview');
       return;
     }
 
-    const results: ImportResult[] = [];
+    try {
+      const res = await fetch('/api/import/batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          urls: selected.map((b) => ({ url: b.url, folder: b.folder })),
+        }),
+      });
 
-    for (let i = 0; i < selected.length; i++) {
-      if (abortRef.current) break;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to start import');
 
-      const bm = selected[i]!;
-      setImportProgress(i + 1);
-
-      try {
-        const res = await fetch('/api/import/url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: bm.url }),
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const { html } = await res.json();
-
-        if (!html || html.length < 100) {
-          results.push({ ...bm, status: 'skipped', error: 'Not a recipe page' });
-        } else {
-          const scanned = await importFromUrl(html, bm.url);
-          await createRecipe(user.id, {
-            ...scanned,
-            source_url: bm.url,
-          });
-          results.push({ ...bm, status: 'imported' });
-        }
-      } catch (e: any) {
-        results.push({ ...bm, status: 'failed', error: e.message });
-      }
-
-      setImportResults([...results]);
+      localStorage.setItem('chefsbook_import_job', data.jobId);
+      startPolling(data.jobId);
+    } catch (e: any) {
+      setError(e.message);
+      setBmPhase('preview');
     }
-
-    setBmPhase('done');
   };
 
   const importedCount = importResults.filter((r) => r.status === 'imported').length;
@@ -513,16 +557,16 @@ export default function ScanPage() {
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold">
-                  {importProgress} of {selectedCount} imported
+                  {importProgress} of {importTotal} processed
                 </p>
                 <p className="text-xs text-cb-muted">
-                  {Math.round((importProgress / selectedCount) * 100)}%
+                  {importTotal > 0 ? Math.round((importProgress / importTotal) * 100) : 0}%
                 </p>
               </div>
               <div className="w-full h-2 bg-cb-bg rounded-full overflow-hidden">
                 <div
                   className="h-full bg-cb-primary rounded-full transition-all duration-300"
-                  style={{ width: `${(importProgress / selectedCount) * 100}%` }}
+                  style={{ width: `${importTotal > 0 ? (importProgress / importTotal) * 100 : 0}%` }}
                 />
               </div>
             </div>
@@ -626,6 +670,8 @@ export default function ScanPage() {
                   setBookmarks([]);
                   setImportResults([]);
                   setImportProgress(0);
+                  setImportTotal(0);
+                  clearPolling();
                 }}
                 className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text transition-colors"
               >

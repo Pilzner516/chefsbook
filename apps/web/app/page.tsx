@@ -74,10 +74,10 @@ export default function HomePage() {
             Dashboard
           </Link>
           <Link
-            href="/dashboard"
+            href="/auth"
             className="bg-cb-primary text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
           >
-            Sign up
+            Sign in
           </Link>
         </div>
       </nav>

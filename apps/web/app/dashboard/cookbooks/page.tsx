@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase, listCookbooks, listRecipes } from '@chefsbook/db';
+import { supabase, listCookbooks, listRecipes, createCookbook } from '@chefsbook/db';
 import type { Cookbook, Recipe } from '@chefsbook/db';
 import Link from 'next/link';
 
@@ -11,6 +11,18 @@ export default function CookbooksPage() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Recipe[]>([]);
   const [searching, setSearching] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [form, setForm] = useState({
+    title: '',
+    author: '',
+    publisher: '',
+    year: '',
+    isbn: '',
+    location: '',
+    notes: '',
+  });
 
   useEffect(() => {
     loadCookbooks();
@@ -26,6 +38,38 @@ export default function CookbooksPage() {
       setCookbooks(data);
     }
     setLoading(false);
+  };
+
+  const handleSaveCookbook = async () => {
+    if (!form.title.trim()) {
+      setFormError('Title is required');
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      await createCookbook(user.id, {
+        title: form.title.trim(),
+        author: form.author.trim() || null,
+        publisher: form.publisher.trim() || null,
+        year: form.year ? parseInt(form.year, 10) : null,
+        isbn: form.isbn.trim() || null,
+        location: form.location.trim() || null,
+        notes: form.notes.trim() || null,
+        cover_url: null,
+        rating: null,
+        visibility: 'private',
+      });
+      setShowModal(false);
+      setForm({ title: '', author: '', publisher: '', year: '', isbn: '', location: '', notes: '' });
+      await loadCookbooks();
+    } catch (e: any) {
+      setFormError(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -59,7 +103,10 @@ export default function CookbooksPage() {
             Index your physical cookbooks and search across your entire shelf.
           </p>
         </div>
-        <button className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2">
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
+        >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
@@ -156,7 +203,10 @@ export default function CookbooksPage() {
           <p className="text-cb-muted text-sm mb-6">
             Index your physical cookbooks to search across your entire shelf by ingredient.
           </p>
-          <button className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity">
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
             Add Your First Cookbook
           </button>
         </div>
@@ -216,6 +266,124 @@ export default function CookbooksPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Add Cookbook Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold">Add Cookbook</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-cb-muted hover:text-cb-text"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-cb-primary rounded-input p-3 mb-4 text-sm">
+                {formError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="e.g. Salt, Fat, Acid, Heat"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Author</label>
+                <input
+                  type="text"
+                  value={form.author}
+                  onChange={(e) => setForm({ ...form, author: e.target.value })}
+                  placeholder="e.g. Samin Nosrat"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Publisher</label>
+                  <input
+                    type="text"
+                    value={form.publisher}
+                    onChange={(e) => setForm({ ...form, publisher: e.target.value })}
+                    placeholder="Publisher"
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Year</label>
+                  <input
+                    type="number"
+                    value={form.year}
+                    onChange={(e) => setForm({ ...form, year: e.target.value })}
+                    placeholder="2018"
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">ISBN</label>
+                  <input
+                    type="text"
+                    value={form.isbn}
+                    onChange={(e) => setForm({ ...form, isbn: e.target.value })}
+                    placeholder="978-..."
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    placeholder="Kitchen shelf"
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  rows={2}
+                  placeholder="Any notes about this cookbook..."
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveCookbook}
+                disabled={saving}
+                className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Add Cookbook'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

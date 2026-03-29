@@ -11,7 +11,7 @@ Return ONLY a JSON object, no markdown, no explanation:
   "prep_minutes": "number | null",
   "cook_minutes": "number | null",
   "cuisine": "string | null",
-  "course": "breakfast|brunch|lunch|dinner|starter|main|side|dessert|snack|drink|other|null",
+  "course": "breakfast|brunch|lunch|dinner|starter|main|side|dessert|snack|drink|bread|other|null",
   "ingredients": [
     { "quantity": "number|null", "unit": "string|null", "ingredient": "string", "preparation": "string|null", "optional": false, "group_label": "string|null" }
   ],

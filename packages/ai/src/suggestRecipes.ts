@@ -17,7 +17,7 @@ Return ONLY a JSON array, no markdown, no explanation:
     "title": "string",
     "description": "string — brief appetizing description",
     "cuisine": "string | null",
-    "course": "breakfast|brunch|lunch|dinner|starter|main|side|dessert|snack|drink|other|null",
+    "course": "breakfast|brunch|lunch|dinner|starter|main|side|dessert|snack|drink|bread|other|null",
     "estimated_time_minutes": "number",
     "key_ingredients": ["string — which of the user's ingredients are used"]
   }

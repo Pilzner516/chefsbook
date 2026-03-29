@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #faf7f0;
+      color: #1a1a1a;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      border-bottom: 1px solid #e8e0d0;
+    }
+    .header img { width: 28px; height: 28px; }
+    .header .logo { font-size: 16px; font-weight: 700; }
+    .header .logo span { color: #ce2b37; }
+
+    .content { padding: 16px; }
+
+    .login-form { display: flex; flex-direction: column; gap: 10px; }
+    .login-form label { font-size: 12px; font-weight: 500; color: #7a6a5a; }
+    .login-form input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #e8e0d0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #faf7f0;
+      outline: none;
+    }
+    .login-form input:focus { border-color: #ce2b37; }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #ce2b37; color: white; }
+    .btn-green { background: #009246; color: white; }
+    .btn-outline {
+      background: none;
+      border: 1px solid #e8e0d0;
+      color: #7a6a5a;
+      margin-top: 8px;
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .status-success { background: #e8f5e9; color: #2e7d32; }
+    .status-error { background: #fce4ec; color: #c62828; }
+
+    .user-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #7a6a5a;
+    }
+    .user-bar button {
+      background: none;
+      border: none;
+      color: #ce2b37;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .save-section { text-align: center; }
+    .page-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #7a6a5a;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .view-link {
+      display: block;
+      margin-top: 10px;
+      text-align: center;
+      color: #ce2b37;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon-48.png" alt="">
+    <div class="logo"><span>Chefs</span>book</div>
+  </div>
+  <div class="content" id="content"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

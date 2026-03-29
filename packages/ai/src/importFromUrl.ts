@@ -11,7 +11,7 @@ Return ONLY a JSON object, no markdown, no explanation:
   "prep_minutes": "number | null",
   "cook_minutes": "number | null",
   "cuisine": "string | null",
-  "course": "breakfast|brunch|lunch|dinner|starter|main|side|dessert|snack|drink|other|null",
+  "course": "breakfast|brunch|lunch|dinner|starter|main|side|dessert|snack|drink|bread|other|null",
   "ingredients": [
     { "quantity": "number|null", "unit": "string|null", "ingredient": "string", "preparation": "string|null", "optional": false, "group_label": "string|null" }
   ],
@@ -28,7 +28,8 @@ Rules:
 - Preserve group labels like "For the sauce:" or "Dough:"
 - Temperatures: preserve original units (°F or °C)
 - If the page contains multiple recipes, extract only the primary/featured one
-- Use null for any field not found`;
+- Use null for any field not found
+- For "course": if the recipe primarily produces a bread product (loaves, rolls, buns, baguettes, focaccia, naan, pretzels, pizza dough, sourdough, tortillas, pita, muffins, waffles, pancakes, biscuits, crumpets), always use "bread" — never "side", "main", or "other" for these. Use "dessert" for cakes, cookies, pastries, sweet pies. Use "other" only as a last resort.`;
 
 const CLASSIFY_PROMPT = `You are a web page classifier. Determine if this page contains a recipe.
 
