@@ -65,6 +65,9 @@ STRIPE_PRO_MONTHLY_PRICE_ID=<price id>
 STRIPE_PRO_YEARLY_PRICE_ID=<price id>
 STRIPE_FAMILY_MONTHLY_PRICE_ID=<price id>
 STRIPE_FAMILY_YEARLY_PRICE_ID=<price id>
+YOUTUBE_API_KEY=<key>                       # YouTube Data API v3 (optional — falls back to oembed)
+SCRAPINGBEE_API_KEY=<key>                   # ScrapingBee (optional — fallback for 403 sites)
+CHROME_PATH=<path>                          # Chrome executable (optional — auto-detected on Windows/Mac/Linux)
 ```
 
 ## Critical patterns
@@ -96,7 +99,7 @@ STRIPE_FAMILY_YEARLY_PRICE_ID=<price id>
 
 ### Database schema (supabase/migrations/)
 
-16+ tables with RLS policies. Key tables:
+18+ tables with RLS policies. Migrations in `supabase/migrations/` (8 files: core, functions, storage, features, categories, imports, youtube, techniques). Key tables:
 - `user_profiles` (auto-created via trigger on auth.users signup)
 - `recipes`, `recipe_ingredients`, `recipe_steps` — core recipe data
 - `cookbooks` — recipe collections
@@ -105,6 +108,7 @@ STRIPE_FAMILY_YEARLY_PRICE_ID=<price id>
 - `cooking_notes` — journal entries per cook
 - `category_groups`, `categories`, `recipe_categories` — hierarchical taxonomy (8 groups, 371 categories)
 - `import_jobs`, `import_job_urls` — bookmark batch import tracking
+- `techniques` — cooking methods/skills with JSONB process_steps, difficulty, tips, mistakes, tools
 - `follows` — follower/followed with pending/accepted status
 
 5 custom Postgres functions: `search_recipes()` (pg_trgm fuzzy), `get_meal_plan_week()`, `generate_shopping_list()`, `clone_recipe()`, `get_public_feed()`.
@@ -113,9 +117,9 @@ Storage buckets: `recipe-images` (5MB, public read) and `avatars` (2MB, public r
 
 ### Shared packages
 
-**@chefsbook/db** — Supabase client is a lazy-init Proxy singleton (`packages/db/src/client.ts`). Query modules organized by domain: `recipes.ts`, `cookbooks.ts`, `mealPlans.ts`, `shopping.ts`, `cookingNotes.ts`, `menuTemplates.ts`, `imports.ts`, `categories.ts`. Types define `PlanTier` (free/pro/family), `SourceType`, `Course`, `MealSlot`, `VisibilityLevel`.
+**@chefsbook/db** — Supabase client is a lazy-init Proxy singleton (`packages/db/src/client.ts`). Query modules organized by domain: `recipes.ts`, `cookbooks.ts`, `mealPlans.ts`, `shopping.ts`, `cookingNotes.ts`, `menuTemplates.ts`, `imports.ts`, `categories.ts`, `techniques.ts`. `subscriptions.ts` defines plan limits and gate-check functions. Types define `PlanTier`, `SourceType` (includes `'youtube'`), `Course`, `MealSlot`, `VisibilityLevel`, `Technique`, `Difficulty`.
 
-**@chefsbook/ai** — `callClaude()` hits the Anthropic API with claude-sonnet. Key exports: `scanRecipe(imageBase64)`, `importFromUrl(url)`, `suggestRecipes(ingredients[])`, `mergeShoppingList()`, `matchFolderToCategory()`. Uses `extractJSON()` to parse structured data from LLM output.
+**@chefsbook/ai** — `callClaude()` hits the Anthropic API (`claude-sonnet-4-20250514`), supports text + optional image input. Key exports: `scanRecipe(imageBase64)`, `importFromUrl(url)`, `importUrlFull(url)`, `classifyPage(html)`, `fetchPage(url)`, `suggestRecipes(ingredients[])`, `generateVariation(recipe, request)`, `mergeShoppingList()`, `matchFolderToCategory()`, `matchFoldersToCategories()`, `importFromYouTube()`, `classifyContent()` (recipe vs technique), `importTechnique()`, `importTechniqueFromYouTube()`, `extractJsonLdRecipe()`. Uses `extractJSON()` to parse structured data from LLM output.
 
 **@chefsbook/ui** — Pure formatters: `formatDuration()`, `formatQuantity()` (Unicode fractions like "1 3/4"), `scaleQuantity()`, `formatServings()`, `getInitials()`, `truncate()`, `groupBy()`.
 
@@ -128,13 +132,27 @@ Storage buckets: `recipe-images` (5MB, public read) and `avatars` (2MB, public r
 | Shopping lists | 1 | 10 | 10 |
 | Sharing | Link only | Publish + followers | + 6 family members |
 
-### Mobile state management
+### Mobile routing & state
+
+Expo Router v6 with 5 bottom tabs: Recipes, Scan, Plan, Shop, Discover. Dynamic routes: `recipe/[id]`, `cookbook/[id]`, `chef/[id]`, `share/[token]`, `recipe/new`, `modal` (settings).
 
 Zustand v5 stores in `apps/mobile/lib/zustand/`: authStore, recipeStore, mealPlanStore, shoppingStore, cookbookStore, cookingNotesStore, importStore, pinStore. Auth store initializes Supabase session and listens for auth state changes.
 
 ### Web architecture
 
-Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav). API routes at `app/api/import/url` (URL fetching), `app/api/import/bookmarks` (HTML bookmark import), and `app/api/webhooks/stripe` (subscription events). Server-side data fetching — no client state library. Stripe integration for subscriptions (not yet configured).
+Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav). Server-side data fetching — no client state library. Stripe integration for subscriptions (not yet configured).
+
+API routes:
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/import/url` | POST | Fetch URL, extract image, strip HTML for AI |
+| `/api/import/batch` | POST | Queue multiple URLs for background import processing |
+| `/api/import/bookmarks` | POST | Parse `bookmarks.html`, extract URLs by folder, create import job |
+| `/api/import/reimport` | POST | Re-fetch existing recipe URLs, update AI-derived fields |
+| `/api/import/youtube` | POST | YouTube video import: metadata, transcript, Claude extraction with timestamps |
+| `/api/extension/import` | POST | CORS-enabled Chrome extension endpoint; classifies recipe vs technique |
+| `/api/webhooks/stripe` | POST | Stripe subscription events, updates `plan_tier` |
 
 ### Theming
 
@@ -142,18 +160,21 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 
 ## Last 3 sessions
 
-- **2026-03-28** — Auth page, cookbook modal, Chrome extension, server-side import pipeline, recipe delete/re-import/edit, image extraction, DB fixes
-- **2026-03-28** — Rewrote CLAUDE.md with full architecture docs; renamed master→main, pushed to GitHub
-- **2026-03-27** — Backend functions, categories taxonomy, import pipeline, docs
+- **2026-03-29** — Massive feature session: bookmark tree UI, YouTube import with timestamps, technique content type, inline recipe editing, view modes (grid/list/table), favourites, cooking notes, meal planner recipe picker, plan tier gating, import failure fixes, discover page, JSON-LD extraction
+- **2026-03-28** — Auth page, cookbook modal, Chrome extension, server-side import pipeline, recipe CRUD, image extraction, DB fixes
+- **2026-03-28** — Rewrote CLAUDE.md with full architecture docs; renamed master to main, pushed to GitHub
 
 ## Known issues
 
+- [x] ~~No README.md~~ — added 2026-03-29
+- [x] ~~Stale dark mode refs in mobile theme context~~ — fixed 2026-03-29
+- [x] ~~No duplicate detection on recipe import~~ — added 2026-03-29 (bookmark + single URL)
+- [x] ~~Cloudflare 403 sites~~ — Puppeteer + ScrapingBee fallback chain added 2026-03-29
 - [ ] No test suite (unit or integration)
-- [ ] No README.md
-- [ ] Stale dark mode refs in mobile theme context (single light palette only)
-- [ ] Stripe env vars not yet configured (subscriptions non-functional)
-- [ ] Cloudflare-protected sites (Serious Eats, some King Arthur pages) return 403 to server-side fetch — extension bypasses this by sending page HTML from browser
-- [ ] No duplicate detection on recipe import
+- [ ] Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
+- [ ] Followers UI not built (DB schema exists)
+- [ ] Family tier features not built (shared lists, shared plans, family cookbook, member invite)
+- [ ] Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
 
 ## Decisions log
 
@@ -167,3 +188,11 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - Chrome extension sends page HTML from browser to bypass Cloudflare bot protection
 - Re-import preserves user edits (title, tags, notes, custom images) — only updates AI-derived fields
 - "bread" added to Course enum (DB constraint + TypeScript type + AI prompts)
+- YouTube import as separate pipeline — Data API + transcript + Claude extraction with timestamp-linked steps
+- Techniques as separate table (not a content_type on recipes) — fundamentally different fields
+- Content classification (recipe vs technique) runs before extraction on all import paths
+- Plan tier gating via `checkRecipeLimit()` / `checkShoppingListLimit()` in `@chefsbook/db/subscriptions`
+- Fetch fallback chain: standard fetch → puppeteer-core (system Chrome) → ScrapingBee → error
+- JSON-LD structured data used as primary extraction source when available, Claude fills gaps
+- `_unresolved` tag marks recipes where title was auto-generated from URL slug
+- Development agenda tracked in AGENDA.md at project root
