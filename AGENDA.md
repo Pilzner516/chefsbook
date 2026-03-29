@@ -134,6 +134,14 @@ Focus: Meal planning (the big homepage promise)
 | 35 | Equipment field extraction | Equipment mixed into ingredients list | S |
 | 36 | Ingredient group preservation | "For the sauce:" groups getting flattened | S |
 
+## TIER 7 — KNOWN BUGS (reported, not yet fixed)
+
+| # | Feature | Problem | Effort |
+|---|---------|---------|--------|
+| 37 | Ingredient quantities missing after re-import | JSON-LD extraction parses quantities but they don't appear in the UI after re-import — investigate whether `extractJsonLdRecipe` quantity parsing fails for fraction chars (½, ⅓) or if `replaceIngredients` drops them | S |
+| 38 | Shopping list: calendar meal plan import | No way to generate a shopping list from a week's meal plan via the UI — `generateShoppingListFromMealPlans()` DB function exists but is not wired to the planner or shop page | M |
+| 39 | Shopping list: overall UX polish | Needs: add items manually, edit quantities, rename lists, merge duplicate ingredients, aisle auto-assignment, share list | L |
+
 ---
 
 ## EFFORT KEY

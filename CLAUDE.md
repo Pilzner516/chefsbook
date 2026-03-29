@@ -160,7 +160,7 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 
 ## Last 3 sessions
 
-- **2026-03-29** — Massive feature session: bookmark tree UI, YouTube import with timestamps, technique content type, inline recipe editing, view modes (grid/list/table), favourites, cooking notes, meal planner recipe picker, plan tier gating, import failure fixes, discover page, JSON-LD extraction
+- **2026-03-29** — Massive feature session: bookmark tree UI, YouTube import with timestamps, technique content type, inline recipe editing, view modes (grid/list/table), favourites, cooking notes, meal planner recipe picker, plan tier gating, import failure fixes, discover page, JSON-LD-first extraction pipeline (skips Claude when structured data is complete), reimport route updated, 25k char limit
 - **2026-03-28** — Auth page, cookbook modal, Chrome extension, server-side import pipeline, recipe CRUD, image extraction, DB fixes
 - **2026-03-28** — Rewrote CLAUDE.md with full architecture docs; renamed master to main, pushed to GitHub
 
@@ -175,6 +175,9 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - [ ] Followers UI not built (DB schema exists)
 - [ ] Family tier features not built (shared lists, shared plans, family cookbook, member invite)
 - [ ] Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
+- [ ] Ingredient quantities not appearing after re-import (JSON-LD fraction parsing or DB storage issue)
+- [ ] Shopping list: no UI to generate from meal plan calendar (backend function exists)
+- [ ] Shopping list: needs manual add, edit, merge duplicates, aisle assignment, sharing
 
 ## Decisions log
 
