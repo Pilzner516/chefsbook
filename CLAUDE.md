@@ -13,6 +13,7 @@ Multi-tenant SaaS recipe app. Turborepo monorepo with two apps and three shared 
 | `packages/db` | Supabase client, queries, types | All database access |
 | `packages/ai` | Claude Sonnet API wrapper | Recipe scanning, URL import, suggestions |
 | `packages/ui` | Pure utility functions | Formatting (duration, fractions, servings), groupBy |
+| `apps/extension` | Chrome/Edge browser extension (MV3, plain JS, no build) | One-click recipe import from any page |
 
 See `apps/mobile/agents/CLAUDE.md` and `apps/web/CLAUDE.md` for app-specific instructions.
 
@@ -68,6 +69,8 @@ STRIPE_FAMILY_YEARLY_PRICE_ID=<price id>
 YOUTUBE_API_KEY=<key>                       # YouTube Data API v3 (optional — falls back to oembed)
 SCRAPINGBEE_API_KEY=<key>                   # ScrapingBee (optional — fallback for 403 sites)
 CHROME_PATH=<path>                          # Chrome executable (optional — auto-detected on Windows/Mac/Linux)
+GOOGLE_BOOKS_API_KEY=<key>                  # Google Books API (optional — works without key at lower rate limit)
+UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
 ```
 
 ## Critical patterns
@@ -140,7 +143,19 @@ Zustand v5 stores in `apps/mobile/lib/zustand/`: authStore, recipeStore, mealPla
 
 ### Web architecture
 
-Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav). Server-side data fetching — no client state library. Stripe integration for subscriptions (not yet configured).
+Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav with: Recipes, Scan, Techniques, Plan, Shop, Cookbooks, Discover). Server-side data fetching — no client state library. Stripe integration for subscriptions (not yet configured).
+
+Key dashboard pages: `/dashboard` (recipes with grid/list/table views + sort), `/dashboard/scan` (image OCR + URL import + bookmark batch import), `/dashboard/techniques` (technique library + manual entry at `/new`), `/dashboard/plan` (weekly meal calendar + recipe picker), `/dashboard/shop` (shopping lists), `/dashboard/cookbooks` (physical cookbook shelf), `/dashboard/discover` (public recipe feed).
+
+### Import pipeline
+
+All import paths (URL, batch, reimport, extension) follow the same extraction priority:
+1. **JSON-LD first**: `extractJsonLdRecipe(rawHtml)` → `checkJsonLdCompleteness()` — if title + ingredients with quantities + steps all present, use directly and **skip Claude entirely**
+2. **JSON-LD + Claude gap-fill**: If JSON-LD is partial, tell Claude what's available and what's missing, send JSON-LD data + 25k chars of page text
+3. **Claude-only fallback**: No JSON-LD found → full Claude extraction with 25k char limit
+4. **Content classification**: `classifyContent()` determines recipe vs technique before extraction on all paths
+
+Fetch chain: standard fetch → puppeteer-core (system Chrome) → ScrapingBee API → descriptive error. Shared via `apps/web/app/api/import/_utils.ts`.
 
 API routes:
 
@@ -153,6 +168,7 @@ API routes:
 | `/api/import/youtube` | POST | YouTube video import: metadata, transcript, Claude extraction with timestamps |
 | `/api/extension/import` | POST | CORS-enabled Chrome extension endpoint; classifies recipe vs technique |
 | `/api/webhooks/stripe` | POST | Stripe subscription events, updates `plan_tier` |
+| `/api/extension/download` | GET | (planned) Zip extension with patched production URLs |
 
 ### Theming
 
@@ -160,9 +176,9 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 
 ## Last 3 sessions
 
-- **2026-03-29** — Massive feature session: bookmark tree UI, YouTube import with timestamps, technique content type, inline recipe editing, view modes (grid/list/table), favourites, cooking notes, meal planner recipe picker, plan tier gating, import failure fixes, discover page, JSON-LD-first extraction pipeline (skips Claude when structured data is complete), reimport route updated, 25k char limit
-- **2026-03-28** — Auth page, cookbook modal, Chrome extension, server-side import pipeline, recipe CRUD, image extraction, DB fixes
-- **2026-03-28** — Rewrote CLAUDE.md with full architecture docs; renamed master to main, pushed to GitHub
+- **2026-03-30** — Massive session: shopping list overhaul (13 departments, AI purchase units, realtime, duplicate aggregation, column layout), meal planner redesign (two-row calendar, smart picker, notes, AI wizard), sidebar refactor (shared component, collapsible, fixed height, recipe pages), search page (ILIKE RPC, category drill-down, auto-tag), voice recipe entry (/speak), cookbook intelligence (ISBN lookup, AI TOC, import review panel), social sharing, user photos, privacy toggle, universal file import (PDF/Word/CSV/JSON), print, settings page, plan switching
+- **2026-03-29** — bookmark tree UI, YouTube import, technique content type, inline recipe editing, view modes, favourites, cooking notes, discover page, JSON-LD-first pipeline, import failure fixes
+- **2026-03-28** — Auth page, Chrome extension, server-side import pipeline, recipe CRUD, DB fixes
 
 ## Known issues
 
@@ -175,9 +191,12 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - [ ] Followers UI not built (DB schema exists)
 - [ ] Family tier features not built (shared lists, shared plans, family cookbook, member invite)
 - [ ] Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
-- [ ] Ingredient quantities not appearing after re-import (JSON-LD fraction parsing or DB storage issue)
-- [ ] Shopping list: no UI to generate from meal plan calendar (backend function exists)
-- [ ] Shopping list: needs manual add, edit, merge duplicates, aisle assignment, sharing
+- [x] ~~Ingredient quantities after re-import~~ — fixed handleRefresh to call replaceIngredients/replaceSteps
+- [x] ~~Shopping list from meal plan~~ — "Add week to list" + per-day cart button
+- [x] ~~Shopping list UX~~ — 3 views, pin, manual add, AI purchase units, departments, duplicate aggregation, realtime
+- [ ] Multilingual support (user language preference, import translation, original content preservation)
+- [ ] Shared with Me system (recipe_shares table, accept/decline, notifications)
+- [ ] Extension install flow + production URL fix
 
 ## Decisions log
 
