@@ -147,6 +147,8 @@ Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (si
 
 Key dashboard pages: `/dashboard` (recipes with grid/list/table views + sort), `/dashboard/scan` (image OCR + URL import + bookmark batch import), `/dashboard/techniques` (technique library + manual entry at `/new`), `/dashboard/plan` (weekly meal calendar + recipe picker), `/dashboard/shop` (shopping lists), `/dashboard/cookbooks` (physical cookbook shelf), `/dashboard/discover` (public recipe feed).
 
+Shared components in `apps/web/components/`: `Sidebar.tsx` (collapsible nav), `MealPlanWizard.tsx`, `RecipeReviewPanel.tsx`, `SocialShareModal.tsx`. Shared fetch/HTML utilities in `apps/web/app/api/import/_utils.ts`.
+
 ### Import pipeline
 
 All import paths (URL, batch, reimport, extension) follow the same extraction priority:
@@ -157,64 +159,51 @@ All import paths (URL, batch, reimport, extension) follow the same extraction pr
 
 Fetch chain: standard fetch → puppeteer-core (system Chrome) → ScrapingBee API → descriptive error. Shared via `apps/web/app/api/import/_utils.ts`.
 
-API routes:
+API routes (all POST unless noted):
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/import/url` | POST | Fetch URL, extract image, strip HTML for AI |
-| `/api/import/batch` | POST | Queue multiple URLs for background import processing |
-| `/api/import/bookmarks` | POST | Parse `bookmarks.html`, extract URLs by folder, create import job |
-| `/api/import/reimport` | POST | Re-fetch existing recipe URLs, update AI-derived fields |
-| `/api/import/youtube` | POST | YouTube video import: metadata, transcript, Claude extraction with timestamps |
-| `/api/extension/import` | POST | CORS-enabled Chrome extension endpoint; classifies recipe vs technique |
-| `/api/webhooks/stripe` | POST | Stripe subscription events, updates `plan_tier` |
-| `/api/extension/download` | GET | (planned) Zip extension with patched production URLs |
+| Route | Purpose |
+|-------|---------|
+| `/api/import/url` | Fetch URL, extract image, strip HTML for AI |
+| `/api/import/batch` | Queue multiple URLs for background import |
+| `/api/import/bookmarks` | Parse `bookmarks.html`, extract URLs by folder |
+| `/api/import/reimport` | Re-fetch existing recipe URLs, update AI-derived fields |
+| `/api/import/youtube` | YouTube video import: metadata + transcript + Claude extraction |
+| `/api/import/file` | Universal file import (PDF, Word, CSV, JSON) |
+| `/api/extension/import` | CORS-enabled Chrome extension endpoint; classifies recipe vs technique |
+| `/api/cookbooks/lookup` | ISBN / title lookup for physical cookbooks |
+| `/api/cookbooks/toc` | AI-generated table of contents from cookbook metadata |
+| `/api/cookbooks/import-recipe` | Import a specific recipe from a cookbook's TOC |
+| `/api/recipes/auto-tag` | AI category tagging for recipes |
+| `/api/meal-plan/generate` | AI meal plan wizard |
+| `/api/shopping/add-items` | Add recipe ingredients to a shopping list |
+| `/api/social/generate` | Generate social sharing text/image |
+| `/api/speak` | Voice recipe entry (speech-to-recipe) |
+| `/api/speak/image` | Generate image for voice-entered recipe |
+| `/api/webhooks/stripe` | Stripe subscription events, updates `plan_tier` |
 
 ### Theming
 
 Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, cream background `#faf7f0`. Mobile uses React Context (`useTheme().colors`). Web uses Tailwind `cb-*` tokens. Inter font on web.
 
-## Last 3 sessions
-
-- **2026-03-30** — Massive session: shopping list overhaul (13 departments, AI purchase units, realtime, duplicate aggregation, column layout), meal planner redesign (two-row calendar, smart picker, notes, AI wizard), sidebar refactor (shared component, collapsible, fixed height, recipe pages), search page (ILIKE RPC, category drill-down, auto-tag), voice recipe entry (/speak), cookbook intelligence (ISBN lookup, AI TOC, import review panel), social sharing, user photos, privacy toggle, universal file import (PDF/Word/CSV/JSON), print, settings page, plan switching
-- **2026-03-29** — bookmark tree UI, YouTube import, technique content type, inline recipe editing, view modes, favourites, cooking notes, discover page, JSON-LD-first pipeline, import failure fixes
-- **2026-03-28** — Auth page, Chrome extension, server-side import pipeline, recipe CRUD, DB fixes
-
 ## Known issues
 
-- [x] ~~No README.md~~ — added 2026-03-29
-- [x] ~~Stale dark mode refs in mobile theme context~~ — fixed 2026-03-29
-- [x] ~~No duplicate detection on recipe import~~ — added 2026-03-29 (bookmark + single URL)
-- [x] ~~Cloudflare 403 sites~~ — Puppeteer + ScrapingBee fallback chain added 2026-03-29
-- [ ] No test suite (unit or integration)
-- [ ] Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
-- [ ] Followers UI not built (DB schema exists)
-- [ ] Family tier features not built (shared lists, shared plans, family cookbook, member invite)
-- [ ] Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
-- [x] ~~Ingredient quantities after re-import~~ — fixed handleRefresh to call replaceIngredients/replaceSteps
-- [x] ~~Shopping list from meal plan~~ — "Add week to list" + per-day cart button
-- [x] ~~Shopping list UX~~ — 3 views, pin, manual add, AI purchase units, departments, duplicate aggregation, realtime
-- [ ] Multilingual support (user language preference, import translation, original content preservation)
-- [ ] Shared with Me system (recipe_shares table, accept/decline, notifications)
-- [ ] Extension install flow + production URL fix
+- No test suite (unit or integration)
+- Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
+- Followers UI not built (DB schema exists)
+- Family tier features not built (shared lists, shared plans, family cookbook, member invite)
+- Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
+- Multilingual support not started
+- Shared with Me system not started (recipe_shares table, accept/decline, notifications)
+
+See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 
 ## Decisions log
 
-- Self-hosted Supabase on RPi5 — NOT supabase.com cloud
-- All Supabase access via Tailscale only (not public internet)
-- Single light "Trattoria" theme — no dark mode
-- Supabase client as lazy Proxy singleton — no createClient() in app code
-- Claude Sonnet for all AI features via @chefsbook/ai wrapper
-- Local EAS builds on dev PC (cloud quota limited)
-- All AI calls run server-side (Anthropic API blocks browser CORS) — API routes at /api/import/url, /api/import/batch, /api/extension/import
+Decisions not already covered in Architecture/Infrastructure sections above:
+
+- All AI calls run server-side (Anthropic API blocks browser CORS)
 - Chrome extension sends page HTML from browser to bypass Cloudflare bot protection
 - Re-import preserves user edits (title, tags, notes, custom images) — only updates AI-derived fields
-- "bread" added to Course enum (DB constraint + TypeScript type + AI prompts)
-- YouTube import as separate pipeline — Data API + transcript + Claude extraction with timestamp-linked steps
 - Techniques as separate table (not a content_type on recipes) — fundamentally different fields
-- Content classification (recipe vs technique) runs before extraction on all import paths
-- Plan tier gating via `checkRecipeLimit()` / `checkShoppingListLimit()` in `@chefsbook/db/subscriptions`
-- Fetch fallback chain: standard fetch → puppeteer-core (system Chrome) → ScrapingBee → error
-- JSON-LD structured data used as primary extraction source when available, Claude fills gaps
 - `_unresolved` tag marks recipes where title was auto-generated from URL slug
-- Development agenda tracked in AGENDA.md at project root
+- Development agenda tracked in `AGENDA.md` at project root

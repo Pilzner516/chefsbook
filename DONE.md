@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-03-31
+- Fix: meal planner shopping list aggregation — recipes appearing multiple times now multiply ingredient quantities by occurrence count (addWeekToShoppingList + addDayToShoppingList)
+- Confirmed recipe detail servings scaling to shopping list was already correct (no fix needed)
+- CLAUDE.md cleanup: removed stale session history, resolved known issues, deduplicated decisions log, expanded API routes table (8 → 17)
+- Added Substack integration to AGENDA.md backlog (Tier 4)
+
 ## 2026-03-30
 - Shopping list overhaul: DB schema (store_name, color, pin, 13 departments, sharing, realtime), 3 view modes (dept/recipe/alpha), pin/unpin, font size, manual add, Supabase Realtime sync
 - Shopping list AI pipeline: purchase_unit + store_category suggestion via Claude, duplicate aggregation, centralized `/api/shopping/add-items` endpoint

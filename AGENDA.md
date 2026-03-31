@@ -56,6 +56,7 @@ Not promised anywhere but high user impact.
 | 22 | Shared with Me system | Social/viral growth mechanic | L |
 | 23 | Extension install flow + production URL fix | Onboarding + removes manual setup friction | M |
 | 24 | Import failure handling improvements | ScrapingBee, Puppeteer already built, needs UI | S |
+| 25 | Substack integration | Users share recipes via Substack newsletters — import from Substack posts, publish recipes as Substack posts | L |
 
 ## TIER 5 — POLISH & INFRASTRUCTURE
 
