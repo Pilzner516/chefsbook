@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-05
+- Android dev client built and running on emulator-5554 (npx expo run:android)
+- Fixed JAVA_HOME, ANDROID_HOME, DuplicateRelativeFileException (AndroidX vs support lib), React 19.1.4 frozen objects crash, duplicate react-native in Metro bundle
+- Pinned React to 19.1.0 across monorepo (root overrides + web package.json)
+- Added Metro blockList to prevent root node_modules react/react-native from bundling
+- Landing screen with ChefsBook branding (cream bg, serif logo, sign in/create account)
+- Sign in screen (email/password, Supabase auth, error handling, Google OAuth stub)
+- Sign up screen (name/email/password, validation, Supabase auth, Google OAuth stub)
+- Auth protection: useProtectedRoute() hook in root layout + guard in tab layout
+- Removed anonymous auth — app shows landing when unauthenticated
+- adb reverse port forwarding for emulator ↔ host Metro/Supabase connectivity
+
 ## 2026-03-31
 - Fix: meal planner shopping list aggregation — recipes appearing multiple times now multiply ingredient quantities by occurrence count (addWeekToShoppingList + addDayToShoppingList)
 - Confirmed recipe detail servings scaling to shopping list was already correct (no fix needed)

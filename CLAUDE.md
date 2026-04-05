@@ -102,7 +102,7 @@ UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls b
 
 ### Database schema (supabase/migrations/)
 
-18+ tables with RLS policies. Migrations in `supabase/migrations/` (8 files: core, functions, storage, features, categories, imports, youtube, techniques). Key tables:
+18+ tables with RLS policies. Migrations in `supabase/migrations/` (11 files: core, functions, storage, features, categories, imports, youtube, techniques, shopping_overhaul, user_photos, cookbook_intelligence). Key tables:
 - `user_profiles` (auto-created via trigger on auth.users signup)
 - `recipes`, `recipe_ingredients`, `recipe_steps` — core recipe data
 - `cookbooks` — recipe collections
@@ -194,6 +194,8 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
 - Multilingual support not started
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
+- Mobile sign-in flow not fully verified end-to-end on device (landing + auth screens coded, Supabase connection confirmed)
+- Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
 
 See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 
@@ -207,3 +209,7 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Techniques as separate table (not a content_type on recipes) — fundamentally different fields
 - `_unresolved` tag marks recipes where title was auto-generated from URL slug
 - Development agenda tracked in `AGENDA.md` at project root
+- React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
+- Metro blockList excludes root node_modules react/react-native to prevent duplicate bundles
+- Mobile auth: no anonymous sessions — unauthenticated users see landing screen
+- Android emulator needs `adb reverse tcp:8081 tcp:8081` + `adb reverse tcp:8000 tcp:8000` for Metro + Supabase
