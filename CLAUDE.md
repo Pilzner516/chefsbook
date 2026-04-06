@@ -196,6 +196,7 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
 - Mobile sign-in flow not fully verified end-to-end on device (landing + auth screens coded, Supabase connection confirmed)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
+- Mobile shopping list and recipe editing not yet verified on device (code compiles clean, needs adb screenshot walkthrough)
 
 See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 
@@ -213,3 +214,6 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Metro blockList excludes root node_modules react/react-native to prevent duplicate bundles
 - Mobile auth: no anonymous sessions — unauthenticated users see landing screen
 - Android emulator needs `adb reverse tcp:8081 tcp:8081` + `adb reverse tcp:8000 tcp:8000` for Metro + Supabase
+- Shopping pipeline shared: `addItemsWithPipeline()` in `@chefsbook/db` is the single source of truth — both web API and mobile call it directly
+- Mobile calls `suggestPurchaseUnits` from `@chefsbook/ai` directly (no CORS in React Native)
+- Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch

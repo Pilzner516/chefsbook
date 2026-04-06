@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-05 (session 2)
+- Mobile shopping list overhaul: shared `addItemsWithPipeline()` pipeline in `@chefsbook/db` (single source of truth for web + mobile)
+- Mobile shopping UI: 3 view modes (Dept/Recipe/A-Z), 13 department groupings, inline quantity editing, manual item add, check/delete/clear completed
+- Mobile recipe editing: inline edit mode with per-ingredient row editor (qty/unit/name, add/remove), per-step textarea, save/cancel
+- Recipe-to-shopping integration: "Add to Shopping List" calls AI `suggestPurchaseUnits` + shared pipeline, shows "X new, Y merged" result
+- Fixed Voice module crash in speak.tsx (lazy `require()` with try/catch instead of static import)
+- Refactored web `add-items` API route to use shared `addItemsWithPipeline` from `@chefsbook/db`
+- Supabase Realtime subscriptions for shopping lists and items in mobile store
+- TypeScript compiles clean for both mobile and web
+
 ## 2026-04-05
 - Android dev client built and running on emulator-5554 (npx expo run:android)
 - Fixed JAVA_HOME, ANDROID_HOME, DuplicateRelativeFileException (AndroidX vs support lib), React 19.1.4 frozen objects crash, duplicate react-native in Metro bundle
