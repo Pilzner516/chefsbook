@@ -65,7 +65,7 @@ export default function NewTechniquePage() {
       {/* Title + Difficulty */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="md:col-span-3">
-          <label className="text-sm font-medium text-cb-muted mb-1 block">Title</label>
+          <label className="text-sm font-medium text-cb-secondary mb-1 block">Title</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -74,7 +74,7 @@ export default function NewTechniquePage() {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-cb-muted mb-1 block">Difficulty</label>
+          <label className="text-sm font-medium text-cb-secondary mb-1 block">Difficulty</label>
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
@@ -89,7 +89,7 @@ export default function NewTechniquePage() {
 
       {/* Description */}
       <div className="mb-6">
-        <label className="text-sm font-medium text-cb-muted mb-1 block">Description</label>
+        <label className="text-sm font-medium text-cb-secondary mb-1 block">Description</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -101,7 +101,7 @@ export default function NewTechniquePage() {
 
       {/* Process Steps */}
       <div className="mb-6">
-        <label className="text-sm font-medium text-cb-muted mb-2 block">Process Steps</label>
+        <label className="text-sm font-medium text-cb-secondary mb-2 block">Process Steps</label>
         <div className="space-y-3">
           {steps.map((step, idx) => (
             <div key={idx} className="bg-cb-card border border-cb-border rounded-card p-3">
@@ -133,7 +133,7 @@ export default function NewTechniquePage() {
                   </div>
                 </div>
                 {steps.length > 1 && (
-                  <button onClick={() => setSteps((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-muted hover:text-cb-primary shrink-0 mt-1">
+                  <button onClick={() => setSteps((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-secondary hover:text-cb-primary shrink-0 mt-1">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                   </button>
                 )}
@@ -146,7 +146,7 @@ export default function NewTechniquePage() {
 
       {/* Tools & Equipment */}
       <div className="mb-6">
-        <label className="text-sm font-medium text-cb-muted mb-1 block">Tools & Equipment</label>
+        <label className="text-sm font-medium text-cb-secondary mb-1 block">Tools & Equipment</label>
         {tools.map((t, idx) => (
           <div key={idx} className="flex gap-2 mb-1.5">
             <input
@@ -156,7 +156,7 @@ export default function NewTechniquePage() {
               className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-1.5 text-sm outline-none focus:border-purple-500"
             />
             {tools.length > 1 && (
-              <button onClick={() => setTools((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-muted hover:text-cb-primary">
+              <button onClick={() => setTools((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-secondary hover:text-cb-primary">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             )}
@@ -167,7 +167,7 @@ export default function NewTechniquePage() {
 
       {/* Key Tips */}
       <div className="mb-6">
-        <label className="text-sm font-medium text-cb-muted mb-1 block">Key Tips</label>
+        <label className="text-sm font-medium text-cb-secondary mb-1 block">Key Tips</label>
         {tips.map((t, idx) => (
           <div key={idx} className="flex gap-2 mb-1.5">
             <input
@@ -177,7 +177,7 @@ export default function NewTechniquePage() {
               className="flex-1 bg-green-50 border border-green-200 rounded-input px-3 py-1.5 text-sm outline-none focus:border-green-400"
             />
             {tips.length > 1 && (
-              <button onClick={() => setTips((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-muted hover:text-cb-primary">
+              <button onClick={() => setTips((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-secondary hover:text-cb-primary">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             )}
@@ -188,7 +188,7 @@ export default function NewTechniquePage() {
 
       {/* Common Mistakes */}
       <div className="mb-8">
-        <label className="text-sm font-medium text-cb-muted mb-1 block">Common Mistakes</label>
+        <label className="text-sm font-medium text-cb-secondary mb-1 block">Common Mistakes</label>
         {mistakes.map((m, idx) => (
           <div key={idx} className="flex gap-2 mb-1.5">
             <input
@@ -198,7 +198,7 @@ export default function NewTechniquePage() {
               className="flex-1 bg-amber-50 border border-amber-200 rounded-input px-3 py-1.5 text-sm outline-none focus:border-amber-400"
             />
             {mistakes.length > 1 && (
-              <button onClick={() => setMistakes((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-muted hover:text-cb-primary">
+              <button onClick={() => setMistakes((prev) => prev.filter((_, i) => i !== idx))} className="text-cb-secondary hover:text-cb-primary">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             )}
@@ -216,7 +216,7 @@ export default function NewTechniquePage() {
         >
           {saving ? 'Saving...' : 'Save Technique'}
         </button>
-        <button onClick={() => router.back()} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+        <button onClick={() => router.back()} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
       </div>
     </div>
   );

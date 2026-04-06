@@ -134,7 +134,7 @@ export default function CookbookDetailPage() {
 
   const chapters = [...new Set(filtered.map((r) => r.chapter).filter(Boolean))] as string[];
 
-  if (loading) return <div className="p-8 text-cb-muted">Loading...</div>;
+  if (loading) return <div className="p-8 text-cb-secondary">Loading...</div>;
   if (!cookbook) return <div className="p-8"><p>Cookbook not found</p><Link href="/dashboard/cookbooks" className="text-cb-primary hover:underline text-sm">Back</Link></div>;
 
   // Show review panel when a recipe has been generated
@@ -176,13 +176,13 @@ export default function CookbookDetailPage() {
         )}
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold mb-1">{cookbook.title}</h1>
-          {cookbook.author && <p className="text-cb-muted mb-1">by {cookbook.author}</p>}
-          <div className="flex flex-wrap gap-2 text-xs text-cb-muted mb-2">
+          {cookbook.author && <p className="text-cb-secondary mb-1">by {cookbook.author}</p>}
+          <div className="flex flex-wrap gap-2 text-xs text-cb-secondary mb-2">
             {cookbook.publisher && <span>{cookbook.publisher}</span>}
             {cookbook.year && <span>{cookbook.year}</span>}
             {cookbook.isbn && <span>ISBN: {cookbook.isbn}</span>}
           </div>
-          {cookbook.description && <p className="text-sm text-cb-muted line-clamp-3 mb-3">{cookbook.description}</p>}
+          {cookbook.description && <p className="text-sm text-cb-secondary line-clamp-3 mb-3">{cookbook.description}</p>}
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">{recipes.length} recipes</span>
             {cookbook.rating && <span className="text-amber-500">{'★'.repeat(cookbook.rating)}{'☆'.repeat(5 - cookbook.rating)}</span>}
@@ -193,7 +193,7 @@ export default function CookbookDetailPage() {
             )}
           </div>
           <div className="flex gap-2 mt-3">
-            <Link href="/dashboard/cookbooks" className="text-sm text-cb-muted hover:text-cb-text">Back</Link>
+            <Link href="/dashboard/cookbooks" className="text-sm text-cb-secondary hover:text-cb-text">Back</Link>
             <button onClick={async () => { if (confirm('Delete this cookbook?')) { await deleteCookbook(id); router.push('/dashboard/cookbooks'); } }} className="text-sm text-cb-primary hover:underline">Delete</button>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function CookbookDetailPage() {
 
       {/* Fetching indicator */}
       {fetchingToc && (
-        <div className="text-center py-8 text-cb-muted">
+        <div className="text-center py-8 text-cb-secondary">
           <p className="text-sm font-medium">AI is generating the table of contents...</p>
           <p className="text-xs mt-1">This may take a moment</p>
         </div>
@@ -223,7 +223,7 @@ export default function CookbookDetailPage() {
           const chapterRecipes = filtered.filter((r) => r.chapter === chapter);
           return (
             <div key={chapter} className="mb-8">
-              <h2 className="text-sm font-bold text-cb-muted uppercase tracking-wide mb-3 pb-1 border-b border-cb-border">{chapter} <span className="font-normal">({chapterRecipes.length})</span></h2>
+              <h2 className="text-sm font-bold text-cb-secondary uppercase tracking-wide mb-3 pb-1 border-b border-cb-border">{chapter} <span className="font-normal">({chapterRecipes.length})</span></h2>
               <div className="space-y-1.5">
                 {chapterRecipes.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 bg-cb-card border border-cb-border rounded-input px-4 py-2.5 hover:border-cb-primary/50 transition-colors">
@@ -236,7 +236,7 @@ export default function CookbookDetailPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.title}</p>
-                      <p className="text-[10px] text-cb-muted">
+                      <p className="text-[10px] text-cb-secondary">
                         {r.page_number ? `Page ${r.page_number}` : ''}
                         {r.ai_generated ? ' · AI suggestion' : ''}
                         {r.matched_recipe_id ? ' · In your collection' : ''}
@@ -245,12 +245,12 @@ export default function CookbookDetailPage() {
                     {r.matched_recipe_id ? (
                       <Link href={`/recipe/${r.matched_recipe_id}`} className="bg-cb-primary text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:opacity-90 shrink-0">View</Link>
                     ) : importStatus[r.id] === 'searching' ? (
-                      <span className="bg-cb-bg text-cb-muted text-xs font-medium px-4 py-1.5 rounded-full shrink-0 animate-pulse">Searching...</span>
+                      <span className="bg-cb-bg text-cb-secondary text-xs font-medium px-4 py-1.5 rounded-full shrink-0 animate-pulse">Searching...</span>
                     ) : importStatus[r.id] === 'success' ? (
                       <Link href={`/recipe/${recipes.find((rx) => rx.id === r.id)?.matched_recipe_id ?? ''}`} className="bg-cb-green text-white text-xs font-semibold px-4 py-1.5 rounded-full shrink-0">✓ View</Link>
                     ) : importStatus[r.id] === 'failed' ? (
                       <div className="flex gap-2 shrink-0">
-                        <Link href={`/dashboard/scan?q=${encodeURIComponent(cookbook.title + ' ' + r.title + ' recipe')}`} className="bg-cb-bg text-cb-muted text-[10px] font-medium px-3 py-1.5 rounded-full hover:text-cb-text">Manual</Link>
+                        <Link href={`/dashboard/scan?q=${encodeURIComponent(cookbook.title + ' ' + r.title + ' recipe')}`} className="bg-cb-bg text-cb-secondary text-[10px] font-medium px-3 py-1.5 rounded-full hover:text-cb-text">Manual</Link>
                         <button onClick={() => handleImportRecipe(r)} className="bg-cb-green/10 text-cb-green text-[10px] font-semibold px-3 py-1.5 rounded-full hover:bg-cb-green/20">Retry</button>
                       </div>
                     ) : (
@@ -267,13 +267,13 @@ export default function CookbookDetailPage() {
           {filtered.map((r) => (
             <div key={r.id} className="flex items-center gap-3 bg-cb-card border border-cb-border rounded-input px-4 py-2.5">
               <p className="text-sm font-medium flex-1">{r.title}</p>
-              {r.page_number && <span className="text-xs text-cb-muted">p.{r.page_number}</span>}
+              {r.page_number && <span className="text-xs text-cb-secondary">p.{r.page_number}</span>}
             </div>
           ))}
         </div>
       ) : !fetchingToc ? (
         <div className="text-center py-12">
-          <p className="text-cb-muted text-sm">No recipes cataloged yet.</p>
+          <p className="text-cb-secondary text-sm">No recipes cataloged yet.</p>
           <button onClick={fetchToc} disabled={fetchingToc} className="text-cb-primary text-sm mt-2 hover:underline">Generate table of contents with AI</button>
         </div>
       ) : null}

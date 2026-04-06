@@ -137,7 +137,7 @@ export default function CookbooksPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Cookbook Shelf</h1>
-          <p className="text-cb-muted text-sm mt-1">
+          <p className="text-cb-secondary text-sm mt-1">
             Index your physical cookbooks and search across your entire shelf.
           </p>
         </div>
@@ -155,12 +155,12 @@ export default function CookbooksPage() {
       {/* Ingredient search */}
       <div className="bg-cb-card border border-cb-border rounded-card p-5 mb-8">
         <h2 className="font-semibold mb-1">Search by ingredient</h2>
-        <p className="text-cb-muted text-sm mb-3">
+        <p className="text-cb-secondary text-sm mb-3">
           Find recipes across all your cookbooks by ingredient name.
         </p>
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cb-muted"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cb-secondary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -173,7 +173,7 @@ export default function CookbooksPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="e.g. chicken, basil, mozzarella..."
-            className="w-full bg-cb-bg border border-cb-border rounded-input pl-10 pr-4 py-3 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+            className="w-full bg-cb-bg border border-cb-border rounded-input pl-10 pr-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
           />
         </div>
 
@@ -181,14 +181,14 @@ export default function CookbooksPage() {
         {search.trim() && (
           <div className="mt-4">
             {searching ? (
-              <p className="text-cb-muted text-sm py-2">Searching...</p>
+              <p className="text-cb-secondary text-sm py-2">Searching...</p>
             ) : searchResults.length === 0 ? (
-              <p className="text-cb-muted text-sm py-2">
+              <p className="text-cb-secondary text-sm py-2">
                 No cookbook recipes found for &ldquo;{search}&rdquo;
               </p>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-cb-muted font-medium uppercase tracking-wide">
+                <p className="text-xs text-cb-secondary font-medium uppercase tracking-wide">
                   {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
                 </p>
                 {searchResults.map((recipe) => {
@@ -202,13 +202,13 @@ export default function CookbooksPage() {
                       <div>
                         <p className="font-medium text-sm">{recipe.title}</p>
                         {book && (
-                          <p className="text-xs text-cb-muted">
+                          <p className="text-xs text-cb-secondary">
                             {book.title}
                             {recipe.page_number ? ` — p. ${recipe.page_number}` : ''}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-cb-muted">
+                      <div className="flex items-center gap-2 text-xs text-cb-secondary">
                         {recipe.cuisine && (
                           <span className="bg-cb-primary/10 text-cb-primary px-2 py-0.5 rounded">
                             {recipe.cuisine}
@@ -229,7 +229,7 @@ export default function CookbooksPage() {
 
       {/* Cookbook grid */}
       {loading ? (
-        <div className="text-center text-cb-muted py-20">Loading cookbooks...</div>
+        <div className="text-center text-cb-secondary py-20">Loading cookbooks...</div>
       ) : cookbooks.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 rounded-full bg-cb-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -238,7 +238,7 @@ export default function CookbooksPage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold mb-2">No cookbooks yet</h2>
-          <p className="text-cb-muted text-sm mb-6">
+          <p className="text-cb-secondary text-sm mb-6">
             Index your physical cookbooks to search across your entire shelf by ingredient.
           </p>
           <button
@@ -273,9 +273,9 @@ export default function CookbooksPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold truncate">{book.title}</h3>
                   {book.author && (
-                    <p className="text-sm text-cb-muted mt-0.5">by {book.author}</p>
+                    <p className="text-sm text-cb-secondary mt-0.5">by {book.author}</p>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-cb-muted mt-2">
+                  <div className="flex items-center gap-2 text-xs text-cb-secondary mt-2">
                     {book.year && <span>{book.year}</span>}
                     {book.publisher && (
                       <>
@@ -299,7 +299,7 @@ export default function CookbooksPage() {
                     </div>
                   )}
                   {book.location && (
-                    <p className="text-xs text-cb-muted mt-1.5">{book.location}</p>
+                    <p className="text-xs text-cb-secondary mt-1.5">{book.location}</p>
                   )}
                 </div>
               </div>
@@ -316,7 +316,7 @@ export default function CookbooksPage() {
               <h2 className="text-lg font-bold">Add Cookbook</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-cb-muted hover:text-cb-text"
+                className="text-cb-secondary hover:text-cb-text"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -338,7 +338,7 @@ export default function CookbooksPage() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Salt, Fat, Acid, Heat"
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                 />
               </div>
               <div>
@@ -348,7 +348,7 @@ export default function CookbooksPage() {
                   value={form.author}
                   onChange={(e) => setForm({ ...form, author: e.target.value })}
                   placeholder="e.g. Samin Nosrat"
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -359,7 +359,7 @@ export default function CookbooksPage() {
                     value={form.publisher}
                     onChange={(e) => setForm({ ...form, publisher: e.target.value })}
                     placeholder="Publisher"
-                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                   />
                 </div>
                 <div>
@@ -369,7 +369,7 @@ export default function CookbooksPage() {
                     value={form.year}
                     onChange={(e) => setForm({ ...form, year: e.target.value })}
                     placeholder="2018"
-                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                   />
                 </div>
               </div>
@@ -382,7 +382,7 @@ export default function CookbooksPage() {
                       value={form.isbn}
                       onChange={(e) => setForm({ ...form, isbn: e.target.value })}
                       placeholder="978-..."
-                      className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                      className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                     />
                     <button
                       onClick={lookupIsbn}
@@ -400,7 +400,7 @@ export default function CookbooksPage() {
                     value={form.location}
                     onChange={(e) => setForm({ ...form, location: e.target.value })}
                     placeholder="Kitchen shelf"
-                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                   />
                 </div>
               </div>
@@ -411,7 +411,7 @@ export default function CookbooksPage() {
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   rows={2}
                   placeholder="Any notes about this cookbook..."
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors resize-none"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors resize-none"
                 />
               </div>
             </div>
@@ -419,7 +419,7 @@ export default function CookbooksPage() {
             <div className="flex justify-end gap-3 mt-5">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text transition-colors"
+                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors"
               >
                 Cancel
               </button>

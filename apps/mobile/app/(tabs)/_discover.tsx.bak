@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { listPublicRecipes } from '@chefsbook/db';
 import type { Recipe } from '@chefsbook/db';
+import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, Chip, EmptyState, Loading } from '../../components/UIKit';
 
 const CUISINES = ['Italian', 'Mexican', 'Asian', 'American', 'French', 'Indian', 'Mediterranean'];
@@ -31,23 +33,37 @@ export default function DiscoverTab() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <ChefsBookHeader />
+
       <View style={{ padding: 16, paddingBottom: 8 }}>
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Discover recipes..."
-          placeholderTextColor={colors.textSecondary}
+        <View
           style={{
+            flexDirection: 'row',
+            alignItems: 'center',
             backgroundColor: colors.bgBase,
             borderWidth: 1,
             borderColor: colors.borderDefault,
-            borderRadius: 10,
-            padding: 12,
-            fontSize: 15,
-            color: colors.textPrimary,
+            borderRadius: 12,
+            paddingHorizontal: 12,
           }}
-        />
+        >
+          <Ionicons name="search" size={20} color={colors.textMuted} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Discover recipes..."
+            placeholderTextColor={colors.textMuted}
+            style={{
+              flex: 1,
+              paddingVertical: 12,
+              paddingLeft: 8,
+              fontSize: 15,
+              color: colors.textPrimary,
+            }}
+          />
+        </View>
       </View>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, maxHeight: 50 }}>
         <Chip label="All" selected={!cuisine} onPress={() => setCuisine(null)} />
         {CUISINES.map((c) => (
@@ -60,7 +76,7 @@ export default function DiscoverTab() {
       ) : (
         <FlashList
           data={recipes}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
           renderItem={({ item }) => (
             <RecipeCard
               title={item.title}
@@ -71,7 +87,7 @@ export default function DiscoverTab() {
             />
           )}
           ListEmptyComponent={
-            <EmptyState icon={'\uD83C\uDF0E'} title="No public recipes" message="Be the first to share a recipe with the community!" />
+            <EmptyState icon="🌍" title="No public recipes found" message="Be the first to share a recipe with the community!" />
           }
         />
       )}

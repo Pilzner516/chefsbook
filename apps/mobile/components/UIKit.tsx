@@ -81,6 +81,11 @@ export function Card({ children, onPress, style }: CardProps) {
           borderWidth: 1,
           borderColor: colors.borderDefault,
           padding: 16,
+          shadowColor: '#000',
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 2,
         },
         style,
       ]}
@@ -181,7 +186,7 @@ export function Avatar({ uri, initials, size = 40 }: AvatarProps) {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: '#0d0d0b', fontSize: size * 0.4, fontWeight: '700' }}>{initials ?? '?'}</Text>
+      <Text style={{ color: '#ffffff', fontSize: size * 0.4, fontWeight: '700' }}>{initials ?? '?'}</Text>
     </View>
   );
 }
@@ -258,7 +263,7 @@ export function Chip({ label, selected, onPress }: ChipProps) {
         marginBottom: 8,
       }}
     >
-      <Text style={{ color: selected ? '#0d0d0b' : colors.textPrimary, fontSize: 13, fontWeight: selected ? '600' : '400' }}>
+      <Text style={{ color: selected ? '#ffffff' : colors.textPrimary, fontSize: 13, fontWeight: selected ? '600' : '400' }}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -287,7 +292,7 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
   const { colors } = useTheme();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
-      <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault, overflow: 'hidden' }}>
+      <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
         {imageUrl && (
           <Image source={{ uri: imageUrl }} style={{ width: '100%', height: 160, backgroundColor: colors.bgBase }} />
         )}

@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,17 +17,43 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@/*": ["./*"],
-      "@chefsbook/db": ["../../packages/db/src"],
-      "@chefsbook/db/*": ["../../packages/db/src/*"],
-      "@chefsbook/ai": ["../../packages/ai/src"],
-      "@chefsbook/ai/*": ["../../packages/ai/src/*"],
-      "@chefsbook/ui": ["../../packages/ui/src"],
-      "@chefsbook/ui/*": ["../../packages/ui/src/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@chefsbook/db": [
+        "../../packages/db/src"
+      ],
+      "@chefsbook/db/*": [
+        "../../packages/db/src/*"
+      ],
+      "@chefsbook/ai": [
+        "../../packages/ai/src"
+      ],
+      "@chefsbook/ai/*": [
+        "../../packages/ai/src/*"
+      ],
+      "@chefsbook/ui": [
+        "../../packages/ui/src"
+      ],
+      "@chefsbook/ui/*": [
+        "../../packages/ui/src/*"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
 }

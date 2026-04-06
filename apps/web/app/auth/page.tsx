@@ -55,7 +55,7 @@ export default function AuthPage() {
           <Link href="/" className="text-2xl font-bold">
             <span className="text-cb-primary">Chefs</span>book
           </Link>
-          <p className="text-cb-muted text-sm mt-2">
+          <p className="text-cb-secondary text-sm mt-2">
             {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
           </p>
         </div>
@@ -84,7 +84,7 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
               />
             </div>
             <div>
@@ -99,7 +99,7 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 6 characters"
-                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
               />
             </div>
             <button
@@ -117,7 +117,7 @@ export default function AuthPage() {
             </button>
           </form>
 
-          <div className="mt-4 text-center text-sm text-cb-muted">
+          <div className="mt-4 text-center text-sm text-cb-secondary">
             {mode === 'login' ? (
               <>
                 Don&apos;t have an account?{' '}

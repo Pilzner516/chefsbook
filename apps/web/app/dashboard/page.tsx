@@ -234,7 +234,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           {selectMode ? (
             <>
-              <span className="text-sm text-cb-muted">{selected.size} selected</span>
+              <span className="text-sm text-cb-secondary">{selected.size} selected</span>
               <button onClick={selectAll} className="text-sm text-cb-primary hover:underline">
                 Select all
               </button>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => { setSelectMode(false); setSelected(new Set()); }}
-                className="text-sm text-cb-muted hover:text-cb-text"
+                className="text-sm text-cb-secondary hover:text-cb-text"
               >
                 Cancel
               </button>
@@ -267,7 +267,7 @@ export default function DashboardPage() {
               {recipes.length > 0 && (
                 <button
                   onClick={() => setSelectMode(true)}
-                  className="border border-cb-border px-4 py-2 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text hover:bg-cb-card transition-colors"
+                  className="border border-cb-border px-4 py-2 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text hover:bg-cb-card transition-colors"
                 >
                   Select
                 </button>
@@ -296,7 +296,7 @@ export default function DashboardPage() {
       {/* Search */}
       <div className="relative mb-4">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cb-muted"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cb-secondary"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -309,7 +309,7 @@ export default function DashboardPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search recipes..."
-          className="w-full bg-cb-card border border-cb-border rounded-input pl-10 pr-4 py-3 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+          className="w-full bg-cb-card border border-cb-border rounded-input pl-10 pr-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
         />
       </div>
 
@@ -323,7 +323,7 @@ export default function DashboardPage() {
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeFilter === f.label
                   ? 'bg-cb-primary text-white'
-                  : 'bg-cb-card border border-cb-border text-cb-muted hover:text-cb-text'
+                  : 'bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text'
               }`}
             >
               {f.label}
@@ -334,7 +334,7 @@ export default function DashboardPage() {
         <select
           value={sortKey}
           onChange={(e) => changeSort(e.target.value as SortKey)}
-          className="bg-cb-card border border-cb-border rounded-input px-2 py-1.5 text-xs text-cb-muted outline-none"
+          className="bg-cb-card border border-cb-border rounded-input px-2 py-1.5 text-xs text-cb-secondary outline-none"
         >
           <option value="date">Date Added</option>
           <option value="title-asc">Title A-Z</option>
@@ -344,13 +344,13 @@ export default function DashboardPage() {
         </select>
         {/* View toggle */}
         <div className="flex bg-cb-card border border-cb-border rounded-input overflow-hidden">
-          <button onClick={() => changeView('grid')} className={`px-2.5 py-1.5 ${viewMode === 'grid' ? 'bg-cb-primary text-white' : 'text-cb-muted hover:text-cb-text'}`} title="Grid view">
+          <button onClick={() => changeView('grid')} className={`px-2.5 py-1.5 ${viewMode === 'grid' ? 'bg-cb-primary text-white' : 'text-cb-secondary hover:text-cb-text'}`} title="Grid view">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" /></svg>
           </button>
-          <button onClick={() => changeView('list')} className={`px-2.5 py-1.5 border-x border-cb-border ${viewMode === 'list' ? 'bg-cb-primary text-white' : 'text-cb-muted hover:text-cb-text'}`} title="List view">
+          <button onClick={() => changeView('list')} className={`px-2.5 py-1.5 border-x border-cb-border ${viewMode === 'list' ? 'bg-cb-primary text-white' : 'text-cb-secondary hover:text-cb-text'}`} title="List view">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" /></svg>
           </button>
-          <button onClick={() => changeView('table')} className={`px-2.5 py-1.5 ${viewMode === 'table' ? 'bg-cb-primary text-white' : 'text-cb-muted hover:text-cb-text'}`} title="Table view">
+          <button onClick={() => changeView('table')} className={`px-2.5 py-1.5 ${viewMode === 'table' ? 'bg-cb-primary text-white' : 'text-cb-secondary hover:text-cb-text'}`} title="Table view">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v.75" /></svg>
           </button>
         </div>
@@ -358,7 +358,7 @@ export default function DashboardPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="text-center text-cb-muted py-20">Loading recipes...</div>
+        <div className="text-center text-cb-secondary py-20">Loading recipes...</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 rounded-full bg-cb-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -367,7 +367,7 @@ export default function DashboardPage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold mb-2">No recipes yet</h2>
-          <p className="text-cb-muted text-sm mb-6">
+          <p className="text-cb-secondary text-sm mb-6">
             Scan a recipe, import from a URL, or add one manually.
           </p>
           <Link
@@ -399,14 +399,14 @@ export default function DashboardPage() {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold mb-1.5 group-hover:text-cb-primary transition-colors">{recipe.title}</h3>
-                    <div className="flex flex-wrap items-center gap-1 text-xs text-cb-muted">
+                    <div className="flex flex-wrap items-center gap-1 text-xs text-cb-secondary">
                       {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded text-[10px]">{recipe.cuisine}</span>}
                       {recipe.course && <span className="bg-cb-green/10 text-cb-green px-1.5 py-0.5 rounded text-[10px]">{recipe.course}</span>}
                       {recipe.youtube_video_id && <span className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] inline-flex items-center gap-0.5"><svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>Video</span>}
                       {recipe.tags?.filter((t) => !t.startsWith('_')).slice(0, 3).map((tag) => (
                         <span key={tag} className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[10px]">{tag}</span>
                       ))}
-                      {(recipe.tags?.filter((t) => !t.startsWith('_')).length ?? 0) > 3 && <span className="text-[10px] text-cb-muted">+{(recipe.tags?.filter((t) => !t.startsWith('_')).length ?? 0) - 3}</span>}
+                      {(recipe.tags?.filter((t) => !t.startsWith('_')).length ?? 0) > 3 && <span className="text-[10px] text-cb-secondary">+{(recipe.tags?.filter((t) => !t.startsWith('_')).length ?? 0) - 3}</span>}
                       {recipe.total_minutes != null && recipe.total_minutes > 0 && <span className="text-[10px]">{formatDuration(recipe.total_minutes)}</span>}
                       <span className="ml-auto flex items-center gap-1.5 shrink-0">
                         <button onClick={(e) => openCartPopover(e, recipe.id)} className="text-cb-border hover:text-cb-green transition-colors" title="Add to shopping list">
@@ -434,7 +434,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm group-hover:text-cb-primary transition-colors truncate">{recipe.title}</p>
-                <div className="flex items-center gap-2 text-xs text-cb-muted mt-0.5">
+                <div className="flex items-center gap-2 text-xs text-cb-secondary mt-0.5">
                   {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded text-[10px]">{recipe.cuisine}</span>}
                   {recipe.course && <span className="bg-cb-green/10 text-cb-green px-1.5 py-0.5 rounded text-[10px]">{recipe.course}</span>}
                   {recipe.total_minutes != null && recipe.total_minutes > 0 && <span>{formatDuration(recipe.total_minutes)}</span>}
@@ -452,12 +452,12 @@ export default function DashboardPage() {
         {/* Table view */}
         {viewMode === 'table' && (
         <div className="border border-cb-border rounded-card overflow-hidden">
-          <div className="text-xs text-cb-muted px-3 py-1.5 bg-cb-bg border-b border-cb-border">
+          <div className="text-xs text-cb-secondary px-3 py-1.5 bg-cb-bg border-b border-cb-border">
             Showing {sorted.length} of {recipes.length} recipes
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-cb-bg border-b border-cb-border text-left text-xs text-cb-muted">
+              <tr className="bg-cb-bg border-b border-cb-border text-left text-xs text-cb-secondary">
                 <th className="px-3 py-2 w-10"></th>
                 {[
                   { key: 'title', label: 'Title' },
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                     </span>
                   </th>
                 ))}
-                <th className="px-3 py-2 w-8" title="Shopping list"><svg className="w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg></th>
+                <th className="px-3 py-2 w-8" title="Shopping list"><svg className="w-4 h-4 text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg></th>
                 <th className="px-3 py-2 w-8"></th>
               </tr>
             </thead>
@@ -486,10 +486,10 @@ export default function DashboardPage() {
                     </Link>
                   </td>
                   <td className="px-3 py-1.5"><Link href={`/recipe/${recipe.id}`} className="font-medium hover:text-cb-primary">{recipe.title}</Link></td>
-                  <td className="px-3 py-1.5 text-cb-muted text-xs">{recipe.cuisine ?? '-'}</td>
-                  <td className="px-3 py-1.5 text-cb-muted text-xs">{recipe.course ?? '-'}</td>
-                  <td className="px-3 py-1.5 text-cb-muted text-xs">{recipe.total_minutes ? formatDuration(recipe.total_minutes) : '-'}</td>
-                  <td className="px-3 py-1.5 text-cb-muted text-xs">{new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                  <td className="px-3 py-1.5 text-cb-secondary text-xs">{recipe.cuisine ?? '-'}</td>
+                  <td className="px-3 py-1.5 text-cb-secondary text-xs">{recipe.course ?? '-'}</td>
+                  <td className="px-3 py-1.5 text-cb-secondary text-xs">{recipe.total_minutes ? formatDuration(recipe.total_minutes) : '-'}</td>
+                  <td className="px-3 py-1.5 text-cb-secondary text-xs">{new Date(recipe.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
                   <td className="px-3 py-1.5">
                     <button onClick={(e) => openCartPopover(e, recipe.id)} className="text-cb-border hover:text-cb-green transition-colors" title="Add to shopping list">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg>
@@ -525,7 +525,7 @@ export default function DashboardPage() {
                       {list.pinned && <span className="text-cb-primary text-[10px]">{'\u2605'}</span>}
                       <p className="text-sm font-medium truncate">{list.name}</p>
                     </div>
-                    {list.store_name && <p className="text-[10px] text-cb-muted truncate">{list.store_name}</p>}
+                    {list.store_name && <p className="text-[10px] text-cb-secondary truncate">{list.store_name}</p>}
                   </button>
                 ))}
                 <Link
@@ -533,17 +533,17 @@ export default function DashboardPage() {
                   onClick={() => setCartRecipeId(null)}
                   className="border-2 border-dashed border-cb-border rounded-card p-3 text-center hover:border-cb-green transition-colors flex flex-col items-center justify-center"
                 >
-                  <svg className="w-5 h-5 text-cb-muted mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                  <p className="text-xs text-cb-muted">New list</p>
+                  <svg className="w-5 h-5 text-cb-secondary mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                  <p className="text-xs text-cb-secondary">New list</p>
                 </Link>
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-cb-muted text-sm mb-3">No shopping lists yet</p>
+                <p className="text-cb-secondary text-sm mb-3">No shopping lists yet</p>
                 <Link href="/dashboard/shop" onClick={() => setCartRecipeId(null)} className="bg-cb-green text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90 inline-block">Create a list</Link>
               </div>
             )}
-            <button onClick={() => setCartRecipeId(null)} className="mt-3 w-full text-center text-xs text-cb-muted hover:text-cb-text">Cancel</button>
+            <button onClick={() => setCartRecipeId(null)} className="mt-3 w-full text-center text-xs text-cb-secondary hover:text-cb-text">Cancel</button>
           </div>
         </div>
       )}

@@ -109,7 +109,7 @@ export default function SocialShareModal({
         {/* Header */}
         <div className="p-5 border-b border-cb-border flex items-center justify-between shrink-0">
           <h2 className="text-lg font-bold">Share to Social</h2>
-          <button onClick={onClose} className="text-cb-muted hover:text-cb-text">
+          <button onClick={onClose} className="text-cb-secondary hover:text-cb-text">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -125,7 +125,7 @@ export default function SocialShareModal({
           {/* Platform tabs */}
           <div className="flex border border-cb-border rounded-input overflow-hidden">
             {PLATFORMS.map((p) => (
-              <button key={p.key} onClick={() => setPlatform(p.key)} className={`flex-1 py-2.5 text-sm font-medium transition-colors ${platform === p.key ? 'bg-cb-primary text-white' : 'text-cb-muted hover:text-cb-text'}`}>
+              <button key={p.key} onClick={() => setPlatform(p.key)} className={`flex-1 py-2.5 text-sm font-medium transition-colors ${platform === p.key ? 'bg-cb-primary text-white' : 'text-cb-secondary hover:text-cb-text'}`}>
                 {p.icon} {p.label}
               </button>
             ))}
@@ -143,7 +143,7 @@ export default function SocialShareModal({
               rows={5}
               className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
             />
-            <p className={`text-[10px] mt-0.5 ${postText.length > currentLimit * 0.9 ? 'text-amber-600' : 'text-cb-muted'}`}>
+            <p className={`text-[10px] mt-0.5 ${postText.length > currentLimit * 0.9 ? 'text-amber-600' : 'text-cb-secondary'}`}>
               {postText.length}/{currentLimit}
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function SocialShareModal({
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-semibold">Hashtags</label>
               <div className="flex gap-2">
-                <button onClick={() => copyToClipboard(hashtags.join(' '), 'tags')} className="text-xs text-cb-muted hover:text-cb-text">{copied === 'tags' ? 'Copied!' : 'Copy all'}</button>
+                <button onClick={() => copyToClipboard(hashtags.join(' '), 'tags')} className="text-xs text-cb-secondary hover:text-cb-text">{copied === 'tags' ? 'Copied!' : 'Copy all'}</button>
                 <button onClick={generateTags} disabled={generatingTags} className="text-xs text-cb-primary hover:underline disabled:opacity-50">{generatingTags ? '...' : 'Regenerate'}</button>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function SocialShareModal({
 
           {/* Instructions */}
           {!isMobile && (
-            <div className="bg-cb-bg rounded-input p-3 text-xs text-cb-muted">
+            <div className="bg-cb-bg rounded-input p-3 text-xs text-cb-secondary">
               <p className="font-semibold mb-1">How to post:</p>
               <ol className="list-decimal list-inside space-y-0.5">
                 <li>Copy your post text above</li>

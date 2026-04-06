@@ -42,7 +42,7 @@ export default function SharedRecipePage() {
     return (
       <main className="min-h-screen bg-cb-bg">
         <Nav />
-        <div className="text-center text-cb-muted py-20">Loading recipe...</div>
+        <div className="text-center text-cb-secondary py-20">Loading recipe...</div>
       </main>
     );
   }
@@ -58,7 +58,7 @@ export default function SharedRecipePage() {
             </svg>
           </div>
           <h2 className="text-xl font-bold mb-2">Recipe not found</h2>
-          <p className="text-cb-muted text-sm mb-6">
+          <p className="text-cb-secondary text-sm mb-6">
             This shared link may have expired or been removed.
           </p>
           <Link
@@ -81,7 +81,7 @@ export default function SharedRecipePage() {
       {/* Shared banner */}
       <div className="bg-cb-card border-b border-cb-border">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-cb-muted">
+          <div className="flex items-center gap-2 text-sm text-cb-secondary">
             <svg className="w-4 h-4 text-cb-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
             </svg>
@@ -113,7 +113,7 @@ export default function SharedRecipePage() {
         {/* Title */}
         <h1 className="text-4xl font-bold mb-4 tracking-tight">{recipe.title}</h1>
         {recipe.description && (
-          <p className="text-cb-muted text-lg mb-6 leading-relaxed">{recipe.description}</p>
+          <p className="text-cb-secondary text-lg mb-6 leading-relaxed">{recipe.description}</p>
         )}
 
         {/* Meta tags */}
@@ -129,17 +129,17 @@ export default function SharedRecipePage() {
             </span>
           )}
           {recipe.prep_minutes != null && recipe.prep_minutes > 0 && (
-            <span className="bg-cb-card text-cb-muted text-sm px-3 py-1.5 rounded-input border border-cb-border">
+            <span className="bg-cb-card text-cb-secondary text-sm px-3 py-1.5 rounded-input border border-cb-border">
               Prep: {formatDuration(recipe.prep_minutes)}
             </span>
           )}
           {recipe.cook_minutes != null && recipe.cook_minutes > 0 && (
-            <span className="bg-cb-card text-cb-muted text-sm px-3 py-1.5 rounded-input border border-cb-border">
+            <span className="bg-cb-card text-cb-secondary text-sm px-3 py-1.5 rounded-input border border-cb-border">
               Cook: {formatDuration(recipe.cook_minutes)}
             </span>
           )}
           {recipe.total_minutes != null && recipe.total_minutes > 0 && (
-            <span className="bg-cb-card text-cb-muted text-sm px-3 py-1.5 rounded-input border border-cb-border">
+            <span className="bg-cb-card text-cb-secondary text-sm px-3 py-1.5 rounded-input border border-cb-border">
               Total: {formatDuration(recipe.total_minutes)}
             </span>
           )}
@@ -147,18 +147,18 @@ export default function SharedRecipePage() {
 
         {/* Servings scaler */}
         <div className="bg-cb-card border border-cb-border rounded-card p-5 mb-10 flex items-center gap-6">
-          <span className="text-sm font-medium text-cb-muted">Servings</span>
+          <span className="text-sm font-medium text-cb-secondary">Servings</span>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setServings((s) => Math.max(1, s - 1))}
-              className="w-9 h-9 rounded-full border border-cb-border flex items-center justify-center text-cb-muted hover:border-cb-primary hover:text-cb-primary transition-colors text-lg"
+              className="w-9 h-9 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors text-lg"
             >
               -
             </button>
             <span className="w-8 text-center font-bold text-lg">{servings}</span>
             <button
               onClick={() => setServings((s) => s + 1)}
-              className="w-9 h-9 rounded-full border border-cb-border flex items-center justify-center text-cb-muted hover:border-cb-primary hover:text-cb-primary transition-colors text-lg"
+              className="w-9 h-9 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors text-lg"
             >
               +
             </button>
@@ -191,10 +191,10 @@ export default function SharedRecipePage() {
                     </span>{' '}
                     {ing.ingredient}
                     {ing.preparation && (
-                      <span className="text-cb-muted">, {ing.preparation}</span>
+                      <span className="text-cb-secondary">, {ing.preparation}</span>
                     )}
                     {ing.optional && (
-                      <span className="text-cb-muted text-xs ml-1">(optional)</span>
+                      <span className="text-cb-secondary text-xs ml-1">(optional)</span>
                     )}
                   </span>
                 </li>
@@ -232,14 +232,14 @@ export default function SharedRecipePage() {
         {recipe.notes && (
           <section className="mt-10">
             <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
-            <p className="text-cb-muted leading-relaxed">{recipe.notes}</p>
+            <p className="text-cb-secondary leading-relaxed">{recipe.notes}</p>
           </section>
         )}
 
         {/* CTA */}
         <div className="mt-12 bg-cb-card border border-cb-border rounded-card p-10 text-center">
           <h3 className="text-2xl font-bold mb-3">Save this recipe</h3>
-          <p className="text-cb-muted mb-6 max-w-md mx-auto">
+          <p className="text-cb-secondary mb-6 max-w-md mx-auto">
             Add it to your Chefsbook to scale servings, plan meals around it,
             and auto-generate shopping lists.
           </p>
@@ -252,7 +252,7 @@ export default function SharedRecipePage() {
             </Link>
             <Link
               href="/"
-              className="border border-cb-border px-8 py-3 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text hover:bg-gray-50 transition-colors"
+              className="border border-cb-border px-8 py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text hover:bg-gray-50 transition-colors"
             >
               Learn more
             </Link>
@@ -261,7 +261,7 @@ export default function SharedRecipePage() {
       </article>
 
       {/* Footer */}
-      <footer className="border-t border-cb-border px-6 py-6 text-center text-cb-muted text-sm">
+      <footer className="border-t border-cb-border px-6 py-6 text-center text-cb-secondary text-sm">
         <Link href="/" className="font-semibold text-cb-text hover:text-cb-primary">
           Chefsbook
         </Link>{' '}

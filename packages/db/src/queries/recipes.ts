@@ -276,6 +276,68 @@ export async function cloneRecipe(sourceRecipeId: string, targetUserId: string):
   return data as string;
 }
 
+export async function updateRecipeMetadata(
+  id: string,
+  fields: {
+    cuisine?: string | null;
+    course?: string | null;
+    tags?: string[];
+    dietary_flags?: string[];
+  },
+): Promise<void> {
+  const { error } = await supabase.from('recipes').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+export async function searchByIngredient(
+  term: string,
+  userId?: string,
+): Promise<Recipe[]> {
+  let query = supabase
+    .from('recipe_ingredients')
+    .select('recipe_id')
+    .ilike('ingredient', `%${term}%`);
+
+  const { data: matches } = await query;
+  if (!matches || matches.length === 0) return [];
+
+  const recipeIds = [...new Set(matches.map((m) => m.recipe_id))];
+
+  let recipeQuery = supabase
+    .from('recipes')
+    .select('*')
+    .in('id', recipeIds)
+    .order('created_at', { ascending: false });
+
+  if (userId) {
+    recipeQuery = recipeQuery.eq('user_id', userId);
+  }
+
+  const { data } = await recipeQuery;
+  return (data ?? []) as Recipe[];
+}
+
+export async function getPublicProfile(
+  username: string,
+): Promise<{ profile: any; recipes: Recipe[] } | null> {
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('username', username)
+    .single();
+
+  if (!profile) return null;
+
+  const { data: recipes } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('user_id', profile.id)
+    .eq('visibility', 'public')
+    .order('created_at', { ascending: false });
+
+  return { profile, recipes: (recipes ?? []) as Recipe[] };
+}
+
 export async function getPublicFeed(params?: {
   limit?: number;
   offset?: number;

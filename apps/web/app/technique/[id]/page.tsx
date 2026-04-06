@@ -56,7 +56,7 @@ export default function TechniquePage() {
         <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
           <Link href="/" className="text-xl font-bold"><span className="text-cb-primary">Chefs</span>book</Link>
         </nav>
-        <div className="text-center text-cb-muted py-20">Loading technique...</div>
+        <div className="text-center text-cb-secondary py-20">Loading technique...</div>
       </main>
     );
   }
@@ -83,7 +83,7 @@ export default function TechniquePage() {
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <Link href="/" className="text-xl font-bold"><span className="text-cb-primary">Chefs</span>book</Link>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-cb-muted hover:text-cb-text text-sm font-medium">Dashboard</Link>
+          <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">Dashboard</Link>
           {isOwner && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -116,7 +116,7 @@ export default function TechniquePage() {
         </div>
 
         {technique.description && (
-          <p className="text-cb-muted text-lg mb-6 leading-relaxed">{technique.description}</p>
+          <p className="text-cb-secondary text-lg mb-6 leading-relaxed">{technique.description}</p>
         )}
 
         {/* Source links */}
@@ -155,11 +155,11 @@ export default function TechniquePage() {
             {/* Tools & Equipment */}
             {technique.tools_and_equipment.length > 0 && (
               <section className="bg-cb-card border border-cb-border rounded-card p-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-cb-muted mb-3">Tools & Equipment</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-cb-secondary mb-3">Tools & Equipment</h3>
                 <ul className="space-y-2">
                   {technique.tools_and_equipment.map((tool, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
-                      <svg className="w-4 h-4 text-cb-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <svg className="w-4 h-4 text-cb-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
                       </svg>
                       {tool}
@@ -172,7 +172,7 @@ export default function TechniquePage() {
             {/* Key Tips */}
             {technique.tips.length > 0 && (
               <section className="bg-cb-card border border-cb-border rounded-card p-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-cb-muted mb-3">Key Tips</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-cb-secondary mb-3">Key Tips</h3>
                 <div className="space-y-2">
                   {technique.tips.map((tip, i) => (
                     <div key={i} className="bg-green-50 border border-green-200 rounded-input p-3 text-sm text-green-800">
@@ -186,7 +186,7 @@ export default function TechniquePage() {
             {/* Common Mistakes */}
             {technique.common_mistakes.length > 0 && (
               <section className="bg-cb-card border border-cb-border rounded-card p-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-cb-muted mb-3">Common Mistakes</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-cb-secondary mb-3">Common Mistakes</h3>
                 <div className="space-y-2">
                   {technique.common_mistakes.map((mistake, i) => (
                     <div key={i} className="bg-amber-50 border border-amber-200 rounded-input p-3 text-sm text-amber-800 flex gap-2">
@@ -262,11 +262,11 @@ export default function TechniquePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
             <h2 className="text-lg font-bold mb-2">Delete technique?</h2>
-            <p className="text-cb-muted text-sm mb-6">
+            <p className="text-cb-secondary text-sm mb-6">
               This will permanently delete &ldquo;{technique.title}&rdquo;. This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text">Cancel</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text">Cancel</button>
               <button onClick={handleDelete} disabled={deleting} className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>

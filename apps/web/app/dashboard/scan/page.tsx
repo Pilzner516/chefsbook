@@ -485,7 +485,7 @@ export default function ScanPage() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-2">Import Recipe</h1>
-      <p className="text-cb-muted text-sm mb-8">
+      <p className="text-cb-secondary text-sm mb-8">
         Scan a photo, paste a URL, or import your browser bookmarks.
       </p>
 
@@ -500,7 +500,7 @@ export default function ScanPage() {
         {/* Image upload */}
         <div className="bg-cb-card border border-cb-border rounded-card p-6">
           <h2 className="font-semibold mb-1">Scan from image</h2>
-          <p className="text-cb-muted text-sm mb-4">
+          <p className="text-cb-secondary text-sm mb-4">
             Upload a photo of a handwritten card, cookbook page, or printed recipe.
           </p>
           <div
@@ -512,17 +512,17 @@ export default function ScanPage() {
             }`}
           >
             {loading === 'image' ? (
-              <div className="text-cb-muted">
+              <div className="text-cb-secondary">
                 <Spinner className="mx-auto mb-3" />
                 <p className="text-sm font-medium">Extracting recipe...</p>
                 <p className="text-xs mt-1">Claude is reading your image</p>
               </div>
             ) : (
               <>
-                <svg className="w-10 h-10 text-cb-muted mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="w-10 h-10 text-cb-secondary mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                 </svg>
-                <p className="text-cb-muted text-sm mb-4">Drag & drop a recipe image here</p>
+                <p className="text-cb-secondary text-sm mb-4">Drag & drop a recipe image here</p>
                 <label className="inline-block bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity">
                   Choose File
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => {
@@ -538,7 +538,7 @@ export default function ScanPage() {
         {/* URL import */}
         <div className="bg-cb-card border border-cb-border rounded-card p-6">
           <h2 className="font-semibold mb-1">Import from URL</h2>
-          <p className="text-cb-muted text-sm mb-4">
+          <p className="text-cb-secondary text-sm mb-4">
             Paste a link to any recipe page. We strip the life story and extract just the recipe.
           </p>
           <div className="space-y-4">
@@ -547,7 +547,7 @@ export default function ScanPage() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://example.com/recipe..."
-              className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+              className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
             />
             <button
               onClick={handleUrlImport}
@@ -567,7 +567,7 @@ export default function ScanPage() {
             </button>
           </div>
           <div className="mt-6 p-4 bg-cb-bg rounded-input">
-            <p className="text-xs text-cb-muted leading-relaxed">
+            <p className="text-xs text-cb-secondary leading-relaxed">
               Works with most recipe websites and YouTube cooking videos.
               YouTube imports include timestamp-linked steps.
             </p>
@@ -583,16 +583,16 @@ export default function ScanPage() {
           </div>
           <div>
             <h2 className="font-semibold">Speak a recipe</h2>
-            <p className="text-cb-muted text-sm">Dictate a recipe and AI will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
+            <p className="text-cb-secondary text-sm">Dictate a recipe and AI will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
           </div>
-          <svg className="w-5 h-5 text-cb-muted ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+          <svg className="w-5 h-5 text-cb-secondary ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
         </div>
       </Link>
 
       {/* File import panel */}
       <div className="bg-cb-card border border-cb-border rounded-card p-6">
         <h2 className="font-semibold mb-1">Import from File</h2>
-        <p className="text-cb-muted text-sm mb-4">
+        <p className="text-cb-secondary text-sm mb-4">
           Upload any file — bookmarks, PDFs, Word docs, or text files. We'll find all the recipes inside.
         </p>
 
@@ -607,11 +607,11 @@ export default function ScanPage() {
                 bmDragOver ? 'border-cb-primary bg-cb-primary/5' : 'border-cb-border'
               }`}
             >
-              <svg className="w-10 h-10 text-cb-muted mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-10 h-10 text-cb-secondary mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
               </svg>
-              <p className="text-cb-muted text-sm mb-4">
-                Drag & drop any file here <span className="text-[10px] text-cb-muted block mt-1">PDF, Word, HTML, Text, CSV, JSON</span>
+              <p className="text-cb-secondary text-sm mb-4">
+                Drag & drop any file here <span className="text-[10px] text-cb-secondary block mt-1">PDF, Word, HTML, Text, CSV, JSON</span>
               </p>
               <label className="inline-block bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity">
                 Choose File
@@ -623,7 +623,7 @@ export default function ScanPage() {
             </div>
 
             <div className="bg-cb-bg rounded-input p-3">
-              <p className="text-xs text-cb-muted leading-relaxed">
+              <p className="text-xs text-cb-secondary leading-relaxed">
                 Supports: PDF cookbooks, Word documents, text files, CSV spreadsheets, JSON exports, and browser bookmark HTML files. Max 50MB.
               </p>
             </div>
@@ -635,7 +635,7 @@ export default function ScanPage() {
           <div className="py-12 text-center">
             <Spinner className="mx-auto mb-3" />
             <p className="text-sm font-medium">Checking for duplicates...</p>
-            <p className="text-xs text-cb-muted mt-1">
+            <p className="text-xs text-cb-secondary mt-1">
               Found {bookmarks.length} bookmarks, checking against your recipes
             </p>
           </div>
@@ -648,14 +648,14 @@ export default function ScanPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-medium">Review bookmarks</p>
-                <p className="text-xs text-cb-muted mt-0.5">
+                <p className="text-xs text-cb-secondary mt-0.5">
                   Click folders to expand. Check items to import.
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => { setBmPhase('idle'); setBookmarks([]); setExpandedFolders(new Set()); }}
-                  className="text-sm text-cb-muted hover:text-cb-text"
+                  className="text-sm text-cb-secondary hover:text-cb-text"
                 >
                   Cancel
                 </button>
@@ -687,7 +687,7 @@ export default function ScanPage() {
                     >
                       {/* Chevron */}
                       <svg
-                        className={`w-3.5 h-3.5 text-cb-muted shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                        className={`w-3.5 h-3.5 text-cb-secondary shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
                         fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -717,7 +717,7 @@ export default function ScanPage() {
                       </button>
 
                       {/* Folder icon */}
-                      <svg className="w-4 h-4 text-cb-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <svg className="w-4 h-4 text-cb-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
                       </svg>
 
@@ -725,7 +725,7 @@ export default function ScanPage() {
                       <span className="text-sm font-medium truncate">{folder}</span>
 
                       {/* Spacer + counts */}
-                      <span className="text-xs text-cb-muted ml-auto shrink-0">
+                      <span className="text-xs text-cb-secondary ml-auto shrink-0">
                         {folderBms.filter((b) => b.selected).length}/{folderBms.length}
                       </span>
                       {folderDupes > 0 && (
@@ -773,8 +773,8 @@ export default function ScanPage() {
 
                           {/* Title + URL + duplicate hint */}
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm truncate ${bm.isDuplicate ? 'text-cb-muted' : ''}`}>{bm.title}</p>
-                            <p className="text-[10px] text-cb-muted truncate">{bm.url}</p>
+                            <p className={`text-sm truncate ${bm.isDuplicate ? 'text-cb-secondary' : ''}`}>{bm.title}</p>
+                            <p className="text-[10px] text-cb-secondary truncate">{bm.url}</p>
                             {bm.isDuplicate && bm.existingTitle && (
                               <p className="text-[10px] text-amber-600 truncate">Already imported: {bm.existingTitle}</p>
                             )}
@@ -795,7 +795,7 @@ export default function ScanPage() {
             </div>
 
             {/* Footer summary */}
-            <div className="mt-3 px-1 text-xs text-cb-muted">
+            <div className="mt-3 px-1 text-xs text-cb-secondary">
               {folders.length} folder{folders.length !== 1 ? 's' : ''} &middot;{' '}
               {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''} found &middot;{' '}
               <span className="font-semibold text-cb-green">{selectedCount} selected</span>
@@ -815,7 +815,7 @@ export default function ScanPage() {
                 <p className="text-sm font-semibold">
                   {importProgress} of {importTotal} processed
                 </p>
-                <p className="text-xs text-cb-muted">
+                <p className="text-xs text-cb-secondary">
                   {importTotal > 0 ? Math.round((importProgress / importTotal) * 100) : 0}%
                 </p>
               </div>
@@ -853,7 +853,7 @@ export default function ScanPage() {
 
             <button
               onClick={() => { abortRef.current = true; }}
-              className="mt-4 text-sm text-cb-muted hover:text-cb-primary"
+              className="mt-4 text-sm text-cb-secondary hover:text-cb-primary"
             >
               Stop importing
             </button>
@@ -869,7 +869,7 @@ export default function ScanPage() {
               </svg>
             </div>
             <h3 className="text-xl font-bold mb-2">Import complete</h3>
-            <p className="text-cb-muted mb-6">
+            <p className="text-cb-secondary mb-6">
               <span className="font-semibold text-cb-green">{importedCount} imported</span>
               {skippedCount > 0 && (
                 <> &middot; <span className="font-semibold text-amber-600">{skippedCount} skipped</span> <span className="text-xs">(not recipes)</span></>
@@ -884,7 +884,7 @@ export default function ScanPage() {
               <div className="text-left max-w-lg mx-auto mb-6">
                 <button
                   onClick={() => setShowFailed(!showFailed)}
-                  className="text-sm text-cb-muted hover:text-cb-text flex items-center gap-1"
+                  className="text-sm text-cb-secondary hover:text-cb-text flex items-center gap-1"
                 >
                   <svg
                     className={`w-3 h-3 transition-transform ${showFailed ? 'rotate-90' : ''}`}
@@ -960,7 +960,7 @@ export default function ScanPage() {
                   setImportTotal(0);
                   clearPolling();
                 }}
-                className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text transition-colors"
+                className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors"
               >
                 Import more
               </button>

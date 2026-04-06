@@ -6,15 +6,20 @@ Next.js 15 (App Router) + React 19 + Tailwind CSS 3.
 
 All pages use these colours via the `cb-*` Tailwind prefix (defined in `tailwind.config.ts`):
 
-| Token        | Value     | Usage                           |
-|--------------|-----------|---------------------------------|
-| `cb-bg`      | `#faf7f0` | Page background (warm cream)    |
-| `cb-card`    | `#ffffff` | Card / panel backgrounds        |
-| `cb-border`  | `#e8e0d0` | Borders, dividers               |
-| `cb-primary` | `#ce2b37` | Buttons, links, active states   |
-| `cb-green`   | `#009246` | CTAs ("Start cooking"), success  |
-| `cb-text`    | `#1a1a1a` | Primary body text               |
-| `cb-muted`   | `#7a6a5a` | Secondary / helper text          |
+| Token              | Value     | Usage                           |
+|--------------------|-----------|----------------------------------|
+| `cb-bg`            | `#faf7f0` | Page background (warm cream)     |
+| `cb-base`          | `#f4f0e8` | Section backgrounds (darker cream) |
+| `cb-card`          | `#ffffff` | Card / panel backgrounds         |
+| `cb-primary`       | `#ce2b37` | Buttons, links, active states    |
+| `cb-primary-soft`  | `#fdecea` | Tag backgrounds (red)            |
+| `cb-green`         | `#009246` | CTAs ("Start cooking"), success  |
+| `cb-green-soft`    | `#e8f5ee` | Tag backgrounds (green)          |
+| `cb-text`          | `#1a1a1a` | Primary body text                |
+| `cb-secondary`     | `#7a6a5a` | Secondary / helper text          |
+| `cb-muted`         | `#9a8a7a` | Muted labels, placeholders       |
+| `cb-border`        | `#e8e0d0` | Borders, dividers                |
+| `cb-border-strong` | `#d0c8b8` | Strong borders, emphasis         |
 
 - Font: Inter (Google Fonts, loaded in `globals.css`)
 - Border radius: `rounded-card` (12px) for cards, `rounded-input` (8px) for inputs

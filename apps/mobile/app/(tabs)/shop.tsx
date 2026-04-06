@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useShoppingStore } from '../../lib/zustand/shoppingStore';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Button, Card, EmptyState, Loading, Input } from '../../components/UIKit';
 import type { ShoppingListItem, StoreCategory } from '@chefsbook/db';
@@ -46,6 +48,7 @@ type ViewMode = 'department' | 'recipe' | 'alpha';
 export default function ShopTab() {
   const { colors } = useTheme();
   const router = useRouter();
+  const tabBarHeight = useTabBarHeight();
   const session = useAuthStore((s) => s.session);
   const lists = useShoppingStore((s) => s.lists);
   const currentList = useShoppingStore((s) => s.currentList);
@@ -122,6 +125,25 @@ export default function ShopTab() {
     setEditingQty(null);
   };
 
+  const handleRemoveRecipeGroup = (groupName: string, groupItems: ShoppingListItem[]) => {
+    Alert.alert(
+      'Remove recipe',
+      `Remove ${groupName} and its ${groupItems.length} ingredients from this list?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            for (const item of groupItems) {
+              await deleteItem(item.id);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleDeleteList = (listId: string, name: string) => {
     Alert.alert('Delete List', `Delete "${name}" and all its items?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -165,6 +187,25 @@ export default function ShopTab() {
     const sorted = [...unchecked].sort((a, b) => a.ingredient.localeCompare(b.ingredient));
     return [['All Items', sorted]] as [string, ShoppingListItem[]][];
   }, [unchecked, viewMode]);
+
+  // Group lists by store name for Level 1 (must be before early returns)
+  const storeGroups = useMemo(() => {
+    const groups: Record<string, typeof lists> = {};
+    for (const list of lists) {
+      const store = list.store_name || 'General';
+      if (!groups[store]) groups[store] = [];
+      groups[store].push(list);
+    }
+    return Object.entries(groups).sort(([a], [b]) =>
+      a === 'General' ? 1 : b === 'General' ? -1 : a.localeCompare(b)
+    );
+  }, [lists]);
+
+  const filteredLists = useMemo(() => {
+    if (!selectedStore) return lists;
+    if (selectedStore === '__all__') return lists;
+    return lists.filter((l) => (l.store_name || 'General') === selectedStore);
+  }, [lists, selectedStore]);
 
   if (loading && !currentList) return <Loading message="Loading shopping lists..." />;
 
@@ -249,9 +290,16 @@ export default function ShopTab() {
           {/* Active items grouped */}
           {grouped.map(([group, groupItems]) => (
             <View key={group} style={{ marginBottom: 16 }}>
-              <Text style={{ color: colors.accent, fontSize: fs.dept, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }}>
-                {DEPT_LABELS[group] || group}
-              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={{ color: colors.accent, fontSize: fs.dept, fontWeight: '700', textTransform: 'uppercase', flex: 1 }}>
+                  {DEPT_LABELS[group] || group}
+                </Text>
+                {viewMode === 'recipe' && group !== 'Uncategorized' && (
+                  <TouchableOpacity onPress={() => handleRemoveRecipeGroup(group, groupItems)} style={{ padding: 4 }}>
+                    <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
               {groupItems.map((item) => {
                 const rawQty = [item.quantity, item.unit].filter(Boolean).join(' ');
                 const displayQty = item.purchase_unit || rawQty;
@@ -342,37 +390,18 @@ export default function ShopTab() {
             <EmptyState icon="🛒" title="Your shopping list is empty" message="Add recipes to your meal plan to generate a shopping list." action={{ label: 'Plan Meals', onPress: () => router.push('/(tabs)/plan') }} />
           )}
 
-          <View style={{ height: 32 }} />
+          <View style={{ height: tabBarHeight }} />
         </ScrollView>
       </View>
     );
   }
-
-  // Group lists by store name for Level 1
-  const storeGroups = useMemo(() => {
-    const groups: Record<string, typeof lists> = {};
-    for (const list of lists) {
-      const store = list.store_name || 'General';
-      if (!groups[store]) groups[store] = [];
-      groups[store].push(list);
-    }
-    return Object.entries(groups).sort(([a], [b]) =>
-      a === 'General' ? 1 : b === 'General' ? -1 : a.localeCompare(b)
-    );
-  }, [lists]);
-
-  const filteredLists = useMemo(() => {
-    if (!selectedStore) return lists;
-    if (selectedStore === '__all__') return lists;
-    return lists.filter((l) => (l.store_name || 'General') === selectedStore);
-  }, [lists, selectedStore]);
 
   // ── Level 2: Lists within a store ──
   if (selectedStore) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
         <ChefsBookHeader />
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight }}>
           <TouchableOpacity onPress={() => setSelectedStore(null)} style={{ marginBottom: 12 }}>
             <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Stores</Text>
           </TouchableOpacity>
@@ -428,7 +457,7 @@ export default function ShopTab() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
       <ChefsBookHeader />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight }}>
         <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>Shopping Lists</Text>
 
         {/* All Lists quick access */}

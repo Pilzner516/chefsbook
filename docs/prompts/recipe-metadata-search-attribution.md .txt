@@ -1,0 +1,177 @@
+Read CLAUDE.md and apps/mobile/CLAUDE.md to orient yourself.
+
+Major feature: Recipe metadata editing, dietary restrictions, attribution 
+tags, ingredient search, and user profiles. This spans mobile AND web.
+
+## Step 1 — Database migrations
+Create supabase/migrations/20260406_012_metadata.sql:
+
+-- Dietary restrictions as structured flags on recipes
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS dietary_flags text[] DEFAULT '{}';
+-- Values: vegan, vegetarian, gluten-free, dairy-free, nut-free, 
+--         halal, kosher, low-carb, keto, paleo
+
+-- Attribution: source ChefsBook user when recipe is cloned
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS attributed_to_user_id uuid 
+  REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE recipes ADD COLUMN IF NOT EXISTS attributed_to_username text;
+
+-- Index for ingredient search
+CREATE INDEX IF NOT EXISTS idx_recipes_ingredients_gin 
+  ON recipes USING gin(ingredients jsonb_path_ops);
+
+Run this migration on rpi5-eth via SSH.
+
+## Step 2 — Shared packages update
+In packages/db/src/queries/recipes.ts add:
+
+- updateRecipeMetadata(id, { cuisine, course, tags, dietary_flags }) 
+  — updates structured fields and tags in one call
+- searchByIngredient(term, userId?) 
+  — ILIKE search across ingredients JSONB array
+- getPublicProfile(username) 
+  — returns user_profiles + their public recipes
+
+In packages/ui/src/constants.ts add:
+
+export const DIETARY_FLAGS = [
+  { key: 'vegan', label: 'Vegan', emoji: '🌱' },
+  { key: 'vegetarian', label: 'Vegetarian', emoji: '🥗' },
+  { key: 'gluten-free', label: 'Gluten-Free', emoji: '🌾' },
+  { key: 'dairy-free', label: 'Dairy-Free', emoji: '🥛' },
+  { key: 'nut-free', label: 'Nut-Free', emoji: '🥜' },
+  { key: 'halal', label: 'Halal', emoji: '☪️' },
+  { key: 'kosher', label: 'Kosher', emoji: '✡️' },
+  { key: 'low-carb', label: 'Low-Carb', emoji: '📉' },
+  { key: 'keto', label: 'Keto', emoji: '🥑' },
+  { key: 'paleo', label: 'Paleo', emoji: '🦴' },
+]
+
+export const CUISINE_LIST = [
+  'Italian', 'French', 'Japanese', 'Chinese', 'Thai', 'Indian',
+  'Mexican', 'Spanish', 'Greek', 'Lebanese', 'American', 'British',
+  'Korean', 'Vietnamese', 'Moroccan', 'Turkish', 'Caribbean',
+  'Peruvian', 'Ethiopian', 'Other'
+]
+
+export const COURSE_LIST = [
+  'Breakfast', 'Brunch', 'Starter', 'Soup', 'Salad', 'Main',
+  'Side', 'Dessert', 'Snack', 'Drink', 'Bread', 'Sauce', 'Other'
+]
+
+## Step 3 — Recipe editing on mobile
+In apps/mobile/app/recipe/[id].tsx:
+
+Expand the Edit mode to include ALL metadata fields:
+
+BASIC INFO (already exists — confirm working):
+- Title, Description, Cuisine, Course, Servings, Cook time
+
+TAGS section:
+- Existing tags as red pills with X to remove
+- "+ Add Tag" inline input
+- "✨ Auto-tag" button calls @chefsbook/ai
+- Tags are lowercase, no special characters
+
+DIETARY FLAGS section:
+- Grid of emoji toggle buttons from DIETARY_FLAGS constant
+- Tapped = active (accent red background), untapped = borderDefault
+- Saves to dietary_flags array column
+
+CATEGORIES section:
+- Cuisine: horizontal scrollable chip selector from CUISINE_LIST
+- Course: horizontal scrollable chip selector from COURSE_LIST
+- Single select for each
+- Currently selected chip is highlighted in accent red
+
+ATTRIBUTION TAG (read-only, always shown if present):
+- Shown separately from regular tags — never in the editable tags list
+- Style: gray background (#f0f0f0), dark text, 🔗 icon
+- Format: "🔗 via @username"
+- Tapping navigates to /chef/[username] profile
+- Label "Original source — cannot be removed" in textMuted below
+- Never show an X button on this tag
+
+## Step 4 — Attribution tag on web
+In apps/web — find the recipe detail page:
+- Add attribution tag display matching mobile style
+- Gray pill with 🔗 icon, "via @username" text
+- Clicking navigates to /chef/[username]
+- Never editable, never removable
+- Show on both recipe detail and recipe cards in Discover mode
+
+## Step 5 — Set attribution on recipe clone
+Find where recipes are cloned (Discover "Add to my collection" action):
+In both mobile (app/share/[token].tsx) and web (api or page):
+- When cloning, set attributed_to_user_id and attributed_to_username
+  from the original recipe's user_id
+- Look up username from user_profiles table
+- This must happen server-side — never trust client for attribution
+
+## Step 6 — Search tab: Ingredient search
+In apps/mobile/app/(tabs)/search.tsx:
+
+Add "Ingredient" as a new filter category:
+- Tapping "Ingredient 🥕" opens a text input
+- User types an ingredient name (e.g. "chicken", "tahini")
+- Results show all recipes containing that ingredient
+- Uses searchByIngredient() from @chefsbook/db
+- Multiple ingredients can be added as active filter pills
+- Combine with other filters (e.g. Ingredient: chicken + Cuisine: Thai)
+
+## Step 7 — Search tab: Dietary Restrictions filter
+In apps/mobile/app/(tabs)/search.tsx:
+
+Add "Dietary 🌱" as a filter category:
+- Tapping shows grid of DIETARY_FLAGS toggle buttons
+- Multi-select: user can pick multiple (vegan AND gluten-free)
+- Active selections show as dismissible pills
+- Filters recipes by dietary_flags array contains selected flags
+
+## Step 8 — Search tab: Tags filter
+In apps/mobile/app/(tabs)/search.tsx:
+
+Add "Tags 🏷️" as a filter category:
+- Shows the most used tags across user's recipes as chips
+- User can tap to add as active filter
+- Also has a text input to search for a specific tag
+- Filters recipes where tags array contains selected tags
+
+## Step 9 — User public profile screen
+In apps/mobile/app/chef/[id].tsx (already exists — enhance it):
+- Header: avatar, display name, @username, bio
+- Stats row: X recipes | X followers | X following
+- Tab toggle: Recipes | About
+- Recipes tab: FlashList of their public recipes
+  (same card style as main recipe list)
+- Each recipe card has "Add to my collection" button
+- If viewing your own profile: show private recipes too
+- Follow/Unfollow button (top right) — updates follows table in Supabase
+
+In apps/web — ensure /chef/[username]/page.tsx has the same features.
+
+## Step 10 — Web search page updates
+In apps/web/app/dashboard/search/page.tsx:
+- Add Ingredient search filter (text input, pill tags)
+- Add Dietary Restrictions filter (checkbox grid)
+- Add Tags filter (chip selector)
+- These mirror the mobile Search tab additions exactly
+
+## Step 11 — Verify
+- adb screenshot to /tmp/cb_screen.png of recipe edit mode 
+  showing Tags + Dietary + Categories sections
+- Describe in text, delete file
+- adb screenshot of Search tab showing Ingredient + Dietary + Tags filters
+- Describe in text, delete file
+- Confirm attribution tag shows on a cloned recipe
+- Confirm tapping attribution navigates to chef profile
+
+## Rules
+- NEVER duplicate logic between mobile and web — 
+  all queries go through @chefsbook/db
+- NEVER duplicate constants — DIETARY_FLAGS and lists 
+  live in @chefsbook/ui only
+- Attribution tag is NEVER removable under any circumstance
+- useTheme().colors always — never hardcode hex
+- Fix all errors without stopping
+- Do not embed screenshots in conversation

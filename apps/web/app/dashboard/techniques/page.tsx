@@ -47,7 +47,7 @@ export default function TechniquesPage() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
         </svg>
         <input
@@ -55,12 +55,12 @@ export default function TechniquesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search techniques..."
-          className="w-full bg-cb-card border border-cb-border rounded-input pl-10 pr-4 py-3 text-sm placeholder:text-cb-muted/60 outline-none focus:border-purple-500 transition-colors"
+          className="w-full bg-cb-card border border-cb-border rounded-input pl-10 pr-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-purple-500 transition-colors"
         />
       </div>
 
       {loading ? (
-        <div className="text-center text-cb-muted py-20">Loading techniques...</div>
+        <div className="text-center text-cb-secondary py-20">Loading techniques...</div>
       ) : techniques.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
@@ -69,7 +69,7 @@ export default function TechniquesPage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold mb-2">No techniques yet</h2>
-          <p className="text-cb-muted text-sm mb-6">
+          <p className="text-cb-secondary text-sm mb-6">
             Import a technique from a URL or YouTube video, or add one manually.
           </p>
           <Link
@@ -99,7 +99,7 @@ export default function TechniquesPage() {
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold mb-1.5 group-hover:text-purple-600 transition-colors">{t.title}</h3>
-                  <div className="flex items-center gap-2 text-xs text-cb-muted">
+                  <div className="flex items-center gap-2 text-xs text-cb-secondary">
                     {t.difficulty && (
                       <span className={`font-medium px-2 py-0.5 rounded ${DIFFICULTY_COLORS[t.difficulty] ?? ''}`}>
                         {t.difficulty.charAt(0).toUpperCase() + t.difficulty.slice(1)}

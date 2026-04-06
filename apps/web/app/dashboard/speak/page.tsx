@@ -135,7 +135,7 @@ export default function SpeakPage() {
           <svg className="w-10 h-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>
         </div>
         <h1 className="text-2xl font-bold mb-2">Speak a Recipe</h1>
-        <p className="text-cb-muted mb-6">Voice recipe entry is a Pro feature. Dictate any recipe and AI will format it for you.</p>
+        <p className="text-cb-secondary mb-6">Voice recipe entry is a Pro feature. Dictate any recipe and AI will format it for you.</p>
         <Link href="/dashboard/settings" className="bg-cb-primary text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 inline-block">Upgrade to Pro</Link>
       </div>
     );
@@ -147,8 +147,8 @@ export default function SpeakPage() {
       <div className="flex items-center gap-2 mb-8">
         {[{ n: 1, label: 'Record' }, { n: 2, label: 'Review' }, { n: 3, label: 'Recipe' }].map(({ n, label }, i) => (
           <div key={n} className="flex items-center gap-2 flex-1">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${step >= n ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-muted'}`}>{n}</div>
-            <span className={`text-sm font-medium ${step >= n ? 'text-cb-text' : 'text-cb-muted'}`}>{label}</span>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${step >= n ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary'}`}>{n}</div>
+            <span className={`text-sm font-medium ${step >= n ? 'text-cb-text' : 'text-cb-secondary'}`}>{label}</span>
             {i < 2 && <div className={`flex-1 h-0.5 ${step > n ? 'bg-cb-primary' : 'bg-cb-border'}`} />}
           </div>
         ))}
@@ -161,15 +161,15 @@ export default function SpeakPage() {
       {/* ── STEP 1: Record ── */}
       {step === 1 && (
         <div className="text-center">
-          <p className="text-cb-muted text-sm mb-6">Speak your recipe naturally. Say the name, ingredients, and steps in any order.</p>
+          <p className="text-cb-secondary text-sm mb-6">Speak your recipe naturally. Say the name, ingredients, and steps in any order.</p>
 
           {showExample && (
             <div className="bg-cb-bg rounded-card p-4 mb-6 text-left max-w-md mx-auto">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-cb-muted">Example</span>
-                <button onClick={() => setShowExample(false)} className="text-[10px] text-cb-muted hover:text-cb-text">Hide</button>
+                <span className="text-xs font-semibold text-cb-secondary">Example</span>
+                <button onClick={() => setShowExample(false)} className="text-[10px] text-cb-secondary hover:text-cb-text">Hide</button>
               </div>
-              <p className="text-xs text-cb-muted italic leading-relaxed">
+              <p className="text-xs text-cb-secondary italic leading-relaxed">
                 "Grandma's cookies. Two cups flour, one cup butter, two eggs, one cup chocolate chips. Cream butter and sugar, add eggs, fold in flour and chips, bake at 375 for 12 minutes."
               </p>
             </div>
@@ -211,7 +211,7 @@ export default function SpeakPage() {
             )}
             {!recording && transcript && (
               <>
-                <button onClick={() => { setTranscript(''); }} className="border border-cb-border px-5 py-3 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text">Start Over</button>
+                <button onClick={() => { setTranscript(''); }} className="border border-cb-border px-5 py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text">Start Over</button>
                 <button onClick={() => setStep(2)} className="bg-cb-primary text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90">Next: Review &rarr;</button>
               </>
             )}
@@ -223,7 +223,7 @@ export default function SpeakPage() {
       {step === 2 && (
         <div>
           <h2 className="text-lg font-bold mb-1">Review what was captured</h2>
-          <p className="text-cb-muted text-sm mb-4">Fix any mistakes before we generate your recipe.</p>
+          <p className="text-cb-secondary text-sm mb-4">Fix any mistakes before we generate your recipe.</p>
 
           <textarea
             value={transcript}
@@ -232,11 +232,11 @@ export default function SpeakPage() {
             className="w-full bg-cb-bg border border-cb-border rounded-card px-4 py-3 text-lg outline-none focus:border-cb-primary leading-relaxed mb-2"
             style={{ fontSize: 18, minHeight: 200 }}
           />
-          <p className="text-xs text-cb-muted mb-6">{transcript.length} characters</p>
+          <p className="text-xs text-cb-secondary mb-6">{transcript.length} characters</p>
 
           <div className="flex gap-3">
-            <button onClick={() => setStep(1)} className="border border-cb-border px-5 py-3 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text">&larr; Re-record</button>
-            <button onClick={() => setTranscript('')} className="text-sm text-cb-muted hover:text-cb-text px-3">Clear</button>
+            <button onClick={() => setStep(1)} className="border border-cb-border px-5 py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text">&larr; Re-record</button>
+            <button onClick={() => setTranscript('')} className="text-sm text-cb-secondary hover:text-cb-text px-3">Clear</button>
             <span className="flex-1" />
             <button onClick={generateRecipe} disabled={!transcript.trim()} className="bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" /></svg>
@@ -253,7 +253,7 @@ export default function SpeakPage() {
             <svg className="w-8 h-8 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" /></svg>
           </div>
           <p className="text-lg font-bold mb-2">Creating your recipe...</p>
-          <p className="text-sm text-cb-muted">{genStep}</p>
+          <p className="text-sm text-cb-secondary">{genStep}</p>
         </div>
       )}
 

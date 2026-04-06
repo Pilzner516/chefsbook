@@ -67,10 +67,10 @@ export default function HomePage() {
           <span className="text-cb-primary">Chefs</span>book
         </Link>
         <div className="flex items-center gap-6">
-          <Link href="/pricing" className="text-cb-muted hover:text-cb-text text-sm font-medium">
+          <Link href="/pricing" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
             Pricing
           </Link>
-          <Link href="/dashboard" className="text-cb-muted hover:text-cb-text text-sm font-medium">
+          <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
             Dashboard
           </Link>
           <Link
@@ -87,7 +87,7 @@ export default function HomePage() {
         <h1 className="text-5xl font-bold mb-6 leading-tight tracking-tight">
           Your recipes, beautifully organised
         </h1>
-        <p className="text-cb-muted text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-cb-secondary text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
           Scan handwritten cards, import from any URL, plan your meals, and generate smart shopping
           lists. Chefsbook is the recipe manager built for real home cooks.
         </p>
@@ -117,7 +117,7 @@ export default function HomePage() {
             >
               <div className="mb-4">{f.icon}</div>
               <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-              <p className="text-cb-muted text-sm leading-relaxed">{f.desc}</p>
+              <p className="text-cb-secondary text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -126,7 +126,7 @@ export default function HomePage() {
       {/* Pricing */}
       <section className="max-w-5xl mx-auto px-6 pb-24">
         <h2 className="text-3xl font-bold text-center mb-4">Simple, honest pricing</h2>
-        <p className="text-cb-muted text-center mb-12 text-lg">Start free. Upgrade when you need more.</p>
+        <p className="text-cb-secondary text-center mb-12 text-lg">Start free. Upgrade when you need more.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {tiers.map((tier) => (
             <div
@@ -145,11 +145,11 @@ export default function HomePage() {
               <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
               <div className="mb-6">
                 <span className="text-3xl font-bold">{tier.price}</span>
-                <span className="text-cb-muted text-sm ml-1">{tier.period}</span>
+                <span className="text-cb-secondary text-sm ml-1">{tier.period}</span>
               </div>
               <ul className="flex-1 space-y-3 mb-8">
                 {tier.features.map((f) => (
-                  <li key={f} className="text-sm text-cb-muted flex items-start gap-2">
+                  <li key={f} className="text-sm text-cb-secondary flex items-start gap-2">
                     <svg className="w-4 h-4 text-cb-green mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                     </svg>
@@ -173,7 +173,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-cb-border px-6 py-8 text-center text-cb-muted text-sm">
+      <footer className="border-t border-cb-border px-6 py-8 text-center text-cb-secondary text-sm">
         Chefsbook &copy; {new Date().getFullYear()}. All rights reserved.
       </footer>
     </main>

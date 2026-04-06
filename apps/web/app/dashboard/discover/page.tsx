@@ -29,13 +29,13 @@ export default function DiscoverPage() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-2">Discover</h1>
-      <p className="text-cb-muted text-sm mb-6">Public recipes from the ChefsBook community.</p>
+      <p className="text-cb-secondary text-sm mb-6">Public recipes from the ChefsBook community.</p>
 
       {cuisines.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">
           <button
             onClick={() => setCuisineFilter('')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${!cuisineFilter ? 'bg-cb-primary text-white' : 'bg-cb-card border border-cb-border text-cb-muted hover:text-cb-text'}`}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${!cuisineFilter ? 'bg-cb-primary text-white' : 'bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text'}`}
           >
             All
           </button>
@@ -43,7 +43,7 @@ export default function DiscoverPage() {
             <button
               key={c}
               onClick={() => setCuisineFilter(c!)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${cuisineFilter === c ? 'bg-cb-primary text-white' : 'bg-cb-card border border-cb-border text-cb-muted hover:text-cb-text'}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${cuisineFilter === c ? 'bg-cb-primary text-white' : 'bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text'}`}
             >
               {c}
             </button>
@@ -52,10 +52,10 @@ export default function DiscoverPage() {
       )}
 
       {loading ? (
-        <div className="text-center text-cb-muted py-20">Loading...</div>
+        <div className="text-center text-cb-secondary py-20">Loading...</div>
       ) : recipes.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-cb-muted">No public recipes yet. Be the first to share one.</p>
+          <p className="text-cb-secondary">No public recipes yet. Be the first to share one.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -73,7 +73,7 @@ export default function DiscoverPage() {
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold mb-1 group-hover:text-cb-primary transition-colors">{recipe.title}</h3>
-                  <div className="flex items-center gap-2 text-xs text-cb-muted">
+                  <div className="flex items-center gap-2 text-xs text-cb-secondary">
                     {recipe.author_avatar ? (
                       <img src={recipe.author_avatar} alt="" className="w-4 h-4 rounded-full" />
                     ) : (
@@ -85,6 +85,11 @@ export default function DiscoverPage() {
                     {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded text-[10px]">{recipe.cuisine}</span>}
                     {recipe.total_minutes != null && recipe.total_minutes > 0 && <span>{formatDuration(recipe.total_minutes)}</span>}
                   </div>
+                  {recipe.attributed_to_username && (
+                    <div className="mt-1 text-xs text-cb-secondary">
+                      <span className="bg-cb-base px-1.5 py-0.5 rounded">🔗 via @{recipe.attributed_to_username}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </Link>

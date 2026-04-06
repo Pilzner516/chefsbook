@@ -1,13 +1,16 @@
-import React, { useEffect, useCallback } from 'react';
-import { View, TextInput, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
-import { RecipeCard, Chip, EmptyState, Loading } from '../../components/UIKit';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
+import { ChefsBookHeader } from '../../components/ChefsBookHeader';
+import { RecipeCard, EmptyState, Loading } from '../../components/UIKit';
 
-const COURSES = ['breakfast', 'lunch', 'dinner', 'dessert', 'snack', 'side', 'drink'];
+type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
 
 export default function RecipesTab() {
   const { colors } = useTheme();
@@ -15,46 +18,124 @@ export default function RecipesTab() {
   const session = useAuthStore((s) => s.session);
   const recipes = useRecipeStore((s) => s.recipes);
   const loading = useRecipeStore((s) => s.loading);
-  const searchQuery = useRecipeStore((s) => s.searchQuery);
-  const filterCourse = useRecipeStore((s) => s.filterCourse);
-  const setSearch = useRecipeStore((s) => s.setSearch);
-  const setFilterCourse = useRecipeStore((s) => s.setFilterCourse);
   const fetchRecipes = useRecipeStore((s) => s.fetchRecipes);
+  const tabBarHeight = useTabBarHeight();
+  const [sortMode, setSortMode] = useState<SortMode>('recent');
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   useEffect(() => {
     if (session?.user?.id) fetchRecipes(session.user.id);
-  }, [session?.user?.id, searchQuery, filterCourse]);
+  }, [session?.user?.id]);
+
+  const sorted = React.useMemo(() => {
+    const list = [...recipes];
+    switch (sortMode) {
+      case 'alpha':
+        return list.sort((a, b) => a.title.localeCompare(b.title));
+      case 'cuisine':
+        return list.sort((a, b) => (a.cuisine ?? '').localeCompare(b.cuisine ?? ''));
+      case 'course':
+        return list.sort((a, b) => (a.course ?? '').localeCompare(b.course ?? ''));
+      default:
+        return list;
+    }
+  }, [recipes, sortMode]);
 
   if (loading && recipes.length === 0) return <Loading message="Loading recipes..." />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
-      <View style={{ padding: 16, paddingBottom: 8 }}>
-        <TextInput
-          value={searchQuery}
-          onChangeText={setSearch}
-          placeholder="Search recipes..."
-          placeholderTextColor={colors.textSecondary}
+      <ChefsBookHeader />
+
+      {/* Subheader: count + search link + sort */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
+        {/* Tappable search bar (navigates to Search tab) */}
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/search')}
           style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
             backgroundColor: colors.bgBase,
             borderWidth: 1,
             borderColor: colors.borderDefault,
-            borderRadius: 10,
-            padding: 12,
-            fontSize: 15,
-            color: colors.textPrimary,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
           }}
-        />
+        >
+          <Ionicons name="search" size={18} color={colors.textMuted} />
+          <Text style={{ color: colors.textMuted, fontSize: 15, marginLeft: 8 }}>Search recipes...</Text>
+        </TouchableOpacity>
+
+        {/* Sort button */}
+        <View style={{ position: 'relative' }}>
+          <TouchableOpacity
+            onPress={() => setShowSortMenu(!showSortMenu)}
+            style={{ marginLeft: 12, padding: 8, minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons name="swap-vertical" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+
+          {showSortMenu && (
+            <View
+              style={{
+                position: 'absolute',
+                top: 44,
+                right: 0,
+                backgroundColor: colors.bgCard,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: colors.borderDefault,
+                shadowColor: '#000',
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 4,
+                zIndex: 100,
+                minWidth: 150,
+              }}
+            >
+              {([
+                { key: 'recent', label: 'Recent' },
+                { key: 'alpha', label: 'A-Z' },
+                { key: 'cuisine', label: 'Cuisine' },
+                { key: 'course', label: 'Course' },
+              ] as const).map((opt) => (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={() => { setSortMode(opt.key); setShowSortMenu(false); }}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    minHeight: 44,
+                    borderBottomWidth: opt.key === 'course' ? 0 : 1,
+                    borderBottomColor: colors.borderDefault,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: sortMode === opt.key ? colors.accent : colors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: sortMode === opt.key ? '600' : '400',
+                    }}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal: 16, maxHeight: 50 }}>
-        <Chip label="All" selected={!filterCourse} onPress={() => setFilterCourse(null)} />
-        {COURSES.map((c) => (
-          <Chip key={c} label={c} selected={filterCourse === c} onPress={() => setFilterCourse(filterCourse === c ? null : c)} />
-        ))}
-      </ScrollView>
+
+      {/* Recipe count */}
+      <Text style={{ color: colors.textMuted, fontSize: 12, paddingHorizontal: 16, marginBottom: 8 }}>
+        {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
+      </Text>
+
       <FlashList
-        data={recipes}
-        contentContainerStyle={{ padding: 16 }}
+        data={sorted}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBarHeight }}
         renderItem={({ item }) => (
           <RecipeCard
             title={item.title}
@@ -67,10 +148,10 @@ export default function RecipesTab() {
         )}
         ListEmptyComponent={
           <EmptyState
-            icon={'\uD83D\uDCD6'}
-            title="No recipes yet"
-            message="Scan a recipe, import from a URL, or add one manually."
-            action={{ label: 'Add Recipe', onPress: () => router.push('/recipe/new') }}
+            icon="👨‍🍳"
+            title="Your recipe collection is empty"
+            message="Import your first recipe to get started."
+            action={{ label: 'Import a Recipe', onPress: () => router.push('/(tabs)/scan') }}
           />
         }
       />

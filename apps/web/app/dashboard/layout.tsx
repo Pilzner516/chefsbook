@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router]);
 
   if (checking) {
-    return <div className="min-h-screen flex items-center justify-center text-cb-muted">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-cb-secondary">Loading...</div>;
   }
 
   return (

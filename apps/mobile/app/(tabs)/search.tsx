@@ -1,0 +1,608 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuthStore } from '../../lib/zustand/authStore';
+import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient } from '@chefsbook/db';
+import type { Recipe } from '@chefsbook/db';
+import { DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST } from '@chefsbook/ui';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
+import { ChefsBookHeader } from '../../components/ChefsBookHeader';
+import { RecipeCard, EmptyState, Loading } from '../../components/UIKit';
+
+type SearchMode = 'my' | 'discover';
+
+interface ActiveFilter {
+  type: string;
+  value: string;
+  label: string;
+}
+
+const CATEGORIES: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { key: 'cuisine', label: 'Cuisine', icon: 'earth-outline' },
+  { key: 'course', label: 'Course', icon: 'restaurant-outline' },
+  { key: 'ingredient', label: 'Ingredient', icon: 'nutrition-outline' },
+  { key: 'dietary', label: 'Dietary', icon: 'leaf-outline' },
+  { key: 'tags', label: 'Tags', icon: 'pricetag-outline' },
+  { key: 'time', label: 'Cook Time', icon: 'time-outline' },
+  { key: 'source', label: 'Source', icon: 'link-outline' },
+  { key: 'favourites', label: 'Favourites', icon: 'heart-outline' },
+];
+
+const DISCOVER_CATEGORIES: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { key: 'cuisine', label: 'Cuisine', icon: 'earth-outline' },
+  { key: 'course', label: 'Course', icon: 'restaurant-outline' },
+  { key: 'dietary', label: 'Dietary', icon: 'leaf-outline' },
+];
+
+// Use CUISINE_LIST and COURSE_LIST from @chefsbook/ui
+const TIME_OPTIONS = [
+  { label: 'Under 15 min', value: 15 },
+  { label: 'Under 30 min', value: 30 },
+  { label: 'Under 60 min', value: 60 },
+  { label: 'Under 2 hours', value: 120 },
+];
+const SOURCE_OPTIONS = ['url', 'scan', 'manual', 'voice', 'youtube'];
+
+export default function SearchTab() {
+  const { colors } = useTheme();
+  const router = useRouter();
+  const session = useAuthStore((s) => s.session);
+  const searchRef = useRef<TextInput>(null);
+
+  const [mode, setMode] = useState<SearchMode>('my');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [cloning, setCloning] = useState<string | null>(null);
+  const tabBarHeight = useTabBarHeight();
+  const [ingredientInput, setIngredientInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
+
+  // Reset state when switching modes
+  const switchMode = (newMode: SearchMode) => {
+    setMode(newMode);
+    setQuery('');
+    setResults([]);
+    setHasSearched(false);
+    setActiveFilters([]);
+    setExpandedCategory(null);
+  };
+
+  const filterParams = useCallback(() => {
+    const params: Record<string, any> = {};
+    for (const f of activeFilters) {
+      if (f.type === 'cuisine') params.cuisine = f.value;
+      if (f.type === 'course') params.course = f.value;
+      if (f.type === 'time') params.maxTime = parseInt(f.value);
+      if (f.type === 'source') params.sourceType = f.value;
+      if (f.type === 'tags') {
+        params.tags = params.tags ? [...params.tags, f.value] : [f.value];
+      }
+      if (f.type === 'favourites') params.favouritesOnly = true;
+    }
+    return params;
+  }, [activeFilters]);
+
+  const doSearch = useCallback(async () => {
+    if (!session?.user?.id) return;
+    if (!query.trim() && activeFilters.length === 0) {
+      setResults([]);
+      setHasSearched(false);
+      return;
+    }
+    setLoading(true);
+    setHasSearched(true);
+    const params = filterParams();
+
+    // Ingredient filter: search by ingredient first, then intersect
+    const ingredientFilters = activeFilters.filter((f) => f.type === 'ingredient');
+    const dietaryFilters = activeFilters.filter((f) => f.type === 'dietary');
+
+    if (mode === 'my') {
+      let data: Recipe[];
+      if (ingredientFilters.length > 0) {
+        // Search by first ingredient, then client-filter by remaining
+        data = await searchByIngredient(ingredientFilters[0].value, session.user.id);
+        for (let i = 1; i < ingredientFilters.length; i++) {
+          const more = await searchByIngredient(ingredientFilters[i].value, session.user.id);
+          const ids = new Set(more.map((r) => r.id));
+          data = data.filter((r) => ids.has(r.id));
+        }
+        // Apply text search filter client-side
+        if (query.trim()) {
+          const q = query.trim().toLowerCase();
+          data = data.filter((r) => r.title.toLowerCase().includes(q));
+        }
+        // Apply other filters client-side
+        if (params.cuisine) data = data.filter((r) => r.cuisine === params.cuisine);
+        if (params.course) data = data.filter((r) => r.course === params.course);
+      } else {
+        data = await listRecipes({
+          userId: session.user.id,
+          search: query.trim() || undefined,
+          ...params,
+        });
+      }
+      // Dietary filter: client-side filter on dietary_flags array
+      if (dietaryFilters.length > 0) {
+        data = data.filter((r) =>
+          dietaryFilters.every((f) => (r.dietary_flags ?? []).includes(f.value))
+        );
+      }
+      setResults(data);
+    } else {
+      const data = await listPublicRecipes({
+        search: query.trim() || undefined,
+        cuisine: params.cuisine,
+        course: params.course,
+      });
+      // Dietary filter for discover mode
+      let filtered = data;
+      if (dietaryFilters.length > 0) {
+        filtered = data.filter((r) =>
+          dietaryFilters.every((f) => (r.dietary_flags ?? []).includes(f.value))
+        );
+      }
+      setResults(filtered);
+    }
+    setLoading(false);
+  }, [session?.user?.id, query, activeFilters, filterParams, mode]);
+
+  useEffect(() => {
+    const timeout = setTimeout(doSearch, 300);
+    return () => clearTimeout(timeout);
+  }, [query, activeFilters]);
+
+  // Auto-load discover feed on mode switch
+  useEffect(() => {
+    if (mode === 'discover' && !hasSearched && results.length === 0) {
+      (async () => {
+        setLoading(true);
+        const data = await listPublicRecipes({ limit: 50 });
+        setResults(data);
+        setHasSearched(true);
+        setLoading(false);
+      })();
+    }
+  }, [mode]);
+
+  const handleClone = async (recipeId: string) => {
+    if (!session?.user?.id) return;
+    setCloning(recipeId);
+    try {
+      await cloneRecipe(recipeId, session.user.id);
+      Alert.alert('Added!', 'Recipe added to your collection.');
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Failed to clone recipe');
+    }
+    setCloning(null);
+  };
+
+  const addFilter = (type: string, value: string, label: string) => {
+    if (['cuisine', 'course', 'time', 'source', 'favourites'].includes(type)) {
+      setActiveFilters((prev) => [...prev.filter((f) => f.type !== type), { type, value, label }]);
+    } else {
+      // Tags, dietary, and ingredient can have multiple
+      if (activeFilters.some((f) => f.type === type && f.value === value)) return;
+      setActiveFilters((prev) => [...prev, { type, value, label }]);
+    }
+    setExpandedCategory(null);
+  };
+
+  const removeFilter = (type: string, value: string) => {
+    setActiveFilters((prev) => prev.filter((f) => !(f.type === type && f.value === value)));
+  };
+
+  const getSubcategoryOptions = (key: string) => {
+    switch (key) {
+      case 'cuisine': return CUISINE_LIST.map((v) => ({ label: v, value: v }));
+      case 'course': return COURSE_LIST.map((v) => ({ label: v, value: v.toLowerCase() }));
+      case 'time': return TIME_OPTIONS.map((v) => ({ label: v.label, value: String(v.value) }));
+      case 'source': return SOURCE_OPTIONS.map((v) => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }));
+      case 'favourites': return [{ label: 'Favourites only', value: 'true' }];
+      case 'dietary': return DIETARY_FLAGS.map((f) => ({ label: `${f.emoji} ${f.label}`, value: f.key }));
+      case 'ingredient': return []; // ingredient uses text input, not chips
+      case 'tags': return []; // tags use text input
+      default: return [];
+    }
+  };
+
+  const categories = mode === 'my' ? CATEGORIES : DISCOVER_CATEGORIES;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <ChefsBookHeader />
+
+      {/* Segmented toggle: My Recipes / Discover */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: colors.bgBase,
+            borderRadius: 22,
+            borderWidth: 1,
+            borderColor: colors.borderDefault,
+            height: 44,
+            overflow: 'hidden',
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => switchMode('my')}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: mode === 'my' ? colors.accent : 'transparent',
+              borderRadius: 22,
+              margin: 2,
+            }}
+          >
+            <Text
+              style={{
+                color: mode === 'my' ? '#ffffff' : colors.textSecondary,
+                fontSize: 14,
+                fontWeight: '600',
+              }}
+            >
+              My Recipes
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => switchMode('discover')}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: mode === 'discover' ? colors.accent : 'transparent',
+              borderRadius: 22,
+              margin: 2,
+            }}
+          >
+            <Text
+              style={{
+                color: mode === 'discover' ? '#ffffff' : colors.textSecondary,
+                fontSize: 14,
+                fontWeight: '600',
+              }}
+            >
+              Discover
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Search bar */}
+      <View style={{ padding: 16, paddingBottom: 8 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.bgBase,
+            borderWidth: 1,
+            borderColor: colors.borderDefault,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+          }}
+        >
+          <Ionicons name="search" size={20} color={colors.textMuted} />
+          <TextInput
+            ref={searchRef}
+            value={query}
+            onChangeText={setQuery}
+            placeholder={mode === 'my' ? 'Search recipes...' : 'Discover recipes...'}
+            placeholderTextColor={colors.textMuted}
+            style={{
+              flex: 1,
+              paddingVertical: 12,
+              paddingLeft: 8,
+              fontSize: 15,
+              color: colors.textPrimary,
+            }}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')} style={{ padding: 4 }}>
+              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Active filter pills */}
+      {activeFilters.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ paddingHorizontal: 16, maxHeight: 44, marginBottom: 8 }}
+        >
+          {activeFilters.map((f) => (
+            <TouchableOpacity
+              key={`${f.type}-${f.value}`}
+              onPress={() => removeFilter(f.type, f.value)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.accentSoft,
+                borderRadius: 20,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                marginRight: 8,
+                minHeight: 32,
+              }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{f.label}</Text>
+              <Ionicons name="close" size={14} color={colors.accent} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity
+            onPress={() => setActiveFilters([])}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              minHeight: 32,
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Clear all</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+
+      <ScrollView style={{ flex: 1 }}>
+        {/* Category cards (show when no search active) */}
+        {!hasSearched && (
+          <View style={{ padding: 16, paddingTop: 8 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
+              {mode === 'my' ? 'Browse by Category' : 'Explore by Category'}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.key}
+                  onPress={() => setExpandedCategory(expandedCategory === cat.key ? null : cat.key)}
+                  style={{
+                    width: '47%',
+                    backgroundColor: colors.bgCard,
+                    borderRadius: 12,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: expandedCategory === cat.key ? colors.accent : colors.borderDefault,
+                    shadowColor: '#000',
+                    shadowOpacity: 0.06,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 2 },
+                    elevation: 2,
+                    minHeight: 44,
+                  }}
+                >
+                  <Ionicons
+                    name={cat.icon}
+                    size={24}
+                    color={expandedCategory === cat.key ? colors.accent : colors.textSecondary}
+                  />
+                  <Text
+                    style={{
+                      color: expandedCategory === cat.key ? colors.accent : colors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: '600',
+                      marginTop: 8,
+                    }}
+                  >
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Expanded subcategory chips or text input */}
+            {expandedCategory && (
+              <View style={{ marginTop: 16 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>
+                  {categories.find((c) => c.key === expandedCategory)?.label}
+                </Text>
+
+                {/* Ingredient: text input */}
+                {expandedCategory === 'ingredient' && (
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TextInput
+                      value={ingredientInput}
+                      onChangeText={setIngredientInput}
+                      placeholder="e.g. chicken, tahini..."
+                      placeholderTextColor={colors.textMuted}
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        if (ingredientInput.trim()) {
+                          addFilter('ingredient', ingredientInput.trim().toLowerCase(), `🥕 ${ingredientInput.trim()}`);
+                          setIngredientInput('');
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        backgroundColor: colors.bgBase,
+                        borderRadius: 8,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        fontSize: 14,
+                        color: colors.textPrimary,
+                        borderWidth: 1,
+                        borderColor: colors.borderDefault,
+                      }}
+                    />
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (ingredientInput.trim()) {
+                          addFilter('ingredient', ingredientInput.trim().toLowerCase(), `🥕 ${ingredientInput.trim()}`);
+                          setIngredientInput('');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: ingredientInput.trim() ? colors.accent : colors.bgBase,
+                        borderRadius: 8,
+                        paddingHorizontal: 16,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ color: ingredientInput.trim() ? '#ffffff' : colors.textSecondary, fontWeight: '600', fontSize: 14 }}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Tags: text input */}
+                {expandedCategory === 'tags' && (
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TextInput
+                      value={tagInput}
+                      onChangeText={setTagInput}
+                      placeholder="Search by tag..."
+                      placeholderTextColor={colors.textMuted}
+                      autoCapitalize="none"
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        if (tagInput.trim()) {
+                          addFilter('tags', tagInput.trim().toLowerCase(), `🏷 ${tagInput.trim()}`);
+                          setTagInput('');
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        backgroundColor: colors.bgBase,
+                        borderRadius: 8,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        fontSize: 14,
+                        color: colors.textPrimary,
+                        borderWidth: 1,
+                        borderColor: colors.borderDefault,
+                      }}
+                    />
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (tagInput.trim()) {
+                          addFilter('tags', tagInput.trim().toLowerCase(), `🏷 ${tagInput.trim()}`);
+                          setTagInput('');
+                        }
+                      }}
+                      style={{
+                        backgroundColor: tagInput.trim() ? colors.accent : colors.bgBase,
+                        borderRadius: 8,
+                        paddingHorizontal: 16,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ color: tagInput.trim() ? '#ffffff' : colors.textSecondary, fontWeight: '600', fontSize: 14 }}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Standard chip options (cuisine, course, dietary, etc.) */}
+                {expandedCategory !== 'ingredient' && expandedCategory !== 'tags' && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {getSubcategoryOptions(expandedCategory).map((opt) => {
+                    const isActive = activeFilters.some(
+                      (f) => f.type === expandedCategory && f.value === opt.value
+                    );
+                    return (
+                      <TouchableOpacity
+                        key={opt.value}
+                        onPress={() =>
+                          isActive
+                            ? removeFilter(expandedCategory, opt.value)
+                            : addFilter(expandedCategory, opt.value, opt.label)
+                        }
+                        style={{
+                          backgroundColor: isActive ? colors.accent : colors.bgBase,
+                          borderRadius: 20,
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          minHeight: 36,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: isActive ? '#ffffff' : colors.textPrimary,
+                            fontSize: 13,
+                            fontWeight: isActive ? '600' : '400',
+                          }}
+                        >
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Results */}
+        {loading && <Loading message="Searching..." />}
+
+        {hasSearched && !loading && (
+          <View style={{ padding: 16, paddingTop: 0 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 12 }}>
+              {results.length} {results.length === 1 ? 'recipe' : 'recipes'} found
+            </Text>
+            {results.length === 0 ? (
+              mode === 'discover' ? (
+                <EmptyState
+                  icon="🌍"
+                  title="No public recipes yet"
+                  message="Be the first to share one!"
+                />
+              ) : (
+                <EmptyState
+                  icon="🔍"
+                  title="No recipes match"
+                  message="Try different filters or search terms."
+                />
+              )
+            ) : (
+              results.map((recipe) => (
+                <View key={recipe.id} style={{ marginBottom: mode === 'discover' ? 4 : 0 }}>
+                  <RecipeCard
+                    title={recipe.title}
+                    imageUrl={recipe.image_url}
+                    cuisine={recipe.cuisine}
+                    totalMinutes={recipe.total_minutes}
+                    isFavourite={mode === 'my' ? recipe.is_favourite : undefined}
+                    onPress={() => router.push(`/recipe/${recipe.id}`)}
+                  />
+                  {mode === 'discover' && recipe.user_id !== session?.user?.id && (
+                    <TouchableOpacity
+                      onPress={() => handleClone(recipe.id)}
+                      disabled={cloning === recipe.id}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colors.accentGreenSoft,
+                        borderRadius: 8,
+                        paddingVertical: 8,
+                        marginBottom: 12,
+                        marginTop: -4,
+                        opacity: cloning === recipe.id ? 0.5 : 1,
+                      }}
+                    >
+                      <Ionicons name="add-circle-outline" size={18} color={colors.accentGreen} />
+                      <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
+                        {cloning === recipe.id ? 'Adding...' : 'Add to my collection'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        <View style={{ height: tabBarHeight }} />
+      </ScrollView>
+    </View>
+  );
+}

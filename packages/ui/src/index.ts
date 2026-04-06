@@ -1,5 +1,12 @@
 import React from 'react';
 
+// Shared theme — single source of truth for both apps
+export { TRATTORIA_COLORS } from './theme';
+export type { TrattoriaColor } from './theme';
+
+// Shared constants
+export { DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST } from './constants';
+
 // Shared formatting utilities used by both mobile and web apps
 
 export function formatDuration(minutes: number | null | undefined): string {

@@ -58,7 +58,7 @@ export default function PricingPage() {
           <span className="text-cb-primary">Chefs</span>book
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-cb-muted hover:text-cb-text text-sm font-medium">
+          <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
             Dashboard
           </Link>
         </div>
@@ -66,7 +66,7 @@ export default function PricingPage() {
 
       <section className="max-w-5xl mx-auto py-20 px-6">
         <h1 className="text-4xl font-bold text-center mb-4">Simple, honest pricing</h1>
-        <p className="text-cb-muted text-center mb-16 text-lg">
+        <p className="text-cb-secondary text-center mb-16 text-lg">
           Start free. Upgrade when you need more.
         </p>
 
@@ -88,11 +88,11 @@ export default function PricingPage() {
               <h2 className="text-xl font-bold mb-2">{tier.name}</h2>
               <div className="mb-6">
                 <span className="text-3xl font-bold">{tier.price}</span>
-                <span className="text-cb-muted text-sm ml-1">{tier.period}</span>
+                <span className="text-cb-secondary text-sm ml-1">{tier.period}</span>
               </div>
               <ul className="flex-1 space-y-3 mb-8">
                 {tier.features.map((f) => (
-                  <li key={f} className="text-sm text-cb-muted flex items-start gap-2">
+                  <li key={f} className="text-sm text-cb-secondary flex items-start gap-2">
                     <svg
                       className="w-4 h-4 text-cb-green mt-0.5 shrink-0"
                       fill="none"
@@ -120,7 +120,7 @@ export default function PricingPage() {
           ))}
         </div>
 
-        <p className="text-center text-cb-muted text-sm mt-12">
+        <p className="text-center text-cb-secondary text-sm mt-12">
           All plans include a 14-day free trial. Cancel anytime. Prices in USD.
         </p>
       </section>

@@ -153,17 +153,17 @@ export default function MenuTemplatesPage() {
           <div className="flex items-center gap-2 mb-1">
             <Link
               href="/dashboard/plan"
-              className="text-cb-muted hover:text-cb-text text-sm"
+              className="text-cb-secondary hover:text-cb-text text-sm"
             >
               Meal Plan
             </Link>
-            <svg className="w-3 h-3 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3 h-3 text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
             </svg>
             <span className="text-sm font-medium">Templates</span>
           </div>
           <h1 className="text-2xl font-bold">Menu Templates</h1>
-          <p className="text-cb-muted text-sm mt-1">
+          <p className="text-cb-secondary text-sm mt-1">
             Save weekly menus as templates and deploy them to your meal planner in one click.
           </p>
         </div>
@@ -187,7 +187,7 @@ export default function MenuTemplatesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="text-sm font-medium text-cb-muted block mb-1">
+              <label className="text-sm font-medium text-cb-secondary block mb-1">
                 Template name
               </label>
               <input
@@ -195,11 +195,11 @@ export default function MenuTemplatesPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Mediterranean Week"
-                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-cb-muted block mb-1">
+              <label className="text-sm font-medium text-cb-secondary block mb-1">
                 Description (optional)
               </label>
               <input
@@ -207,7 +207,7 @@ export default function MenuTemplatesPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Quick weeknight meals with Mediterranean flavours"
-                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-2.5 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
               />
             </div>
           </div>
@@ -217,7 +217,7 @@ export default function MenuTemplatesPage() {
             <p className="text-sm font-medium mb-3">Add a meal slot</p>
             <div className="flex flex-wrap gap-3 items-end">
               <div>
-                <label className="text-xs text-cb-muted block mb-1">Day</label>
+                <label className="text-xs text-cb-secondary block mb-1">Day</label>
                 <select
                   value={addSlotDay}
                   onChange={(e) => setAddSlotDay(Number(e.target.value))}
@@ -231,7 +231,7 @@ export default function MenuTemplatesPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-cb-muted block mb-1">Meal</label>
+                <label className="text-xs text-cb-secondary block mb-1">Meal</label>
                 <select
                   value={addSlotMeal}
                   onChange={(e) => setAddSlotMeal(e.target.value as MealSlot)}
@@ -245,7 +245,7 @@ export default function MenuTemplatesPage() {
                 </select>
               </div>
               <div className="flex-1 min-w-[200px]">
-                <label className="text-xs text-cb-muted block mb-1">Recipe</label>
+                <label className="text-xs text-cb-secondary block mb-1">Recipe</label>
                 <select
                   value={addSlotRecipe}
                   onChange={(e) => setAddSlotRecipe(e.target.value)}
@@ -272,7 +272,7 @@ export default function MenuTemplatesPage() {
           {/* Slots preview */}
           {slots.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs text-cb-muted font-medium uppercase tracking-wide mb-2">
+              <p className="text-xs text-cb-secondary font-medium uppercase tracking-wide mb-2">
                 {slots.length} meal{slots.length !== 1 ? 's' : ''} in template
               </p>
               <div className="grid grid-cols-7 gap-2">
@@ -280,7 +280,7 @@ export default function MenuTemplatesPage() {
                   const daySlots = slots.filter((s) => s.day === dayIndex);
                   return (
                     <div key={day} className="bg-cb-bg rounded-input p-2 min-h-[80px]">
-                      <p className="text-xs font-semibold text-cb-muted mb-1">{day}</p>
+                      <p className="text-xs font-semibold text-cb-secondary mb-1">{day}</p>
                       {daySlots.map((slot, i) => {
                         const globalIndex = slots.indexOf(slot);
                         return (
@@ -296,7 +296,7 @@ export default function MenuTemplatesPage() {
                             </div>
                             <button
                               onClick={() => handleRemoveSlot(globalIndex)}
-                              className="text-cb-muted hover:text-cb-primary opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0"
+                              className="text-cb-secondary hover:text-cb-primary opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0"
                             >
                               &times;
                             </button>
@@ -326,7 +326,7 @@ export default function MenuTemplatesPage() {
                 setDescription('');
                 setSlots([]);
               }}
-              className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text transition-colors"
+              className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors"
             >
               Cancel
             </button>
@@ -343,7 +343,7 @@ export default function MenuTemplatesPage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold mb-2">No templates yet</h2>
-          <p className="text-cb-muted text-sm mb-6">
+          <p className="text-cb-secondary text-sm mb-6">
             Create a weekly menu template to quickly populate your meal planner.
           </p>
           <button
@@ -364,12 +364,12 @@ export default function MenuTemplatesPage() {
                 <div>
                   <h3 className="font-semibold">{template.name}</h3>
                   {template.description && (
-                    <p className="text-cb-muted text-sm mt-0.5">{template.description}</p>
+                    <p className="text-cb-secondary text-sm mt-0.5">{template.description}</p>
                   )}
                 </div>
                 <button
                   onClick={() => handleDeleteTemplate(template.id)}
-                  className="text-cb-muted hover:text-cb-primary text-sm"
+                  className="text-cb-secondary hover:text-cb-primary text-sm"
                   title="Delete template"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -384,12 +384,12 @@ export default function MenuTemplatesPage() {
                   const count = template.slots.filter((s) => s.day === i).length;
                   return (
                     <div key={day} className="text-center">
-                      <p className="text-[10px] text-cb-muted">{day}</p>
+                      <p className="text-[10px] text-cb-secondary">{day}</p>
                       <div
                         className={`w-full h-6 rounded flex items-center justify-center text-xs ${
                           count > 0
                             ? 'bg-cb-primary/10 text-cb-primary font-medium'
-                            : 'bg-cb-bg text-cb-muted/50'
+                            : 'bg-cb-bg text-cb-secondary/50'
                         }`}
                       >
                         {count > 0 ? count : '-'}
@@ -399,7 +399,7 @@ export default function MenuTemplatesPage() {
                 })}
               </div>
 
-              <p className="text-xs text-cb-muted mb-4">
+              <p className="text-xs text-cb-secondary mb-4">
                 {template.slots.length} meal{template.slots.length !== 1 ? 's' : ''} across{' '}
                 {new Set(template.slots.map((s) => s.day)).size} days
               </p>

@@ -3,9 +3,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, listRecipes, listTechniques } from '@chefsbook/db';
+import { supabase, listRecipes, listTechniques, searchByIngredient } from '@chefsbook/db';
 import type { Recipe, Technique } from '@chefsbook/db';
-import { formatDuration } from '@chefsbook/ui';
+import { formatDuration, DIETARY_FLAGS } from '@chefsbook/ui';
 
 const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread'];
 const SOURCES = [
@@ -38,6 +38,9 @@ export default function SearchPage() {
   const [tagFilter, setTagFilter] = useState('');
   const [timeFilter, setTimeFilter] = useState(0);
   const [sort, setSort] = useState<'relevance' | 'newest' | 'az' | 'time'>('relevance');
+  const [ingredientFilter, setIngredientFilter] = useState('');
+  const [ingredientPills, setIngredientPills] = useState<string[]>([]);
+  const [dietaryFilters, setDietaryFilters] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => { if (user) setUserId(user.id); });
@@ -48,7 +51,7 @@ export default function SearchPage() {
       const timer = setTimeout(() => search(), 300);
       return () => clearTimeout(timer);
     }
-  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, userId]);
+  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId]);
 
   // Auto-tag state
   const [taggingCount, setTaggingCount] = useState<number | null>(null);
@@ -87,8 +90,26 @@ export default function SearchPage() {
   const search = async () => {
     if (!userId) return;
     setLoading(true);
-    const [recipeResults, techResults] = await Promise.all([
-      listRecipes({
+
+    let recipeResults: Recipe[];
+
+    if (ingredientPills.length > 0) {
+      // Ingredient search: intersect results
+      recipeResults = await searchByIngredient(ingredientPills[0], userId);
+      for (let i = 1; i < ingredientPills.length; i++) {
+        const more = await searchByIngredient(ingredientPills[i], userId);
+        const ids = new Set(more.map((r) => r.id));
+        recipeResults = recipeResults.filter((r) => ids.has(r.id));
+      }
+      // Apply text search client-side
+      if (query) {
+        const q = query.toLowerCase();
+        recipeResults = recipeResults.filter((r) => r.title.toLowerCase().includes(q));
+      }
+      if (cuisineFilter) recipeResults = recipeResults.filter((r) => r.cuisine === cuisineFilter);
+      if (courseFilter) recipeResults = recipeResults.filter((r) => r.course === courseFilter);
+    } else {
+      recipeResults = await listRecipes({
         userId,
         search: query || undefined,
         cuisine: cuisineFilter || undefined,
@@ -97,9 +118,17 @@ export default function SearchPage() {
         sourceType: sourceFilter || undefined,
         tags: tagFilter ? [tagFilter] : undefined,
         limit: 100,
-      }),
-      query ? listTechniques({ userId, search: query, limit: 20 }) : Promise.resolve([]),
-    ]);
+      });
+    }
+
+    // Dietary filter
+    if (dietaryFilters.length > 0) {
+      recipeResults = recipeResults.filter((r) =>
+        dietaryFilters.every((f) => (r.dietary_flags ?? []).includes(f))
+      );
+    }
+
+    const techResults = query ? await listTechniques({ userId, search: query, limit: 20 }) : [];
     setRecipes(recipeResults);
     setTechniques(techResults);
     setLoading(false);
@@ -128,6 +157,11 @@ export default function SearchPage() {
     sourceFilter && { label: SOURCES.find((s) => s.value === sourceFilter)?.label ?? sourceFilter, clear: () => setSourceFilter('') },
     tagFilter && { label: tagFilter, clear: () => setTagFilter('') },
     timeFilter > 0 && { label: TIME_FILTERS.find((t) => t.value === timeFilter)?.label ?? '', clear: () => setTimeFilter(0) },
+    ...ingredientPills.map((ing) => ({ label: `🥕 ${ing}`, clear: () => setIngredientPills((p) => p.filter((i) => i !== ing)) })),
+    ...dietaryFilters.map((d) => {
+      const info = DIETARY_FLAGS.find((f) => f.key === d);
+      return { label: `${info?.emoji ?? ''} ${info?.label ?? d}`, clear: () => setDietaryFilters((prev) => prev.filter((f) => f !== d)) };
+    }),
   ].filter(Boolean) as { label: string; clear: () => void }[];
 
   return (
@@ -136,54 +170,97 @@ export default function SearchPage() {
       <div className="w-[260px] shrink-0 space-y-4 hidden lg:block">
         {/* Cuisine */}
         <div>
-          <h3 className="text-xs font-bold text-cb-muted uppercase tracking-wide mb-2">Cuisine</h3>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cuisine</h3>
           <div className="space-y-0.5">
-            <button onClick={() => setCuisineFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!cuisineFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>All Cuisines</button>
+            <button onClick={() => setCuisineFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!cuisineFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Cuisines</button>
             {allCuisines.map((c) => (
-              <button key={c} onClick={() => setCuisineFilter(c!)} className={`block text-sm w-full text-left px-2 py-1 rounded ${cuisineFilter === c ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>{c}</button>
+              <button key={c} onClick={() => setCuisineFilter(c!)} className={`block text-sm w-full text-left px-2 py-1 rounded ${cuisineFilter === c ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{c}</button>
             ))}
           </div>
         </div>
 
         {/* Course */}
         <div>
-          <h3 className="text-xs font-bold text-cb-muted uppercase tracking-wide mb-2">Course</h3>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Course</h3>
           <div className="space-y-0.5">
-            <button onClick={() => setCourseFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!courseFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>All Courses</button>
+            <button onClick={() => setCourseFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!courseFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Courses</button>
             {COURSES.map((c) => (
-              <button key={c} onClick={() => setCourseFilter(c)} className={`block text-sm w-full text-left px-2 py-1 rounded ${courseFilter === c ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>{c.charAt(0).toUpperCase() + c.slice(1)}</button>
+              <button key={c} onClick={() => setCourseFilter(c)} className={`block text-sm w-full text-left px-2 py-1 rounded ${courseFilter === c ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{c.charAt(0).toUpperCase() + c.slice(1)}</button>
             ))}
           </div>
         </div>
 
         {/* Source */}
         <div>
-          <h3 className="text-xs font-bold text-cb-muted uppercase tracking-wide mb-2">Source</h3>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Source</h3>
           <div className="space-y-0.5">
-            <button onClick={() => setSourceFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!sourceFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>All Sources</button>
+            <button onClick={() => setSourceFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!sourceFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Sources</button>
             {SOURCES.map((s) => (
-              <button key={s.value} onClick={() => setSourceFilter(s.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${sourceFilter === s.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>{s.label}</button>
+              <button key={s.value} onClick={() => setSourceFilter(s.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${sourceFilter === s.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{s.label}</button>
             ))}
           </div>
         </div>
 
         {/* Tags */}
         <div>
-          <h3 className="text-xs font-bold text-cb-muted uppercase tracking-wide mb-2">Tags</h3>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Tags</h3>
           <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-            <button onClick={() => setTagFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!tagFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>All Tags</button>
+            <button onClick={() => setTagFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!tagFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Tags</button>
             {allTags.slice(0, 20).map(([tag, count]) => (
-              <button key={tag} onClick={() => setTagFilter(tag)} className={`block text-sm w-full text-left px-2 py-1 rounded ${tagFilter === tag ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>{tag} <span className="text-[10px] text-cb-muted">({count})</span></button>
+              <button key={tag} onClick={() => setTagFilter(tag)} className={`block text-sm w-full text-left px-2 py-1 rounded ${tagFilter === tag ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{tag} <span className="text-[10px] text-cb-secondary">({count})</span></button>
+            ))}
+          </div>
+        </div>
+
+        {/* Ingredient search */}
+        <div>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Ingredient</h3>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const val = ingredientFilter.trim().toLowerCase();
+            if (val && !ingredientPills.includes(val)) {
+              setIngredientPills((p) => [...p, val]);
+              setIngredientFilter('');
+            }
+          }} className="flex gap-1 mb-1">
+            <input
+              value={ingredientFilter}
+              onChange={(e) => setIngredientFilter(e.target.value)}
+              placeholder="e.g. chicken..."
+              className="flex-1 bg-cb-bg border border-cb-border rounded-input px-2 py-1 text-sm outline-none focus:border-cb-primary min-w-0"
+            />
+            <button type="submit" className="text-cb-primary text-sm font-medium px-2">+</button>
+          </form>
+          {ingredientPills.map((ing) => (
+            <button key={ing} onClick={() => setIngredientPills((p) => p.filter((i) => i !== ing))} className="inline-flex items-center gap-1 bg-cb-primary/10 text-cb-primary text-xs font-medium px-2 py-0.5 rounded-full mr-1 mb-1 hover:bg-cb-primary/20">
+              🥕 {ing}
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+          ))}
+        </div>
+
+        {/* Dietary Restrictions */}
+        <div>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Dietary</h3>
+          <div className="flex flex-wrap gap-1">
+            {DIETARY_FLAGS.map((flag) => (
+              <button
+                key={flag.key}
+                onClick={() => setDietaryFilters((prev) => prev.includes(flag.key) ? prev.filter((f) => f !== flag.key) : [...prev, flag.key])}
+                className={`text-xs px-2 py-1 rounded-full ${dietaryFilters.includes(flag.key) ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+              >
+                {flag.emoji} {flag.label}
+              </button>
             ))}
           </div>
         </div>
 
         {/* Cook time */}
         <div>
-          <h3 className="text-xs font-bold text-cb-muted uppercase tracking-wide mb-2">Cook Time</h3>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cook Time</h3>
           <div className="space-y-0.5">
             {TIME_FILTERS.map((t) => (
-              <button key={t.value} onClick={() => setTimeFilter(t.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${timeFilter === t.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-muted hover:text-cb-text'}`}>{t.label}</button>
+              <button key={t.value} onClick={() => setTimeFilter(t.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${timeFilter === t.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{t.label}</button>
             ))}
           </div>
         </div>
@@ -193,20 +270,20 @@ export default function SearchPage() {
       <div className="flex-1 min-w-0">
         {/* Search bar */}
         <div className="relative mb-4">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
             placeholder="Search recipes, ingredients, tags..."
-            className="w-full bg-cb-card border border-cb-border rounded-card pl-11 pr-4 py-3.5 text-base placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+            className="w-full bg-cb-card border border-cb-border rounded-card pl-11 pr-4 py-3.5 text-base placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
           />
         </div>
 
         {/* Auto-tag button */}
         {taggingCount != null && taggingCount > 0 && !tagResult && (
           <div className="flex items-center justify-between bg-cb-bg rounded-card p-3 mb-4">
-            <p className="text-xs text-cb-muted">{taggingCount} recipe{taggingCount !== 1 ? 's' : ''} missing cuisine or course tags</p>
+            <p className="text-xs text-cb-secondary">{taggingCount} recipe{taggingCount !== 1 ? 's' : ''} missing cuisine or course tags</p>
             <button onClick={startAutoTag} disabled={tagging} className="bg-cb-primary text-white px-4 py-1.5 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5">
               {tagging ? 'Tagging...' : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>Auto-tag all</>}
             </button>
@@ -228,14 +305,14 @@ export default function SearchPage() {
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             ))}
-            <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); }} className="text-xs text-cb-muted hover:text-cb-text">Clear all</button>
+            <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); setIngredientPills([]); setDietaryFilters([]); }} className="text-xs text-cb-secondary hover:text-cb-text">Clear all</button>
           </div>
         )}
 
         {/* Result count + sort */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-cb-muted">{sorted.length} recipe{sorted.length !== 1 ? 's' : ''}{techniques.length > 0 ? ` + ${techniques.length} technique${techniques.length !== 1 ? 's' : ''}` : ''}</p>
-          <select value={sort} onChange={(e) => setSort(e.target.value as any)} className="bg-cb-card border border-cb-border rounded-input px-2 py-1.5 text-xs text-cb-muted outline-none">
+          <p className="text-sm text-cb-secondary">{sorted.length} recipe{sorted.length !== 1 ? 's' : ''}{techniques.length > 0 ? ` + ${techniques.length} technique${techniques.length !== 1 ? 's' : ''}` : ''}</p>
+          <select value={sort} onChange={(e) => setSort(e.target.value as any)} className="bg-cb-card border border-cb-border rounded-input px-2 py-1.5 text-xs text-cb-secondary outline-none">
             <option value="relevance">Relevance</option>
             <option value="newest">Newest</option>
             <option value="az">A-Z</option>
@@ -244,10 +321,10 @@ export default function SearchPage() {
         </div>
 
         {loading ? (
-          <div className="text-center text-cb-muted py-16">Searching...</div>
+          <div className="text-center text-cb-secondary py-16">Searching...</div>
         ) : sorted.length === 0 && techniques.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-cb-muted mb-2">No recipes found</p>
+            <p className="text-cb-secondary mb-2">No recipes found</p>
             {activeFilters.length > 0 && <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); }} className="text-cb-primary text-sm hover:underline">Clear all filters</button>}
           </div>
         ) : (
@@ -278,7 +355,7 @@ export default function SearchPage() {
                     </div>
                     <div className="p-3">
                       <h3 className="font-semibold text-sm mb-1 group-hover:text-cb-primary truncate">{recipe.title}</h3>
-                      <div className="flex flex-wrap gap-1 text-[10px] text-cb-muted">
+                      <div className="flex flex-wrap gap-1 text-[10px] text-cb-secondary">
                         {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded">{recipe.cuisine}</span>}
                         {recipe.course && <span className="bg-cb-green/10 text-cb-green px-1.5 py-0.5 rounded">{recipe.course}</span>}
                         {recipe.total_minutes != null && recipe.total_minutes > 0 && <span>{formatDuration(recipe.total_minutes)}</span>}

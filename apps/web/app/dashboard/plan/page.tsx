@@ -53,10 +53,10 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
       <div className="flex items-center justify-between mb-1">
         <div>
           <div className="text-sm font-bold">{dayName}</div>
-          <div className="text-xs text-cb-muted">{dateLabel}</div>
+          <div className="text-xs text-cb-secondary">{dateLabel}</div>
         </div>
         {hasRecipes && (
-          <button onClick={() => onOpenDayShop(date)} className="text-cb-muted hover:text-cb-green transition-colors" title="Add day to shopping list">
+          <button onClick={() => onOpenDayShop(date)} className="text-cb-secondary hover:text-cb-green transition-colors" title="Add day to shopping list">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg>
           </button>
         )}
@@ -69,7 +69,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
             {plan.recipe_id ? (
               /* Recipe entry */
               <div className="relative">
-                <span className={`absolute top-2 left-2 z-10 text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${SLOT_COLORS[plan.meal_slot] ?? 'bg-cb-bg text-cb-muted'}`}>
+                <span className={`absolute top-2 left-2 z-10 text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${SLOT_COLORS[plan.meal_slot] ?? 'bg-cb-bg text-cb-secondary'}`}>
                   {plan.meal_slot}
                 </span>
                 <button
@@ -95,7 +95,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
             ) : (
               /* Note entry */
               <div className="bg-amber-50 border border-amber-200 rounded-input px-2.5 py-2 group relative">
-                <span className={`text-[9px] uppercase tracking-wide font-bold ${SLOT_COLORS[plan.meal_slot] ?? 'text-cb-muted'} block mb-0.5`}>
+                <span className={`text-[9px] uppercase tracking-wide font-bold ${SLOT_COLORS[plan.meal_slot] ?? 'text-cb-secondary'} block mb-0.5`}>
                   {plan.meal_slot}
                 </span>
                 <p className="text-xs text-amber-800 flex items-center gap-1">
@@ -112,7 +112,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
 
       {/* Add buttons */}
       <div className="mt-3 flex gap-1.5">
-        <button onClick={() => onOpenPicker(date)} className="flex-1 py-2 border-2 border-dashed border-cb-border rounded-input text-xs text-cb-muted hover:border-cb-primary hover:text-cb-primary transition-colors flex items-center justify-center gap-1">
+        <button onClick={() => onOpenPicker(date)} className="flex-1 py-2 border-2 border-dashed border-cb-border rounded-input text-xs text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors flex items-center justify-center gap-1">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           Add recipe
         </button>
@@ -334,18 +334,18 @@ export default function PlanPage() {
               Add week to list
             </button>
           )}
-          <Link href="/dashboard/plan/templates" className="border border-cb-border px-4 py-2 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text hover:bg-cb-card transition-colors">Templates</Link>
+          <Link href="/dashboard/plan/templates" className="border border-cb-border px-4 py-2 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text hover:bg-cb-card transition-colors">Templates</Link>
           <div className="flex items-center gap-2 bg-cb-card border border-cb-border rounded-input px-1">
-            <button onClick={() => navigateWeek(-1)} className="px-3 py-2 text-cb-muted hover:text-cb-primary"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></button>
-            <span className="text-sm text-cb-muted px-2">{weekDates[0]} — {weekDates[6]}</span>
-            <button onClick={() => navigateWeek(1)} className="px-3 py-2 text-cb-muted hover:text-cb-primary"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg></button>
+            <button onClick={() => navigateWeek(-1)} className="px-3 py-2 text-cb-secondary hover:text-cb-primary"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></button>
+            <span className="text-sm text-cb-secondary px-2">{weekDates[0]} — {weekDates[6]}</span>
+            <button onClick={() => navigateWeek(1)} className="px-3 py-2 text-cb-secondary hover:text-cb-primary"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg></button>
           </div>
         </div>
       </div>
 
       {/* Calendar grid — Row 1: Mon-Fri, Row 2: Sat-Sun */}
       {loading ? (
-        <div className="text-center text-cb-muted py-20">Loading meal plan...</div>
+        <div className="text-center text-cb-secondary py-20">Loading meal plan...</div>
       ) : (
         <div className="space-y-3">
           {/* Row 1: Mon–Fri */}
@@ -370,7 +370,7 @@ export default function PlanPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-xs mx-4 p-5">
             <h3 className="text-sm font-bold mb-1">Add {new Date(dayShopDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })}'s meals to:</h3>
-            <p className="text-[10px] text-cb-muted mb-3">{plans.filter((p: any) => p.plan_date === dayShopDate && p.recipe_id).length} recipe{plans.filter((p: any) => p.plan_date === dayShopDate && p.recipe_id).length !== 1 ? 's' : ''}</p>
+            <p className="text-[10px] text-cb-secondary mb-3">{plans.filter((p: any) => p.plan_date === dayShopDate && p.recipe_id).length} recipe{plans.filter((p: any) => p.plan_date === dayShopDate && p.recipe_id).length !== 1 ? 's' : ''}</p>
             {shopLists.length > 0 && (
               <select value={dayShopListId} onChange={(e) => setDayShopListId(e.target.value)} className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none mb-2">
                 {shopLists.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
@@ -379,7 +379,7 @@ export default function PlanPage() {
             <div className="flex gap-2">
               <button onClick={addDayToShoppingList} disabled={addingToShop} className="flex-1 bg-cb-green text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{addingToShop ? 'Adding...' : 'Add'}</button>
               <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `${new Date(dayShopDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })} meals`); setDayShopListId(list.id); await addDayToShoppingList(); }} disabled={addingToShop} className="text-xs text-cb-green hover:underline">+ New list</button>
-              <button onClick={() => setDayShopDate(null)} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+              <button onClick={() => setDayShopDate(null)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
             </div>
           </div>
         </div>
@@ -390,17 +390,17 @@ export default function PlanPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
             <h2 className="text-lg font-bold mb-1">Add a note</h2>
-            <p className="text-cb-muted text-xs mb-3">{dayLabel(noteDate)}</p>
+            <p className="text-cb-secondary text-xs mb-3">{dayLabel(noteDate)}</p>
             <div className="flex gap-1.5 mb-3">
               {MEAL_SLOTS.map((slot) => (
-                <button key={slot} onClick={() => setNoteSlot(slot)} className={`px-2.5 py-1 rounded-full text-xs font-medium ${noteSlot === slot ? 'bg-amber-500 text-white' : 'bg-cb-bg text-cb-muted'}`}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</button>
+                <button key={slot} onClick={() => setNoteSlot(slot)} className={`px-2.5 py-1 rounded-full text-xs font-medium ${noteSlot === slot ? 'bg-amber-500 text-white' : 'bg-cb-bg text-cb-secondary'}`}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</button>
               ))}
             </div>
             <input value={noteText} onChange={(e) => setNoteText(e.target.value.slice(0, 100))} onKeyDown={(e) => { if (e.key === 'Enter') saveNote(); }} autoFocus placeholder='e.g. "Use leftovers", "Date night — go out"' className="w-full bg-cb-bg border border-amber-300 rounded-input px-3 py-2 text-sm outline-none focus:border-amber-500 mb-1" />
-            <p className="text-[10px] text-cb-muted mb-3">{noteText.length}/100</p>
+            <p className="text-[10px] text-cb-secondary mb-3">{noteText.length}/100</p>
             <div className="flex gap-2">
               <button onClick={saveNote} disabled={!noteText.trim()} className="flex-1 bg-amber-500 text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Save note</button>
-              <button onClick={() => setNoteDate(null)} className="text-sm text-cb-muted hover:text-cb-text px-4">Cancel</button>
+              <button onClick={() => setNoteDate(null)} className="text-sm text-cb-secondary hover:text-cb-text px-4">Cancel</button>
             </div>
           </div>
         </div>
@@ -411,7 +411,7 @@ export default function PlanPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
             <h2 className="text-lg font-bold mb-1">Add week to shopping list</h2>
-            <p className="text-cb-muted text-xs mb-4">{plans.filter((p: any) => p.recipe_id).length} recipes</p>
+            <p className="text-cb-secondary text-xs mb-4">{plans.filter((p: any) => p.recipe_id).length} recipes</p>
             {shopLists.length > 0 && (
               <div className="space-y-1.5 mb-4">
                 {shopLists.map((list) => (
@@ -420,7 +420,7 @@ export default function PlanPage() {
               </div>
             )}
             <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `Week of ${weekDates[0]}`); await addWeekToShoppingList(list.id); }} disabled={addingToShop} className="w-full bg-cb-green text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mb-2">{addingToShop ? 'Adding...' : 'Create new list & add'}</button>
-            <button onClick={() => setShowShopModal(false)} className="w-full text-center text-sm text-cb-muted py-1">Cancel</button>
+            <button onClick={() => setShowShopModal(false)} className="w-full text-center text-sm text-cb-secondary py-1">Cancel</button>
           </div>
         </div>
       )}
@@ -442,9 +442,9 @@ export default function PlanPage() {
             <div className="p-5 border-b border-cb-border flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold">Add recipe</h2>
-                <p className="text-xs text-cb-muted">{dayLabel(pickerDate)} · {pickerSlot.charAt(0).toUpperCase() + pickerSlot.slice(1)}</p>
+                <p className="text-xs text-cb-secondary">{dayLabel(pickerDate)} · {pickerSlot.charAt(0).toUpperCase() + pickerSlot.slice(1)}</p>
               </div>
-              <button onClick={() => { setPickerDate(null); setSelectedRecipeId(null); }} className="text-cb-muted hover:text-cb-text">
+              <button onClick={() => { setPickerDate(null); setSelectedRecipeId(null); }} className="text-cb-secondary hover:text-cb-text">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -453,16 +453,16 @@ export default function PlanPage() {
             <div className="px-5 pt-4 pb-2">
               <div className="flex gap-1.5 mb-3 overflow-x-auto">
                 {MEAL_SLOTS.map((slot) => (
-                  <button key={slot} onClick={() => setPickerSlot(slot)} className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${pickerSlot === slot ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-muted hover:text-cb-text'}`}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</button>
+                  <button key={slot} onClick={() => setPickerSlot(slot)} className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 ${pickerSlot === slot ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</button>
                 ))}
               </div>
 
               {/* Cuisine filter */}
               {userCuisines.length > 0 && (
                 <div className="flex gap-1.5 mb-3 overflow-x-auto">
-                  <button onClick={() => setCuisineFilter('')} className={`px-2.5 py-1 rounded-full text-[10px] font-medium shrink-0 ${!cuisineFilter ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-muted'}`}>All</button>
+                  <button onClick={() => setCuisineFilter('')} className={`px-2.5 py-1 rounded-full text-[10px] font-medium shrink-0 ${!cuisineFilter ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary'}`}>All</button>
                   {userCuisines.map((c) => (
-                    <button key={c} onClick={() => setCuisineFilter(c!)} className={`px-2.5 py-1 rounded-full text-[10px] font-medium shrink-0 ${cuisineFilter === c ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-muted'}`}>{c}</button>
+                    <button key={c} onClick={() => setCuisineFilter(c!)} className={`px-2.5 py-1 rounded-full text-[10px] font-medium shrink-0 ${cuisineFilter === c ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary'}`}>{c}</button>
                   ))}
                 </div>
               )}
@@ -474,7 +474,7 @@ export default function PlanPage() {
             {/* Tabs */}
             <div className="flex border-b border-cb-border px-5">
               {([['favourites', '\u2605 Favourites'], ['all', 'All Recipes']] as const).map(([key, label]) => (
-                <button key={key} onClick={() => setPickerTab(key)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${pickerTab === key ? 'border-cb-primary text-cb-primary' : 'border-transparent text-cb-muted hover:text-cb-text'}`}>{label}</button>
+                <button key={key} onClick={() => setPickerTab(key)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${pickerTab === key ? 'border-cb-primary text-cb-primary' : 'border-transparent text-cb-secondary hover:text-cb-text'}`}>{label}</button>
               ))}
             </div>
 
@@ -482,7 +482,7 @@ export default function PlanPage() {
             <div className="flex-1 overflow-y-auto p-3 space-y-1">
               {filteredRecipes.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-cb-muted text-sm">{pickerTab === 'favourites' ? 'No favourited recipes match these filters.' : 'No recipes found.'}</p>
+                  <p className="text-cb-secondary text-sm">{pickerTab === 'favourites' ? 'No favourited recipes match these filters.' : 'No recipes found.'}</p>
                   {pickerTab === 'favourites' && <button onClick={() => setPickerTab('all')} className="text-cb-primary text-sm mt-2 hover:underline">Try All Recipes</button>}
                 </div>
               ) : (
@@ -493,7 +493,7 @@ export default function PlanPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.title}</p>
-                      <p className="text-[10px] text-cb-muted">{[r.cuisine, r.course, r.total_minutes ? `${r.total_minutes}min` : null].filter(Boolean).join(' · ')}</p>
+                      <p className="text-[10px] text-cb-secondary">{[r.cuisine, r.course, r.total_minutes ? `${r.total_minutes}min` : null].filter(Boolean).join(' · ')}</p>
                     </div>
                     {r.is_favourite && <span className="text-cb-primary text-xs shrink-0">{'\u2665'}</span>}
                     {selectedRecipeId === r.id && (
@@ -511,7 +511,7 @@ export default function PlanPage() {
               <button onClick={assignRecipe} disabled={!selectedRecipeId} className="w-full bg-cb-primary text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
                 {selectedRecipeId ? `Add to ${DAYS[weekDates.indexOf(pickerDate!)]} · ${pickerSlot.charAt(0).toUpperCase() + pickerSlot.slice(1)}` : 'Select a recipe'}
               </button>
-              <button onClick={() => { setPickerDate(null); openNoteEntry(pickerDate!); }} className="w-full text-center text-xs text-cb-muted hover:text-amber-600">Add a note instead</button>
+              <button onClick={() => { setPickerDate(null); openNoteEntry(pickerDate!); }} className="w-full text-center text-xs text-cb-secondary hover:text-amber-600">Add a note instead</button>
             </div>
           </div>
         </div>

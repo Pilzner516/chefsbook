@@ -91,23 +91,23 @@ export default function SettingsPage() {
             </label>
             <div>
               <p className="text-sm font-medium">{uploading ? 'Uploading...' : 'Click avatar to change photo'}</p>
-              <p className="text-xs text-cb-muted">Stored in Supabase avatars bucket</p>
+              <p className="text-xs text-cb-secondary">Stored in Supabase avatars bucket</p>
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-cb-muted block mb-1">Display name</label>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Display name</label>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
           </div>
           <div>
-            <label className="text-sm font-medium text-cb-muted block mb-1">Username</label>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Username</label>
             <div className="flex items-center">
-              <span className="text-sm text-cb-muted mr-1">@</span>
+              <span className="text-sm text-cb-secondary mr-1">@</span>
               <input value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="username" className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-cb-muted block mb-1">Email</label>
-            <input value={email} disabled className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm text-cb-muted" />
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Email</label>
+            <input value={email} disabled className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm text-cb-secondary" />
           </div>
         </div>
       </section>
@@ -116,12 +116,12 @@ export default function SettingsPage() {
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Public Profile</h2>
         <div>
-          <label className="text-sm font-medium text-cb-muted block mb-1">Bio</label>
+          <label className="text-sm font-medium text-cb-secondary block mb-1">Bio</label>
           <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 160))} rows={3} maxLength={160} placeholder="Tell other cooks about yourself..." className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
-          <p className="text-[10px] text-cb-muted mt-0.5">{bio.length}/160</p>
+          <p className="text-[10px] text-cb-secondary mt-0.5">{bio.length}/160</p>
         </div>
         {username && (
-          <p className="text-xs text-cb-muted mt-2">Your public profile: <a href={`/chef/${username}`} className="text-cb-primary hover:underline">/chef/{username}</a></p>
+          <p className="text-xs text-cb-secondary mt-2">Your public profile: <a href={`/chef/${username}`} className="text-cb-primary hover:underline">/chef/{username}</a></p>
         )}
       </section>
 
@@ -139,7 +139,7 @@ export default function SettingsPage() {
               <p className="text-lg font-bold mb-2">{plan.price}</p>
               <ul className="space-y-1 mb-3">
                 {plan.features.map((f) => (
-                  <li key={f} className="text-[10px] text-cb-muted flex items-start gap-1">
+                  <li key={f} className="text-[10px] text-cb-secondary flex items-start gap-1">
                     <svg className="w-3 h-3 text-cb-green mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                     {f}
                   </li>
@@ -163,13 +163,13 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-cb-muted text-center">Payment integration coming soon. Plans can be selected freely during beta.</p>
+        <p className="text-[10px] text-cb-secondary text-center">Payment integration coming soon. Plans can be selected freely during beta.</p>
       </section>
 
       {/* Appearance */}
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Appearance</h2>
-        <p className="text-sm text-cb-muted">Shopping list font size can be adjusted using A+/A- buttons on any shopping list.</p>
+        <p className="text-sm text-cb-secondary">Shopping list font size can be adjusted using A+/A- buttons on any shopping list.</p>
       </section>
 
       {/* Actions */}

@@ -11,11 +11,13 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import * as Clipboard from 'expo-clipboard';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { scanRecipe } from '@chefsbook/ai';
 import { pickImage, takePhoto, processImage } from '../../lib/image';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
 
@@ -32,6 +34,7 @@ export default function ScanTab() {
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [importStatus, setImportStatus] = useState<ImportStatus>('idle');
   const [importedRecipeId, setImportedRecipeId] = useState<string | null>(null);
+  const tabBarHeight = useTabBarHeight();
   const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
   const [hasPulsed, setHasPulsed] = useState(false);
 
@@ -155,25 +158,25 @@ export default function ScanTab() {
 
   const gridCells = [
     {
-      icon: '\uD83D\uDCF7',
+      iconName: 'camera' as const,
       label: 'Scan Photo',
       subtitle: 'Cookbook or recipe card',
       onPress: () => handleScan(takePhoto),
     },
     {
-      icon: '\uD83D\uDD17',
+      iconName: 'link' as const,
       label: 'Import URL',
       subtitle: 'Paste any recipe link',
       onPress: () => setShowUrlInput(!showUrlInput),
     },
     {
-      icon: '\uD83D\uDDBC\uFE0F',
+      iconName: 'images' as const,
       label: 'Choose Photo',
       subtitle: 'From your gallery',
       onPress: () => handleScan(pickImage),
     },
     {
-      icon: '\u270F\uFE0F',
+      iconName: 'create' as const,
       label: 'Manual Entry',
       subtitle: 'Type it yourself',
       onPress: () => router.push('/recipe/new'),
@@ -200,7 +203,7 @@ export default function ScanTab() {
           }}
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.accentGreenSoft, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}
         >
-          <Text style={{ fontSize: 16 }}>{'\u2705'}</Text>
+          <Ionicons name="checkmark-circle" size={20} color={colors.accentGreen} />
           <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>Recipe saved! View it →</Text>
         </TouchableOpacity>
       )}
@@ -223,7 +226,7 @@ export default function ScanTab() {
               marginBottom: 12,
             }}
           >
-            <Text style={{ fontSize: 16, marginRight: 8 }}>{'\uD83D\uDCCB'}</Text>
+            <Ionicons name="clipboard-outline" size={18} color={colors.accent} style={{ marginRight: 8 }} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Paste from clipboard</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12 }} numberOfLines={1}>{clipboardUrl}</Text>
@@ -249,11 +252,16 @@ export default function ScanTab() {
               justifyContent: 'center',
               marginBottom: 16,
               paddingHorizontal: 20,
+              shadowColor: colors.accent,
+              shadowOpacity: 0.4,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 6,
             }}
           >
             <View style={{ alignItems: 'center' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontSize: 32, marginRight: 10 }}>{'\uD83C\uDF99\uFE0F'}</Text>
+                <Ionicons name="mic" size={36} color="white" style={{ marginRight: 10 }} />
                 <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: '700' }}>Speak a Recipe</Text>
               </View>
               <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 }}>Dictate and AI formats it instantly</Text>
@@ -301,7 +309,10 @@ export default function ScanTab() {
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>{'\uD83D\uDCCB'} Paste</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="clipboard-outline" size={16} color={colors.textPrimary} style={{ marginRight: 4 }} />
+                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>Paste</Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => handleImport()}
@@ -328,42 +339,47 @@ export default function ScanTab() {
         {/* Share from browser banner */}
         <View
           style={{
-            backgroundColor: colors.bgBase,
+            backgroundColor: colors.bgScreen,
             borderRadius: 12,
-            borderWidth: 1,
-            borderColor: colors.borderDefault,
+            borderLeftWidth: 3,
+            borderLeftColor: colors.accentGreen,
             padding: 16,
             marginTop: 8,
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-            <Text style={{ fontSize: 18, marginRight: 8 }}>{'\uD83C\uDF10'}</Text>
+            <Ionicons name="globe-outline" size={20} color={colors.accentGreen} style={{ marginRight: 8 }} />
             <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>Share recipes directly from Chrome</Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
             Open any recipe in your browser, tap Share, select ChefsBook
           </Text>
-          <View style={{ marginTop: 10, gap: 4 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>1. Open a recipe page in Chrome</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>2. Tap ⋮ menu → Share</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>3. Select ChefsBook from the list</Text>
+          <View style={{ marginTop: 10, gap: 6 }}>
+            {['Open a recipe page in Chrome', 'Tap \u22EE menu \u2192 Share', 'Select ChefsBook from the list'].map((step, i) => (
+              <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accentGreen, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                  <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>{i + 1}</Text>
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{step}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: tabBarHeight }} />
       </ScrollView>
     </View>
   );
 }
 
 function GridCell({
-  icon,
+  iconName,
   label,
   subtitle,
   onPress,
   colors,
 }: {
-  icon: string;
+  iconName: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle: string;
   onPress: () => void;
@@ -375,23 +391,32 @@ function GridCell({
       activeOpacity={0.7}
       style={{
         flex: 1,
-        backgroundColor: colors.bgCard,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.borderDefault,
+        backgroundColor: colors.bgScreen,
+        borderRadius: 14,
         height: 130,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 20,
         shadowColor: '#000',
-        shadowOpacity: 0.06,
+        shadowOpacity: 0.07,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
+        elevation: 3,
       }}
     >
-      <Text style={{ fontSize: 36, marginBottom: 8 }}>{icon}</Text>
-      <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+      <View style={{
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: colors.accentSoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 12,
+      }}>
+        <Ionicons name={iconName} size={32} color={colors.accent} />
+      </View>
+      <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', textAlign: 'center', marginTop: 4 }}>{label}</Text>
       <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 2 }}>{subtitle}</Text>
     </TouchableOpacity>
   );

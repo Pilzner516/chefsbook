@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useTheme } from '../../context/ThemeContext';
@@ -846,6 +847,23 @@ function RecipeDetailInner() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      {/* Recipe image */}
+      {recipe.image_url && /^https?:\/\//.test(recipe.image_url) ? (
+        <Image
+          source={{ uri: recipe.image_url }}
+          style={{ width: '100%', height: 220 }}
+          resizeMode="cover"
+          onError={() => {}} // silently fail — layout still shows
+        />
+      ) : (
+        <View style={{
+          width: '100%', height: 220, backgroundColor: '#faf7f0',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Ionicons name="restaurant-outline" size={48} color={colors.textMuted} />
+        </View>
+      )}
+
       <View style={{ padding: 16 }}>
         <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 8 }}>{recipe.title}</Text>
         {recipe.description && (
@@ -948,10 +966,17 @@ function RecipeDetailInner() {
         )}
 
         {/* Action buttons */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
-          <View style={{ flex: 1 }}>
-            <Button title={recipe.is_favourite ? '❤ Saved' : '♡ Save'} onPress={() => toggleFav(recipe.id, recipe.is_favourite)} variant="secondary" />
-          </View>
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'center' }}>
+          <TouchableOpacity
+            onPress={() => toggleFav(recipe.id, recipe.is_favourite)}
+            style={{ padding: 8 }}
+          >
+            <Ionicons
+              name={recipe.is_favourite ? 'heart' : 'heart-outline'}
+              size={26}
+              color={recipe.is_favourite ? colors.accent : colors.textMuted}
+            />
+          </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Button title="🔗 Share" onPress={() => shareRecipe(recipe)} variant="secondary" />
           </View>
