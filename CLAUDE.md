@@ -185,6 +185,25 @@ API routes (all POST unless noted):
 
 Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, cream background `#faf7f0`. Mobile uses React Context (`useTheme().colors`). Web uses Tailwind `cb-*` tokens. Inter font on web.
 
+## QA Notepad (temp testing tool)
+Triggered by tapping the ChefsBook logo in the header.
+Remove QANotepad.tsx and the logo tap handler when done testing.
+
+### Export QA report via adb (paste into Claude):
+```bash
+adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_notepad.json
+```
+
+### Clear all QA items via adb:
+```bash
+adb shell run-as com.chefsbook.app sh -c 'echo "[]" > /data/data/com.chefsbook.app/files/qa_notepad.json'
+```
+
+### Read via Claude Code:
+```bash
+adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_notepad.json | python -m json.tool
+```
+
 ## Known issues
 
 - No test suite (unit or integration)

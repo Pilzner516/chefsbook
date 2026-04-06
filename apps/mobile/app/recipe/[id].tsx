@@ -17,6 +17,7 @@ import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
 import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps } from '@chefsbook/db';
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
 import { CountdownTimer } from '../../components/CountdownTimer';
+import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -234,7 +235,10 @@ function IngredientRow({
       disabled={!linked}
       style={{ flexDirection: 'row', paddingVertical: 6 }}
     >
-      <Text style={{ color: colors.accent, fontSize: 15, width: 70, textAlign: 'right', marginRight: 12 }}>
+      <Text
+        numberOfLines={1}
+        style={{ color: colors.accent, fontSize: 15, width: 80, textAlign: 'right', marginRight: 12 }}
+      >
         {formatQuantity(converted.quantity)} {converted.unit}
       </Text>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -854,7 +858,9 @@ function RecipeDetailInner() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <ChefsBookHeader />
+      <ScrollView style={{ flex: 1 }}>
       {/* Recipe image */}
       {recipe.image_url && /^https?:\/\//.test(recipe.image_url) ? (
         <Image
@@ -1121,5 +1127,6 @@ function RecipeDetailInner() {
         <View style={{ height: 40 }} />
       </View>
     </ScrollView>
+    </View>
   );
 }

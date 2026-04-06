@@ -6,6 +6,7 @@ import { useAuthStore } from '../lib/zustand/authStore';
 import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { LANGUAGES } from '@chefsbook/ui';
 import { LanguagePickerModal } from './LanguagePickerModal';
+import { QANotepad } from './QANotepad';
 
 export function ChefsBookHeader() {
   const { colors } = useTheme();
@@ -16,6 +17,7 @@ export function ChefsBookHeader() {
   const units = usePreferencesStore((s) => s.units);
   const setUnits = usePreferencesStore((s) => s.setUnits);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
+  const [qaNotepadVisible, setQaNotepadVisible] = useState(false);
 
   const langCode = (language || 'en').toUpperCase().slice(0, 3);
 
@@ -38,10 +40,12 @@ export function ChefsBookHeader() {
         alignItems: 'center',
       }}
     >
-      <Text style={{ fontSize: 28, fontWeight: '700', fontFamily }}>
-        <Text style={{ color: colors.textPrimary }}>Chefs</Text>
-        <Text style={{ color: colors.accent }}>Book</Text>
-      </Text>
+      <TouchableOpacity onPress={() => setQaNotepadVisible(true)} activeOpacity={1}>
+        <Text style={{ fontSize: 28, fontWeight: '700', fontFamily }}>
+          <Text style={{ color: colors.textPrimary }}>Chefs</Text>
+          <Text style={{ color: colors.accent }}>Book</Text>
+        </Text>
+      </TouchableOpacity>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {/* Language flag */}
@@ -102,6 +106,10 @@ export function ChefsBookHeader() {
       <LanguagePickerModal
         visible={langPickerVisible}
         onClose={() => setLangPickerVisible(false)}
+      />
+      <QANotepad
+        visible={qaNotepadVisible}
+        onClose={() => setQaNotepadVisible(false)}
       />
     </View>
   );

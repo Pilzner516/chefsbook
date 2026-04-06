@@ -6,6 +6,25 @@ interface ConversionResult {
   warning?: string;
 }
 
+// ── Unit abbreviation ──
+
+const UNIT_ABBREV: Record<string, string> = {
+  'teaspoon': 'tsp', 'teaspoons': 'tsp',
+  'tablespoon': 'Tbsp', 'tablespoons': 'Tbsp',
+  'fluid ounce': 'fl oz', 'fluid ounces': 'fl oz',
+  'cup': 'cup', 'cups': 'cups',
+  'ounce': 'oz', 'ounces': 'oz',
+  'pound': 'lb', 'pounds': 'lb',
+  'gram': 'g', 'grams': 'g',
+  'kilogram': 'kg', 'kilograms': 'kg',
+  'milliliter': 'ml', 'milliliters': 'ml',
+  'liter': 'L', 'liters': 'L',
+};
+
+function abbrevUnit(unit: string): string {
+  return UNIT_ABBREV[unit.toLowerCase()] ?? unit;
+}
+
 // ── Dry ingredient detection ──
 
 const LIQUID_KEYWORDS = [
@@ -121,14 +140,13 @@ export function convertIngredient(
 
   // ── Dry ingredient with liquid unit (ml) → ambiguous, return unchanged ──
   if (isLiquidUnit && ingredientIsDry && !ingredientIsLiquid) {
-    if (name) console.warn('Dry ingredient with liquid unit:', name, quantity, unit);
-    return { quantity, unit, warning: 'dry ingredient with liquid unit' };
+    return { quantity, unit: abbrevUnit(unit), warning: 'dry ingredient with liquid unit' };
   }
 
   // ── Dry volume units (cups, Tbsp, tsp) → never convert to ml ──
   // These are recipe volume measures — keep as-is regardless of system
   if (isDryVolumeUnit && !ingredientIsLiquid) {
-    return { quantity, unit };
+    return { quantity, unit: abbrevUnit(unit) };
   }
 
   // ── Liquid volume conversions ──
@@ -162,8 +180,8 @@ export function convertIngredient(
     }
   }
 
-  // No conversion — return unchanged
-  return { quantity, unit };
+  // No conversion — return unchanged but abbreviate
+  return { quantity, unit: abbrevUnit(unit) };
 }
 
 /**
