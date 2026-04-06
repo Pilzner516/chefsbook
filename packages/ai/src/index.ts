@@ -24,3 +24,5 @@ export { classifyContent } from './classifyContent';
 export type { ContentClassification } from './classifyContent';
 export { importTechnique, importTechniqueFromYouTube } from './importTechnique';
 export type { ExtractedTechnique } from './importTechnique';
+export { generateAiChefSuggestion } from './aiChefComplete';
+export type { AiChefSuggestion } from './aiChefComplete';

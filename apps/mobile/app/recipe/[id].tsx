@@ -10,9 +10,9 @@ import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { shareRecipe } from '../../lib/sharing';
 import { parseTimers, ParsedTimer } from '../../lib/timers';
-import { formatDuration, formatServings, scaleQuantity, formatQuantity } from '@chefsbook/ui';
+import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST } from '@chefsbook/ui';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { updateRecipe, replaceIngredients, replaceSteps } from '@chefsbook/db';
+import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps } from '@chefsbook/db';
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
 import { CountdownTimer } from '../../components/CountdownTimer';
 
@@ -505,6 +505,7 @@ function RecipeDetailInner() {
   const [editNotes, setEditNotes] = useState('');
   const [editIngredients, setEditIngredients] = useState<{ quantity: string; unit: string; ingredient: string; preparation: string; optional: boolean }[]>([]);
   const [editSteps, setEditSteps] = useState<{ instruction: string; timer_minutes: string }[]>([]);
+  const [editDietaryFlags, setEditDietaryFlags] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
@@ -590,6 +591,7 @@ function RecipeDetailInner() {
     setEditCuisine(currentRecipe.cuisine || '');
     setEditCourse(currentRecipe.course || '');
     setEditNotes(currentRecipe.notes || '');
+    setEditDietaryFlags(currentRecipe.dietary_flags ?? []);
     setEditIngredients((currentRecipe.ingredients ?? []).map((ing) => ({
       quantity: ing.quantity != null ? String(ing.quantity) : '',
       unit: ing.unit || '',
@@ -618,6 +620,9 @@ function RecipeDetailInner() {
         cuisine: editCuisine.trim() || null,
         course: (editCourse.trim() || null) as any,
         notes: editNotes.trim() || null,
+      });
+      await updateRecipeMetadata(currentRecipe.id, {
+        dietary_flags: editDietaryFlags,
       });
       await replaceIngredients(currentRecipe.id, session.user.id, editIngredients.map((ing, i) => ({
         quantity: ing.quantity ? parseFloat(ing.quantity) : null,
@@ -672,16 +677,100 @@ function RecipeDetailInner() {
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Description</Text>
           <TextInput value={editDesc} onChangeText={setEditDesc} multiline style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 12, minHeight: 60, textAlignVertical: 'top' }} />
 
-          <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Cuisine</Text>
-              <TextInput value={editCuisine} onChangeText={setEditCuisine} style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault }} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Course</Text>
-              <TextInput value={editCourse} onChangeText={setEditCourse} style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault }} />
-            </View>
+          {/* Cuisine chip selector */}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Cuisine</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, maxHeight: 40 }}>
+            {CUISINE_LIST.map((c) => (
+              <TouchableOpacity
+                key={c}
+                onPress={() => setEditCuisine(editCuisine === c ? '' : c)}
+                style={{
+                  backgroundColor: editCuisine === c ? colors.accent : colors.bgBase,
+                  borderRadius: 20,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  marginRight: 8,
+                  borderWidth: 1,
+                  borderColor: editCuisine === c ? colors.accent : colors.borderDefault,
+                }}
+              >
+                <Text style={{ color: editCuisine === c ? '#ffffff' : colors.textPrimary, fontSize: 13, fontWeight: editCuisine === c ? '600' : '400' }}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Course chip selector */}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Course</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, maxHeight: 40 }}>
+            {COURSE_LIST.map((c) => (
+              <TouchableOpacity
+                key={c}
+                onPress={() => setEditCourse(editCourse.toLowerCase() === c.toLowerCase() ? '' : c.toLowerCase())}
+                style={{
+                  backgroundColor: editCourse.toLowerCase() === c.toLowerCase() ? colors.accent : colors.bgBase,
+                  borderRadius: 20,
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  marginRight: 8,
+                  borderWidth: 1,
+                  borderColor: editCourse.toLowerCase() === c.toLowerCase() ? colors.accent : colors.borderDefault,
+                }}
+              >
+                <Text style={{ color: editCourse.toLowerCase() === c.toLowerCase() ? '#ffffff' : colors.textPrimary, fontSize: 13, fontWeight: editCourse.toLowerCase() === c.toLowerCase() ? '600' : '400' }}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Dietary Flags toggle grid */}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Dietary Flags</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {DIETARY_FLAGS.map((flag) => {
+              const active = editDietaryFlags.includes(flag.key);
+              return (
+                <TouchableOpacity
+                  key={flag.key}
+                  onPress={() => setEditDietaryFlags(active ? editDietaryFlags.filter((f) => f !== flag.key) : [...editDietaryFlags, flag.key])}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: active ? colors.accent : colors.bgBase,
+                    borderRadius: 20,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderWidth: 1,
+                    borderColor: active ? colors.accent : colors.borderDefault,
+                    gap: 4,
+                  }}
+                >
+                  <Text style={{ fontSize: 14 }}>{flag.emoji}</Text>
+                  <Text style={{ color: active ? '#ffffff' : colors.textPrimary, fontSize: 13, fontWeight: active ? '600' : '400' }}>{flag.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+
+          {/* Attribution tag (read-only) */}
+          {currentRecipe?.attributed_to_username && (
+            <View style={{ marginBottom: 12 }}>
+              <TouchableOpacity
+                onPress={() => router.push(`/chef/${currentRecipe.attributed_to_username}`)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.bgBase,
+                  borderRadius: 16,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  alignSelf: 'flex-start',
+                  gap: 4,
+                }}
+              >
+                <Text style={{ fontSize: 13 }}>🔗</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>via @{currentRecipe.attributed_to_username}</Text>
+              </TouchableOpacity>
+              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>Original source — cannot be removed</Text>
+            </View>
+          )}
 
           <Divider />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -763,11 +852,100 @@ function RecipeDetailInner() {
           <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 12 }}>{recipe.description}</Text>
         )}
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
           {recipe.cuisine && <Badge label={recipe.cuisine} />}
           {recipe.course && <Badge label={recipe.course} />}
           {recipe.total_minutes != null && recipe.total_minutes > 0 && <Badge label={formatDuration(recipe.total_minutes)} color={colors.accentGreen} />}
+          {(recipe.dietary_flags ?? []).map((flag) => {
+            const info = DIETARY_FLAGS.find((f) => f.key === flag);
+            return info ? <Badge key={flag} label={`${info.emoji} ${info.label}`} color={colors.accentGreen} /> : null;
+          })}
         </View>
+
+        {/* Import status warning banner */}
+        {recipe.import_status === 'partial' && (recipe.missing_sections?.length ?? 0) > 0 && (
+          <View style={{
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 12,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ fontSize: 16, marginRight: 6 }}>{'\u26A0\uFE0F'}</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>Some sections could not be imported</Text>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {(recipe.missing_sections ?? []).map((section: string) => (
+                <View key={section} style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                  <Text style={{ color: '#92400e', fontSize: 12, fontWeight: '600', textTransform: 'capitalize' }}>{section}</Text>
+                </View>
+              ))}
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (recipe.source_url) {
+                    Alert.alert('Reimport', 'Re-fetch this recipe from the original URL?', [
+                      { text: 'Cancel' },
+                      { text: 'Reimport', onPress: () => Alert.alert('Coming soon', 'Reimport will be available soon.') },
+                    ]);
+                  }
+                }}
+                style={{ flex: 1, backgroundColor: colors.bgCard, borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
+              >
+                <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>Try reimporting</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Alert.alert('aiChef', 'aiChef completion will suggest missing content based on the recipe title and available data.')}
+                style={{ flex: 1, backgroundColor: colors.accentGreenSoft, borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
+              >
+                <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600' }}>{'\u2728'} Complete with aiChef</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* aiChef badge */}
+        {recipe.aichef_assisted && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <View style={{ backgroundColor: colors.accentGreenSoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '700' }}>{'\u2728'} aiChef assisted</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Source attribution */}
+        {recipe.source_url && (
+          <TouchableOpacity
+            onPress={() => { try { const { Linking } = require('react-native'); Linking.openURL(recipe.source_url!); } catch {} }}
+            style={{ marginBottom: 8 }}
+          >
+            <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+              {'\uD83D\uDCD6'} Original recipe{recipe.source_author ? ` by ${recipe.source_author}` : ''} at {new URL(recipe.source_url).hostname.replace('www.', '')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Attribution tag */}
+        {recipe.attributed_to_username && (
+          <TouchableOpacity
+            onPress={() => router.push(`/chef/${recipe.attributed_to_username}`)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.bgBase,
+              borderRadius: 16,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              alignSelf: 'flex-start',
+              marginBottom: 16,
+              gap: 4,
+            }}
+          >
+            <Text style={{ fontSize: 13 }}>🔗</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>via @{recipe.attributed_to_username}</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Action buttons */}
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>

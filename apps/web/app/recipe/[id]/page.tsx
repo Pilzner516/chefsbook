@@ -384,7 +384,7 @@ export default function RecipePage() {
             <span className="text-cb-primary">Chefs</span>book
           </Link>
         </nav>
-        <div className="text-center text-cb-muted py-20">Loading recipe...</div>
+        <div className="text-center text-cb-secondary py-20">Loading recipe...</div>
       </main>
     );
   }
@@ -417,7 +417,7 @@ export default function RecipePage() {
           <span className="text-cb-primary">Chefs</span>book
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-cb-muted hover:text-cb-text text-sm font-medium">
+          <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
             Dashboard
           </Link>
           <button
@@ -464,7 +464,7 @@ export default function RecipePage() {
               className={`flex items-center gap-2 border px-4 py-2 rounded-input text-sm font-medium transition-colors ${
                 recipe.is_favourite
                   ? 'border-cb-primary text-cb-primary bg-cb-primary/5'
-                  : 'border-cb-border text-cb-muted hover:bg-cb-card'
+                  : 'border-cb-border text-cb-secondary hover:bg-cb-card'
               }`}
               title={recipe.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
             >
@@ -533,11 +533,11 @@ export default function RecipePage() {
           </div>
         ) : isOwner ? (
           <label className="h-48 rounded-card border-2 border-dashed border-cb-border bg-cb-card flex flex-col items-center justify-center cursor-pointer hover:border-cb-primary transition-colors">
-            <svg className="w-10 h-10 text-cb-muted mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-10 h-10 text-cb-secondary mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
             </svg>
-            <span className="text-cb-muted text-sm">{uploading ? 'Uploading...' : 'Add a photo'}</span>
+            <span className="text-cb-secondary text-sm">{uploading ? 'Uploading...' : 'Add a photo'}</span>
             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleImageUpload(file);
@@ -552,7 +552,7 @@ export default function RecipePage() {
           {userIsPro ? (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-cb-muted">Your Photos <span className="font-normal">{userPhotos.length}/10</span></h3>
+                <h3 className="text-sm font-semibold text-cb-secondary">Your Photos <span className="font-normal">{userPhotos.length}/10</span></h3>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {userPhotos.map((photo) => (
@@ -568,9 +568,9 @@ export default function RecipePage() {
                 {userPhotos.length < 10 && (
                   <label className="w-20 h-20 rounded-input border-2 border-dashed border-cb-border flex items-center justify-center cursor-pointer hover:border-cb-primary transition-colors shrink-0">
                     {uploadingPhoto ? (
-                      <span className="text-[10px] text-cb-muted">...</span>
+                      <span className="text-[10px] text-cb-secondary">...</span>
                     ) : (
-                      <svg className="w-6 h-6 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      <svg className="w-6 h-6 text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                       const file = e.target.files?.[0];
@@ -599,7 +599,7 @@ export default function RecipePage() {
           ) : (
             <div className="bg-cb-bg rounded-card p-3 flex items-center gap-3">
               <svg className="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
-              <p className="text-xs text-cb-muted">Upgrade to Pro to add your own photos to any recipe.</p>
+              <p className="text-xs text-cb-secondary">Upgrade to Pro to add your own photos to any recipe.</p>
               <a href="/pricing" className="text-xs text-cb-primary font-semibold hover:underline shrink-0">Upgrade</a>
             </div>
           )}
@@ -664,13 +664,13 @@ export default function RecipePage() {
               defaultValue={recipe.description ?? ''}
               autoFocus
               rows={3}
-              className="w-full bg-cb-bg border border-cb-primary rounded-input px-3 py-2 text-lg text-cb-muted outline-none leading-relaxed"
+              className="w-full bg-cb-bg border border-cb-primary rounded-input px-3 py-2 text-lg text-cb-secondary outline-none leading-relaxed"
               onBlur={(e) => saveDescription(e.target.value)}
             />
           </form>
         ) : recipe.description ? (
           <p
-            className={`text-cb-muted text-lg mb-6 leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-1 -mx-1' : ''}`}
+            className={`text-cb-secondary text-lg mb-6 leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-1 -mx-1' : ''}`}
             onClick={() => isOwner && setEditingDesc(true)}
             title={isOwner ? 'Click to edit description' : undefined}
           >
@@ -679,7 +679,7 @@ export default function RecipePage() {
         ) : isOwner ? (
           <button
             onClick={() => setEditingDesc(true)}
-            className="text-sm text-cb-muted mb-6 border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
+            className="text-sm text-cb-secondary mb-6 border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
           >
             + Add description
           </button>
@@ -712,7 +712,7 @@ export default function RecipePage() {
           ) : isOwner ? (
             <button
               onClick={() => setEditingCuisine(true)}
-              className="text-sm px-3 py-1 rounded-input font-medium border border-dashed border-cb-border text-cb-muted hover:border-cb-primary hover:text-cb-primary"
+              className="text-sm px-3 py-1 rounded-input font-medium border border-dashed border-cb-border text-cb-secondary hover:border-cb-primary hover:text-cb-primary"
             >
               + Cuisine
             </button>
@@ -745,7 +745,7 @@ export default function RecipePage() {
           ) : isOwner ? (
             <button
               onClick={() => setEditingCourse(true)}
-              className="text-sm px-3 py-1 rounded-input font-medium border border-dashed border-cb-border text-cb-muted hover:border-cb-green hover:text-cb-green"
+              className="text-sm px-3 py-1 rounded-input font-medium border border-dashed border-cb-border text-cb-secondary hover:border-cb-green hover:text-cb-green"
             >
               + Course
             </button>
@@ -753,7 +753,7 @@ export default function RecipePage() {
 
           {/* Duration */}
           {recipe.total_minutes != null && recipe.total_minutes > 0 && (
-            <span className="bg-cb-card text-cb-muted text-sm px-3 py-1 rounded-input border border-cb-border">
+            <span className="bg-cb-card text-cb-secondary text-sm px-3 py-1 rounded-input border border-cb-border">
               {formatDuration(recipe.total_minutes)}
             </span>
           )}
@@ -797,18 +797,35 @@ export default function RecipePage() {
             ) : (
               <button
                 onClick={() => setEditingTags(true)}
-                className="text-sm px-3 py-1 rounded-input font-medium border border-dashed border-cb-border text-cb-muted hover:border-blue-400 hover:text-blue-600"
+                className="text-sm px-3 py-1 rounded-input font-medium border border-dashed border-cb-border text-cb-secondary hover:border-blue-400 hover:text-blue-600"
               >
                 + Tag
               </button>
             )
+          )}
+
+          {/* Dietary flags */}
+          {(recipe.dietary_flags ?? []).map((flag: string) => (
+            <span key={flag} className="bg-cb-green-soft text-cb-green text-sm px-3 py-1 rounded-input font-medium">
+              {flag}
+            </span>
+          ))}
+
+          {/* Attribution tag */}
+          {recipe.attributed_to_username && (
+            <Link
+              href={`/chef/${recipe.attributed_to_username}`}
+              className="bg-cb-base text-cb-text text-sm px-3 py-1 rounded-input font-medium inline-flex items-center gap-1 hover:ring-2 hover:ring-cb-border"
+            >
+              🔗 via @{recipe.attributed_to_username}
+            </Link>
           )}
         </div>
 
         {(recipe.source_url || recipe.channel_name) && (
           <div className="mb-8 flex items-center gap-4 flex-wrap">
             {recipe.channel_name && (
-              <span className="text-sm text-cb-muted">
+              <span className="text-sm text-cb-secondary">
                 by <span className="font-medium text-cb-text">{recipe.channel_name}</span>
               </span>
             )}
@@ -849,8 +866,8 @@ export default function RecipePage() {
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">Book: {cookbook.title.split(':')[0]!.trim()}</p>
-              {cookbook.author && <p className="text-xs text-cb-muted">by {cookbook.author}</p>}
-              {recipe.page_number && <p className="text-[10px] text-cb-muted">Page {recipe.page_number}</p>}
+              {cookbook.author && <p className="text-xs text-cb-secondary">by {cookbook.author}</p>}
+              {recipe.page_number && <p className="text-[10px] text-cb-secondary">Page {recipe.page_number}</p>}
               {recipe.tags?.includes('AI Adaptation') && (
                 <p className="text-[10px] text-amber-600 mt-0.5">AI adaptation — refer to the original cookbook for the exact recipe</p>
               )}
@@ -869,6 +886,50 @@ export default function RecipePage() {
           </div>
         )}
 
+        {/* Source attribution */}
+        {recipe.source_url && (
+          <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-cb-muted hover:text-cb-primary mb-2 block">
+            📖 Original recipe{recipe.source_author ? ` by ${recipe.source_author}` : ''} at {new URL(recipe.source_url).hostname.replace('www.', '')}
+          </a>
+        )}
+        {recipe.attributed_to_username && (
+          <a href={`/chef/${recipe.attributed_to_username}`} className="text-xs text-cb-muted hover:text-cb-primary mb-2 block">
+            🔗 via @{recipe.attributed_to_username}
+          </a>
+        )}
+
+        {/* aiChef badge */}
+        {recipe.aichef_assisted && (
+          <span className="inline-flex items-center gap-1 bg-cb-green-soft text-cb-green text-xs font-bold px-2.5 py-1 rounded-full mb-4">
+            ✨ aiChef assisted
+          </span>
+        )}
+
+        {/* Import status warning */}
+        {recipe.import_status === 'partial' && (recipe.missing_sections?.length ?? 0) > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-card p-4 mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span>⚠️</span>
+              <p className="text-sm font-semibold text-amber-800">Some sections could not be imported</p>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(recipe.missing_sections ?? []).map((section: string) => (
+                <span key={section} className="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full capitalize">{section}</span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              {recipe.source_url && (
+                <button onClick={handleRefresh} className="text-xs font-medium px-3 py-1.5 rounded-input border border-cb-border hover:border-cb-primary">
+                  Try reimporting
+                </button>
+              )}
+              <button className="text-xs font-medium px-3 py-1.5 rounded-input bg-cb-green-soft text-cb-green hover:bg-cb-green/20">
+                ✨ Complete with aiChef
+              </button>
+            </div>
+          </div>
+        )}
+
         {!recipe.video_only && recipe.tags?.includes('_incomplete') && (
           <div className="bg-amber-50 border border-amber-200 rounded-card p-4 mb-6 flex items-center gap-3">
             <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -883,18 +944,18 @@ export default function RecipePage() {
 
         {/* Servings scaler + shopping list — hide for video_only */}
         {!recipe.video_only && <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-10 flex items-center gap-4 flex-wrap">
-          <span className="text-sm font-medium text-cb-muted">Servings</span>
+          <span className="text-sm font-medium text-cb-secondary">Servings</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setServings((s) => Math.max(1, s - 1))}
-              className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-muted hover:border-cb-primary hover:text-cb-primary transition-colors"
+              className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors"
             >
               -
             </button>
             <span className="w-8 text-center font-semibold">{servings}</span>
             <button
               onClick={() => setServings((s) => s + 1)}
-              className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-muted hover:border-cb-primary hover:text-cb-primary transition-colors"
+              className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors"
             >
               +
             </button>
@@ -935,8 +996,8 @@ export default function RecipePage() {
                     <input value={row.quantity} onChange={(e) => updateDraftIng(idx, 'quantity', e.target.value)} placeholder="Qty" className="w-14 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary text-right tabular-nums" />
                     <input value={row.unit} onChange={(e) => updateDraftIng(idx, 'unit', e.target.value)} placeholder="Unit" className="w-16 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary" />
                     <input value={row.ingredient} onChange={(e) => updateDraftIng(idx, 'ingredient', e.target.value)} placeholder="Ingredient" className="flex-1 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary" />
-                    <input value={row.preparation} onChange={(e) => updateDraftIng(idx, 'preparation', e.target.value)} placeholder="Prep" className="w-28 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary text-cb-muted" />
-                    <button onClick={() => removeDraftIng(idx)} className="text-cb-muted hover:text-cb-primary shrink-0" title="Remove">
+                    <input value={row.preparation} onChange={(e) => updateDraftIng(idx, 'preparation', e.target.value)} placeholder="Prep" className="w-28 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary text-cb-secondary" />
+                    <button onClick={() => removeDraftIng(idx)} className="text-cb-secondary hover:text-cb-primary shrink-0" title="Remove">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
@@ -945,7 +1006,7 @@ export default function RecipePage() {
               <div className="flex items-center gap-2">
                 <button onClick={addDraftIng} className="text-xs text-cb-primary hover:underline">+ Add row</button>
                 <span className="flex-1" />
-                <button onClick={() => setEditingIngredients(false)} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+                <button onClick={() => setEditingIngredients(false)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
                 <button onClick={saveIngredients} disabled={saving} className="bg-cb-primary text-white px-4 py-1.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
                   {saving ? 'Saving...' : 'Save'}
                 </button>
@@ -967,7 +1028,7 @@ export default function RecipePage() {
             return groups.map((group, gi) => (
               <div key={gi} className={gi > 0 ? 'mt-6' : ''}>
                 {group.label && (
-                  <h3 className="text-sm font-semibold text-cb-muted uppercase tracking-wide mb-3">
+                  <h3 className="text-sm font-semibold text-cb-secondary uppercase tracking-wide mb-3">
                     {group.label}
                   </h3>
                 )}
@@ -978,16 +1039,16 @@ export default function RecipePage() {
                         <td className="py-2 pr-3 text-right align-top w-16 text-cb-primary font-semibold tabular-nums whitespace-nowrap">
                           {formatQuantity(scaleQuantity(ing.quantity, originalServings, servings))}
                         </td>
-                        <td className="py-2 pr-3 align-top w-20 text-cb-muted text-sm whitespace-nowrap">
+                        <td className="py-2 pr-3 align-top w-20 text-cb-secondary text-sm whitespace-nowrap">
                           {ing.unit ?? ''}
                         </td>
                         <td className="py-2 align-top">
                           {ing.ingredient}
                           {ing.preparation && (
-                            <span className="text-cb-muted">, {ing.preparation}</span>
+                            <span className="text-cb-secondary">, {ing.preparation}</span>
                           )}
                           {ing.optional && (
-                            <span className="text-cb-muted text-xs ml-1">(optional)</span>
+                            <span className="text-cb-secondary text-xs ml-1">(optional)</span>
                           )}
                         </td>
                       </tr>
@@ -1024,7 +1085,7 @@ export default function RecipePage() {
                       placeholder={`Step ${idx + 1}...`}
                       className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
                     />
-                    <button onClick={() => removeDraftStep(idx)} className="text-cb-muted hover:text-cb-primary shrink-0 mt-1" title="Remove step">
+                    <button onClick={() => removeDraftStep(idx)} className="text-cb-secondary hover:text-cb-primary shrink-0 mt-1" title="Remove step">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     </button>
                   </li>
@@ -1033,7 +1094,7 @@ export default function RecipePage() {
               <div className="flex items-center gap-2">
                 <button onClick={addDraftStep} className="text-xs text-cb-primary hover:underline">+ Add step</button>
                 <span className="flex-1" />
-                <button onClick={() => setEditingSteps(false)} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+                <button onClick={() => setEditingSteps(false)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
                 <button onClick={saveSteps} disabled={saving} className="bg-cb-primary text-white px-4 py-1.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
                   {saving ? 'Saving...' : 'Save'}
                 </button>
@@ -1092,7 +1153,7 @@ export default function RecipePage() {
             <div>
               <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
               <p
-                className={`text-cb-muted leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-2 py-1 -mx-2' : ''}`}
+                className={`text-cb-secondary leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-2 py-1 -mx-2' : ''}`}
                 onClick={() => isOwner && setEditingNotes(true)}
                 title={isOwner ? 'Click to edit notes' : undefined}
               >
@@ -1102,7 +1163,7 @@ export default function RecipePage() {
           ) : isOwner ? (
             <button
               onClick={() => setEditingNotes(true)}
-              className="text-sm text-cb-muted border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
+              className="text-sm text-cb-secondary border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
             >
               + Add notes
             </button>
@@ -1142,7 +1203,7 @@ export default function RecipePage() {
                   >
                     Save
                   </button>
-                  <button onClick={() => { setAddingNote(false); setNewNote(''); }} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+                  <button onClick={() => { setAddingNote(false); setNewNote(''); }} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
                 </div>
               </div>
             )}
@@ -1152,7 +1213,7 @@ export default function RecipePage() {
                   <div key={note.id} className="bg-cb-card border border-cb-border rounded-input p-3 flex gap-3">
                     <div className="flex-1">
                       <p className="text-sm leading-relaxed">{note.note}</p>
-                      <p className="text-[10px] text-cb-muted mt-1">
+                      <p className="text-[10px] text-cb-secondary mt-1">
                         {new Date(note.cooked_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </p>
                     </div>
@@ -1161,7 +1222,7 @@ export default function RecipePage() {
                         await deleteCookingNote(note.id);
                         setCookingNotes((prev) => prev.filter((n) => n.id !== note.id));
                       }}
-                      className="text-cb-muted hover:text-cb-primary shrink-0 self-start"
+                      className="text-cb-secondary hover:text-cb-primary shrink-0 self-start"
                       title="Delete note"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1172,7 +1233,7 @@ export default function RecipePage() {
                 ))}
               </div>
             ) : !addingNote ? (
-              <p className="text-cb-muted text-sm">No cooking log entries yet. Click &ldquo;Log a cook&rdquo; after you make this recipe.</p>
+              <p className="text-cb-secondary text-sm">No cooking log entries yet. Click &ldquo;Log a cook&rdquo; after you make this recipe.</p>
             ) : null}
           </section>
         )}
@@ -1187,7 +1248,7 @@ export default function RecipePage() {
         {!isOwner && (
           <div className="bg-cb-card border border-cb-border rounded-card p-8 text-center">
             <h3 className="text-lg font-semibold mb-2">Like this recipe?</h3>
-            <p className="text-cb-muted text-sm mb-4">
+            <p className="text-cb-secondary text-sm mb-4">
               {isLoggedIn
                 ? 'Save it to your Chefsbook and never lose a recipe again.'
                 : 'Sign up to save recipes, plan meals, and generate shopping lists.'}
@@ -1207,13 +1268,13 @@ export default function RecipePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
             <h2 className="text-lg font-bold mb-2">Delete recipe?</h2>
-            <p className="text-cb-muted text-sm mb-6">
+            <p className="text-cb-secondary text-sm mb-6">
               This will permanently delete &ldquo;{recipe.title}&rdquo;. This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-muted hover:text-cb-text"
+                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text"
               >
                 Cancel
               </button>
@@ -1235,7 +1296,7 @@ export default function RecipePage() {
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-md mx-4 p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold">Add {recipe?.ingredients.length} ingredients to:</h2>
-              <button onClick={() => { setShowShoppingModal(false); setShowNewListForm(false); }} className="text-cb-muted hover:text-cb-text">
+              <button onClick={() => { setShowShoppingModal(false); setShowNewListForm(false); }} className="text-cb-secondary hover:text-cb-text">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -1254,21 +1315,21 @@ export default function RecipePage() {
                           {list.pinned && <span className="text-cb-primary text-[10px]">{'\u2605'}</span>}
                           <p className="text-sm font-medium truncate">{list.name}</p>
                         </div>
-                        {list.store_name && <p className="text-[10px] text-cb-muted truncate">{list.store_name}</p>}
+                        {list.store_name && <p className="text-[10px] text-cb-secondary truncate">{list.store_name}</p>}
                       </button>
                     ))}
                     <button
                       onClick={() => setShowNewListForm(true)}
                       className="border-2 border-dashed border-cb-border rounded-card p-3 text-center hover:border-cb-green transition-colors"
                     >
-                      <svg className="w-5 h-5 text-cb-muted mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                      <p className="text-xs text-cb-muted">New list</p>
+                      <svg className="w-5 h-5 text-cb-secondary mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      <p className="text-xs text-cb-secondary">New list</p>
                     </button>
                   </div>
                 )}
                 {shoppingLists.length === 0 && (
                   <div className="text-center py-4">
-                    <p className="text-cb-muted text-sm mb-3">No shopping lists yet</p>
+                    <p className="text-cb-secondary text-sm mb-3">No shopping lists yet</p>
                     <button onClick={() => setShowNewListForm(true)} className="bg-cb-green text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90">Create your first list</button>
                   </div>
                 )}
@@ -1291,7 +1352,7 @@ export default function RecipePage() {
                 />
                 <div className="flex gap-2 pt-1">
                   <button onClick={handleNewShoppingList} disabled={!newListName.trim()} className="flex-1 bg-cb-green text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Create & Add</button>
-                  {shoppingLists.length > 0 && <button onClick={() => setShowNewListForm(false)} className="text-sm text-cb-muted hover:text-cb-text px-3">Back</button>}
+                  {shoppingLists.length > 0 && <button onClick={() => setShowNewListForm(false)} className="text-sm text-cb-secondary hover:text-cb-text px-3">Back</button>}
                 </div>
               </div>
             )}
@@ -1314,7 +1375,7 @@ export default function RecipePage() {
             <p className="text-sm font-semibold">{addConfirm.count} items added to {addConfirm.listName}</p>
           </div>
           <Link href={`/dashboard/shop`} onClick={() => setAddConfirm(null)} className="text-xs text-cb-green font-semibold hover:underline shrink-0">Go to list</Link>
-          <button onClick={() => setAddConfirm(null)} className="text-cb-muted hover:text-cb-text shrink-0">
+          <button onClick={() => setAddConfirm(null)} className="text-cb-secondary hover:text-cb-text shrink-0">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
           </button>
         </div>

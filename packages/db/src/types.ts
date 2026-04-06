@@ -90,6 +90,13 @@ export interface Recipe {
   youtube_video_id: string | null;
   channel_name: string | null;
   video_only: boolean;
+  dietary_flags: string[];
+  attributed_to_user_id: string | null;
+  attributed_to_username: string | null;
+  import_status: 'complete' | 'partial';
+  missing_sections: string[];
+  aichef_assisted: boolean;
+  source_author: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -126,6 +133,9 @@ export interface MealPlan {
   recipe_id: string | null;
   servings: number | null;
   notes: string | null;
+  synced_to_list_id: string | null;
+  synced_at: string | null;
+  synced_ingredients_hash: string | null;
   created_at: string;
 }
 
