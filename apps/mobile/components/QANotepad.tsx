@@ -3,7 +3,10 @@ import { View, Text, TouchableOpacity, Modal, ScrollView, Alert, TextInput, Plat
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Clipboard from 'expo-clipboard';
+import * as Sharing from 'expo-sharing';
 import { useTheme } from '../context/ThemeContext';
+
+const isStaging = process.env.EXPO_PUBLIC_APP_VARIANT === 'staging';
 
 const QA_FILE = (FileSystem.documentDirectory ?? '') + 'qa_notepad.json';
 
@@ -83,11 +86,29 @@ export function QANotepad({ visible, onClose }: Props) {
     const date = new Date().toLocaleDateString();
     const report = `ChefsBook QA Report — ${date}\n\n` +
       items.map((item, i) => `${i + 1}. ${item.text}`).join('\n');
-    try {
-      await Clipboard.setStringAsync(report);
-      Alert.alert('Copied!', 'QA report copied to clipboard.');
-    } catch {
-      Alert.alert('Export', report);
+
+    if (isStaging) {
+      // In staging: write to temp file and share via native share sheet
+      try {
+        const tempFile = (FileSystem.cacheDirectory ?? '') + 'qa_report.txt';
+        await FileSystem.writeAsStringAsync(tempFile, report);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(tempFile, { mimeType: 'text/plain', dialogTitle: 'Share QA Report' });
+        } else {
+          await Clipboard.setStringAsync(report);
+          Alert.alert('Copied!', 'QA report copied to clipboard.');
+        }
+      } catch {
+        await Clipboard.setStringAsync(report);
+        Alert.alert('Copied!', 'QA report copied to clipboard.');
+      }
+    } else {
+      try {
+        await Clipboard.setStringAsync(report);
+        Alert.alert('Copied!', 'QA report copied to clipboard.');
+      } catch {
+        Alert.alert('Export', report);
+      }
     }
   };
 
@@ -111,8 +132,16 @@ export function QANotepad({ visible, onClose }: Props) {
             borderBottomColor: colors.borderDefault,
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity onPress={handleExport} style={{ padding: 4 }}>
-                <Ionicons name="share-outline" size={20} color={colors.textMuted} />
+              <TouchableOpacity
+                onPress={handleExport}
+                style={isStaging ? {
+                  flexDirection: 'row', alignItems: 'center', gap: 4,
+                  backgroundColor: colors.accent, borderRadius: 8,
+                  paddingHorizontal: 10, paddingVertical: 6,
+                } : { padding: 4 }}
+              >
+                <Ionicons name="share-outline" size={isStaging ? 16 : 20} color={isStaging ? '#fff' : colors.textMuted} />
+                {isStaging && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Share</Text>}
               </TouchableOpacity>
               {items.length > 0 && (
                 <TouchableOpacity onPress={handleClearAll} style={{ padding: 4 }}>

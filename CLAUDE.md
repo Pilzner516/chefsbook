@@ -248,6 +248,31 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - QA Notepad: temporary testing tool, triggered by tapping ChefsBook logo. Remove `QANotepad.tsx` + logo tap handler when done testing
 - Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`
 
+## Builds
+
+### Staging APK
+Package: com.chefsbook.app.staging (installs alongside dev client)
+Config: apps/mobile/app.staging.json + apps/mobile/.env.staging
+Build command (requires Metro stopped first):
+```bash
+export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr"
+export ANDROID_HOME="$LOCALAPPDATA/Android/Sdk"
+cd apps/mobile
+EXPO_PUBLIC_APP_VARIANT=staging npx expo run:android --variant release
+```
+Install: `adb install -r apps/mobile/android/app/build/outputs/apk/release/app-release.apk`
+
+### Web Staging (RPi5)
+URL: http://100.110.47.62:3001
+Prerequisites: Node.js + npm must be installed on rpi5-eth
+Deploy: `ssh rasp@rpi5-eth && /mnt/chefsbook/deploy-staging.sh`
+
+### To update staging after code changes:
+1. Stop Metro dev server
+2. `cd apps/mobile && npx expo run:android --variant release`
+3. `adb install -r [apk path]`
+4. `ssh rasp@rpi5-eth && /mnt/chefsbook/deploy-staging.sh`
+
 ## Navigator Agent
 Before doing any UI work, navigation, or screen testing:
 READ .claude/agents/navigator.md

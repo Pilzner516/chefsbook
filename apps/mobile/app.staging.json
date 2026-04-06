@@ -1,0 +1,84 @@
+{
+  "expo": {
+    "name": "ChefsBook Staging",
+    "slug": "chefsbook-staging",
+    "scheme": "chefsbook-staging",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#faf7f0"
+    },
+    "ios": {
+      "bundleIdentifier": "com.chefsbook.app.staging",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Chefsbook uses your camera to scan recipes from cookbooks, handwritten cards, and printed pages.",
+        "NSPhotoLibraryUsageDescription": "Chefsbook accesses your photo library so you can import recipe images.",
+        "NSPhotoLibraryAddUsageDescription": "Chefsbook saves recipe photos to your photo library.",
+        "NSMicrophoneUsageDescription": "Chefsbook uses your microphone for voice search.",
+        "NSSpeechRecognitionUsageDescription": "Chefsbook uses speech recognition for hands-free recipe search."
+      }
+    },
+    "android": {
+      "package": "com.chefsbook.app.staging",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ce2b37"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https" },
+            { "scheme": "http" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        },
+        {
+          "action": "SEND",
+          "data": [{ "mimeType": "text/plain" }],
+          "category": ["DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Chefsbook uses your camera to scan recipes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Chefsbook accesses photos to import recipe images."
+        }
+      ],
+      "expo-secure-store",
+      "@react-native-voice/voice"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "variant": "staging",
+      "router": {},
+      "eas": {
+        "projectId": "0dc9bfa3-1969-412b-afc4-01625a8ec75e"
+      }
+    },
+    "owner": "pilzner"
+  }
+}

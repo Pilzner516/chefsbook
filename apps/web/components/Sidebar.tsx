@@ -99,7 +99,14 @@ export default function Sidebar({ user }: { user: User | null }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
-        {!collapsed && <Link href="/" className="text-xl font-bold flex-1"><span className="text-cb-primary">Chefs</span>book</Link>}
+        {!collapsed && (
+          <span className="flex items-center gap-1.5 flex-1">
+            <Link href="/" className="text-xl font-bold"><span className="text-cb-primary">Chefs</span>book</Link>
+            {process.env.NEXT_PUBLIC_APP_URL?.includes(':3001') && (
+              <span className="text-[9px] font-bold bg-cb-green text-white px-1.5 py-0.5 rounded -mt-2">STAGING</span>
+            )}
+          </span>
+        )}
         {!collapsed && (
           <div className="flex items-center gap-1.5">
             {/* Language flag */}
