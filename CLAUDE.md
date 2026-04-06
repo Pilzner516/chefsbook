@@ -194,9 +194,8 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
 - Multilingual support not started
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
-- Mobile sign-in flow not fully verified end-to-end on device (landing + auth screens coded, Supabase connection confirmed)
+- Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
-- Mobile shopping list and recipe editing not yet verified on device (code compiles clean, needs adb screenshot walkthrough)
 
 See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 

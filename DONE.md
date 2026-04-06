@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-05 (session 3)
+- Fixed React hooks violation in shop.tsx — useMemo calls were after early return, causing "Rendered fewer hooks than expected" crash when navigating back from list detail to list overview
+- ADB verified: Shop tab loads correctly, "Week of 2026-03-30" list shows 41 items with department grouping (Produce, Meat & Seafood, Dairy & Eggs, Baking, Pasta & Grains, Canned & Jarred, Condiments & Sauces, Spices & Seasonings) and purchase units
+- ADB verified: Navigate back from list detail → list overview — no crash (hooks fix confirmed)
+- Web app shop page verified loading (HTTP 200) — same data via shared Supabase backend
+- Committed 98-file batch covering all features from sessions 1-3
+
 ## 2026-04-05 (session 2)
 - Mobile shopping list overhaul: shared `addItemsWithPipeline()` pipeline in `@chefsbook/db` (single source of truth for web + mobile)
 - Mobile shopping UI: 3 view modes (Dept/Recipe/A-Z), 13 department groupings, inline quantity editing, manual item add, check/delete/clear completed
