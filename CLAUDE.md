@@ -217,3 +217,5 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Mobile calls `suggestPurchaseUnits` from `@chefsbook/ai` directly (no CORS in React Native)
 - Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch
 - Mobile tag management calls `callClaude` + `extractJSON` from `@chefsbook/ai` directly (no CORS in React Native) for auto-tag suggestions
+- Shopping list font size preference persisted via `expo-secure-store` (key: `shopping_font_size`, values: `small`/`medium`/`large`)
+- Mobile theme only has `textPrimary` and `textSecondary` — no `textMuted` color exists

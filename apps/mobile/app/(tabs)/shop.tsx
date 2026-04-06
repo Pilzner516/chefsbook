@@ -1,10 +1,20 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { Button, Card, EmptyState, Loading, Input } from '../../components/UIKit';
 import type { ShoppingListItem, StoreCategory } from '@chefsbook/db';
+
+type FontSize = 'small' | 'medium' | 'large';
+const FONT_KEY = 'shopping_font_size';
+const FONT_SCALES: Record<FontSize, { qty: number; name: number; sub: number; dept: number }> = {
+  small:  { qty: 12, name: 13, sub: 10, dept: 11 },
+  medium: { qty: 14, name: 15, sub: 11, dept: 13 },
+  large:  { qty: 17, name: 18, sub: 13, dept: 15 },
+};
+const FONT_LABELS: FontSize[] = ['small', 'medium', 'large'];
 
 const DEPT_ORDER: (StoreCategory | 'uncategorized')[] = [
   'produce', 'meat_seafood', 'dairy_eggs', 'baking', 'bakery',
@@ -55,6 +65,21 @@ export default function ShopTab() {
   const [manualInput, setManualInput] = useState('');
   const [editingQty, setEditingQty] = useState<string | null>(null);
   const [editQtyValue, setEditQtyValue] = useState('');
+  const [fontSize, setFontSize] = useState<FontSize>('medium');
+  const fs = FONT_SCALES[fontSize];
+
+  // Load persisted font size
+  useEffect(() => {
+    SecureStore.getItemAsync(FONT_KEY).then((v) => {
+      if (v && FONT_LABELS.includes(v as FontSize)) setFontSize(v as FontSize);
+    });
+  }, []);
+
+  const cycleFontSize = useCallback(() => {
+    const next = FONT_LABELS[(FONT_LABELS.indexOf(fontSize) + 1) % FONT_LABELS.length];
+    setFontSize(next);
+    SecureStore.setItemAsync(FONT_KEY, next);
+  }, [fontSize]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -149,11 +174,18 @@ export default function ShopTab() {
             <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Lists</Text>
           </TouchableOpacity>
           <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center' }} numberOfLines={1}>{currentList.name}</Text>
-          {checkedCount > 0 && (
-            <TouchableOpacity onPress={() => clearChecked(currentList.id)}>
-              <Text style={{ color: colors.danger, fontSize: 13 }}>Clear {checkedCount}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {checkedCount > 0 && (
+              <TouchableOpacity onPress={() => clearChecked(currentList.id)}>
+                <Text style={{ color: colors.danger, fontSize: 13 }}>Clear {checkedCount}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={cycleFontSize} style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: colors.bgBase }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>
+                {fontSize === 'small' ? 'A' : fontSize === 'medium' ? 'A+' : 'A++'}
+              </Text>
             </TouchableOpacity>
-          )}
+          </View>
         </View>
 
         {/* View mode toggle */}
@@ -212,61 +244,67 @@ export default function ShopTab() {
           {/* Active items grouped */}
           {grouped.map(([group, groupItems]) => (
             <View key={group} style={{ marginBottom: 16 }}>
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }}>
+              <Text style={{ color: colors.accent, fontSize: fs.dept, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase' }}>
                 {DEPT_LABELS[group] || group}
               </Text>
-              {groupItems.map((item) => (
-                <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
-                  {/* Checkbox */}
-                  <TouchableOpacity onPress={() => toggleItem(item.id, !item.is_checked)} style={{ marginRight: 10 }}>
-                    <Text style={{ fontSize: 18 }}>{'\u2610'}</Text>
-                  </TouchableOpacity>
+              {groupItems.map((item) => {
+                const rawQty = [item.quantity, item.unit].filter(Boolean).join(' ');
+                const displayQty = item.purchase_unit || rawQty;
+                const usageQty = item.purchase_unit ? rawQty : '';
 
-                  {/* Quantity (tappable to edit) */}
-                  {editingQty === item.id ? (
-                    <TextInput
-                      value={editQtyValue}
-                      onChangeText={setEditQtyValue}
-                      onBlur={() => handleSaveQty(item.id)}
-                      onSubmitEditing={() => handleSaveQty(item.id)}
-                      autoFocus
-                      style={{
-                        width: 70, fontSize: 13, color: colors.accent,
-                        borderBottomWidth: 1, borderBottomColor: colors.accent,
-                        paddingVertical: 2, marginRight: 8,
-                      }}
-                    />
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setEditingQty(item.id);
-                        setEditQtyValue(item.quantity_needed || [item.quantity, item.unit].filter(Boolean).join(' ') || '');
-                      }}
-                      style={{ marginRight: 8, minWidth: 50 }}
-                    >
-                      <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
-                        {item.quantity_needed || [item.quantity, item.unit].filter(Boolean).join(' ') || ''}
-                      </Text>
+                return (
+                  <View key={item.id} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 }}>
+                    {/* Checkbox */}
+                    <TouchableOpacity onPress={() => toggleItem(item.id, !item.is_checked)} style={{ marginRight: 10, marginTop: 2 }}>
+                      <Text style={{ fontSize: 18 }}>{'\u2610'}</Text>
                     </TouchableOpacity>
-                  )}
 
-                  {/* Ingredient name + recipe source */}
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontSize: 15 }}>{item.ingredient}</Text>
-                    {item.recipe_name && (
-                      <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{item.recipe_name}</Text>
+                    {/* Purchase unit (tappable to edit) */}
+                    {editingQty === item.id ? (
+                      <TextInput
+                        value={editQtyValue}
+                        onChangeText={setEditQtyValue}
+                        onBlur={() => handleSaveQty(item.id)}
+                        onSubmitEditing={() => handleSaveQty(item.id)}
+                        autoFocus
+                        style={{
+                          width: 80, fontSize: fs.qty, color: colors.accent,
+                          borderBottomWidth: 1, borderBottomColor: colors.accent,
+                          paddingVertical: 2, marginRight: 8,
+                        }}
+                      />
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditingQty(item.id);
+                          setEditQtyValue(item.purchase_unit || rawQty || '');
+                        }}
+                        style={{ marginRight: 8, minWidth: 55 }}
+                      >
+                        <Text style={{ color: colors.accent, fontSize: fs.qty, fontWeight: '600' }}>
+                          {displayQty || ''}
+                        </Text>
+                      </TouchableOpacity>
                     )}
-                    {item.purchase_unit && (
-                      <Text style={{ color: colors.accentGreen, fontSize: 11 }}>Buy: {item.purchase_unit}</Text>
-                    )}
+
+                    {/* Ingredient name + recipe source + usage */}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: colors.textPrimary, fontSize: fs.name }}>{item.ingredient}</Text>
+                      {item.recipe_name && (
+                        <Text style={{ color: colors.textSecondary, fontSize: fs.sub }}>{item.recipe_name}</Text>
+                      )}
+                      {usageQty ? (
+                        <Text style={{ color: colors.accentGreen, fontSize: fs.sub }}>{usageQty} in recipe</Text>
+                      ) : null}
+                    </View>
+
+                    {/* Delete */}
+                    <TouchableOpacity onPress={() => handleDeleteItem(item)} style={{ padding: 4 }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 16 }}>{'\u00D7'}</Text>
+                    </TouchableOpacity>
                   </View>
-
-                  {/* Delete */}
-                  <TouchableOpacity onPress={() => handleDeleteItem(item)} style={{ padding: 4 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 16 }}>{'\u00D7'}</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
+                );
+              })}
             </View>
           ))}
 

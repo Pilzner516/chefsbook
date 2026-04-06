@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-05 (session 5)
+- Fixed recipe detail notes rendering: paragraph splitting on newlines and labeled sections (e.g. "Rub:", "Sauce:"), proper line spacing and margins
+- Shopping list item layout overhaul: purchase unit as prominent left element in accent red (`colors.accent`), usage amount in green (`colors.accentGreen`) below item name, removed green "Buy:" label
+- Shopping list font size control: 3 sizes (Small/Medium/Large) with `A`/`A+`/`A++` cycle toggle in header, persisted via `expo-secure-store`
+- ADB verified: Red purchase units and green usage amounts display correctly
+- ADB verified: Font size toggle visible in header, cycling through Small → Medium → Large works with visible text scaling
+
 ## 2026-04-05 (session 4)
 - Mobile tag management on recipe detail: TagManager component with add/remove tag pills (accentSoft bg, pomodoro red text), inline text input, AI auto-tag via `callClaude` from `@chefsbook/ai`
 - Auto-tag sends recipe title, cuisine, ingredients, steps to Claude and returns 5-8 suggested tags as green dashed pills; tap to add

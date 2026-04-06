@@ -874,7 +874,17 @@ function RecipeDetailInner() {
           <>
             <Divider />
             <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Notes</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20 }}>{recipe.notes}</Text>
+            {recipe.notes
+              .split(/\n+/)
+              .flatMap((line: string) =>
+                line.split(/(?<=\.)\s+(?=[A-Z][a-zA-Z\s/]*:\s)/)
+              )
+              .filter((p: string) => p.trim())
+              .map((paragraph: string, i: number) => (
+                <Text key={i} style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 22, marginBottom: 10 }}>
+                  {paragraph.trim()}
+                </Text>
+              ))}
           </>
         )}
 
