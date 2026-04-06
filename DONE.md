@@ -1,6 +1,28 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-06 (session 3)
+- Floating pill tab bar: removed elevated Scan button, all 5 tabs flat and identical inside pill
+- Meal plan add flow: bottom sheet recipe picker with meal type selector (Breakfast/Lunch/Dinner/Snack), save to plan, toast confirmation
+- Day-to-cart flow: cart icon on plan day cards, list picker bottom sheet, merge ingredients with AI purchase unit suggestions
+- Remove recipe from shopping list: trash icon on recipe group headers in recipe view mode with confirmation
+- Recipe detail: replaced Save/Share/Pin pill buttons with icon row (heart, share, pushpin emoji, pencil)
+- Recipe detail: added ChefsBookHeader with language/unit controls
+- Recipe image: added hero image with placeholder (cream bg + restaurant icon) when no image
+- Favorite heart: fixed toggleFav to update currentRecipe state, fixed pin reactivity via selector
+- Language selector: 28 languages with flag emojis, bottom sheet picker with search, priority languages
+- Metric/imperial toggle: [kg|lb] pill in header, unit conversion across recipe detail + shopping list
+- Unit conversion: full ladder system (ml→L, g→kg, oz→lb, tsp→Tbsp→cup→qt), dry ingredient classification
+- Unit conversion fix: everything converts consistently — no more mixing metric/imperial in same recipe
+- Unit abbreviation: teaspoons→tsp, tablespoons→Tbsp etc. on all display paths, numberOfLines={1}
+- Preferences store: Zustand + SecureStore persistence, Supabase sync on login
+- Web sidebar: language dropdown + unit toggle, reads/writes user_profiles
+- QA Notepad: hidden testing tool triggered by logo tap, persists to expo-file-system JSON, export to clipboard
+- Recipe saves: recipe_saves table with auto save_count trigger, save count badge on recipe cards + detail
+- Red heart on Favorites category card in search
+- DB migrations: user_preferences (language/units), recipe_saves + save_count + trigger + RLS
+- American spelling: Favourites → Favorites throughout mobile app
+
 ## 2026-04-06 (session 2)
 - Import pipeline waterfall: JSON-LD first → Claude gap-fill → Claude-only fallback; `import_status` + `missing_sections` + `aichef_assisted` fields on recipes
 - aiChef completion system: `generateAiChefSuggestion()` in `@chefsbook/ai` for suggesting missing recipe sections with user review

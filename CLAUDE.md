@@ -211,7 +211,7 @@ adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_not
 - Followers UI not built (DB schema exists)
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
-- Multilingual support not started
+- Multilingual support: language selector UI built, actual translation not implemented (UI labels still English-only)
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
@@ -240,6 +240,13 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Mobile tag management calls `callClaude` + `extractJSON` from `@chefsbook/ai` directly (no CORS in React Native) for auto-tag suggestions
 - Shopping list font size preference persisted via `expo-secure-store` (key: `shopping_font_size`, values: `small`/`medium`/`large`)
 - Mobile theme has `textPrimary`, `textSecondary`, and `textMuted` (via TRATTORIA_COLORS spread from `@chefsbook/ui`)
+- Unit conversion: everything converts — metric mode shows ml/g/kg, imperial stays cups/tsp/oz/lb. No mixing.
+- Unit conversion lives ONLY in `packages/ui/src/unitConversion.ts` — never duplicate in app code
+- Language/unit preferences: `preferencesStore` (mobile, Zustand + SecureStore) syncs to `user_profiles.preferred_language` / `preferred_units` in Supabase
+- Recipe saves vs favorites: `is_favourite` = personal bookmark on own recipes; `recipe_saves` table = social save of others' public recipes with `save_count` trigger
+- American spelling used throughout mobile app (Favorite not Favourite)
+- QA Notepad: temporary testing tool, triggered by tapping ChefsBook logo. Remove `QANotepad.tsx` + logo tap handler when done testing
+- Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`
 
 ## Navigator Agent
 Before doing any UI work, navigation, or screen testing:
