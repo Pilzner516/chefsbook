@@ -187,60 +187,73 @@ export default function SpeakScreen() {
   // ── Step 1: Record ──
   if (step === 1) {
     const micLabel = recording ? 'Tap to pause' : fullTranscript.length > 0 ? 'Tap to continue' : 'Tap to speak';
+    const hasContent = finalTranscript.length > 0 || interimTranscript.length > 0;
 
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
-        <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center', paddingBottom: tabBarHeight + 80 }}>
-          <ProgressBar />
+        <View style={{ flex: 1, paddingHorizontal: 20 }}>
+          {/* Step indicator */}
+          <View style={{ paddingTop: 12 }}>
+            <ProgressBar />
+          </View>
 
-          <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
-            Speak your recipe naturally. Say the name, ingredients, and steps in any order.
+          {/* Instructions */}
+          <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginBottom: 24 }}>
+            Speak your recipe naturally — name, ingredients, steps
           </Text>
 
-          <Card style={{ padding: 16, marginBottom: 20, width: '100%' }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Example</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontStyle: 'italic', lineHeight: 20 }}>
-              "Grandma's cookies. Two cups flour, one cup butter, two eggs, one cup chocolate chips. Cream butter and sugar, add eggs, fold in flour and chips, bake at 375 for 12 minutes."
+          {/* Mic button */}
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <TouchableOpacity
+              onPress={recording ? stopRecording : startRecording}
+              style={{
+                width: 100, height: 100, borderRadius: 50,
+                backgroundColor: recording ? '#a81f2a' : colors.accent,
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Ionicons name={recording ? 'mic' : 'mic-outline'} size={48} color="#ffffff" />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 10, fontWeight: '600' }}>
+              {micLabel}
             </Text>
-          </Card>
+            <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
+              {recording ? `Listening in ${langName}...` : ''}
+            </Text>
+          </View>
 
-          {/* Big mic button */}
-          <TouchableOpacity
-            onPress={recording ? stopRecording : startRecording}
-            style={{
-              width: 120, height: 120, borderRadius: 60,
-              backgroundColor: recording ? '#ef4444' : colors.accent,
-              alignItems: 'center', justifyContent: 'center',
-              marginBottom: 12,
-            }}
-          >
-            <Ionicons name="mic" size={52} color="#ffffff" />
-          </TouchableOpacity>
-          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', marginBottom: 4 }}>
-            {micLabel}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 8 }}>
-            Listening in {langName}
-          </Text>
-          {recording && (
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#ef4444', marginBottom: 8 }} />
-          )}
-
-          {/* Live transcript */}
-          {fullTranscript.length > 0 && (
-            <View style={{ width: '100%', marginTop: 16 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{fullTranscript.length} characters</Text>
-                <TouchableOpacity onPress={clearTranscript} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
-                  <Ionicons name="refresh-outline" size={14} color={colors.textMuted} />
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear</Text>
-                </TouchableOpacity>
+          {/* Transcript box — fills remaining space */}
+          <View style={{
+            flex: 1,
+            backgroundColor: colors.bgCard,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: recording ? colors.accent : colors.borderDefault,
+            padding: 16,
+            marginBottom: 16,
+          }}>
+            {/* Recording indicator + clear button */}
+            {(recording || hasContent) && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                {recording && (
+                  <>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, marginRight: 8 }} />
+                    <Text style={{ fontSize: 11, color: colors.accent }}>Recording...</Text>
+                  </>
+                )}
+                <View style={{ flex: 1 }} />
+                {hasContent && (
+                  <TouchableOpacity onPress={clearTranscript} style={{ padding: 4 }}>
+                    <Ionicons name="refresh-outline" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )}
               </View>
-              <View style={{
-                backgroundColor: colors.bgBase, borderRadius: 12, padding: 16,
-                minHeight: 80,
-              }}>
-                <Text style={{ color: colors.textPrimary, fontSize: 16, lineHeight: 24 }}>
+            )}
+
+            {/* Transcript text */}
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              {hasContent ? (
+                <Text style={{ fontSize: 15, color: colors.textPrimary, lineHeight: 24 }}>
                   {finalTranscript}
                   {interimTranscript ? (
                     <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>
@@ -248,24 +261,40 @@ export default function SpeakScreen() {
                     </Text>
                   ) : null}
                 </Text>
-              </View>
-            </View>
-          )}
-
-          {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginTop: 12 }}>{error}</Text> : null}
-        </ScrollView>
-
-        {/* Sticky bottom action */}
-        {!recording && fullTranscript.length > 0 && (
-          <View style={{
-            position: 'absolute',
-            bottom: insets.bottom + 80,
-            left: 16,
-            right: 16,
-          }}>
-            <Button title="Next: Review" onPress={() => setStep(2)} />
+              ) : (
+                <Text style={{ fontSize: 14, color: colors.textMuted, fontStyle: 'italic', textAlign: 'center', marginTop: 20 }}>
+                  Your recipe will appear here as you speak...
+                </Text>
+              )}
+            </ScrollView>
           </View>
-        )}
+
+          {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginBottom: 8 }}>{error}</Text> : null}
+        </View>
+
+        {/* Extract Recipe button — pinned above nav bar */}
+        <View style={{
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 16,
+          paddingTop: 12,
+          backgroundColor: colors.bgScreen,
+          borderTopWidth: 0.5,
+          borderTopColor: colors.borderDefault,
+        }}>
+          <TouchableOpacity
+            onPress={() => setStep(2)}
+            disabled={!hasContent}
+            style={{
+              backgroundColor: hasContent ? colors.accent : colors.borderDefault,
+              height: 52,
+              borderRadius: 26,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>Extract Recipe</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
