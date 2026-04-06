@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useShoppingStore } from '../../lib/zustand/shoppingStore';
+import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Button, Card, EmptyState, Loading, Input } from '../../components/UIKit';
 import type { ShoppingListItem, StoreCategory } from '@chefsbook/db';
 
@@ -43,6 +45,7 @@ type ViewMode = 'department' | 'recipe' | 'alpha';
 
 export default function ShopTab() {
   const { colors } = useTheme();
+  const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const lists = useShoppingStore((s) => s.lists);
   const currentList = useShoppingStore((s) => s.currentList);
@@ -61,6 +64,7 @@ export default function ShopTab() {
   const unsubscribe = useShoppingStore((s) => s.unsubscribe);
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
+  const [selectedStore, setSelectedStore] = useState<string | null>(null); // null = Level 1 store view
   const [viewMode, setViewMode] = useState<ViewMode>('department');
   const [manualInput, setManualInput] = useState('');
   const [editingQty, setEditingQty] = useState<string | null>(null);
@@ -168,9 +172,10 @@ export default function ShopTab() {
   if (currentList) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+        <ChefsBookHeader />
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingBottom: 8 }}>
-          <TouchableOpacity onPress={() => useShoppingStore.setState({ currentList: null })}>
+          <TouchableOpacity onPress={() => { useShoppingStore.setState({ currentList: null }); }}>
             <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Lists</Text>
           </TouchableOpacity>
           <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center' }} numberOfLines={1}>{currentList.name}</Text>
@@ -334,7 +339,7 @@ export default function ShopTab() {
           )}
 
           {items.length === 0 && (
-            <EmptyState icon="🛒" title="Empty list" message="Add items from a recipe or type one above." />
+            <EmptyState icon="🛒" title="Your shopping list is empty" message="Add recipes to your meal plan to generate a shopping list." action={{ label: 'Plan Meals', onPress: () => router.push('/(tabs)/plan') }} />
           )}
 
           <View style={{ height: 32 }} />
@@ -343,50 +348,126 @@ export default function ShopTab() {
     );
   }
 
-  // ── List overview ──
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.bgScreen, padding: 16 }}>
-      <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '700', marginBottom: 16 }}>Shopping Lists</Text>
+  // Group lists by store name for Level 1
+  const storeGroups = useMemo(() => {
+    const groups: Record<string, typeof lists> = {};
+    for (const list of lists) {
+      const store = list.store_name || 'General';
+      if (!groups[store]) groups[store] = [];
+      groups[store].push(list);
+    }
+    return Object.entries(groups).sort(([a], [b]) =>
+      a === 'General' ? 1 : b === 'General' ? -1 : a.localeCompare(b)
+    );
+  }, [lists]);
 
-      {showNew && (
-        <Card style={{ marginBottom: 16 }}>
-          <Input value={newName} onChangeText={setNewName} placeholder="List name..." />
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-            <View style={{ flex: 1 }}><Button title="Create" onPress={handleCreate} /></View>
-            <View style={{ flex: 1 }}><Button title="Cancel" onPress={() => setShowNew(false)} variant="ghost" /></View>
-          </View>
-        </Card>
-      )}
+  const filteredLists = useMemo(() => {
+    if (!selectedStore) return lists;
+    if (selectedStore === '__all__') return lists;
+    return lists.filter((l) => (l.store_name || 'General') === selectedStore);
+  }, [lists, selectedStore]);
 
-      {!showNew && <View style={{ marginBottom: 16 }}><Button title="New Shopping List" onPress={() => setShowNew(true)} /></View>}
+  // ── Level 2: Lists within a store ──
+  if (selectedStore) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+        <ChefsBookHeader />
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+          <TouchableOpacity onPress={() => setSelectedStore(null)} style={{ marginBottom: 12 }}>
+            <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Stores</Text>
+          </TouchableOpacity>
 
-      <ScrollView>
-        {lists.length === 0 ? (
-          <EmptyState icon="🛒" title="No shopping lists" message="Create a list or generate one from your meal plan." />
-        ) : (
-          lists.map((list) => (
-            <Card key={list.id} onPress={() => fetchList(list.id)} style={{ marginBottom: 10 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>
-                    {list.pinned ? '📌 ' : ''}{list.name}
-                  </Text>
-                  {list.date_range_start && (
-                    <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
-                      {list.date_range_start} — {list.date_range_end}
-                    </Text>
-                  )}
-                </View>
-                <TouchableOpacity
-                  onPress={(e) => { e.stopPropagation?.(); handleDeleteList(list.id, list.name); }}
-                  style={{ padding: 8 }}
-                >
-                  <Text style={{ color: colors.textSecondary, fontSize: 16 }}>{'\u00D7'}</Text>
-                </TouchableOpacity>
+          <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>
+            {selectedStore === '__all__' ? 'All Lists' : selectedStore}
+          </Text>
+
+          {showNew && (
+            <Card style={{ marginBottom: 16 }}>
+              <Input value={newName} onChangeText={setNewName} placeholder="List name..." />
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <View style={{ flex: 1 }}><Button title="Create" onPress={handleCreate} /></View>
+                <View style={{ flex: 1 }}><Button title="Cancel" onPress={() => setShowNew(false)} variant="ghost" /></View>
               </View>
             </Card>
-          ))
+          )}
+
+          {!showNew && <View style={{ marginBottom: 16 }}><Button title="+ New List" onPress={() => setShowNew(true)} /></View>}
+
+          {filteredLists.length === 0 ? (
+            <EmptyState icon="🛒" title="No lists here" message="Create a new shopping list." />
+          ) : (
+            filteredLists.map((list) => (
+              <Card key={list.id} onPress={() => fetchList(list.id)} style={{ marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>
+                      {list.pinned ? '\uD83D\uDCCC ' : ''}{list.name}
+                    </Text>
+                    {list.date_range_start && (
+                      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+                        {list.date_range_start} — {list.date_range_end}
+                      </Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    onPress={(e) => { e.stopPropagation?.(); handleDeleteList(list.id, list.name); }}
+                    style={{ padding: 8 }}
+                  >
+                    <Text style={{ color: colors.textSecondary, fontSize: 16 }}>{'\u00D7'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ── Level 1: Store/Group selector ──
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <ChefsBookHeader />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>Shopping Lists</Text>
+
+        {/* All Lists quick access */}
+        <Card onPress={() => setSelectedStore('__all__')} style={{ marginBottom: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={{ fontSize: 22 }}>{'\uD83D\uDED2'}</Text>
+              <View>
+                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>All Lists</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13 }}>{lists.length} lists</Text>
+              </View>
+            </View>
+            <Text style={{ color: colors.textMuted, fontSize: 18 }}>{'\u203A'}</Text>
+          </View>
+        </Card>
+
+        {/* Store groups */}
+        {storeGroups.map(([store, storeLists]) => (
+          <Card key={store} onPress={() => setSelectedStore(store)} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Text style={{ fontSize: 22 }}>{'\uD83C\uDFEA'}</Text>
+                <View>
+                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{store}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>{storeLists.length} {storeLists.length === 1 ? 'list' : 'lists'}</Text>
+                </View>
+              </View>
+              <Text style={{ color: colors.textMuted, fontSize: 18 }}>{'\u203A'}</Text>
+            </View>
+          </Card>
+        ))}
+
+        {lists.length === 0 && (
+          <EmptyState icon="🛒" title="No shopping lists" message="Create a list or generate one from your meal plan." action={{ label: 'Plan Meals', onPress: () => router.push('/(tabs)/plan') }} />
         )}
+
+        <View style={{ marginTop: 12 }}>
+          <Button title="+ New Shopping List" onPress={() => { setSelectedStore('__all__'); setShowNew(true); }} />
+        </View>
       </ScrollView>
     </View>
   );

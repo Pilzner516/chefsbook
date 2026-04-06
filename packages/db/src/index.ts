@@ -11,3 +11,4 @@ export * from './queries/categories';
 export * from './queries/techniques';
 export * from './queries/recipePhotos';
 export * from './subscriptions';
+export * from './shopping/deduplication';
