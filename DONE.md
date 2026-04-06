@@ -1,7 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
-## 2026-04-06
+## 2026-04-06 (session 2)
+- Import pipeline waterfall: JSON-LD first → Claude gap-fill → Claude-only fallback; `import_status` + `missing_sections` + `aichef_assisted` fields on recipes
+- aiChef completion system: `generateAiChefSuggestion()` in `@chefsbook/ai` for suggesting missing recipe sections with user review
+- Shopping list store navigation: two-level hierarchy (stores → items), smart deduplication with quantity merging
+- Meal plan editing: inline edit, remove meal, smart cart sync UI (synced_to_list_id/synced_at/synced_ingredients_hash on meal_plans)
+- Fixed TypeScript crash: made new DB fields optional (`?:`) on MealPlan and Recipe interfaces — required fields without values caused "Maximum update depth exceeded"
+- Emulator debugging: identified Metro hostname issue (Tailscale IP vs localhost), fixed with `REACT_NATIVE_PACKAGER_HOSTNAME=localhost`
+- Documented reliable emulator launch: must use CLI with `-no-snapshot -gpu host`, not Android Studio Device Manager
+
+## 2026-04-06 (session 1)
 - Fixed Android build: added android.enableJetifier=true to resolve androidx/support-compat duplicate class conflict
 - Redesigned mobile Scan/Import tab: hero Speak button with pulse animation, 2x2 icon grid, collapsible URL input, clipboard paste helper, Chrome share banner
 - Registered ChefsBook as Android share target (intent filters for VIEW http/https + SEND text/plain in app.json)

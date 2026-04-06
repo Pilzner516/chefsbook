@@ -196,6 +196,8 @@ Both apps share the "Trattoria" palette: red accent `#ce2b37`, green `#009246`, 
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
+- Emulator must be launched from CLI (`emulator -avd Medium_Phone_API_36.1 -no-snapshot -gpu host`) — Android Studio Device Manager launches headless/invisible window
+- Metro hostname: set `REACT_NATIVE_PACKAGER_HOSTNAME=localhost` before `npx expo start` when on Tailscale (otherwise Metro advertises Tailscale IP, unreachable from emulator)
 
 See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 
