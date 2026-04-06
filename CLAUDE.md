@@ -216,3 +216,4 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Shopping pipeline shared: `addItemsWithPipeline()` in `@chefsbook/db` is the single source of truth — both web API and mobile call it directly
 - Mobile calls `suggestPurchaseUnits` from `@chefsbook/ai` directly (no CORS in React Native)
 - Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch
+- Mobile tag management calls `callClaude` + `extractJSON` from `@chefsbook/ai` directly (no CORS in React Native) for auto-tag suggestions

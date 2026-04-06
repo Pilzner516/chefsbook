@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-05 (session 4)
+- Mobile tag management on recipe detail: TagManager component with add/remove tag pills (accentSoft bg, pomodoro red text), inline text input, AI auto-tag via `callClaude` from `@chefsbook/ai`
+- Auto-tag sends recipe title, cuisine, ingredients, steps to Claude and returns 5-8 suggested tags as green dashed pills; tap to add
+- Tag sanitization: lowercase, no special characters, no duplicates
+- ADB verified: Tags section renders on recipe detail with Auto-tag + Add Tag buttons
+- ADB verified: Manual tag add ("bbq" pill with × remove button), tag removal (reverts to empty state)
+- ADB verified: Auto-tag AI returns 7 suggestions (pork, ribs, oven-baked, barbecue, tender, american, comfort-food) as green dashed pills
+- ADB verified: Tags persist to Supabase and sync to web (confirmed via REST API query)
+
 ## 2026-04-05 (session 3)
 - Fixed React hooks violation in shop.tsx — useMemo calls were after early return, causing "Rendered fewer hooks than expected" crash when navigating back from list detail to list overview
 - ADB verified: Shop tab loads correctly, "Week of 2026-03-30" list shows 41 items with department grouping (Produce, Meat & Seafood, Dairy & Eggs, Baking, Pasta & Grains, Canned & Jarred, Condiments & Sauces, Spices & Seasonings) and purchase units

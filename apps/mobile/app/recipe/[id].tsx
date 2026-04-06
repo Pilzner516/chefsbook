@@ -11,7 +11,7 @@ import { useAuthStore } from '../../lib/zustand/authStore';
 import { shareRecipe } from '../../lib/sharing';
 import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity } from '@chefsbook/ui';
-import { suggestPurchaseUnits } from '@chefsbook/ai';
+import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
 import { updateRecipe, replaceIngredients, replaceSteps } from '@chefsbook/db';
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
 import { CountdownTimer } from '../../components/CountdownTimer';
@@ -277,6 +277,194 @@ function SourceSection({ recipe }: { recipe: { source_url: string | null; source
             {recipe.source_url}
           </Text>
         </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+// --- Tag Management section ---
+function TagManager({
+  recipeId,
+  tags,
+  recipe,
+  onTagsChanged,
+}: {
+  recipeId: string;
+  tags: string[];
+  recipe: { title: string; cuisine: string | null; ingredients?: { ingredient: string }[]; steps?: { instruction: string }[] };
+  onTagsChanged: () => void;
+}) {
+  const { colors } = useTheme();
+  const [showInput, setShowInput] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  const sanitizeTag = (t: string) => t.toLowerCase().replace(/[^a-z0-9-]/g, '').trim();
+
+  const addTag = async (raw: string) => {
+    const tag = sanitizeTag(raw);
+    if (!tag || tags.includes(tag)) return;
+    try {
+      await updateRecipe(recipeId, { tags: [...tags, tag] });
+      onTagsChanged();
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
+
+  const removeTag = async (tag: string) => {
+    try {
+      await updateRecipe(recipeId, { tags: tags.filter((t) => t !== tag) });
+      onTagsChanged();
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!inputValue.trim()) return;
+    addTag(inputValue);
+    setInputValue('');
+  };
+
+  const autoTag = async () => {
+    setLoadingSuggestions(true);
+    setSuggestions([]);
+    try {
+      const ingList = (recipe.ingredients ?? []).map((i) => i.ingredient).slice(0, 10).join(', ');
+      const stepList = (recipe.steps ?? []).map((s) => s.instruction).slice(0, 5).join('. ');
+      const prompt = `Suggest 5-8 tags for this recipe. Tags should be lowercase single words or hyphenated (e.g. "one-pot", "gluten-free"). Cover: main protein, cooking method, characteristics, diet flags if applicable.
+
+Title: ${recipe.title}
+Cuisine: ${recipe.cuisine ?? 'unknown'}
+Ingredients: ${ingList}
+Steps: ${stepList}
+
+Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
+
+      const text = await callClaude({ prompt, maxTokens: 200 });
+      const result = extractJSON<string[]>(text);
+      const cleaned = result.map(sanitizeTag).filter((t) => t && !tags.includes(t));
+      setSuggestions(cleaned);
+    } catch (err: any) {
+      Alert.alert('Auto-tag failed', err.message);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const addSuggestion = (tag: string) => {
+    addTag(tag);
+    setSuggestions((prev) => prev.filter((t) => t !== tag));
+  };
+
+  return (
+    <View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Tags</Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={autoTag} disabled={loadingSuggestions}>
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>
+              {loadingSuggestions ? 'Thinking...' : '🤖 Auto-tag'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowInput(!showInput)}>
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{showInput ? 'Cancel' : '+ Add Tag'}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Existing tags */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+        {tags.length === 0 && !showInput && suggestions.length === 0 && (
+          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>No tags yet. Tap + Add Tag or Auto-tag.</Text>
+        )}
+        {tags.map((tag) => (
+          <View
+            key={tag}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.accentSoft,
+              borderRadius: 16,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              gap: 6,
+            }}
+          >
+            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{tag}</Text>
+            <TouchableOpacity onPress={() => removeTag(tag)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '700' }}>{'\u00D7'}</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+
+      {/* Add tag input */}
+      {showInput && (
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+          <TextInput
+            value={inputValue}
+            onChangeText={setInputValue}
+            placeholder="Type a tag..."
+            placeholderTextColor={colors.textSecondary}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+            style={{
+              flex: 1,
+              backgroundColor: colors.bgBase,
+              borderRadius: 8,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              fontSize: 14,
+              color: colors.textPrimary,
+              borderWidth: 1,
+              borderColor: colors.borderDefault,
+            }}
+          />
+          <TouchableOpacity
+            onPress={handleSubmit}
+            style={{
+              backgroundColor: colors.accent,
+              borderRadius: 8,
+              paddingHorizontal: 16,
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Add</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* AI suggestions */}
+      {suggestions.length > 0 && (
+        <View style={{ marginBottom: 10 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 6 }}>Suggested tags — tap to add:</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {suggestions.map((tag) => (
+              <TouchableOpacity
+                key={tag}
+                onPress={() => addSuggestion(tag)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.accentGreenSoft,
+                  borderRadius: 16,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderWidth: 1,
+                  borderColor: colors.accentGreen,
+                  borderStyle: 'dashed',
+                }}
+              >
+                <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600' }}>+ {tag}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       )}
     </View>
   );
@@ -689,6 +877,15 @@ function RecipeDetailInner() {
             <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20 }}>{recipe.notes}</Text>
           </>
         )}
+
+        {/* Tag management */}
+        <Divider />
+        <TagManager
+          recipeId={recipe.id}
+          tags={tags}
+          recipe={{ title: recipe.title, cuisine: recipe.cuisine, ingredients, steps }}
+          onTagsChanged={() => fetchRecipe(recipe.id)}
+        />
 
         {/* Source metadata (bookmark import) */}
         <Divider />
