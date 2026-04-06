@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@chefsbook/db';
 import type { User } from '@supabase/supabase-js';
+import { LANGUAGES, PRIORITY_LANGUAGES } from '@chefsbook/ui';
+import type { UnitSystem } from '@chefsbook/ui';
 
 const navItems = [
   { href: '/dashboard/search', label: 'Search', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg> },
@@ -23,11 +25,48 @@ export default function Sidebar({ user }: { user: User | null }) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [counts, setCounts] = useState<{ recipes: number; techniques: number }>({ recipes: 0, techniques: 0 });
+  const [language, setLanguageState] = useState('en');
+  const [units, setUnitsState] = useState<UnitSystem>('imperial');
+  const [langOpen, setLangOpen] = useState(false);
+  const [langSearch, setLangSearch] = useState('');
+  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar_collapsed');
     if (saved === 'true') setCollapsed(true);
   }, []);
+
+  // Load preferences from Supabase
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('user_profiles').select('preferred_language, preferred_units').eq('id', user.id).single().then(({ data }) => {
+      if (data) {
+        setLanguageState(data.preferred_language || 'en');
+        setUnitsState((data.preferred_units as UnitSystem) || 'imperial');
+      }
+    });
+  }, [user]);
+
+  // Close language picker on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    if (langOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [langOpen]);
+
+  const setLanguage = async (code: string) => {
+    setLanguageState(code);
+    setLangOpen(false);
+    if (user) await supabase.from('user_profiles').update({ preferred_language: code }).eq('id', user.id);
+  };
+
+  const toggleUnits = async () => {
+    const next = units === 'imperial' ? 'metric' : 'imperial';
+    setUnitsState(next);
+    if (user) await supabase.from('user_profiles').update({ preferred_units: next }).eq('id', user.id);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -38,6 +77,13 @@ export default function Sidebar({ user }: { user: User | null }) {
       setCounts((prev) => ({ ...prev, techniques: count ?? 0 }));
     });
   }, [user]);
+
+  const currentFlag = LANGUAGES.find((l) => l.code === language)?.flag ?? '🇺🇸';
+  const priorityLangs = LANGUAGES.filter((l) => PRIORITY_LANGUAGES.includes(l.code));
+  const otherLangs = LANGUAGES.filter((l) => !PRIORITY_LANGUAGES.includes(l.code));
+  const filteredLangs = langSearch.trim()
+    ? LANGUAGES.filter((l) => l.name.toLowerCase().includes(langSearch.toLowerCase()) || l.nativeName.toLowerCase().includes(langSearch.toLowerCase()))
+    : null;
 
   const toggleCollapse = () => {
     const next = !collapsed;
@@ -53,7 +99,49 @@ export default function Sidebar({ user }: { user: User | null }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
-        {!collapsed && <Link href="/" className="text-xl font-bold"><span className="text-cb-primary">Chefs</span>book</Link>}
+        {!collapsed && <Link href="/" className="text-xl font-bold flex-1"><span className="text-cb-primary">Chefs</span>book</Link>}
+        {!collapsed && (
+          <div className="flex items-center gap-1.5">
+            {/* Language flag */}
+            <div ref={langRef} className="relative">
+              <button onClick={() => setLangOpen(!langOpen)} className="text-lg p-1 hover:bg-cb-bg rounded transition-colors" title="Language">
+                {currentFlag}
+              </button>
+              {langOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-cb-card border border-cb-border rounded-card shadow-lg z-50 max-h-80 flex flex-col">
+                  <div className="p-2 border-b border-cb-border">
+                    <input
+                      value={langSearch}
+                      onChange={(e) => setLangSearch(e.target.value)}
+                      placeholder="Search languages..."
+                      className="w-full text-sm px-2 py-1.5 rounded-input border border-cb-border bg-cb-bg text-cb-text placeholder:text-cb-muted focus:outline-none focus:border-cb-primary"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="overflow-y-auto flex-1">
+                    {(filteredLangs ?? [...priorityLangs, ...otherLangs]).map((lang, i) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => setLanguage(lang.code)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-cb-bg transition-colors ${language === lang.code ? 'bg-cb-primary-soft' : ''} ${!filteredLangs && i === priorityLangs.length - 1 ? 'border-b border-cb-border' : ''}`}
+                      >
+                        <span className="text-lg">{lang.flag}</span>
+                        <span className="text-cb-text flex-1 text-left">{lang.nativeName}</span>
+                        {lang.nativeName !== lang.name && <span className="text-cb-muted text-xs">({lang.name})</span>}
+                        {language === lang.code && <span className="text-cb-primary">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Unit toggle */}
+            <div className="flex h-6 rounded-full border border-cb-border overflow-hidden text-[11px] font-semibold">
+              <button onClick={toggleUnits} className={`px-2 transition-colors ${units === 'metric' ? 'bg-cb-primary text-white' : 'text-cb-muted hover:text-cb-text'}`}>kg</button>
+              <button onClick={toggleUnits} className={`px-2 transition-colors ${units === 'imperial' ? 'bg-cb-primary text-white' : 'text-cb-muted hover:text-cb-text'}`}>lb</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <nav className="flex-1 p-2 space-y-0.5">

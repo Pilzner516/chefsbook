@@ -11,7 +11,8 @@ import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { shareRecipe } from '../../lib/sharing';
 import { parseTimers, ParsedTimer } from '../../lib/timers';
-import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST } from '@chefsbook/ui';
+import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
+import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
 import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps } from '@chefsbook/db';
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
@@ -207,6 +208,12 @@ function IngredientRow({
 }) {
   const router = useRouter();
   const recipes = useRecipeStore((s) => s.recipes);
+  const units = usePreferencesStore((s) => s.units);
+
+  // Convert units based on preference
+  const converted = useMemo(() => {
+    return convertIngredient(scaled, ing.unit, units);
+  }, [scaled, ing.unit, units]);
 
   // Check if this ingredient matches another recipe title (sub-recipe linking)
   const linked = useMemo(() => {
@@ -228,7 +235,7 @@ function IngredientRow({
       style={{ flexDirection: 'row', paddingVertical: 6 }}
     >
       <Text style={{ color: colors.accent, fontSize: 15, width: 70, textAlign: 'right', marginRight: 12 }}>
-        {formatQuantity(scaled)} {ing.unit ?? ''}
+        {formatQuantity(converted.quantity)} {converted.unit}
       </Text>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
         <Text style={{
@@ -491,7 +498,8 @@ function RecipeDetailInner() {
   const removeRecipe = useRecipeStore((s) => s.removeRecipe);
   const pin = usePinStore((s) => s.pin);
   const unpin = usePinStore((s) => s.unpin);
-  const isPinned = usePinStore((s) => s.isPinned);
+  const pinnedList = usePinStore((s) => s.pinned);
+  const preferredUnits = usePreferencesStore((s) => s.units);
   const session = useAuthStore((s) => s.session);
   const fetchShoppingLists = useShoppingStore((s) => s.fetchLists);
   const addShoppingList = useShoppingStore((s) => s.addList);
@@ -655,7 +663,7 @@ function RecipeDetailInner() {
   const steps = recipe.steps ?? [];
   const tags = recipe.tags ?? [];
   const originalServings = recipe.servings || 4;
-  const pinned = isPinned(recipe.id);
+  const pinned = pinnedList.some((r) => r.id === recipe.id);
 
   if (cookMode && steps.length > 0) {
     return <CookMode steps={steps} onExit={() => setCookMode(false)} />;
@@ -965,33 +973,24 @@ function RecipeDetailInner() {
           </TouchableOpacity>
         )}
 
-        {/* Action buttons */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'center' }}>
-          <TouchableOpacity
-            onPress={() => toggleFav(recipe.id, recipe.is_favourite)}
-            style={{ padding: 8 }}
-          >
+        {/* Action icons */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 28, marginBottom: 14, alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => toggleFav(recipe.id, recipe.is_favourite)} style={{ padding: 6 }}>
             <Ionicons
               name={recipe.is_favourite ? 'heart' : 'heart-outline'}
               size={26}
               color={recipe.is_favourite ? colors.accent : colors.textMuted}
             />
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Button title="🔗 Share" onPress={() => shareRecipe(recipe)} variant="secondary" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button
-              title={pinned ? '📌 Pinned' : '📌 Pin'}
-              onPress={() => (pinned ? unpin(recipe.id) : pin(recipe))}
-              variant={pinned ? 'primary' : 'secondary'}
-            />
-          </View>
-        </View>
-
-        {/* Edit button */}
-        <View style={{ marginBottom: 10 }}>
-          <Button title="✏️ Edit Recipe" onPress={startEditing} variant="secondary" />
+          <TouchableOpacity onPress={() => shareRecipe(recipe)} style={{ padding: 6 }}>
+            <Ionicons name="share-social-outline" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => (pinned ? unpin(recipe.id) : pin(recipe))} style={{ padding: 6 }}>
+            <Text style={{ fontSize: 22, opacity: pinned ? 1 : 0.3 }}>📌</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={startEditing} style={{ padding: 6 }}>
+            <Ionicons name="create-outline" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
 
         {/* Add to shopping list */}
@@ -1059,7 +1058,7 @@ function RecipeDetailInner() {
                 <Text style={{ color: colors.bgScreen, fontSize: 13, fontWeight: '700' }}>{step.step_number}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.textPrimary, fontSize: 15, lineHeight: 22 }}>{step.instruction ?? ''}</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 15, lineHeight: 22 }}>{convertTemperatureInText(step.instruction ?? '', preferredUnits)}</Text>
                 {allTimers.length > 0 && (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                     {allTimers.map((t, i) => (

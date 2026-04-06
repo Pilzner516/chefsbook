@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
+import { convertIngredient, formatQuantity as formatQty } from '@chefsbook/ui';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
@@ -74,6 +76,7 @@ export default function ShopTab() {
   const [editQtyValue, setEditQtyValue] = useState('');
   const [fontSize, setFontSize] = useState<FontSize>('medium');
   const fs = FONT_SCALES[fontSize];
+  const preferredUnits = usePreferencesStore((s) => s.units);
 
   // Load persisted font size
   useEffect(() => {
@@ -301,7 +304,8 @@ export default function ShopTab() {
                 )}
               </View>
               {groupItems.map((item) => {
-                const rawQty = [item.quantity, item.unit].filter(Boolean).join(' ');
+                const converted = convertIngredient(item.quantity, item.unit, preferredUnits);
+                const rawQty = [converted.quantity ? formatQty(converted.quantity) : item.quantity, converted.unit || item.unit].filter(Boolean).join(' ');
                 const displayQty = item.purchase_unit || rawQty;
                 const usageQty = item.purchase_unit ? rawQty : '';
 

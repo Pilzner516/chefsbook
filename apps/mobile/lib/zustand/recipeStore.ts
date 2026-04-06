@@ -86,6 +86,7 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
     await toggleFavourite(id, !current);
     set((s) => ({
       recipes: s.recipes.map((r) => (r.id === id ? { ...r, is_favourite: !current } : r)),
+      currentRecipe: s.currentRecipe?.id === id ? { ...s.currentRecipe, is_favourite: !current } : s.currentRecipe,
     }));
   },
 }));

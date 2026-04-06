@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
+import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { PinnedBar } from '../components/PinnedBar';
 import { ImportBanner } from '../components/ImportBanner';
 import { Loading } from '../components/UIKit';
@@ -17,6 +18,8 @@ function useProtectedRoute() {
   const router = useRouter();
   const navRef = useNavigationContainerRef();
   const [navReady, setNavReady] = useState(false);
+  const loadFromLocal = usePreferencesStore((s) => s.loadFromLocal);
+  const loadFromSupabase = usePreferencesStore((s) => s.loadFromSupabase);
 
   useEffect(() => {
     if (navRef?.isReady()) setNavReady(true);
@@ -25,6 +28,14 @@ function useProtectedRoute() {
     });
     return unsubscribe;
   }, [navRef]);
+
+  // Load preferences on auth
+  useEffect(() => {
+    loadFromLocal();
+    if (session?.user?.id) {
+      loadFromSupabase(session.user.id);
+    }
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (loading || !navReady) return;
