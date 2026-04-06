@@ -30,7 +30,7 @@
       "package": "com.chefsbook.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#faf7f0"
+        "backgroundColor": "#ce2b37"
       },
       "permissions": [
         "android.permission.CAMERA",

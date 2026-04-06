@@ -1,75 +1,111 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
-import { Button } from '../components/UIKit';
 
 export default function LandingScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgScreen }]}>
-      <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>
-            <Text style={[styles.logoChefs, { color: colors.textPrimary }]}>Chefs</Text>
-            <Text style={[styles.logoBook, { color: colors.accent }]}>Book</Text>
-          </Text>
-          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-            Your recipes, all in one place.
-          </Text>
-        </View>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.bgScreen,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 40,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+    >
+      {/* App icon */}
+      <Image
+        source={require('../assets/icon.png')}
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 26,
+          marginBottom: 20,
+          alignSelf: 'center',
+        }}
+        resizeMode="contain"
+      />
 
-        <View style={styles.buttons}>
-          <Button
-            title="Sign In"
-            onPress={() => router.push('/auth/signin')}
-            variant="primary"
-            size="lg"
-          />
-          <View style={{ height: 12 }} />
-          <Button
-            title="Create Account"
-            onPress={() => router.push('/auth/signup')}
-            variant="secondary"
-            size="lg"
-          />
-        </View>
+      {/* ChefsBook logo */}
+      <Text style={{
+        fontSize: 34,
+        fontWeight: 'bold',
+        fontFamily,
+        textAlign: 'center',
+        marginBottom: 8,
+      }}>
+        <Text style={{ color: colors.textPrimary }}>Chefs</Text>
+        <Text style={{ color: colors.accent }}>Book</Text>
+      </Text>
+
+      {/* Tagline */}
+      <Text style={{
+        fontSize: 14,
+        color: colors.textSecondary,
+        textAlign: 'center',
+        marginBottom: 32,
+        fontFamily,
+      }}>
+        Your recipes, beautifully organized
+      </Text>
+
+      {/* Three dots */}
+      <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
+        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.borderDefault }} />
+        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.accent }} />
+        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.borderDefault }} />
       </View>
-    </SafeAreaView>
+
+      {/* Sign In button */}
+      <TouchableOpacity
+        onPress={() => router.push('/auth/signin')}
+        style={{
+          width: '100%',
+          height: 52,
+          borderRadius: 26,
+          backgroundColor: colors.accent,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>Sign In</Text>
+      </TouchableOpacity>
+
+      {/* Create Account button */}
+      <TouchableOpacity
+        onPress={() => router.push('/auth/signup')}
+        style={{
+          width: '100%',
+          height: 52,
+          borderRadius: 26,
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderColor: colors.accent,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 16,
+        }}
+      >
+        <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700' }}>Create Account</Text>
+      </TouchableOpacity>
+
+      {/* Continue as guest */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, width: '100%' }}>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.borderDefault }} />
+        <TouchableOpacity onPress={() => router.push('/(tabs)/' as any)} style={{ paddingHorizontal: 16 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>Continue as guest</Text>
+        </TouchableOpacity>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.borderDefault }} />
+      </View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 64,
-  },
-  logo: {
-    fontSize: 48,
-    fontWeight: '700',
-  },
-  logoChefs: {
-    fontFamily: 'serif',
-  },
-  logoBook: {
-    fontFamily: 'serif',
-  },
-  tagline: {
-    fontSize: 16,
-    marginTop: 12,
-  },
-  buttons: {
-    paddingHorizontal: 16,
-  },
-});
