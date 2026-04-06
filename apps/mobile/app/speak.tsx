@@ -45,34 +45,60 @@ export default function SpeakScreen() {
   const tabBarHeight = useTabBarHeight();
 
   const [step, setStep] = useState<Step>(1);
-  const [transcript, setTranscript] = useState('');
+  const [finalTranscript, setFinalTranscript] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState('');
   const [recording, setRecording] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState('');
   const [recipe, setRecipe] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  // Track text accumulated before current recording session
-  const prevTranscriptRef = useRef('');
+  // Ref to access latest interim in the 'end' handler
+  const interimRef = useRef('');
 
-  // Speech recognition events — append new results to previous text
+  const fullTranscript = finalTranscript + (interimTranscript ? (finalTranscript ? ' ' : '') + interimTranscript : '');
+
+  // Speech recognition events
   useSpeechRecognitionEvent('result', (event) => {
-    const newText = event.results[0]?.transcript ?? '';
-    const prev = prevTranscriptRef.current;
-    setTranscript(prev ? prev + ' ' + newText : newText);
+    const result = event.results[0];
+    if (!result) return;
+
+    if ((event as any).isFinal || (result as any).isFinal) {
+      // Utterance complete — commit to permanent record
+      setFinalTranscript((prev) => {
+        const sep = prev.length > 0 ? ' ' : '';
+        return prev + sep + result.transcript;
+      });
+      setInterimTranscript('');
+      interimRef.current = '';
+    } else {
+      // Still speaking — live preview
+      setInterimTranscript(result.transcript);
+      interimRef.current = result.transcript;
+    }
   });
   useSpeechRecognitionEvent('error', (event) => {
     setError(`Recognition error: ${event.message}`);
     setRecording(false);
   });
   useSpeechRecognitionEvent('start', () => setRecording(true));
-  useSpeechRecognitionEvent('end', () => setRecording(false));
+  useSpeechRecognitionEvent('end', () => {
+    setRecording(false);
+    // Finalize any remaining interim text
+    const remaining = interimRef.current;
+    if (remaining) {
+      setFinalTranscript((prev) => {
+        const sep = prev.length > 0 ? ' ' : '';
+        return prev + sep + remaining;
+      });
+      setInterimTranscript('');
+      interimRef.current = '';
+    }
+  });
 
   const startRecording = async () => {
     try {
       setError('');
-      // Snapshot current transcript so new results append after it
-      prevTranscriptRef.current = transcript;
       const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!result.granted) {
         setError('Microphone permission required');
@@ -98,19 +124,25 @@ export default function SpeakScreen() {
   const clearTranscript = () => {
     Alert.alert('Clear your recording?', '', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: () => { setTranscript(''); prevTranscriptRef.current = ''; } },
+      { text: 'Clear', style: 'destructive', onPress: () => {
+        setFinalTranscript('');
+        setInterimTranscript('');
+        interimRef.current = '';
+      }},
     ]);
   };
 
   const generateRecipe = async () => {
-    if (!transcript.trim()) return;
+    const fullText = finalTranscript + (interimTranscript ? ' ' + interimTranscript : '');
+    console.log('Sending to Claude:', fullText.length, 'chars');
+    if (!fullText.trim()) return;
     setStep(3);
     setGenerating(true);
     setError('');
     try {
       setGenStep('Reading your recipe...');
       setGenStep('Extracting ingredients & steps...');
-      const result = await formatVoiceRecipe(transcript);
+      const result = await formatVoiceRecipe(fullText);
       if (!result) throw new Error('Could not extract a recipe. Try speaking with more detail.');
       setRecipe(result);
     } catch (e: any) {
@@ -154,7 +186,7 @@ export default function SpeakScreen() {
 
   // ── Step 1: Record ──
   if (step === 1) {
-    const micLabel = recording ? 'Tap to pause' : transcript.length > 0 ? 'Tap to continue' : 'Tap to speak';
+    const micLabel = recording ? 'Tap to pause' : fullTranscript.length > 0 ? 'Tap to continue' : 'Tap to speak';
 
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
@@ -195,10 +227,10 @@ export default function SpeakScreen() {
           )}
 
           {/* Live transcript */}
-          {transcript.length > 0 && (
+          {fullTranscript.length > 0 && (
             <View style={{ width: '100%', marginTop: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{transcript.length} characters</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{fullTranscript.length} characters</Text>
                 <TouchableOpacity onPress={clearTranscript} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
                   <Ionicons name="refresh-outline" size={14} color={colors.textMuted} />
                   <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear</Text>
@@ -208,7 +240,14 @@ export default function SpeakScreen() {
                 backgroundColor: colors.bgBase, borderRadius: 12, padding: 16,
                 minHeight: 80,
               }}>
-                <Text style={{ color: colors.textPrimary, fontSize: 16, lineHeight: 24 }}>{transcript}</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 16, lineHeight: 24 }}>
+                  {finalTranscript}
+                  {interimTranscript ? (
+                    <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>
+                      {finalTranscript ? ' ' : ''}{interimTranscript}
+                    </Text>
+                  ) : null}
+                </Text>
               </View>
             </View>
           )}
@@ -217,7 +256,7 @@ export default function SpeakScreen() {
         </ScrollView>
 
         {/* Sticky bottom action */}
-        {!recording && transcript.length > 0 && (
+        {!recording && fullTranscript.length > 0 && (
           <View style={{
             position: 'absolute',
             bottom: insets.bottom + 80,
@@ -241,8 +280,8 @@ export default function SpeakScreen() {
         <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 16 }}>Fix any mistakes before we generate your recipe.</Text>
 
         <TextInput
-          value={transcript}
-          onChangeText={setTranscript}
+          value={fullTranscript}
+          onChangeText={(text) => { setFinalTranscript(text); setInterimTranscript(''); }}
           multiline
           style={{
             backgroundColor: colors.bgBase, borderRadius: 12, padding: 16,
@@ -251,14 +290,14 @@ export default function SpeakScreen() {
             borderWidth: 1, borderColor: colors.borderDefault,
           }}
         />
-        <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4, marginBottom: 16 }}>{transcript.length} characters</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4, marginBottom: 16 }}>{fullTranscript.length} characters</Text>
 
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Button title="Re-record" onPress={() => setStep(1)} variant="ghost" />
           </View>
           <View style={{ flex: 1 }}>
-            <Button title="Generate Recipe" onPress={generateRecipe} disabled={!transcript.trim()} />
+            <Button title="Generate Recipe" onPress={generateRecipe} disabled={!fullTranscript.trim()} />
           </View>
         </View>
 
