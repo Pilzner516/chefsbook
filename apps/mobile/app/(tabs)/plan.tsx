@@ -11,6 +11,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Card, EmptyState, Loading } from '../../components/UIKit';
 import { suggestPurchaseUnits } from '@chefsbook/ai';
+import { supabase } from '@chefsbook/db';
 import type { MealSlot, Recipe } from '@chefsbook/db';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -188,28 +189,48 @@ export default function PlanTab() {
   const handleAddDayToList = async (listId: string, listName: string) => {
     if (!session?.user?.id || !cartDate) return;
     setListPickerVisible(false);
-    const dayPlans = plans.filter((p: any) => p.plan_date === cartDate && p.recipe_id);
 
     try {
-      const items: { ingredient: string; quantity?: number | null; unit?: string | null; quantity_needed?: string | null; recipe_id?: string; recipe_name?: string }[] = [];
-      for (const plan of dayPlans) {
-        const recipe = (plan as any).recipe;
-        if (!recipe) continue;
-        const ingredients = recipe.ingredients ?? recipe.recipe_ingredients ?? [];
-        for (const ing of ingredients) {
-          items.push({
-            ingredient: ing.ingredient,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            quantity_needed: [ing.quantity, ing.unit].filter(Boolean).join(' ') || null,
-            recipe_id: plan.recipe_id!,
-            recipe_name: recipe.title,
-          });
-        }
+      // Get recipe IDs from meal plans for this day (or all week)
+      const targetPlans = cartDate === '__week__'
+        ? plans.filter((p: any) => p.recipe_id)
+        : plans.filter((p: any) => p.plan_date === cartDate && p.recipe_id);
+
+      const recipeIds = [...new Set(targetPlans.map((p) => p.recipe_id).filter(Boolean))] as string[];
+      if (recipeIds.length === 0) {
+        Alert.alert('No recipes', 'No recipes planned for this day.');
+        return;
       }
 
+      // Fetch full recipe data with ingredients from DB
+      const { data: recipes } = await supabase
+        .from('recipes')
+        .select('id, title')
+        .in('id', recipeIds);
+
+      const { data: allIngredients } = await supabase
+        .from('recipe_ingredients')
+        .select('recipe_id, ingredient, quantity, unit')
+        .in('recipe_id', recipeIds);
+
+      const recipeMap = new Map((recipes ?? []).map((r) => [r.id, r.title]));
+
+      const items = (allIngredients ?? [])
+        .filter((ing) => ing.ingredient)
+        .map((ing) => ({
+          ingredient: ing.ingredient,
+          quantity: ing.quantity,
+          unit: ing.unit,
+          quantity_needed: [ing.quantity, ing.unit].filter(Boolean).join(' ') || null,
+          recipe_id: ing.recipe_id,
+          recipe_name: recipeMap.get(ing.recipe_id) ?? 'Unknown',
+        }));
+
       if (items.length === 0) {
-        Alert.alert('No ingredients', 'The planned recipes have no ingredients to add.');
+        Alert.alert(
+          'No ingredients found',
+          'The planned recipes exist but have no ingredients stored. Try editing the recipes to add ingredients.',
+        );
         return;
       }
 

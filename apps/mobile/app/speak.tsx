@@ -1,16 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-let Voice: any = null;
-try {
-  Voice = require('@react-native-voice/voice').default;
-} catch {}
+import { Ionicons } from '@expo/vector-icons';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { useRecipeStore } from '../lib/zustand/recipeStore';
+import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { formatVoiceRecipe } from '@chefsbook/ai';
-import { formatQuantity } from '@chefsbook/ui';
+import { formatQuantity, LANGUAGES } from '@chefsbook/ui';
 import { Button, Card, Loading, Divider } from '../components/UIKit';
+
+const SPEECH_LOCALE_MAP: Record<string, string> = {
+  'en': 'en-US', 'fr': 'fr-FR', 'es': 'es-ES',
+  'de': 'de-DE', 'it': 'it-IT', 'pt': 'pt-PT',
+  'nl': 'nl-NL', 'ja': 'ja-JP', 'ko': 'ko-KR',
+  'zh': 'zh-CN', 'ar': 'ar-SA', 'ru': 'ru-RU',
+  'pl': 'pl-PL', 'tr': 'tr-TR', 'sv': 'sv-SE',
+  'da': 'da-DK', 'fi': 'fi-FI', 'no': 'nb-NO',
+  'hi': 'hi-IN', 'th': 'th-TH', 'vi': 'vi-VN',
+  'id': 'id-ID', 'ms': 'ms-MY', 'he': 'he-IL',
+  'el': 'el-GR', 'hu': 'hu-HU', 'ro': 'ro-RO',
+  'uk': 'uk-UA',
+};
 
 type Step = 1 | 2 | 3;
 
@@ -19,6 +34,10 @@ export default function SpeakScreen() {
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
+  const language = usePreferencesStore((s) => s.language);
+
+  const speechLocale = SPEECH_LOCALE_MAP[language] ?? 'en-US';
+  const langName = LANGUAGES.find((l) => l.code === language)?.name ?? 'English';
 
   const [step, setStep] = useState<Step>(1);
   const [transcript, setTranscript] = useState('');
@@ -29,49 +48,40 @@ export default function SpeakScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!Voice) return;
-    Voice.onSpeechResults = (e: any) => {
-      if (e.value && e.value.length > 0) {
-        setTranscript(e.value[0] ?? '');
-      }
-    };
-    Voice.onSpeechPartialResults = (e: any) => {
-      if (e.value && e.value.length > 0) {
-        setTranscript(e.value[0] ?? '');
-      }
-    };
-    Voice.onSpeechError = (e: any) => {
-      console.error('[Speak] Voice error:', e.error);
-      setRecording(false);
-    };
-    Voice.onSpeechEnd = () => {
-      setRecording(false);
-    };
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, []);
+  // Speech recognition events
+  useSpeechRecognitionEvent('result', (event) => {
+    setTranscript(event.results[0]?.transcript ?? '');
+  });
+  useSpeechRecognitionEvent('error', (event) => {
+    setError(`Recognition error: ${event.message}`);
+    setRecording(false);
+  });
+  useSpeechRecognitionEvent('start', () => setRecording(true));
+  useSpeechRecognitionEvent('end', () => setRecording(false));
 
   const startRecording = async () => {
-    if (!Voice) { setError('Voice recognition not available in this build'); return; }
     try {
       setTranscript('');
       setError('');
-      await Voice.start('en-US');
-      setRecording(true);
+      const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!result.granted) {
+        setError('Microphone permission required');
+        return;
+      }
+      ExpoSpeechRecognitionModule.start({
+        lang: speechLocale,
+        interimResults: true,
+        continuous: true,
+      });
     } catch (e: any) {
       setError('Could not start voice recognition: ' + e.message);
     }
   };
 
-  const stopRecording = async () => {
+  const stopRecording = () => {
     try {
-      await Voice?.stop();
-    } catch (e) {
-      // ignore
-    }
+      ExpoSpeechRecognitionModule.stop();
+    } catch {}
     setRecording(false);
   };
 
@@ -152,10 +162,13 @@ export default function SpeakScreen() {
             marginBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 48, color: '#fff' }}>🎤</Text>
+          <Ionicons name="mic" size={52} color="#ffffff" />
         </TouchableOpacity>
         <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', marginBottom: 4 }}>
           {recording ? 'Listening...' : 'Tap to start'}
+        </Text>
+        <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 8 }}>
+          Listening in {langName}
         </Text>
         {recording && (
           <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#ef4444', marginBottom: 8 }} />
@@ -264,7 +277,6 @@ export default function SpeakScreen() {
 
         <Divider />
 
-        {/* Ingredients */}
         <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Ingredients</Text>
         {(recipe.ingredients ?? []).map((ing: any, i: number) => (
           <View key={i} style={{ flexDirection: 'row', paddingVertical: 4 }}>
@@ -279,7 +291,6 @@ export default function SpeakScreen() {
 
         <Divider />
 
-        {/* Steps */}
         <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Steps</Text>
         {(recipe.steps ?? []).map((s: any, i: number) => (
           <View key={i} style={{ flexDirection: 'row', marginBottom: 12 }}>

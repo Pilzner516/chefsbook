@@ -543,17 +543,26 @@ function RecipeDetailInner() {
     const userId = session?.user?.id;
     if (!userId || !currentRecipe) return;
 
-    const makeItems = () => (currentRecipe.ingredients ?? []).map((ing) => {
-      const scaled = scaleQuantity(ing.quantity, currentRecipe.servings || 4, servings);
-      return {
-        ingredient: ing.ingredient,
-        quantity: scaled,
-        unit: ing.unit,
-        quantity_needed: [scaled, ing.unit].filter(Boolean).join(' ') || null,
-        recipe_id: currentRecipe.id,
-        recipe_name: currentRecipe.title,
-      };
-    });
+    const makeItems = () => {
+      const ings = currentRecipe.ingredients ?? [];
+      console.log('[RecipeDetail] Adding to shopping list:', ings.length, 'ingredients');
+      return ings
+        .filter((ing) => ing != null && ing.ingredient)
+        .map((ing) => {
+          let scaled: number | null = null;
+          try {
+            scaled = scaleQuantity(ing.quantity, currentRecipe.servings || 4, servings);
+          } catch { scaled = ing.quantity; }
+          return {
+            ingredient: ing.ingredient,
+            quantity: scaled,
+            unit: ing.unit,
+            quantity_needed: [scaled, ing.unit].filter(Boolean).join(' ') || null,
+            recipe_id: currentRecipe.id,
+            recipe_name: currentRecipe.title,
+          };
+        });
+    };
 
     const addToList = async (listId: string, listName: string) => {
       const items = makeItems();

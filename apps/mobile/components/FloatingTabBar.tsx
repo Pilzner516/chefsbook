@@ -82,8 +82,8 @@ export function FloatingTabBar() {
         style={{
           position: 'absolute',
           bottom: pillBottom,
-          left: 40,
-          right: 40,
+          left: 16,
+          right: 16,
           height: 64,
           backgroundColor: '#ffffff',
           borderRadius: 32,
@@ -127,19 +127,22 @@ export function FloatingTabBar() {
                   justifyContent: 'center',
                   backgroundColor: active ? colors.accentSoft : 'transparent',
                   borderRadius: 20,
-                  paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  gap: 3,
+                  paddingVertical: 4,
+                  paddingHorizontal: 10,
+                  gap: 2,
                 }}
               >
                 <Ionicons
                   name={active ? tab.iconActive : tab.icon}
-                  size={22}
+                  size={20}
                   color={active ? colors.accent : colors.textMuted}
                 />
                 <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                   style={{
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: active ? '600' : '400',
                     color: active ? colors.accent : colors.textMuted,
                   }}

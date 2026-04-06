@@ -42,15 +42,28 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https" },
-            { "scheme": "http" }
+            {
+              "scheme": "https"
+            },
+            {
+              "scheme": "http"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         },
         {
           "action": "SEND",
-          "data": [{ "mimeType": "text/plain" }],
-          "category": ["DEFAULT"]
+          "data": [
+            {
+              "mimeType": "text/plain"
+            }
+          ],
+          "category": [
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -69,7 +82,13 @@
         }
       ],
       "expo-secure-store",
-      "@react-native-voice/voice"
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow ChefsBook to use the microphone to record recipes",
+          "speechRecognitionPermission": "Allow ChefsBook to recognize your speech to create recipes"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
