@@ -27,7 +27,7 @@ const CATEGORIES: { key: string; label: string; icon: React.ComponentProps<typeo
   { key: 'tags', label: 'Tags', icon: 'pricetag-outline' },
   { key: 'time', label: 'Cook Time', icon: 'time-outline' },
   { key: 'source', label: 'Source', icon: 'link-outline' },
-  { key: 'favourites', label: 'Favourites', icon: 'heart-outline' },
+  { key: 'favourites', label: 'Favorites', icon: 'heart' },
 ];
 
 const DISCOVER_CATEGORIES: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
@@ -204,7 +204,7 @@ export default function SearchTab() {
       case 'course': return COURSE_LIST.map((v) => ({ label: v, value: v.toLowerCase() }));
       case 'time': return TIME_OPTIONS.map((v) => ({ label: v.label, value: String(v.value) }));
       case 'source': return SOURCE_OPTIONS.map((v) => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }));
-      case 'favourites': return [{ label: 'Favourites only', value: 'true' }];
+      case 'favourites': return [{ label: 'Favorites only', value: 'true' }];
       case 'dietary': return DIETARY_FLAGS.map((f) => ({ label: `${f.emoji} ${f.label}`, value: f.key }));
       case 'ingredient': return []; // ingredient uses text input, not chips
       case 'tags': return []; // tags use text input
@@ -382,7 +382,7 @@ export default function SearchTab() {
                   <Ionicons
                     name={cat.icon}
                     size={24}
-                    color={expandedCategory === cat.key ? colors.accent : colors.textSecondary}
+                    color={cat.key === 'favourites' ? colors.accent : expandedCategory === cat.key ? colors.accent : colors.textSecondary}
                   />
                   <Text
                     style={{
@@ -571,6 +571,7 @@ export default function SearchTab() {
                     cuisine={recipe.cuisine}
                     totalMinutes={recipe.total_minutes}
                     isFavourite={mode === 'my' ? recipe.is_favourite : undefined}
+                    saveCount={recipe.save_count}
                     onPress={() => router.push(`/recipe/${recipe.id}`)}
                   />
                   {mode === 'discover' && recipe.user_id !== session?.user?.id && (

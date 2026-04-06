@@ -894,6 +894,18 @@ function RecipeDetailInner() {
           })}
         </View>
 
+        {/* Save count */}
+        {(recipe.save_count ?? 0) > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+            <Ionicons name="heart" size={14} color={colors.accent} />
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+              {recipe.user_id === session?.user?.id
+                ? `${recipe.save_count} people saved this`
+                : `${recipe.save_count} saves`}
+            </Text>
+          </View>
+        )}
+
         {/* Import status warning banner */}
         {recipe.import_status === 'partial' && (recipe.missing_sections?.length ?? 0) > 0 && (
           <View style={{

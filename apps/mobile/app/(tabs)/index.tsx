@@ -143,6 +143,7 @@ export default function RecipesTab() {
             cuisine={item.cuisine}
             totalMinutes={item.total_minutes}
             isFavourite={item.is_favourite}
+            saveCount={item.save_count}
             onPress={() => router.push(`/recipe/${item.id}`)}
           />
         )}

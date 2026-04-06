@@ -267,6 +267,19 @@ export async function toggleFavourite(id: string, isFavourite: boolean): Promise
   await supabase.from('recipes').update({ is_favourite: isFavourite }).eq('id', id);
 }
 
+export async function saveRecipe(recipeId: string, userId: string): Promise<void> {
+  await supabase.from('recipe_saves').upsert({ recipe_id: recipeId, user_id: userId }, { onConflict: 'recipe_id,user_id' });
+}
+
+export async function unsaveRecipe(recipeId: string, userId: string): Promise<void> {
+  await supabase.from('recipe_saves').delete().eq('recipe_id', recipeId).eq('user_id', userId);
+}
+
+export async function isRecipeSaved(recipeId: string, userId: string): Promise<boolean> {
+  const { count } = await supabase.from('recipe_saves').select('*', { count: 'exact', head: true }).eq('recipe_id', recipeId).eq('user_id', userId);
+  return (count ?? 0) > 0;
+}
+
 export async function cloneRecipe(sourceRecipeId: string, targetUserId: string): Promise<string> {
   const { data, error } = await supabase.rpc('clone_recipe', {
     p_source_recipe_id: sourceRecipeId,

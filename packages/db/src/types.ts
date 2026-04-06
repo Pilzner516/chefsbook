@@ -97,6 +97,7 @@ export interface Recipe {
   missing_sections?: string[];
   aichef_assisted?: boolean;
   source_author?: string | null;
+  save_count: number;
   created_at: string;
   updated_at: string;
 }
