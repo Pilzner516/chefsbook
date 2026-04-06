@@ -1,7 +1,8 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuthStore } from '../../lib/zustand/authStore';
 
 function TabIcon({ emoji }: { emoji: string }) {
   return <Text style={{ fontSize: 20 }}>{emoji}</Text>;
@@ -9,6 +10,12 @@ function TabIcon({ emoji }: { emoji: string }) {
 
 export default function TabLayout() {
   const { colors } = useTheme();
+  const session = useAuthStore((s) => s.session);
+  const isAnonymous = session?.user?.is_anonymous === true;
+
+  if (!session || isAnonymous) {
+    return <Redirect href="/" />;
+  }
 
   return (
     <Tabs

@@ -60,7 +60,6 @@ export default function DiscoverTab() {
       ) : (
         <FlashList
           data={recipes}
-          estimatedItemSize={200}
           contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => (
             <RecipeCard

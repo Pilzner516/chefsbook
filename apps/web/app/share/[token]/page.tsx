@@ -17,8 +17,13 @@ export default function SharedRecipePage() {
   useEffect(() => {
     (async () => {
       const data = await getRecipeByShareToken(token);
-      setRecipe(data);
-      if (data) setServings(data.servings);
+      // Block private recipes from share view
+      if (data && data.visibility === 'private') {
+        setRecipe(null);
+      } else {
+        setRecipe(data);
+        if (data) setServings(data.servings);
+      }
       setLoading(false);
     })();
   }, [token]);

@@ -23,9 +23,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   init: async () => {
     const { data } = await supabase.auth.getSession();
-    if (!data.session) {
-      await supabase.auth.signInAnonymously();
-    } else {
+    if (data.session) {
       set({ session: data.session });
       await get().loadProfile();
     }

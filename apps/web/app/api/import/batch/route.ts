@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
   const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
@@ -40,34 +41,59 @@ async function processQueue(jobId: string, userId: string) {
       .eq('id', row.id);
 
     try {
-      // Fetch the page
-      const response = await fetch(row.url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const rawHtml = await response.text();
-      const imageUrl = extractImageUrl(rawHtml, row.url);
-      const text = stripHtml(rawHtml).slice(0, 10000);
-
-      if (text.length < 100) {
+      // Pre-flight: reject obviously non-recipe URLs
+      const preflight = preflightUrl(row.url);
+      if (!preflight.ok) {
         await db
           .from('import_job_urls')
-          .update({ status: 'not_recipe', error_message: 'Page has no meaningful content' })
+          .update({ status: 'not_recipe', error_message: preflight.error })
+          .eq('id', row.id);
+        throw new Error('__skip__');
+      }
+
+      // Fetch with fallback chain (standard → Puppeteer → ScrapingBee)
+      const { html: rawHtml } = await fetchWithFallback(row.url);
+
+      const imageUrl = extractImageUrl(rawHtml, row.url);
+      const text = stripHtml(rawHtml).slice(0, 25000);
+
+      if (text.length < 500) {
+        await db
+          .from('import_job_urls')
+          .update({ status: 'not_recipe', error_message: 'Page has no meaningful content (JS-rendered site?)' })
           .eq('id', row.id);
       } else {
-        // AI extraction
-        const recipe = await importFromUrl(text, row.url);
+        // JSON-LD first, Claude as fallback
+        const jsonLd = extractJsonLdRecipe(rawHtml);
+        const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
 
-        // Insert recipe
+        let recipe: any;
+        if (complete && jsonLd) {
+          recipe = { ...jsonLd, source_type: 'url' };
+        } else if (jsonLd && available.length > 0) {
+          const jsonLdSummary = JSON.stringify(jsonLd, null, 2).slice(0, 3000);
+          recipe = await importFromUrl(text, row.url, { available, missing, jsonLdData: jsonLdSummary });
+          if (jsonLd.ingredients?.length && available.includes('ingredients')) recipe.ingredients = jsonLd.ingredients;
+          if (jsonLd.steps?.length && available.includes('steps')) recipe.steps = jsonLd.steps;
+          if (jsonLd.title && !recipe.title) recipe.title = jsonLd.title;
+          if (jsonLd.servings && !recipe.servings) recipe.servings = jsonLd.servings;
+          if (jsonLd.prep_minutes && !recipe.prep_minutes) recipe.prep_minutes = jsonLd.prep_minutes;
+          if (jsonLd.cook_minutes && !recipe.cook_minutes) recipe.cook_minutes = jsonLd.cook_minutes;
+        } else {
+          recipe = await importFromUrl(text, row.url);
+        }
+
+        const { title, generated } = ensureTitle(recipe, row.url);
+        const isIncomplete = !recipe.ingredients?.length || !recipe.steps?.length;
+        const tags: string[] = [];
+        if (generated) tags.push('_unresolved');
+        if (isIncomplete) tags.push('_incomplete');
+
         const { data: newRecipe, error: insertErr } = await db
           .from('recipes')
           .insert({
             user_id: userId,
-            title: recipe.title,
+            title,
             description: recipe.description,
             servings: recipe.servings ?? 4,
             prep_minutes: recipe.prep_minutes,
@@ -78,6 +104,7 @@ async function processQueue(jobId: string, userId: string) {
             source_url: row.url,
             image_url: imageUrl,
             notes: recipe.notes,
+            tags,
             bookmark_folder: row.folder_name,
             import_job_id: jobId,
           })
@@ -126,10 +153,12 @@ async function processQueue(jobId: string, userId: string) {
         }
       }
     } catch (e: any) {
-      await db
-        .from('import_job_urls')
-        .update({ status: 'failed', error_message: e.message?.slice(0, 500) })
-        .eq('id', row.id);
+      if (e.message !== '__skip__') {
+        await db
+          .from('import_job_urls')
+          .update({ status: 'failed', error_message: e.message?.slice(0, 500) })
+          .eq('id', row.id);
+      }
     }
 
     // Update counters
@@ -182,7 +211,7 @@ export async function POST(req: Request) {
     .from('import_jobs')
     .insert({
       user_id: user.id,
-      source_type: 'batch',
+      source_type: 'bookmarks_html',
       total_urls: urls.length,
     })
     .select()

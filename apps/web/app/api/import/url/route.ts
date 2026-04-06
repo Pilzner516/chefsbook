@@ -1,75 +1,116 @@
-import { importFromUrl, stripHtml } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import type { ImportCompleteness } from '@chefsbook/ai';
+import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
-/**
- * Extract the best image URL from raw HTML.
- * Priority: og:image > schema.org/Recipe image > first large <img>.
- */
 function extractImageUrl(html: string, pageUrl: string): string | null {
-  // 1. og:image
   const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
     ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
   if (ogMatch?.[1]) return resolveUrl(ogMatch[1], pageUrl);
-
-  // 2. Schema.org Recipe image
   const schemaMatch = html.match(/"image"\s*:\s*"([^"]+)"/);
   if (schemaMatch?.[1] && schemaMatch[1].startsWith('http')) return schemaMatch[1];
-
-  // 3. Schema.org image array
   const schemaArrayMatch = html.match(/"image"\s*:\s*\[\s*"([^"]+)"/);
   if (schemaArrayMatch?.[1] && schemaArrayMatch[1].startsWith('http')) return schemaArrayMatch[1];
-
   return null;
 }
 
 function resolveUrl(src: string, base: string): string {
-  try {
-    return new URL(src, base).href;
-  } catch {
-    return src;
-  }
+  try { return new URL(src, base).href; } catch { return src; }
 }
 
 export async function POST(req: Request) {
-  const { url } = await req.json();
+  const { url, forceType } = await req.json();
 
   if (!url || typeof url !== 'string') {
     return Response.json({ error: 'URL is required' }, { status: 400 });
   }
 
+  const preflight = preflightUrl(url);
+  if (!preflight.ok) {
+    return Response.json({ error: preflight.error }, { status: 422 });
+  }
+
   try {
-    // Fetch the page server-side (avoids CORS issues)
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      },
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (!response.ok) {
-      return Response.json(
-        { error: `Failed to fetch URL: ${response.status}` },
-        { status: 502 },
-      );
-    }
-
-    const rawHtml = await response.text();
-
-    // Extract image before stripping HTML
+    const { html: rawHtml } = await fetchWithFallback(url);
     const imageUrl = extractImageUrl(rawHtml, url);
+    const text = stripHtml(rawHtml).slice(0, 25000);
 
-    const text = stripHtml(rawHtml).slice(0, 10000);
-
-    if (text.length < 100) {
+    if (text.length < 500) {
       return Response.json(
-        { error: 'Page has no meaningful content' },
+        { error: 'This site requires a browser to load. Try the Chrome extension instead.' },
         { status: 422 },
       );
     }
 
-    // Run AI extraction server-side (Anthropic API blocks browser CORS)
-    const recipe = await importFromUrl(text, url);
+    // Classify content: recipe or technique
+    const contentType = forceType ?? (await classifyContent(text.slice(0, 1000), url)).content_type;
 
-    return Response.json({ recipe, imageUrl });
+    if (contentType === 'technique') {
+      const technique = await importTechnique(text, url);
+      if (!technique) {
+        return Response.json({ error: 'Could not extract a technique from this page.' }, { status: 422 });
+      }
+      return Response.json({ contentType: 'technique', technique, imageUrl });
+    }
+
+    // ── Recipe extraction: JSON-LD first, Claude as fallback ──
+
+    const jsonLd = extractJsonLdRecipe(rawHtml);
+    const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
+
+    let recipe: any;
+    let completeness: ImportCompleteness;
+
+    if (complete && jsonLd) {
+      // JSON-LD has title + ingredients with quantities + steps → use directly, skip Claude
+      recipe = { ...jsonLd, source_type: 'url' };
+      completeness = { source: 'json-ld', complete: true, missing_fields: missing };
+    } else if (jsonLd && available.length > 0) {
+      // Partial JSON-LD → ask Claude to fill gaps only
+      const jsonLdSummary = JSON.stringify(jsonLd, null, 2).slice(0, 3000);
+      recipe = await importFromUrl(text, url, {
+        available,
+        missing,
+        jsonLdData: jsonLdSummary,
+      });
+      // Merge: prefer JSON-LD for fields it had
+      if (jsonLd.title && !recipe.title) recipe.title = jsonLd.title;
+      if (jsonLd.ingredients?.length && available.includes('ingredients')) recipe.ingredients = jsonLd.ingredients;
+      if (jsonLd.steps?.length && available.includes('steps')) recipe.steps = jsonLd.steps;
+      if (jsonLd.servings && !recipe.servings) recipe.servings = jsonLd.servings;
+      if (jsonLd.prep_minutes && !recipe.prep_minutes) recipe.prep_minutes = jsonLd.prep_minutes;
+      if (jsonLd.cook_minutes && !recipe.cook_minutes) recipe.cook_minutes = jsonLd.cook_minutes;
+      completeness = { source: 'json-ld+claude', complete: !missing.some((f) => ['title', 'ingredients', 'steps'].includes(f)), missing_fields: missing };
+    } else {
+      // No JSON-LD at all → full Claude extraction with 25k limit
+      recipe = await importFromUrl(text, url);
+      const hasIngredients = recipe.ingredients?.length > 0;
+      const hasSteps = recipe.steps?.length > 0;
+      completeness = {
+        source: 'claude',
+        complete: !!recipe.title && hasIngredients && hasSteps,
+        missing_fields: [
+          ...(!recipe.title ? ['title'] : []),
+          ...(!hasIngredients ? ['ingredients'] : []),
+          ...(!hasSteps ? ['steps'] : []),
+        ],
+      };
+    }
+
+    const { title, generated } = ensureTitle(recipe, url);
+    recipe.title = title;
+
+    // Tag incomplete recipes
+    if (!completeness.complete || generated) {
+      recipe.tags = [...(recipe.tags ?? []), '_incomplete'];
+    }
+
+    return Response.json({
+      contentType: 'recipe',
+      recipe,
+      imageUrl,
+      titleGenerated: generated,
+      completeness,
+    });
   } catch (e: any) {
     return Response.json({ error: e.message }, { status: 500 });
   }

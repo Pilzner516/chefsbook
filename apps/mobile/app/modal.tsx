@@ -10,7 +10,12 @@ import { getInitials } from '@chefsbook/ui';
 export default function SettingsModal() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { session, profile, planTier, signIn, signUp, signOut } = useAuthStore();
+  const session = useAuthStore((s) => s.session);
+  const profile = useAuthStore((s) => s.profile);
+  const planTier = useAuthStore((s) => s.planTier);
+  const signIn = useAuthStore((s) => s.signIn);
+  const signUp = useAuthStore((s) => s.signUp);
+  const signOut = useAuthStore((s) => s.signOut);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');

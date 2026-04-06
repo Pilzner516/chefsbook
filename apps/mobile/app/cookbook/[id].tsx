@@ -11,7 +11,8 @@ export default function CookbookDetail() {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { currentCookbook, fetchCookbook } = useCookbookStore();
+  const currentCookbook = useCookbookStore((s) => s.currentCookbook);
+  const fetchCookbook = useCookbookStore((s) => s.fetchCookbook);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
 

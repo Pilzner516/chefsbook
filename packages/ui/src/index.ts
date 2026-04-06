@@ -52,6 +52,74 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength - 1) + '\u2026';
 }
 
+// Short abbreviations for shopping list qty column (T, t, c — no space)
+const UNIT_SHORT: [RegExp, string][] = [
+  [/\bfluid ounces?\b/gi, 'fl oz'],
+  [/\btablespoons?\b|\bTbsp\b|\btbsp\b/g, 'T'],
+  [/\bteaspoons?\b|\btsp\b/gi, 't'],
+  [/\bcups?\b/gi, 'c'],
+  [/\bounces?\b|\boz\b/gi, 'oz'],
+  [/\bpounds?\b|\blbs?\b/gi, 'lb'],
+  [/\bgrams?\b/gi, 'g'],
+  [/\bkilograms?\b/gi, 'kg'],
+  [/\bmilliliters?\b/gi, 'ml'],
+  [/\bliters?\b/gi, 'L'],
+  [/\binches?\b/gi, 'in'],
+];
+
+// Medium abbreviations for recipe display (Tbsp, tsp, cup — readable)
+const UNIT_MEDIUM: [RegExp, string][] = [
+  [/\bfluid ounces?\b/gi, 'fl oz'],
+  [/\btablespoons?\b/gi, 'Tbsp'],
+  [/\bteaspoons?\b/gi, 'tsp'],
+  [/\bpackages?\b/gi, 'pkg'],
+  [/\bpackets?\b/gi, 'pkt'],
+  [/\bpieces?\b/gi, 'pc'],
+  [/\bounces?\b/gi, 'oz'],
+  [/\bpounds?\b/gi, 'lb'],
+  [/\bgrams?\b/gi, 'g'],
+  [/\bkilograms?\b/gi, 'kg'],
+  [/\bmilliliters?\b/gi, 'ml'],
+  [/\bliters?\b/gi, 'L'],
+  [/\binches?\b/gi, 'in'],
+];
+
+/** Ultra-short units for tight spaces (T, t, c). No space before single-char. */
+export function abbreviateUnit(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of UNIT_SHORT) {
+    result = result.replace(pattern, replacement);
+  }
+  result = result.replace(/(\d+\.?\d*)\s+([TtcgL])\b/g, '$1$2');
+  return result;
+}
+
+/** Readable abbreviations for recipe display (Tbsp, tsp, cup). */
+export function abbreviateUnitMedium(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of UNIT_MEDIUM) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
+const STRIP_ADJECTIVES = /\b(very cold|cold|room temperature|warm|hot|melted|softened|frozen|fresh|dried|ground|whole|raw|cooked|toasted|roasted|chopped|diced|minced|sliced|grated|shredded|peeled|pitted|seeded|deveined|trimmed|halved|quartered|roughly|finely|thinly|thickly)\b/gi;
+
+export function cleanIngredientName(name: string): string {
+  let result = name;
+  // Strip everything after comma (prep notes like "butter, cubed")
+  result = result.split(',')[0]!;
+  // Strip parenthetical notes like "(480g)"
+  result = result.replace(/\([^)]*\)/g, '');
+  // Strip prep adjectives but keep item-identity ones
+  result = result.replace(STRIP_ADJECTIVES, '');
+  // Clean up whitespace
+  result = result.replace(/\s+/g, ' ').trim();
+  // Capitalize first letter
+  if (result.length > 0) result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result;
+}
+
 export function groupBy<T>(items: T[], key: (item: T) => string | null): Record<string, T[]> {
   const groups: Record<string, T[]> = {};
   for (const item of items) {

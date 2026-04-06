@@ -1,11 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, getRecipe, deleteRecipe, updateRecipe } from '@chefsbook/db';
-import type { RecipeWithDetails } from '@chefsbook/db';
-import { formatDuration, formatQuantity, scaleQuantity } from '@chefsbook/ui';
+import SocialShareModal from '@/components/SocialShareModal';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook } from '@chefsbook/db';
+import type { Cookbook } from '@chefsbook/db';
+import { addIngredientsToList } from '@/lib/addToShoppingList';
+import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
+import type { CookingNote } from '@chefsbook/db';
+import { formatDuration, formatQuantity, scaleQuantity, cleanIngredientName } from '@chefsbook/ui';
+
+function formatTimestamp(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 export default function RecipePage() {
   const { id } = useParams<{ id: string }>();
@@ -23,14 +33,57 @@ export default function RecipePage() {
   const [editingTags, setEditingTags] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [editingIngredients, setEditingIngredients] = useState(false);
+  const [editingSteps, setEditingSteps] = useState(false);
+  const [draftIngredients, setDraftIngredients] = useState<{ quantity: string; unit: string; ingredient: string; preparation: string; group_label: string }[]>([]);
+  const [draftSteps, setDraftSteps] = useState<{ instruction: string }[]>([]);
+  const [showShoppingModal, setShowShoppingModal] = useState(false);
+  const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
+  const [newListName, setNewListName] = useState('');
+  const [newStoreName, setNewStoreName] = useState('');
+  const [showNewListForm, setShowNewListForm] = useState(false);
+  const [addConfirm, setAddConfirm] = useState<{ count: number; listName: string; listId: string } | null>(null);
+  const [showSocialShare, setShowSocialShare] = useState(false);
+  useEffect(() => { if (addConfirm) { const t = setTimeout(() => setAddConfirm(null), 4000); return () => clearTimeout(t); } }, [addConfirm]);
+  const [saving, setSaving] = useState(false);
+  const [cookingNotes, setCookingNotes] = useState<CookingNote[]>([]);
+  const [newNote, setNewNote] = useState('');
+  const [addingNote, setAddingNote] = useState(false);
+  const [userPhotos, setUserPhotos] = useState<RecipeUserPhoto[]>([]);
+  const [userIsPro, setUserIsPro] = useState(false);
+  const [cookbook, setCookbook] = useState<Cookbook | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const ytIframeRef = useRef<HTMLIFrameElement>(null);
+
+  const seekYouTube = useCallback((seconds: number) => {
+    ytIframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }),
+      '*',
+    );
+  }, []);
 
   useEffect(() => {
     (async () => {
       const data = await getRecipe(id);
       setRecipe(data);
       if (data) setServings(data.servings);
+      // Load cookbook if linked
+      if (data?.cookbook_id) getCookbook(data.cookbook_id).then(setCookbook);
+
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && data && user.id === data.user_id) setIsOwner(true);
+      if (user) {
+        setIsLoggedIn(true);
+        isPro(user.id).then(setUserIsPro);
+        if (data && user.id === data.user_id) {
+          setIsOwner(true);
+          listCookingNotes(id).then(setCookingNotes);
+          listRecipePhotos(id).then(setUserPhotos);
+        }
+      }
       setLoading(false);
     })();
   }, [id]);
@@ -50,6 +103,9 @@ export default function RecipePage() {
     if (!recipe?.source_url) return;
     setRefreshing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
       const res = await fetch('/api/import/url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,7 +114,7 @@ export default function RecipePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Re-import failed');
 
-      // Only update AI-derived fields — preserve user edits (tags, notes, title, custom images)
+      // Update AI-derived fields — preserve user edits (tags, notes, title, custom images)
       await updateRecipe(id, {
         description: data.recipe.description,
         servings: data.recipe.servings ?? recipe.servings,
@@ -68,6 +124,26 @@ export default function RecipePage() {
         course: recipe.course || data.recipe.course,
         image_url: recipe.image_url || data.imageUrl || null,
       });
+
+      // Replace ingredients and steps with fresh extracted data
+      if (data.recipe.ingredients?.length) {
+        await replaceIngredients(id, user.id, data.recipe.ingredients.map((ing: any) => ({
+          quantity: ing.quantity ?? null,
+          unit: ing.unit ?? null,
+          ingredient: ing.ingredient,
+          preparation: ing.preparation ?? null,
+          optional: ing.optional ?? false,
+          group_label: ing.group_label ?? null,
+        })));
+      }
+      if (data.recipe.steps?.length) {
+        await replaceSteps(id, user.id, data.recipe.steps.map((step: any) => ({
+          step_number: step.step_number,
+          instruction: step.instruction,
+          timer_minutes: step.timer_minutes ?? null,
+          group_label: step.group_label ?? null,
+        })));
+      }
 
       // Refresh page data
       const updated = await getRecipe(id);
@@ -113,6 +189,152 @@ export default function RecipePage() {
     const tags = recipe.tags.filter((t) => t !== tag);
     await updateRecipe(id, { tags });
     setRecipe({ ...recipe, tags });
+  };
+
+  const saveTitle = async (title: string) => {
+    if (!recipe || !title.trim()) return;
+    await updateRecipe(id, { title: title.trim() });
+    setRecipe({ ...recipe, title: title.trim() });
+    setEditingTitle(false);
+  };
+
+  const saveDescription = async (desc: string) => {
+    if (!recipe) return;
+    const val = desc.trim() || null;
+    await updateRecipe(id, { description: val });
+    setRecipe({ ...recipe, description: val });
+    setEditingDesc(false);
+  };
+
+  const saveNotes = async (notes: string) => {
+    if (!recipe) return;
+    const val = notes.trim() || null;
+    await updateRecipe(id, { notes: val });
+    setRecipe({ ...recipe, notes: val });
+    setEditingNotes(false);
+  };
+
+  const startEditIngredients = () => {
+    if (!recipe) return;
+    setDraftIngredients(recipe.ingredients.map((ing) => ({
+      quantity: ing.quantity != null ? String(ing.quantity) : '',
+      unit: ing.unit ?? '',
+      ingredient: ing.ingredient,
+      preparation: ing.preparation ?? '',
+      group_label: ing.group_label ?? '',
+    })));
+    setEditingIngredients(true);
+  };
+
+  const updateDraftIng = (idx: number, field: string, value: string) => {
+    setDraftIngredients((prev) => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+  };
+
+  const addDraftIng = () => {
+    setDraftIngredients((prev) => [...prev, { quantity: '', unit: '', ingredient: '', preparation: '', group_label: '' }]);
+  };
+
+  const removeDraftIng = (idx: number) => {
+    setDraftIngredients((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const saveIngredients = async () => {
+    if (!recipe) return;
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const parsed = draftIngredients
+        .filter((row) => row.ingredient.trim())
+        .map((row) => ({
+          quantity: row.quantity ? parseFloat(row.quantity) || null : null,
+          unit: row.unit.trim() || null,
+          ingredient: row.ingredient.trim(),
+          preparation: row.preparation.trim() || null,
+          optional: false,
+          group_label: row.group_label.trim() || null,
+        }));
+      const saved = await replaceIngredients(recipe.id, user.id, parsed);
+      setRecipe({ ...recipe, ingredients: saved });
+      setEditingIngredients(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startEditSteps = () => {
+    if (!recipe) return;
+    setDraftSteps(recipe.steps.map((s) => ({ instruction: s.instruction })));
+    setEditingSteps(true);
+  };
+
+  const updateDraftStep = (idx: number, value: string) => {
+    setDraftSteps((prev) => prev.map((row, i) => i === idx ? { instruction: value } : row));
+  };
+
+  const addDraftStep = () => {
+    setDraftSteps((prev) => [...prev, { instruction: '' }]);
+  };
+
+  const removeDraftStep = (idx: number) => {
+    setDraftSteps((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const saveSteps = async () => {
+    if (!recipe) return;
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const parsed = draftSteps
+        .filter((row) => row.instruction.trim())
+        .map((row, i) => ({
+          step_number: i + 1,
+          instruction: row.instruction.trim(),
+          timer_minutes: null,
+          group_label: null,
+        }));
+      const saved = await replaceSteps(recipe.id, user.id, parsed);
+      setRecipe({ ...recipe, steps: saved });
+      setEditingSteps(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddToShoppingList = async (listId: string) => {
+    if (!recipe) return;
+    try {
+      const items = recipe.ingredients.map((ing) => ({
+        ingredient: ing.ingredient,
+        quantity: scaleQuantity(ing.quantity, originalServings, servings),
+        unit: ing.unit,
+        quantity_needed: [scaleQuantity(ing.quantity, originalServings, servings), ing.unit].filter(Boolean).join(' ') || null,
+        recipe_id: recipe.id,
+        recipe_name: recipe.title,
+      }));
+      const result = await addIngredientsToList(listId, items);
+      setShowShoppingModal(false);
+      setAddConfirm({ count: result.total, listName: shoppingLists.find((l) => l.id === listId)?.name ?? 'list', listId });
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to add items');
+    }
+  };
+
+  const handleNewShoppingList = async () => {
+    if (!newListName.trim()) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const list = await createShoppingList(user.id, newListName.trim(), { storeName: newStoreName.trim() || undefined });
+      setShoppingLists((prev) => [...prev, list]);
+      await handleAddToShoppingList(list.id);
+      setNewListName('');
+      setNewStoreName('');
+      setShowNewListForm(false);
+    } catch (e: any) {
+      alert(e?.message ?? 'Failed to create shopping list');
+    }
   };
 
   const handleImageUpload = async (file: File) => {
@@ -207,6 +429,49 @@ export default function RecipePage() {
             </svg>
             {copied ? 'Copied!' : 'Share'}
           </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors print:hidden"
+            title="Print recipe"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+            </svg>
+            <span className="hidden sm:inline">Print</span>
+          </button>
+          {isOwner && (
+            <button
+              onClick={() => {
+                if (!userIsPro) { alert('Social sharing is a Pro feature. Upgrade in Settings.'); return; }
+                setShowSocialShare(true);
+              }}
+              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors print:hidden"
+              title="Share to social media"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+              </svg>
+              <span className="hidden sm:inline">Post</span>
+              {!userIsPro && <svg className="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>}
+            </button>
+          )}
+          {isOwner && (
+            <button
+              onClick={async () => {
+                await toggleFavourite(id, !recipe.is_favourite);
+                setRecipe({ ...recipe, is_favourite: !recipe.is_favourite });
+              }}
+              className={`flex items-center gap-2 border px-4 py-2 rounded-input text-sm font-medium transition-colors ${
+                recipe.is_favourite
+                  ? 'border-cb-primary text-cb-primary bg-cb-primary/5'
+                  : 'border-cb-border text-cb-muted hover:bg-cb-card'
+              }`}
+              title={recipe.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
+            >
+              <span className="text-base">{recipe.is_favourite ? '\u2665' : '\u2661'}</span>
+              {recipe.is_favourite ? 'Favourited' : 'Favourite'}
+            </button>
+          )}
           {isOwner && recipe?.source_url && (
             <button
               onClick={handleRefresh}
@@ -233,14 +498,24 @@ export default function RecipePage() {
         </div>
       </nav>
 
-      {/* Hero image */}
+      {/* Hero: YouTube embed or image */}
       <div className="max-w-4xl mx-auto px-6">
-        {recipe.image_url ? (
-          <div className="h-72 rounded-card overflow-hidden bg-cb-card relative group">
+        {recipe.youtube_video_id ? (
+          <div className="aspect-video rounded-card overflow-hidden bg-black">
+            <iframe
+              ref={ytIframeRef}
+              src={`https://www.youtube.com/embed/${recipe.youtube_video_id}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : recipe.image_url ? (
+          <div className={`rounded-card overflow-hidden relative group ${recipe.cookbook_id ? 'bg-cb-bg flex items-center justify-center' : 'bg-cb-card'}`} style={{ height: recipe.cookbook_id ? 300 : 288 }}>
             <img
               src={recipe.image_url}
               alt={recipe.title}
-              className="w-full h-full object-cover"
+              className={`w-full h-full ${recipe.cookbook_id ? 'object-contain' : 'object-cover'}`}
             />
             {isOwner && (
               <label className="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1.5 rounded-input text-xs font-medium cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
@@ -271,12 +546,144 @@ export default function RecipePage() {
         ) : null}
       </div>
 
+      {/* User Photo Gallery */}
+      {isOwner && (
+        <div className="max-w-4xl mx-auto px-6 mt-4">
+          {userIsPro ? (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-cb-muted">Your Photos <span className="font-normal">{userPhotos.length}/10</span></h3>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {userPhotos.map((photo) => (
+                  <div key={photo.id} className="w-20 h-20 rounded-input overflow-hidden bg-cb-bg shrink-0 relative group">
+                    <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                      <button onClick={async () => { await setPhotoPrimary(photo.id, id); if (recipe) { await updateRecipe(id, { image_url: photo.url }); setRecipe({ ...recipe, image_url: photo.url }); } }} className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[10px]" title="Set as main">★</button>
+                      <button onClick={async () => { await deleteRecipePhoto(photo.id); setUserPhotos((prev) => prev.filter((p) => p.id !== photo.id)); }} className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[10px] text-cb-primary" title="Delete">✕</button>
+                    </div>
+                    {photo.is_primary && <span className="absolute top-0.5 left-0.5 bg-cb-primary text-white text-[8px] px-1 rounded">Main</span>}
+                  </div>
+                ))}
+                {userPhotos.length < 10 && (
+                  <label className="w-20 h-20 rounded-input border-2 border-dashed border-cb-border flex items-center justify-center cursor-pointer hover:border-cb-primary transition-colors shrink-0">
+                    {uploadingPhoto ? (
+                      <span className="text-[10px] text-cb-muted">...</span>
+                    ) : (
+                      <svg className="w-6 h-6 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    )}
+                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !recipe) return;
+                      setUploadingPhoto(true);
+                      try {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) return;
+                        const ext = file.name.split('.').pop() ?? 'jpg';
+                        const path = `${user.id}/${id}/${crypto.randomUUID()}.${ext}`;
+                        const { error: upErr } = await supabase.storage.from('recipe-user-photos').upload(path, file, { contentType: file.type });
+                        if (upErr) throw upErr;
+                        const { data: { publicUrl } } = supabase.storage.from('recipe-user-photos').getPublicUrl(path);
+                        const photo = await addRecipePhoto(id, user.id, path, publicUrl);
+                        setUserPhotos((prev) => [...prev, photo]);
+                      } catch (err: any) {
+                        alert(err?.message ?? 'Upload failed');
+                      } finally {
+                        setUploadingPhoto(false);
+                      }
+                    }} />
+                  </label>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-cb-bg rounded-card p-3 flex items-center gap-3">
+              <svg className="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
+              <p className="text-xs text-cb-muted">Upgrade to Pro to add your own photos to any recipe.</p>
+              <a href="/pricing" className="text-xs text-cb-primary font-semibold hover:underline shrink-0">Upgrade</a>
+            </div>
+          )}
+        </div>
+      )}
+
       <article className="max-w-4xl mx-auto py-10 px-6">
         {/* Title & meta */}
-        <h1 className="text-3xl font-bold mb-4">{recipe.title}</h1>
-        {recipe.description && (
-          <p className="text-cb-muted text-lg mb-6 leading-relaxed">{recipe.description}</p>
+        {editingTitle ? (
+          <form onSubmit={(e) => { e.preventDefault(); saveTitle((e.currentTarget.elements.namedItem('title') as HTMLInputElement).value); }} className="mb-4">
+            <input
+              name="title"
+              defaultValue={recipe.title}
+              autoFocus
+              className="text-3xl font-bold w-full bg-cb-bg border border-cb-primary rounded-input px-3 py-1 outline-none"
+              onBlur={(e) => saveTitle(e.target.value)}
+            />
+          </form>
+        ) : (
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className={`text-3xl font-bold ${isOwner ? 'cursor-pointer hover:text-cb-primary/80' : ''}`}
+                  onClick={() => isOwner && setEditingTitle(true)}
+                  title={isOwner ? 'Click to edit title' : undefined}
+                >
+                  {recipe.title}
+                </h1>
+                {recipe.visibility === 'private' && (
+                  <span className="bg-red-500 text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-full tracking-wider">PRIVATE</span>
+                )}
+              </div>
+            </div>
+            {isOwner && (
+              <button
+                onClick={async () => {
+                  const next = recipe.visibility === 'private' ? 'public' : 'private';
+                  await updateRecipe(id, { visibility: next as any });
+                  setRecipe({ ...recipe, visibility: next as any });
+                }}
+                className={`shrink-0 mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  recipe.visibility === 'private'
+                    ? 'border-red-300 text-red-500 bg-red-50 hover:bg-red-100'
+                    : 'border-cb-green/30 text-cb-green bg-cb-green/5 hover:bg-cb-green/10'
+                }`}
+                title={recipe.visibility === 'private' ? 'Only you can see this recipe' : 'Anyone with the link can view this recipe'}
+              >
+                {recipe.visibility === 'private' ? (
+                  <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>Private</>
+                ) : (
+                  <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12.75 3.03v.568c0 .334.148.65.405.864l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 0 1-1.161.886l-.143.048a1.107 1.107 0 0 0-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 0 1-1.652.928l-.679-.906a1.125 1.125 0 0 0-1.906.172L4.5 15.75l-.612.153M12.75 3.031a9 9 0 0 1 6.69 14.036m0 0-.177-.529A2.25 2.25 0 0 0 17.128 15H16.5l-.324-.324a1.453 1.453 0 0 0-2.328.377l-.036.073a1.586 1.586 0 0 1-.982.816l-.99.282c-.55.157-.894.702-.8 1.267l.073.438c.08.474.49.821.97.821.846 0 1.598.542 1.865 1.345l.215.643m5.276-3.67a9.012 9.012 0 0 1-5.276 3.67m0 0a9 9 0 0 1-10.275-4.835M15.75 9c0 .896-.393 1.7-1.016 2.25" /></svg>Public</>
+                )}
+              </button>
+            )}
+          </div>
         )}
+        {editingDesc ? (
+          <form onSubmit={(e) => { e.preventDefault(); saveDescription((e.currentTarget.elements.namedItem('desc') as HTMLTextAreaElement).value); }} className="mb-6">
+            <textarea
+              name="desc"
+              defaultValue={recipe.description ?? ''}
+              autoFocus
+              rows={3}
+              className="w-full bg-cb-bg border border-cb-primary rounded-input px-3 py-2 text-lg text-cb-muted outline-none leading-relaxed"
+              onBlur={(e) => saveDescription(e.target.value)}
+            />
+          </form>
+        ) : recipe.description ? (
+          <p
+            className={`text-cb-muted text-lg mb-6 leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-1 -mx-1' : ''}`}
+            onClick={() => isOwner && setEditingDesc(true)}
+            title={isOwner ? 'Click to edit description' : undefined}
+          >
+            {recipe.description}
+          </p>
+        ) : isOwner ? (
+          <button
+            onClick={() => setEditingDesc(true)}
+            className="text-sm text-cb-muted mb-6 border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
+          >
+            + Add description
+          </button>
+        ) : null}
 
         <div className="flex flex-wrap gap-3 mb-4 items-center">
           {/* Cuisine */}
@@ -398,24 +805,84 @@ export default function RecipePage() {
           )}
         </div>
 
-        {recipe.source_url && (
-          <div className="mb-8">
-            <a
-              href={recipe.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-cb-primary hover:underline"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-              </svg>
-              View original
-            </a>
+        {(recipe.source_url || recipe.channel_name) && (
+          <div className="mb-8 flex items-center gap-4 flex-wrap">
+            {recipe.channel_name && (
+              <span className="text-sm text-cb-muted">
+                by <span className="font-medium text-cb-text">{recipe.channel_name}</span>
+              </span>
+            )}
+            {recipe.source_url && (
+              <a
+                href={recipe.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-cb-primary hover:underline"
+              >
+                {recipe.youtube_video_id ? (
+                  <>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.545 15.568V8.432L15.818 12l-6.273 3.568Z" />
+                    </svg>
+                    Watch on YouTube
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    View original
+                  </>
+                )}
+              </a>
+            )}
           </div>
         )}
 
-        {/* Servings scaler */}
-        <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-10 inline-flex items-center gap-4">
+        {/* Cookbook attribution */}
+        {cookbook && (
+          <div className="bg-cb-bg border border-cb-border rounded-card p-4 mb-6 flex items-center gap-3">
+            {cookbook.cover_url ? (
+              <img src={cookbook.cover_url} alt="" className="w-12 h-16 rounded object-cover shrink-0" />
+            ) : (
+              <div className="w-12 h-16 rounded bg-cb-card border border-cb-border flex items-center justify-center shrink-0 text-lg">📚</div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">Book: {cookbook.title.split(':')[0]!.trim()}</p>
+              {cookbook.author && <p className="text-xs text-cb-muted">by {cookbook.author}</p>}
+              {recipe.page_number && <p className="text-[10px] text-cb-muted">Page {recipe.page_number}</p>}
+              {recipe.tags?.includes('AI Adaptation') && (
+                <p className="text-[10px] text-amber-600 mt-0.5">AI adaptation — refer to the original cookbook for the exact recipe</p>
+              )}
+            </div>
+            <Link href={`/dashboard/cookbooks/${cookbook.id}`} className="text-xs text-cb-primary hover:underline shrink-0">View Cookbook &rarr;</Link>
+          </div>
+        )}
+
+        {/* video_only: no recipe extracted */}
+        {recipe.video_only && (
+          <div className="bg-amber-50 border border-amber-200 rounded-card p-6 mb-10 text-center">
+            <p className="text-sm font-medium text-amber-800 mb-1">No recipe found in this video</p>
+            <p className="text-xs text-amber-600">
+              This video was saved as a bookmark. You can watch it above or try re-importing.
+            </p>
+          </div>
+        )}
+
+        {!recipe.video_only && recipe.tags?.includes('_incomplete') && (
+          <div className="bg-amber-50 border border-amber-200 rounded-card p-4 mb-6 flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-amber-800">This recipe may be incomplete</p>
+              <p className="text-xs text-amber-600">Some ingredients or steps may be missing. Try re-importing or edit manually.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Servings scaler + shopping list — hide for video_only */}
+        {!recipe.video_only && <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-10 flex items-center gap-4 flex-wrap">
           <span className="text-sm font-medium text-cb-muted">Servings</span>
           <div className="flex items-center gap-2">
             <button
@@ -432,13 +899,60 @@ export default function RecipePage() {
               +
             </button>
           </div>
-        </div>
+          {isOwner && recipe.ingredients.length > 0 && (
+            <button
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const lists = await listShoppingLists(user.id);
+                setShoppingLists(lists);
+                setShowShoppingModal(true);
+              }}
+              className="ml-auto flex items-center gap-1.5 border border-cb-green text-cb-green px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-green hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+              </svg>
+              Add to shopping list
+            </button>
+          )}
+        </div>}
 
+        {!recipe.video_only && <>
         {/* Ingredients */}
         <section className="mb-10">
-          <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">
-            Ingredients
-          </h2>
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-cb-border">
+            <h2 className="text-xl font-bold">Ingredients</h2>
+            {isOwner && !editingIngredients && (
+              <button onClick={startEditIngredients} className="text-xs text-cb-primary hover:underline">Edit</button>
+            )}
+          </div>
+          {editingIngredients ? (
+            <div>
+              <div className="space-y-1.5 mb-3">
+                {draftIngredients.map((row, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <input value={row.quantity} onChange={(e) => updateDraftIng(idx, 'quantity', e.target.value)} placeholder="Qty" className="w-14 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary text-right tabular-nums" />
+                    <input value={row.unit} onChange={(e) => updateDraftIng(idx, 'unit', e.target.value)} placeholder="Unit" className="w-16 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary" />
+                    <input value={row.ingredient} onChange={(e) => updateDraftIng(idx, 'ingredient', e.target.value)} placeholder="Ingredient" className="flex-1 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary" />
+                    <input value={row.preparation} onChange={(e) => updateDraftIng(idx, 'preparation', e.target.value)} placeholder="Prep" className="w-28 bg-cb-bg border border-cb-border rounded-input px-2 py-1.5 text-sm outline-none focus:border-cb-primary text-cb-muted" />
+                    <button onClick={() => removeDraftIng(idx)} className="text-cb-muted hover:text-cb-primary shrink-0" title="Remove">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={addDraftIng} className="text-xs text-cb-primary hover:underline">+ Add row</button>
+                <span className="flex-1" />
+                <button onClick={() => setEditingIngredients(false)} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+                <button onClick={saveIngredients} disabled={saving} className="bg-cb-primary text-white px-4 py-1.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          ) : (
+          <>
           {(() => {
             const groups: { label: string | null; items: typeof recipe.ingredients }[] = [];
             for (const ing of recipe.ingredients) {
@@ -483,11 +997,49 @@ export default function RecipePage() {
               </div>
             ));
           })()}
+          </>
+          )}
         </section>
 
         {/* Steps */}
         <section className="mb-10">
-          <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Steps</h2>
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-cb-border">
+            <h2 className="text-xl font-bold">Steps</h2>
+            {isOwner && !editingSteps && (
+              <button onClick={startEditSteps} className="text-xs text-cb-primary hover:underline">Edit</button>
+            )}
+          </div>
+          {editingSteps ? (
+            <div>
+              <ol className="space-y-3 mb-3">
+                {draftSteps.map((row, idx) => (
+                  <li key={idx} className="flex gap-3">
+                    <div className="w-7 h-7 rounded-full bg-cb-primary/20 text-cb-primary flex items-center justify-center text-xs font-bold shrink-0 mt-1">
+                      {idx + 1}
+                    </div>
+                    <textarea
+                      value={row.instruction}
+                      onChange={(e) => updateDraftStep(idx, e.target.value)}
+                      rows={2}
+                      placeholder={`Step ${idx + 1}...`}
+                      className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
+                    />
+                    <button onClick={() => removeDraftStep(idx)} className="text-cb-muted hover:text-cb-primary shrink-0 mt-1" title="Remove step">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <div className="flex items-center gap-2">
+                <button onClick={addDraftStep} className="text-xs text-cb-primary hover:underline">+ Add step</button>
+                <span className="flex-1" />
+                <button onClick={() => setEditingSteps(false)} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+                <button onClick={saveSteps} disabled={saving} className="bg-cb-primary text-white px-4 py-1.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          ) : (
           <ol className="space-y-6">
             {recipe.steps.map((step) => (
               <li key={step.id} className="flex gap-4">
@@ -496,38 +1048,158 @@ export default function RecipePage() {
                 </div>
                 <div className="flex-1">
                   <p className="leading-relaxed">{step.instruction}</p>
-                  {step.timer_minutes != null && step.timer_minutes > 0 && (
-                    <p className="text-cb-primary text-sm mt-1 font-medium">
-                      &#9201; {formatDuration(step.timer_minutes)}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-3 mt-1">
+                    {step.timestamp_seconds != null && recipe.youtube_video_id && (
+                      <button
+                        onClick={() => seekYouTube(step.timestamp_seconds!)}
+                        className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-cb-primary bg-cb-primary/10 px-2 py-0.5 rounded hover:bg-cb-primary/20 transition-colors"
+                        title="Jump to this step in the video"
+                      >
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                        {formatTimestamp(step.timestamp_seconds)}
+                      </button>
+                    )}
+                    {step.timer_minutes != null && step.timer_minutes > 0 && (
+                      <span className="text-cb-primary text-sm font-medium">
+                        &#9201; {formatDuration(step.timer_minutes)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}
           </ol>
+          )}
         </section>
+        </>}
 
         {/* Notes */}
-        {recipe.notes && (
+        <section className="mb-10">
+          {editingNotes ? (
+            <div>
+              <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
+              <textarea
+                defaultValue={recipe.notes ?? ''}
+                autoFocus
+                rows={4}
+                className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary mb-2"
+                onBlur={(e) => saveNotes(e.target.value)}
+              />
+            </div>
+          ) : recipe.notes ? (
+            <div>
+              <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
+              <p
+                className={`text-cb-muted leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-2 py-1 -mx-2' : ''}`}
+                onClick={() => isOwner && setEditingNotes(true)}
+                title={isOwner ? 'Click to edit notes' : undefined}
+              >
+                {recipe.notes}
+              </p>
+            </div>
+          ) : isOwner ? (
+            <button
+              onClick={() => setEditingNotes(true)}
+              className="text-sm text-cb-muted border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
+            >
+              + Add notes
+            </button>
+          ) : null}
+        </section>
+
+        {/* Cooking Notes (owner only) */}
+        {isOwner && (
           <section className="mb-10">
-            <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
-            <p className="text-cb-muted leading-relaxed">{recipe.notes}</p>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-cb-border">
+              <h2 className="text-xl font-bold">Cooking Log</h2>
+              {!addingNote && (
+                <button onClick={() => setAddingNote(true)} className="text-xs text-cb-primary hover:underline">+ Log a cook</button>
+              )}
+            </div>
+            {addingNote && (
+              <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-4">
+                <textarea
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="How did it turn out? Any adjustments?"
+                  rows={3}
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary mb-2"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!newNote.trim()) return;
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) return;
+                      const note = await addCookingNote(user.id, id, newNote.trim());
+                      setCookingNotes((prev) => [note, ...prev]);
+                      setNewNote('');
+                      setAddingNote(false);
+                    }}
+                    className="bg-cb-primary text-white px-4 py-1.5 rounded-input text-sm font-semibold hover:opacity-90"
+                  >
+                    Save
+                  </button>
+                  <button onClick={() => { setAddingNote(false); setNewNote(''); }} className="text-sm text-cb-muted hover:text-cb-text">Cancel</button>
+                </div>
+              </div>
+            )}
+            {cookingNotes.length > 0 ? (
+              <div className="space-y-3">
+                {cookingNotes.map((note) => (
+                  <div key={note.id} className="bg-cb-card border border-cb-border rounded-input p-3 flex gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm leading-relaxed">{note.note}</p>
+                      <p className="text-[10px] text-cb-muted mt-1">
+                        {new Date(note.cooked_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await deleteCookingNote(note.id);
+                        setCookingNotes((prev) => prev.filter((n) => n.id !== note.id));
+                      }}
+                      className="text-cb-muted hover:text-cb-primary shrink-0 self-start"
+                      title="Delete note"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : !addingNote ? (
+              <p className="text-cb-muted text-sm">No cooking log entries yet. Click &ldquo;Log a cook&rdquo; after you make this recipe.</p>
+            ) : null}
           </section>
         )}
 
-        {/* CTA for non-logged-in users */}
-        <div className="bg-cb-card border border-cb-border rounded-card p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Like this recipe?</h3>
-          <p className="text-cb-muted text-sm mb-4">
-            Save it to your Chefsbook and never lose a recipe again.
-          </p>
-          <Link
-            href="/dashboard"
-            className="inline-block bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            Add to my Chefsbook
-          </Link>
+        {/* Print watermark */}
+        <div className="print-watermark hidden">
+          {recipe.source_url && <p style={{ fontSize: '8pt', color: '#aaa', marginBottom: '0.5em' }}>Source: {recipe.source_url}</p>}
+          Saved with ChefsBook &mdash; chefsbook.com
         </div>
+
+        {/* CTA — only for non-owners */}
+        {!isOwner && (
+          <div className="bg-cb-card border border-cb-border rounded-card p-8 text-center">
+            <h3 className="text-lg font-semibold mb-2">Like this recipe?</h3>
+            <p className="text-cb-muted text-sm mb-4">
+              {isLoggedIn
+                ? 'Save it to your Chefsbook and never lose a recipe again.'
+                : 'Sign up to save recipes, plan meals, and generate shopping lists.'}
+            </p>
+            <Link
+              href={isLoggedIn ? '/dashboard' : '/auth'}
+              className="inline-block bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              {isLoggedIn ? 'Add to my Chefsbook' : 'Sign up to save this recipe'}
+            </Link>
+          </div>
+        )}
       </article>
 
       {/* Delete confirmation */}
@@ -554,6 +1226,97 @@ export default function RecipePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Shopping list picker modal */}
+      {showShoppingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setShowShoppingModal(false); setShowNewListForm(false); }}>
+          <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-md mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold">Add {recipe?.ingredients.length} ingredients to:</h2>
+              <button onClick={() => { setShowShoppingModal(false); setShowNewListForm(false); }} className="text-cb-muted hover:text-cb-text">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {!showNewListForm ? (
+              <>
+                {shoppingLists.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {shoppingLists.map((list) => (
+                      <button
+                        key={list.id}
+                        onClick={() => handleAddToShoppingList(list.id)}
+                        className="bg-cb-bg border border-cb-border rounded-card p-3 text-left hover:border-cb-green hover:bg-cb-green/5 transition-colors"
+                      >
+                        <div className="flex items-center gap-1 mb-0.5">
+                          {list.pinned && <span className="text-cb-primary text-[10px]">{'\u2605'}</span>}
+                          <p className="text-sm font-medium truncate">{list.name}</p>
+                        </div>
+                        {list.store_name && <p className="text-[10px] text-cb-muted truncate">{list.store_name}</p>}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setShowNewListForm(true)}
+                      className="border-2 border-dashed border-cb-border rounded-card p-3 text-center hover:border-cb-green transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-cb-muted mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                      <p className="text-xs text-cb-muted">New list</p>
+                    </button>
+                  </div>
+                )}
+                {shoppingLists.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-cb-muted text-sm mb-3">No shopping lists yet</p>
+                    <button onClick={() => setShowNewListForm(true)} className="bg-cb-green text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90">Create your first list</button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  value={newListName}
+                  onChange={(e) => setNewListName(e.target.value)}
+                  autoFocus
+                  placeholder="List name"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm outline-none focus:border-cb-green"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleNewShoppingList(); }}
+                />
+                <input
+                  value={newStoreName}
+                  onChange={(e) => setNewStoreName(e.target.value)}
+                  placeholder="Store name (optional, e.g. Whole Foods)"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-green"
+                />
+                <div className="flex gap-2 pt-1">
+                  <button onClick={handleNewShoppingList} disabled={!newListName.trim()} className="flex-1 bg-cb-green text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Create & Add</button>
+                  {shoppingLists.length > 0 && <button onClick={() => setShowNewListForm(false)} className="text-sm text-cb-muted hover:text-cb-text px-3">Back</button>}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Social Share Modal */}
+      {showSocialShare && recipe && (
+        <SocialShareModal recipe={recipe} onClose={() => setShowSocialShare(false)} />
+      )}
+
+      {/* Added to list confirmation */}
+      {addConfirm && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-cb-card border border-cb-green/30 shadow-lg rounded-card p-4 flex items-center gap-4 max-w-sm animate-in fade-in slide-in-from-bottom-4">
+          <div className="w-10 h-10 rounded-full bg-cb-green/10 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-cb-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{addConfirm.count} items added to {addConfirm.listName}</p>
+          </div>
+          <Link href={`/dashboard/shop`} onClick={() => setAddConfirm(null)} className="text-xs text-cb-green font-semibold hover:underline shrink-0">Go to list</Link>
+          <button onClick={() => setAddConfirm(null)} className="text-cb-muted hover:text-cb-text shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
     </main>

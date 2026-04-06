@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, createRecipe } from '@chefsbook/db';
+import Link from 'next/link';
+import { supabase, createRecipe, createTechnique, checkRecipeLimit } from '@chefsbook/db';
 import { scanRecipe } from '@chefsbook/ai';
 
 // ─── Bookmark types ─────────────────────────────────────────────
@@ -12,6 +13,8 @@ interface Bookmark {
   url: string;
   folder: string;
   selected: boolean;
+  isDuplicate?: boolean;
+  existingTitle?: string;
 }
 
 interface ImportResult {
@@ -22,25 +25,7 @@ interface ImportResult {
   error?: string;
 }
 
-type BookmarkPhase = 'idle' | 'preview' | 'importing' | 'done';
-
-// ─── Folder tag colours ─────────────────────────────────────────
-
-const FOLDER_COLOURS = [
-  'bg-red-100 text-red-700',
-  'bg-blue-100 text-blue-700',
-  'bg-green-100 text-green-700',
-  'bg-amber-100 text-amber-700',
-  'bg-purple-100 text-purple-700',
-  'bg-pink-100 text-pink-700',
-  'bg-cyan-100 text-cyan-700',
-  'bg-orange-100 text-orange-700',
-];
-
-function getFolderColour(folder: string, allFolders: string[]): string {
-  const idx = allFolders.indexOf(folder);
-  return FOLDER_COLOURS[idx % FOLDER_COLOURS.length]!;
-}
+type BookmarkPhase = 'idle' | 'checking' | 'preview' | 'importing' | 'done';
 
 // ─── Main page ──────────────────────────────────────────────────
 
@@ -62,15 +47,19 @@ export default function ScanPage() {
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
   const [showFailed, setShowFailed] = useState(false);
   const abortRef = useRef(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Resume active import on mount ──
+  // (Voice recording moved to /dashboard/speak)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  // ── Check pro + speech support + resume import ──
   useEffect(() => {
     const activeJobId = localStorage.getItem('chefsbook_import_job');
     if (activeJobId) {
       setBmPhase('importing');
       startPolling(activeJobId);
     }
+    // (Voice + pro check moved to /dashboard/speak)
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
 
@@ -129,6 +118,8 @@ export default function ScanPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
+      const gate = await checkRecipeLimit(user.id);
+      if (!gate.allowed) throw new Error(gate.reason!);
       const base64 = await fileToBase64(file);
       const scanned = await scanRecipe(base64, file.type || 'image/jpeg');
       const recipe = await createRecipe(user.id, scanned);
@@ -140,6 +131,9 @@ export default function ScanPage() {
     }
   };
 
+  const isYouTubeUrl = (u: string) =>
+    /(?:youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/.test(u);
+
   const handleUrlImport = async () => {
     if (!url.trim()) return;
     setLoading('url');
@@ -147,15 +141,79 @@ export default function ScanPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
-      const res = await fetch('/api/import/url', {
+
+      // Plan limit check
+      const gate = await checkRecipeLimit(user.id);
+      if (!gate.allowed) throw new Error(gate.reason!);
+
+      // Duplicate check: warn if URL already imported
+      const { data: existing } = await supabase
+        .from('recipes')
+        .select('id, title')
+        .eq('user_id', user.id)
+        .eq('source_url', url.trim())
+        .limit(1);
+      if (existing?.length) {
+        const proceed = confirm(`You already have "${existing[0].title}" from this URL. Import again?`);
+        if (!proceed) { setLoading(null); return; }
+      }
+
+      const endpoint = isYouTubeUrl(url) ? '/api/import/youtube' : '/api/import/url';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Import failed');
-      const recipe = await createRecipe(user.id, { ...data.recipe, source_url: url, image_url: data.imageUrl || undefined });
-      router.push(`/recipe/${recipe.id}`);
+
+      // Route by content type
+      if (data.contentType === 'technique' && !data.videoOnly) {
+        // Technique extracted
+        const technique = await createTechnique(user.id, {
+          ...data.technique,
+          source_url: url,
+          source_type: isYouTubeUrl(url) ? 'youtube' : 'web',
+          youtube_video_id: data.videoId ?? null,
+          image_url: data.thumbnail ?? data.imageUrl ?? null,
+        });
+        router.push(`/technique/${technique.id}`);
+      } else if (data.videoOnly) {
+        // No content extracted — save as video bookmark
+        const recipe = await createRecipe(user.id, {
+          title: data.title,
+          description: data.description,
+          servings: null,
+          prep_minutes: null,
+          cook_minutes: null,
+          cuisine: null,
+          course: null,
+          ingredients: [],
+          steps: [],
+          notes: null,
+          source_type: 'youtube',
+          source_url: url,
+          image_url: data.thumbnail,
+          youtube_video_id: data.videoId,
+          channel_name: data.channelName,
+          video_only: true,
+        });
+        router.push(`/recipe/${recipe.id}`);
+      } else {
+        // Recipe extracted
+        const recipeData = {
+          ...data.recipe,
+          source_url: url,
+          image_url: data.thumbnail ?? data.imageUrl ?? undefined,
+          youtube_video_id: data.videoId ?? undefined,
+          channel_name: data.channelName ?? undefined,
+        };
+        if (data.titleGenerated) {
+          recipeData.tags = [...(recipeData.tags ?? []), '_unresolved'];
+        }
+        const recipe = await createRecipe(user.id, recipeData);
+        router.push(`/recipe/${recipe.id}`);
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -178,42 +236,141 @@ export default function ScanPage() {
     const results: Bookmark[] = [];
 
     const walk = (node: Element, folder: string) => {
-      for (const child of Array.from(node.children)) {
-        if (child.tagName === 'DT') {
-          const h3 = child.querySelector(':scope > h3');
-          const a = child.querySelector(':scope > a');
-          const dl = child.querySelector(':scope > dl');
+      let currentFolder = folder;
 
-          if (h3 && dl) {
-            walk(dl, h3.textContent?.trim() || folder);
-          } else if (a) {
+      for (const child of Array.from(node.children)) {
+        const tag = child.tagName;
+
+        if (tag === 'DT') {
+          const h3 = Array.from(child.children).find(c => c.tagName === 'H3');
+          if (h3) {
+            currentFolder = h3.textContent?.trim() || folder;
+          }
+
+          const a = Array.from(child.children).find(c => c.tagName === 'A');
+          if (a) {
             const href = a.getAttribute('href');
-            if (href && href.startsWith('http')) {
+            if (href?.startsWith('http')) {
               results.push({
                 title: a.textContent?.trim() || href,
                 url: href,
-                folder: folder || 'Uncategorised',
+                folder: currentFolder || 'Uncategorised',
                 selected: true,
               });
             }
           }
-        } else if (child.tagName === 'DL') {
-          walk(child, folder);
+
+          walk(child, currentFolder);
+        } else if (tag === 'DL') {
+          walk(child, currentFolder);
         }
       }
     };
 
-    const topDl = doc.querySelector('dl');
-    if (topDl) walk(topDl, 'Bookmarks');
+    const root = doc.querySelector('dl') || doc.body;
+    walk(root, 'Bookmarks');
     return results;
   };
 
+  // ── Universal file import ──
+  const [fileRecipes, setFileRecipes] = useState<any[]>([]);
+  const [fileType, setFileType] = useState('');
+  const [fileError, setFileError] = useState('');
+
+  const handleFileImport = async (file: File) => {
+    setBmPhase('checking');
+    setFileError('');
+    setFileType('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/import/file', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setFileError(data.error || 'Failed to process file');
+        setBmPhase('idle');
+        setError(data.error || 'Failed to process file');
+        return;
+      }
+      setFileType(data.fileType);
+      if (data.recipes?.length > 0) {
+        // Convert to bookmark-like format for the existing review UI
+        const mapped = data.recipes.map((r: any, i: number) => ({
+          title: r.title || `Recipe ${i + 1}`,
+          url: '',
+          folder: r.section_hint || data.fileType || 'Recipes',
+          selected: true,
+          isDuplicate: false,
+          existingTitle: undefined,
+          _recipe: r, // store full recipe for direct import
+        }));
+        setBookmarks(mapped);
+        setFileRecipes(data.recipes);
+        setExpandedFolders(new Set(mapped.map((b: any) => b.folder)));
+        setBmPhase('preview');
+      } else {
+        setFileError('No recipes found in this file');
+        setBmPhase('idle');
+        setError('No recipes found in this file');
+      }
+    } catch (e: any) {
+      setFileError(e.message);
+      setBmPhase('idle');
+      setError(e.message);
+    }
+  };
+
   const handleBookmarkFile = (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const isHtml = ext === 'html' || ext === 'htm' || file.type === 'text/html';
+
+    if (!isHtml) {
+      // Non-HTML file → route through universal file import API
+      handleFileImport(file);
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const html = reader.result as string;
       const parsed = parseBookmarksHtml(html);
       setBookmarks(parsed);
+      setBmPhase('checking');
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: existing } = await supabase
+            .from('recipes')
+            .select('title, source_url')
+            .eq('user_id', user.id);
+
+          if (existing?.length) {
+            const urlMap = new Map<string, string>();
+            const titleMap = new Map<string, string>();
+            for (const r of existing) {
+              if (r.source_url) urlMap.set(r.source_url, r.title ?? r.source_url);
+              if (r.title) titleMap.set(r.title.toLowerCase(), r.title);
+            }
+
+            setBookmarks(parsed.map((b) => {
+              const urlMatch = urlMap.get(b.url);
+              if (urlMatch) {
+                return { ...b, isDuplicate: true, existingTitle: urlMatch, selected: false };
+              }
+              const titleMatch = titleMap.get(b.title.toLowerCase());
+              if (titleMatch) {
+                return { ...b, isDuplicate: true, existingTitle: titleMatch, selected: false };
+              }
+              return b;
+            }));
+          }
+        }
+      } catch {
+        // Duplicate check failed — proceed without marking
+      }
+
+      setExpandedFolders(new Set(parsed.map((b) => b.folder)));
       setBmPhase('preview');
     };
     reader.readAsText(file);
@@ -238,13 +395,54 @@ export default function ScanPage() {
     );
   };
 
+  const toggleExpand = (folder: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folder)) next.delete(folder);
+      else next.add(folder);
+      return next;
+    });
+  };
+
   const selectedCount = bookmarks.filter((b) => b.selected).length;
+  const duplicateCount = bookmarks.filter((b) => b.isDuplicate).length;
   const folders = [...new Set(bookmarks.map((b) => b.folder))];
 
   const startBookmarkImport = async () => {
     const selected = bookmarks.filter((b) => b.selected);
     if (selected.length === 0) return;
 
+    // Check if these are file-extracted recipes (have _recipe data, no URLs)
+    const hasDirectRecipes = selected.some((b: any) => b._recipe);
+
+    if (hasDirectRecipes) {
+      // Direct import from file — save each recipe immediately
+      setBmPhase('importing');
+      setImportProgress(0);
+      setImportTotal(selected.length);
+      setImportResults([]);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setError('Not signed in'); setBmPhase('preview'); return; }
+
+      let imported = 0;
+      for (const bm of selected) {
+        const r = (bm as any)._recipe;
+        if (!r) continue;
+        try {
+          await createRecipe(user.id, { ...r, source_type: r.source_type || 'manual' });
+          imported++;
+          setImportProgress(imported);
+          setImportResults((prev) => [...prev, { title: r.title || bm.title, url: '', folder: bm.folder, status: 'imported' as const }]);
+        } catch (e: any) {
+          setImportResults((prev) => [...prev, { title: r.title || bm.title, url: '', folder: bm.folder, status: 'failed' as const, error: e.message }]);
+        }
+      }
+      setBmPhase('done');
+      return;
+    }
+
+    // Standard bookmark URL batch import
     setBmPhase('importing');
     setImportProgress(0);
     setImportTotal(selected.length);
@@ -357,7 +555,7 @@ export default function ScanPage() {
               className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading === 'url' ? (
-                <><Spinner size={16} /> Importing...</>
+                <><Spinner size={16} /> {isYouTubeUrl(url) ? 'Importing from YouTube...' : 'Importing...'}</>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -370,18 +568,32 @@ export default function ScanPage() {
           </div>
           <div className="mt-6 p-4 bg-cb-bg rounded-input">
             <p className="text-xs text-cb-muted leading-relaxed">
-              Works with most recipe websites including AllRecipes, BBC Good Food,
-              Serious Eats, NYT Cooking, and many more.
+              Works with most recipe websites and YouTube cooking videos.
+              YouTube imports include timestamp-linked steps.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Third panel: Bookmark import */}
+      {/* Voice recipe link */}
+      <Link href="/dashboard/speak" className="block bg-cb-card border border-cb-border rounded-card p-6 mb-8 hover:border-cb-primary/50 transition-colors">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-cb-primary/10 flex items-center justify-center shrink-0">
+            <svg className="w-6 h-6 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>
+          </div>
+          <div>
+            <h2 className="font-semibold">Speak a recipe</h2>
+            <p className="text-cb-muted text-sm">Dictate a recipe and AI will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
+          </div>
+          <svg className="w-5 h-5 text-cb-muted ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        </div>
+      </Link>
+
+      {/* File import panel */}
       <div className="bg-cb-card border border-cb-border rounded-card p-6">
-        <h2 className="font-semibold mb-1">Import bookmarks folder</h2>
+        <h2 className="font-semibold mb-1">Import from File</h2>
         <p className="text-cb-muted text-sm mb-4">
-          Bulk-import recipe URLs from your browser bookmarks. Export your bookmarks as HTML first.
+          Upload any file — bookmarks, PDFs, Word docs, or text files. We'll find all the recipes inside.
         </p>
 
         {/* Phase: idle — drop zone */}
@@ -399,48 +611,50 @@ export default function ScanPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
               </svg>
               <p className="text-cb-muted text-sm mb-4">
-                Drag & drop your <span className="font-mono text-xs bg-cb-bg px-1.5 py-0.5 rounded">bookmarks.html</span> file here
+                Drag & drop any file here <span className="text-[10px] text-cb-muted block mt-1">PDF, Word, HTML, Text, CSV, JSON</span>
               </p>
               <label className="inline-block bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity">
                 Choose File
-                <input type="file" accept=".html,.htm" className="hidden" onChange={(e) => {
+                <input type="file" accept=".html,.htm,.pdf,.docx,.doc,.txt,.rtf,.csv,.json" className="hidden" onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleBookmarkFile(file);
                 }} />
               </label>
             </div>
 
-            <div className="bg-cb-bg rounded-input p-4">
-              <p className="text-xs font-semibold text-cb-muted mb-2">How to export bookmarks:</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-cb-muted">
-                <div>
-                  <p className="font-medium text-cb-text mb-0.5">Chrome</p>
-                  <p>Bookmarks Manager &rarr; &#8942; &rarr; Export bookmarks</p>
-                </div>
-                <div>
-                  <p className="font-medium text-cb-text mb-0.5">Safari</p>
-                  <p>File &rarr; Export Bookmarks...</p>
-                </div>
-                <div>
-                  <p className="font-medium text-cb-text mb-0.5">Firefox</p>
-                  <p>Bookmarks &rarr; Manage &rarr; Import and Backup &rarr; Export</p>
-                </div>
-              </div>
+            <div className="bg-cb-bg rounded-input p-3">
+              <p className="text-xs text-cb-muted leading-relaxed">
+                Supports: PDF cookbooks, Word documents, text files, CSV spreadsheets, JSON exports, and browser bookmark HTML files. Max 50MB.
+              </p>
             </div>
           </>
         )}
 
-        {/* Phase: preview — table grouped by folder */}
+        {/* Phase: checking — duplicate detection */}
+        {bmPhase === 'checking' && (
+          <div className="py-12 text-center">
+            <Spinner className="mx-auto mb-3" />
+            <p className="text-sm font-medium">Checking for duplicates...</p>
+            <p className="text-xs text-cb-muted mt-1">
+              Found {bookmarks.length} bookmarks, checking against your recipes
+            </p>
+          </div>
+        )}
+
+        {/* Phase: preview — folder tree */}
         {bmPhase === 'preview' && (
           <>
+            {/* Header: summary + actions */}
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm">
-                <span className="font-semibold">{bookmarks.length}</span> bookmarks found in{' '}
-                <span className="font-semibold">{folders.length}</span> folders
-              </p>
+              <div>
+                <p className="text-sm font-medium">Review bookmarks</p>
+                <p className="text-xs text-cb-muted mt-0.5">
+                  Click folders to expand. Check items to import.
+                </p>
+              </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => { setBmPhase('idle'); setBookmarks([]); }}
+                  onClick={() => { setBmPhase('idle'); setBookmarks([]); setExpandedFolders(new Set()); }}
                   className="text-sm text-cb-muted hover:text-cb-text"
                 >
                   Cancel
@@ -455,55 +669,74 @@ export default function ScanPage() {
               </div>
             </div>
 
+            {/* Tree */}
             <div className="max-h-[500px] overflow-y-auto border border-cb-border rounded-card">
               {folders.map((folder) => {
-                const folderBookmarks = bookmarks.filter((b) => b.folder === folder);
-                const allSelected = folderBookmarks.every((b) => b.selected);
-                const noneSelected = folderBookmarks.every((b) => !b.selected);
-                const colour = getFolderColour(folder, folders);
+                const folderBms = bookmarks.filter((b) => b.folder === folder);
+                const allSelected = folderBms.every((b) => b.selected);
+                const noneSelected = folderBms.every((b) => !b.selected);
+                const expanded = expandedFolders.has(folder);
+                const folderDupes = folderBms.filter((b) => b.isDuplicate).length;
 
                 return (
-                  <div key={folder} className="border-b border-cb-border last:border-b-0">
-                    {/* Folder header */}
-                    <div className="flex items-center gap-3 px-4 py-3 bg-cb-bg sticky top-0">
+                  <div key={folder}>
+                    {/* Folder row */}
+                    <div
+                      onClick={() => toggleExpand(folder)}
+                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-cb-bg/50 cursor-pointer border-b border-cb-border select-none"
+                    >
+                      {/* Chevron */}
+                      <svg
+                        className={`w-3.5 h-3.5 text-cb-muted shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                      </svg>
+
+                      {/* Folder checkbox */}
                       <button
-                        onClick={() => toggleFolder(folder, !allSelected)}
-                        className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                        onClick={(e) => { e.stopPropagation(); toggleFolder(folder, !allSelected); }}
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
                           allSelected
                             ? 'bg-cb-primary border-cb-primary text-white'
                             : noneSelected
-                            ? 'border-cb-border'
-                            : 'bg-cb-primary/50 border-cb-primary/50 text-white'
+                              ? 'border-cb-border'
+                              : 'bg-cb-primary border-cb-primary text-white'
                         }`}
                       >
-                        {(allSelected || !noneSelected) && (
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        {allSelected && (
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                           </svg>
                         )}
+                        {!allSelected && !noneSelected && (
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" d="M5 12h14" />
+                          </svg>
+                        )}
                       </button>
-                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${colour}`}>
-                        {folder}
+
+                      {/* Folder icon */}
+                      <svg className="w-4 h-4 text-cb-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                      </svg>
+
+                      {/* Folder name */}
+                      <span className="text-sm font-medium truncate">{folder}</span>
+
+                      {/* Spacer + counts */}
+                      <span className="text-xs text-cb-muted ml-auto shrink-0">
+                        {folderBms.filter((b) => b.selected).length}/{folderBms.length}
                       </span>
-                      <span className="text-xs text-cb-muted ml-auto">
-                        {folderBookmarks.filter((b) => b.selected).length} / {folderBookmarks.length}
-                      </span>
-                      <button
-                        onClick={() => toggleFolder(folder, true)}
-                        className="text-[10px] text-cb-primary hover:underline"
-                      >
-                        All
-                      </button>
-                      <button
-                        onClick={() => toggleFolder(folder, false)}
-                        className="text-[10px] text-cb-muted hover:underline"
-                      >
-                        None
-                      </button>
+                      {folderDupes > 0 && (
+                        <span className="text-[10px] text-amber-600 shrink-0">
+                          {folderDupes} dup{folderDupes !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Bookmark rows */}
-                    {folderBookmarks.map((bm) => {
+                    {/* Bookmark rows (visible when expanded) */}
+                    {expanded && folderBms.map((bm) => {
                       const globalIndex = bookmarks.indexOf(bm);
                       const hostname = (() => { try { return new URL(bm.url).hostname; } catch { return ''; } })();
 
@@ -511,41 +744,64 @@ export default function ScanPage() {
                         <div
                           key={globalIndex}
                           onClick={() => toggleBookmark(globalIndex)}
-                          className="flex items-center gap-3 px-4 py-2 hover:bg-cb-bg/50 cursor-pointer transition-colors"
+                          className={`flex items-center gap-2 pl-12 pr-3 py-1.5 cursor-pointer transition-colors border-b border-cb-border/50 last:border-b-0 ${
+                            bm.isDuplicate ? 'bg-amber-50/30 hover:bg-amber-50/60' : 'hover:bg-cb-bg/50'
+                          }`}
                         >
+                          {/* Bookmark checkbox */}
                           <span
-                            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                            className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
                               bm.selected
                                 ? 'bg-cb-primary border-cb-primary text-white'
                                 : 'border-cb-border'
                             }`}
                           >
                             {bm.selected && (
-                              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <svg className="w-2 h-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                               </svg>
                             )}
                           </span>
-                          {/* favicon */}
+
+                          {/* Favicon */}
                           <img
                             src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
                             alt=""
                             className="w-4 h-4 shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
+
+                          {/* Title + URL + duplicate hint */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm truncate">{bm.title}</p>
+                            <p className={`text-sm truncate ${bm.isDuplicate ? 'text-cb-muted' : ''}`}>{bm.title}</p>
                             <p className="text-[10px] text-cb-muted truncate">{bm.url}</p>
+                            {bm.isDuplicate && bm.existingTitle && (
+                              <p className="text-[10px] text-amber-600 truncate">Already imported: {bm.existingTitle}</p>
+                            )}
                           </div>
-                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${colour}`}>
-                            {folder}
-                          </span>
+
+                          {/* Warning icon for duplicates */}
+                          {bm.isDuplicate && (
+                            <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                            </svg>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 );
               })}
+            </div>
+
+            {/* Footer summary */}
+            <div className="mt-3 px-1 text-xs text-cb-muted">
+              {folders.length} folder{folders.length !== 1 ? 's' : ''} &middot;{' '}
+              {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''} found &middot;{' '}
+              <span className="font-semibold text-cb-green">{selectedCount} selected</span>
+              {duplicateCount > 0 && (
+                <> &middot; <span className="font-semibold text-amber-600">{duplicateCount} skipped</span></>
+              )}
             </div>
           </>
         )}
@@ -652,6 +908,37 @@ export default function ScanPage() {
                           {r.error && <p className="text-red-400 mt-0.5">{r.error}</p>}
                         </div>
                       ))}
+                    <button
+                      onClick={async () => {
+                        const failedUrls = importResults
+                          .filter((r) => r.status === 'failed')
+                          .map((r) => ({ url: r.url, folder: r.folder }));
+                        if (failedUrls.length === 0) return;
+                        setBmPhase('importing');
+                        setImportProgress(0);
+                        setImportTotal(failedUrls.length);
+                        setImportResults([]);
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (!session) return;
+                        try {
+                          const res = await fetch('/api/import/batch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                            body: JSON.stringify({ urls: failedUrls }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error);
+                          localStorage.setItem('chefsbook_import_job', data.jobId);
+                          startPolling(data.jobId);
+                        } catch (e: any) {
+                          setError(e.message);
+                          setBmPhase('done');
+                        }
+                      }}
+                      className="mt-2 w-full bg-cb-primary text-white py-2 rounded-input text-xs font-semibold hover:opacity-90"
+                    >
+                      Retry {failedCount} failed URL{failedCount !== 1 ? 's' : ''}
+                    </button>
                   </div>
                 )}
               </div>

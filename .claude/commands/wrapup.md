@@ -1,27 +1,56 @@
-Wrap this session for the current project. Do the following in order:
+At the end of every Claude Code session, run this wrap-up sequence:
 
-1. Read CLAUDE.md to understand what was worked on this session.
+1. SUMMARIZE THIS SESSION
+   Review what was built, fixed, or changed in this session.
+   Create a bullet list of completed items in this format:
+   - [YYYY-MM-DD] Brief description of what was done
 
-2. Update CLAUDE.md:
-   - Add today's date and a one-line summary to LAST 3 SESSIONS (keep only last 3)
-   - Update KNOWN ISSUES: check off anything resolved today, add any new ones
-   - Add any architectural decisions made today to DECISIONS LOG
-   - Update CONVENTIONS if anything changed
+2. UPDATE DONE.md
+   - Check if DONE.md exists in the project root
+   - If it does not exist: create it with this header:
+     # DONE.md - Completed Features & Changes
+     # Updated automatically at every Claude Code session wrap.
+   - Append today's completed items to the TOP of the file 
+     (newest first), under a date header:
+     ## YYYY-MM-DD
+     - Item 1
+     - Item 2
+   - Do not remove any existing entries
+   - Keep entries concise (one line each)
 
-3. Update the STATUS.md entry for this project in C:\Users\seblu\aiproj\bob-hq\STATUS.md:
-   - Last: what we did today in one line
-   - Next: the single most important next action
-   - Blockers: anything blocking progress, or None
+3. UPDATE CLAUDE.md
+   - Update the LAST SESSION section with what was done today
+   - Update the NEXT SESSION section with what comes next
+   - Update any KEY DECISIONS that were made
+   - Update any KNOWN ISSUES that were discovered or fixed
 
-4. Git commit and push this project:
-   git add CLAUDE.md
-   git commit -m "wrap: [project] [date]"
+4. UPDATE STATUS.md in bob-hq
+   - Read C:\Users\seblu\aiproj\bob-hq\STATUS.md
+   - Find this project's section
+   - Update the Last: field with today's date and a summary
+   - Update the Next: field with the next priority items
+   - Update Blockers: if anything changed
+   - Write the updated STATUS.md back to bob-hq
+
+5. GIT COMMIT & PUSH
+   Run these commands:
+   git add DONE.md CLAUDE.md
+   git commit -m "wrap: [brief description of today's session]"
    git push
 
-5. Git commit and push bob-hq:
+   Then commit STATUS.md to bob-hq:
    cd C:\Users\seblu\aiproj\bob-hq
    git add STATUS.md
-   git commit -m "wrap: [project] [date]"
+   git commit -m "status: update [project name] [date]"
    git push
+   cd back to the project directory
 
-6. Confirm with: "Session wrapped. CLAUDE.md updated, STATUS.md pushed to bob-hq."
+6. CONFIRM COMPLETION
+   Output a summary:
+   "✓ Session wrapped:
+   - X items added to DONE.md
+   - CLAUDE.md updated
+   - STATUS.md updated
+   - Committed and pushed"
+   
+   Then list the items added to DONE.md so the user can verify.

@@ -82,7 +82,12 @@ async function getPageHtml(tabId) {
   try {
     const [result] = await chrome.scripting.executeScript({
       target: { tabId },
-      func: () => document.documentElement.outerHTML,
+      func: () => {
+        // Wait 500ms for recipe plugins (WPRM, Tasty, etc.) to finish rendering
+        return new Promise((resolve) => {
+          setTimeout(() => resolve(document.documentElement.outerHTML), 500);
+        });
+      },
     });
     return result?.result || '';
   } catch {

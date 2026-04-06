@@ -1,0 +1,187 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@chefsbook/db';
+
+export default function SettingsPage() {
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [email, setEmail] = useState('');
+  const [planTier, setPlanTier] = useState('free');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setEmail(user.email ?? '');
+      const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single();
+      if (profile) {
+        setDisplayName(profile.display_name ?? '');
+        setUsername(profile.username ?? '');
+        setBio(profile.bio ?? '');
+        setPlanTier(profile.plan_tier ?? 'free');
+        setAvatarUrl(profile.avatar_url);
+      }
+    })();
+  }, []);
+
+  const saveProfile = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      const { error } = await supabase.from('user_profiles').update({
+        display_name: displayName.trim() || null,
+        username: username.trim() || null,
+        bio: bio.trim() || null,
+      }).eq('id', user.id);
+      if (error) throw error;
+      setMessage('Saved');
+      setTimeout(() => setMessage(''), 2000);
+    } catch (e: any) {
+      setMessage(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const path = `${user.id}/avatar.${file.name.split('.').pop() ?? 'jpg'}`;
+      await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+      setAvatarUrl(publicUrl);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="p-8 max-w-2xl">
+      <h1 className="text-2xl font-bold mb-8">Settings</h1>
+
+      {message && (
+        <div className={`rounded-input p-3 mb-6 text-sm ${message === 'Saved' ? 'bg-cb-green/10 text-cb-green' : 'bg-red-50 text-cb-primary'}`}>{message}</div>
+      )}
+
+      {/* Account */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Account</h2>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 mb-4">
+            <label className="cursor-pointer">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-cb-border" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-cb-primary/20 flex items-center justify-center text-xl font-bold text-cb-primary">
+                  {displayName?.charAt(0)?.toUpperCase() || email?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarUpload(f); }} />
+            </label>
+            <div>
+              <p className="text-sm font-medium">{uploading ? 'Uploading...' : 'Click avatar to change photo'}</p>
+              <p className="text-xs text-cb-muted">Stored in Supabase avatars bucket</p>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-muted block mb-1">Display name</label>
+            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-muted block mb-1">Username</label>
+            <div className="flex items-center">
+              <span className="text-sm text-cb-muted mr-1">@</span>
+              <input value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="username" className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-muted block mb-1">Email</label>
+            <input value={email} disabled className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm text-cb-muted" />
+          </div>
+        </div>
+      </section>
+
+      {/* Profile */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Public Profile</h2>
+        <div>
+          <label className="text-sm font-medium text-cb-muted block mb-1">Bio</label>
+          <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 160))} rows={3} maxLength={160} placeholder="Tell other cooks about yourself..." className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          <p className="text-[10px] text-cb-muted mt-0.5">{bio.length}/160</p>
+        </div>
+        {username && (
+          <p className="text-xs text-cb-muted mt-2">Your public profile: <a href={`/chef/${username}`} className="text-cb-primary hover:underline">/chef/{username}</a></p>
+        )}
+      </section>
+
+      {/* Plan */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Plan & Billing</h2>
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          {([
+            { tier: 'free', name: 'Free', price: '$0', features: ['50 recipes', '5 scans/month', '1 shopping list', 'Share via link'] },
+            { tier: 'pro', name: 'Pro', price: '$4.99/mo', features: ['Unlimited recipes', 'Unlimited scans', '10 shopping lists', 'Voice entry', 'Photo gallery', 'Public profile'] },
+            { tier: 'family', name: 'Family', price: '$8.99/mo', features: ['Everything in Pro', 'Up to 6 members', 'Shared lists', 'Shared meal plans'] },
+          ] as const).map((plan) => (
+            <div key={plan.tier} className={`rounded-card border p-4 ${planTier === plan.tier ? 'border-cb-primary ring-2 ring-cb-primary/20' : 'border-cb-border'}`}>
+              <p className="font-bold text-sm">{plan.name}</p>
+              <p className="text-lg font-bold mb-2">{plan.price}</p>
+              <ul className="space-y-1 mb-3">
+                {plan.features.map((f) => (
+                  <li key={f} className="text-[10px] text-cb-muted flex items-start gap-1">
+                    <svg className="w-3 h-3 text-cb-green mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {planTier === plan.tier ? (
+                <span className="block text-center text-xs font-semibold text-cb-primary bg-cb-primary/10 py-1.5 rounded-input">Current Plan</span>
+              ) : (
+                <button
+                  onClick={async () => {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+                    await supabase.from('user_profiles').update({ plan_tier: plan.tier }).eq('id', user.id);
+                    setPlanTier(plan.tier);
+                  }}
+                  className="w-full text-center text-xs font-semibold py-1.5 rounded-input border border-cb-border hover:border-cb-primary hover:text-cb-primary transition-colors"
+                >
+                  Select Plan
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-cb-muted text-center">Payment integration coming soon. Plans can be selected freely during beta.</p>
+      </section>
+
+      {/* Appearance */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Appearance</h2>
+        <p className="text-sm text-cb-muted">Shopping list font size can be adjusted using A+/A- buttons on any shopping list.</p>
+      </section>
+
+      {/* Actions */}
+      <div className="flex items-center gap-3">
+        <button onClick={saveProfile} disabled={saving} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
+      </div>
+
+      {/* Danger zone */}
+      <section className="mt-12 pt-6 border-t border-red-200">
+        <h2 className="text-sm font-bold text-cb-primary mb-2">Danger Zone</h2>
+        <button disabled className="border border-red-200 text-cb-primary px-4 py-2 rounded-input text-sm font-medium opacity-50 cursor-not-allowed">Delete Account (coming soon)</button>
+      </section>
+    </div>
+  );
+}

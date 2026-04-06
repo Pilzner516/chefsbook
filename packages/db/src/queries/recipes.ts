@@ -66,18 +66,23 @@ export async function listRecipes(params?: {
   course?: string;
   maxTime?: number;
   tags?: string[];
+  sourceType?: string;
+  includePublic?: boolean;
   favouritesOnly?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<Recipe[]> {
   // Use server-side search_recipes function for trgm-powered search
-  if (params?.userId && params?.search) {
+  if (params?.userId && (params?.search || params?.sourceType || params?.tags?.length || params?.includePublic || params?.cuisine || params?.course || params?.maxTime)) {
     const { data } = await supabase.rpc('search_recipes', {
       p_user_id: params.userId,
-      p_query: params.search,
+      p_query: params.search ?? null,
       p_cuisine: params.cuisine ?? null,
       p_course: params.course ?? null,
       p_max_time: params.maxTime ?? null,
+      p_source_type: params.sourceType ?? null,
+      p_tags: params.tags ?? null,
+      p_include_public: params.includePublic ?? false,
       p_limit: params.limit ?? 50,
       p_offset: params.offset ?? 0,
     });
@@ -128,7 +133,10 @@ export async function listPublicRecipes(params?: {
 
 export async function createRecipe(
   userId: string,
-  recipe: ScannedRecipe & { image_url?: string; source_url?: string; cookbook_id?: string; page_number?: number },
+  recipe: ScannedRecipe & {
+    image_url?: string; source_url?: string; cookbook_id?: string; page_number?: number;
+    youtube_video_id?: string; channel_name?: string; video_only?: boolean;
+  },
 ): Promise<RecipeWithDetails> {
   const { data: newRecipe, error } = await supabase
     .from('recipes')
@@ -147,6 +155,9 @@ export async function createRecipe(
       cookbook_id: recipe.cookbook_id,
       page_number: recipe.page_number,
       notes: recipe.notes,
+      youtube_video_id: recipe.youtube_video_id ?? null,
+      channel_name: recipe.channel_name ?? null,
+      video_only: recipe.video_only ?? false,
     })
     .select()
     .single();
@@ -172,6 +183,7 @@ export async function createRecipe(
     instruction: step.instruction,
     timer_minutes: step.timer_minutes,
     group_label: step.group_label,
+    timestamp_seconds: (step as any).timestamp_seconds ?? null,
   }));
 
   const [{ data: savedIngredients }, { data: savedSteps }] = await Promise.all([
@@ -203,6 +215,47 @@ export async function updateRecipe(
 
   if (error || !data) throw error ?? new Error('Failed to update recipe');
   return data as Recipe;
+}
+
+export async function replaceIngredients(
+  recipeId: string,
+  userId: string,
+  ingredients: { quantity: number | null; unit: string | null; ingredient: string; preparation: string | null; optional: boolean; group_label: string | null }[],
+): Promise<RecipeIngredient[]> {
+  await supabase.from('recipe_ingredients').delete().eq('recipe_id', recipeId);
+  if (ingredients.length === 0) return [];
+  const rows = ingredients.map((ing, i) => ({
+    recipe_id: recipeId,
+    user_id: userId,
+    sort_order: i,
+    quantity: ing.quantity,
+    unit: ing.unit,
+    ingredient: ing.ingredient,
+    preparation: ing.preparation,
+    optional: ing.optional,
+    group_label: ing.group_label,
+  }));
+  const { data } = await supabase.from('recipe_ingredients').insert(rows).select();
+  return (data ?? []) as RecipeIngredient[];
+}
+
+export async function replaceSteps(
+  recipeId: string,
+  userId: string,
+  steps: { step_number: number; instruction: string; timer_minutes: number | null; group_label: string | null }[],
+): Promise<RecipeStep[]> {
+  await supabase.from('recipe_steps').delete().eq('recipe_id', recipeId);
+  if (steps.length === 0) return [];
+  const rows = steps.map((step) => ({
+    recipe_id: recipeId,
+    user_id: userId,
+    step_number: step.step_number,
+    instruction: step.instruction,
+    timer_minutes: step.timer_minutes,
+    group_label: step.group_label,
+  }));
+  const { data } = await supabase.from('recipe_steps').insert(rows).select();
+  return (data ?? []) as RecipeStep[];
 }
 
 export async function deleteRecipe(id: string): Promise<void> {

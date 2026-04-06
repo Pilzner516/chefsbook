@@ -69,7 +69,14 @@
       "Bash(python3 -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(''''title:'''',d.get\\(''''recipe'''',{}\\).get\\(''''title''''\\)\\);print\\(''''image:'''',d.get\\(''''imageUrl''''\\)\\)\")",
       "Bash(npx --yes sharp-cli -i apps/extension/icons/icon.svg -o apps/extension/icons/icon-16.png resize 16 16)",
       "Bash(npx sharp-cli:*)",
-      "Bash(ssh rasp@rpi5-eth \"sudo docker exec supabase-db psql -U supabase_admin -d postgres -c \"\":*)"
+      "Bash(ssh rasp@rpi5-eth \"sudo docker exec supabase-db psql -U supabase_admin -d postgres -c \"\":*)",
+      "Bash(head:*)",
+      "Bash(npm run:*)",
+      "Bash(grep -r \"drag\\\\|drop\\\\|DnD\\\\|dnd\\\\|useDrag\\\\|onDragOver\\\\|onDrop\" /c/Users/seblu/aiproj/chefsbook/apps/web --include=*.tsx --include=*.ts)",
+      "Bash(grep:*)",
+      "Bash(find /c/Users/seblu/aiproj/chefsbook/apps/web/app/api -type f -name *.ts -o -name *.tsx)",
+      "Bash(ssh -o ConnectTimeout=5 rasp@rpi5-eth \"docker exec supabase-db psql -U postgres -d postgres -c \"\"DROP POLICY IF EXISTS \\\\\"\"own or shared\\\\\"\" ON shopping_list_shares; CREATE POLICY \\\\\"\"shares_own\\\\\"\" ON shopping_list_shares FOR ALL USING \\(auth.uid\\(\\) = shared_with_user_id OR auth.uid\\(\\) = \\(SELECT user_id FROM shopping_lists WHERE id = list_id\\)\\);\"\"\")",
+      "Bash(ssh -o ConnectTimeout=5 rasp@rpi5-eth \"docker exec supabase-db psql -U postgres -d postgres -c \"\":*)"
     ]
   }
 }

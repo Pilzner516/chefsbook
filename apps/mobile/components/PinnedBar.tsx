@@ -6,7 +6,8 @@ import { usePinStore } from '../lib/zustand/pinStore';
 
 export function PinnedBar() {
   const { colors } = useTheme();
-  const { pinned, unpin } = usePinStore();
+  const pinned = usePinStore((s) => s.pinned);
+  const unpin = usePinStore((s) => s.unpin);
   const router = useRouter();
 
   if (pinned.length === 0) return null;

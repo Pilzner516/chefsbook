@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { ensureTitle } from '../../import/_utils';
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -51,10 +52,8 @@ export async function POST(req: Request) {
     let rawHtml: string;
 
     if (clientHtml && typeof clientHtml === 'string' && clientHtml.length > 100) {
-      // Extension sent page HTML directly (bypasses Cloudflare etc.)
       rawHtml = clientHtml;
     } else {
-      // Fallback: fetch server-side
       const response = await fetch(url, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' },
         signal: AbortSignal.timeout(15000),
@@ -66,21 +65,78 @@ export async function POST(req: Request) {
     }
 
     const imageUrl = extractImageUrl(rawHtml, url);
-    const text = stripHtml(rawHtml).slice(0, 10000);
+    const text = stripHtml(rawHtml).slice(0, 25000);
 
     if (text.length < 100) {
       return Response.json({ error: 'Page has no meaningful content' }, { status: 422, headers });
     }
 
-    // AI extraction
-    const recipe = await importFromUrl(text, url);
+    // Classify content: recipe or technique
+    const classification = await classifyContent(text.slice(0, 1000), url);
 
-    // Save to DB
+    if (classification.content_type === 'technique') {
+      const technique = await importTechnique(text, url);
+      if (!technique) {
+        return Response.json({ error: 'Could not extract technique' }, { status: 422, headers });
+      }
+
+      const { data: newTechnique, error: techErr } = await db
+        .from('techniques')
+        .insert({
+          user_id: user.id,
+          title: technique.title,
+          description: technique.description,
+          process_steps: technique.process_steps ?? [],
+          tips: technique.tips ?? [],
+          common_mistakes: technique.common_mistakes ?? [],
+          tools_and_equipment: technique.tools_and_equipment ?? [],
+          difficulty: technique.difficulty,
+          source_url: url,
+          source_type: 'extension',
+          image_url: imageUrl,
+        })
+        .select()
+        .single();
+
+      if (techErr || !newTechnique) {
+        return Response.json({ error: techErr?.message ?? 'Insert failed' }, { status: 500, headers });
+      }
+
+      return Response.json({
+        success: true,
+        contentType: 'technique',
+        technique: { id: newTechnique.id, title: newTechnique.title },
+      }, { headers });
+    }
+
+    // Recipe extraction: JSON-LD first, Claude as fallback
+    const jsonLd = extractJsonLdRecipe(rawHtml);
+    const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
+
+    let recipe: any;
+    if (complete && jsonLd) {
+      recipe = { ...jsonLd, source_type: 'url' };
+    } else if (jsonLd && available.length > 0) {
+      const jsonLdSummary = JSON.stringify(jsonLd, null, 2).slice(0, 3000);
+      recipe = await importFromUrl(text, url, { available, missing, jsonLdData: jsonLdSummary });
+      if (jsonLd.ingredients?.length && available.includes('ingredients')) recipe.ingredients = jsonLd.ingredients;
+      if (jsonLd.steps?.length && available.includes('steps')) recipe.steps = jsonLd.steps;
+      if (jsonLd.title && !recipe.title) recipe.title = jsonLd.title;
+    } else {
+      recipe = await importFromUrl(text, url);
+    }
+
+    const { title, generated } = ensureTitle(recipe, url);
+    const isIncomplete = !recipe.ingredients?.length || !recipe.steps?.length;
+    const tags: string[] = [];
+    if (generated) tags.push('_unresolved');
+    if (isIncomplete) tags.push('_incomplete');
+
     const { data: newRecipe, error: insertErr } = await db
       .from('recipes')
       .insert({
         user_id: user.id,
-        title: recipe.title,
+        title,
         description: recipe.description,
         servings: recipe.servings ?? 4,
         prep_minutes: recipe.prep_minutes,
@@ -91,6 +147,7 @@ export async function POST(req: Request) {
         source_url: url,
         image_url: imageUrl,
         notes: recipe.notes,
+        tags,
       })
       .select()
       .single();
@@ -99,7 +156,6 @@ export async function POST(req: Request) {
       return Response.json({ error: insertErr?.message ?? 'Insert failed' }, { status: 500, headers });
     }
 
-    // Insert ingredients + steps
     if (recipe.ingredients?.length) {
       await db.from('recipe_ingredients').insert(
         recipe.ingredients.map((ing: any, i: number) => ({
@@ -130,6 +186,7 @@ export async function POST(req: Request) {
 
     return Response.json({
       success: true,
+      contentType: 'recipe',
       recipe: { id: newRecipe.id, title: newRecipe.title },
     }, { headers });
   } catch (e: any) {

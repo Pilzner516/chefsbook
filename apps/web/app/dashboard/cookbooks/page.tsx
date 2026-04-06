@@ -14,6 +14,7 @@ export default function CookbooksPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  const [isbnLooking, setIsbnLooking] = useState(false);
   const [form, setForm] = useState({
     title: '',
     author: '',
@@ -22,6 +23,9 @@ export default function CookbooksPage() {
     isbn: '',
     location: '',
     notes: '',
+    cover_url: '',
+    description: '',
+    google_books_id: '',
   });
 
   useEffect(() => {
@@ -58,12 +62,17 @@ export default function CookbooksPage() {
         isbn: form.isbn.trim() || null,
         location: form.location.trim() || null,
         notes: form.notes.trim() || null,
-        cover_url: null,
+        cover_url: form.cover_url || null,
+        google_books_id: form.google_books_id || null,
+        description: form.description || null,
         rating: null,
+        total_recipes: null,
+        toc_fetched: false,
+        toc_fetched_at: null,
         visibility: 'private',
       });
       setShowModal(false);
-      setForm({ title: '', author: '', publisher: '', year: '', isbn: '', location: '', notes: '' });
+      setForm({ title: '', author: '', publisher: '', year: '', isbn: '', location: '', notes: '', cover_url: '', description: '', google_books_id: '' });
       await loadCookbooks();
     } catch (e: any) {
       setFormError(e.message);
@@ -80,6 +89,35 @@ export default function CookbooksPage() {
     const timeout = setTimeout(() => searchByIngredient(search), 400);
     return () => clearTimeout(timeout);
   }, [search]);
+
+  const lookupIsbn = async () => {
+    if (!form.isbn.trim()) return;
+    setIsbnLooking(true);
+    setFormError('');
+    try {
+      const res = await fetch('/api/cookbooks/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isbn: form.isbn.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setFormError(data.error || 'Book not found'); return; }
+      setForm((prev) => ({
+        ...prev,
+        title: data.title || prev.title,
+        author: data.author || prev.author,
+        publisher: data.publisher || prev.publisher,
+        year: data.year ? String(data.year) : prev.year,
+        cover_url: data.coverUrl || prev.cover_url,
+        description: data.description || prev.description,
+        google_books_id: data.googleBooksId || prev.google_books_id,
+      }));
+    } catch (e: any) {
+      setFormError(e.message);
+    } finally {
+      setIsbnLooking(false);
+    }
+  };
 
   const searchByIngredient = async (query: string) => {
     setSearching(true);
@@ -213,9 +251,10 @@ export default function CookbooksPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cookbooks.map((book) => (
-            <div
+            <Link
               key={book.id}
-              className="bg-cb-card border border-cb-border rounded-card p-5 hover:border-cb-primary/50 transition-colors"
+              href={`/dashboard/cookbooks/${book.id}`}
+              className="bg-cb-card border border-cb-border rounded-card p-5 hover:border-cb-primary/50 transition-colors block"
             >
               <div className="flex gap-4">
                 {book.cover_url ? (
@@ -264,7 +303,7 @@ export default function CookbooksPage() {
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
@@ -337,13 +376,22 @@ export default function CookbooksPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">ISBN</label>
-                  <input
-                    type="text"
-                    value={form.isbn}
-                    onChange={(e) => setForm({ ...form, isbn: e.target.value })}
-                    placeholder="978-..."
-                    className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
-                  />
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={form.isbn}
+                      onChange={(e) => setForm({ ...form, isbn: e.target.value })}
+                      placeholder="978-..."
+                      className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm placeholder:text-cb-muted/60 outline-none focus:border-cb-primary transition-colors"
+                    />
+                    <button
+                      onClick={lookupIsbn}
+                      disabled={!form.isbn.trim() || isbnLooking}
+                      className="bg-cb-primary text-white px-3 py-2 rounded-input text-xs font-semibold hover:opacity-90 disabled:opacity-50 shrink-0"
+                    >
+                      {isbnLooking ? '...' : 'Lookup'}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Location</label>

@@ -46,8 +46,18 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
 
   fetchRecipe: async (id) => {
     set({ loading: true });
-    const recipe = await getRecipe(id);
-    set({ currentRecipe: recipe, loading: false });
+    try {
+      const recipe = await getRecipe(id);
+      console.log('[recipeStore] fetchRecipe result:', recipe?.id, {
+        title: recipe?.title,
+        ingredientCount: recipe?.ingredients?.length ?? 0,
+        stepCount: recipe?.steps?.length ?? 0,
+      });
+      set({ currentRecipe: recipe, loading: false });
+    } catch (err) {
+      console.error('[recipeStore] fetchRecipe error:', err);
+      set({ currentRecipe: null, loading: false });
+    }
   },
 
   addRecipe: async (userId, recipe) => {

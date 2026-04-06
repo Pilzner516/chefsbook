@@ -32,7 +32,7 @@ Zustand v5 for state management. NativeWind v4 for styling.
 ## File structure
 - `app/` — Expo Router screens (file-based routing)
 - `components/UIKit.tsx` — Reusable design system components
-- `context/ThemeContext.tsx` — Theme provider with dark/light modes
+- `context/ThemeContext.tsx` — Theme provider (single "Trattoria" light palette)
 - `constants/themes.ts` — Color palettes
 - `lib/` — Utilities (image processing, sharing)
 - `lib/zustand/` — State stores (auth, recipe, cookbook, mealPlan, shopping)

@@ -13,7 +13,13 @@ export default function RecipesTab() {
   const { colors } = useTheme();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
-  const { recipes, loading, searchQuery, filterCourse, setSearch, setFilterCourse, fetchRecipes } = useRecipeStore();
+  const recipes = useRecipeStore((s) => s.recipes);
+  const loading = useRecipeStore((s) => s.loading);
+  const searchQuery = useRecipeStore((s) => s.searchQuery);
+  const filterCourse = useRecipeStore((s) => s.filterCourse);
+  const setSearch = useRecipeStore((s) => s.setSearch);
+  const setFilterCourse = useRecipeStore((s) => s.setFilterCourse);
+  const fetchRecipes = useRecipeStore((s) => s.fetchRecipes);
 
   useEffect(() => {
     if (session?.user?.id) fetchRecipes(session.user.id);
@@ -48,7 +54,6 @@ export default function RecipesTab() {
       </ScrollView>
       <FlashList
         data={recipes}
-        estimatedItemSize={200}
         contentContainerStyle={{ padding: 16 }}
         renderItem={({ item }) => (
           <RecipeCard

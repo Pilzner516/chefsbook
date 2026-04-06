@@ -15,4 +15,14 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
+// Block the root-hoisted react-native to prevent duplicate copies in the bundle.
+// Mobile has its own react-native in apps/mobile/node_modules/ which must be the only copy.
+const rootRN = path.resolve(monorepoRoot, 'node_modules', 'react-native');
+const rootReact = path.resolve(monorepoRoot, 'node_modules', 'react');
+const escape = (p) => p.replace(/[\\\/]/g, '[/\\\\]').replace(/\./g, '\\.');
+config.resolver.blockList = [
+  new RegExp(`^${escape(rootRN)}[/\\\\].*$`),
+  new RegExp(`^${escape(rootReact)}[/\\\\].*$`),
+];
+
 module.exports = config;

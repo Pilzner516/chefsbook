@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { fetchWithFallback } from '../_utils';
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -18,7 +19,6 @@ function extractImageUrl(html: string, pageUrl: string): string | null {
   return null;
 }
 
-// Background processor
 async function processReimports(recipeIds: string[]) {
   const db = getServiceClient();
 
@@ -32,35 +32,50 @@ async function processReimports(recipeIds: string[]) {
     if (!recipe?.source_url) continue;
 
     try {
-      const response = await fetch(recipe.source_url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!response.ok) {
-        console.error(`[reimport] ${recipe.source_url} returned ${response.status}`);
-        continue;
-      }
-
-      const rawHtml = await response.text();
+      // Use fallback chain (fetch → Puppeteer → ScrapingBee)
+      const { html: rawHtml } = await fetchWithFallback(recipe.source_url);
       const imageUrl = extractImageUrl(rawHtml, recipe.source_url);
-      const text = stripHtml(rawHtml).slice(0, 10000);
+      const text = stripHtml(rawHtml).slice(0, 25000);
       if (text.length < 100) continue;
 
-      const extracted = await importFromUrl(text, recipe.source_url);
+      // JSON-LD first, Claude as fallback
+      const jsonLd = extractJsonLdRecipe(rawHtml);
+      const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
 
-      // Only update AI-derived fields — preserve user edits
-      await db
-        .from('recipes')
-        .update({
-          description: extracted.description,
-          servings: extracted.servings ?? recipe.servings,
-          prep_minutes: extracted.prep_minutes,
-          cook_minutes: extracted.cook_minutes,
-          cuisine: recipe.cuisine || extracted.cuisine,
-          course: recipe.course || extracted.course,
-          image_url: recipe.image_url || imageUrl || null,
-        })
-        .eq('id', recipeId);
+      let extracted: any;
+      if (complete && jsonLd) {
+        extracted = { ...jsonLd, source_type: 'url' };
+      } else if (jsonLd && available.length > 0) {
+        const jsonLdSummary = JSON.stringify(jsonLd, null, 2).slice(0, 3000);
+        extracted = await importFromUrl(text, recipe.source_url, { available, missing, jsonLdData: jsonLdSummary });
+        if (jsonLd.ingredients?.length && available.includes('ingredients')) extracted.ingredients = jsonLd.ingredients;
+        if (jsonLd.steps?.length && available.includes('steps')) extracted.steps = jsonLd.steps;
+        if (jsonLd.title && !extracted.title) extracted.title = jsonLd.title;
+        if (jsonLd.servings && !extracted.servings) extracted.servings = jsonLd.servings;
+        if (jsonLd.prep_minutes && !extracted.prep_minutes) extracted.prep_minutes = jsonLd.prep_minutes;
+        if (jsonLd.cook_minutes && !extracted.cook_minutes) extracted.cook_minutes = jsonLd.cook_minutes;
+      } else {
+        extracted = await importFromUrl(text, recipe.source_url);
+      }
+
+      // Only update AI-derived fields — preserve user edits (tags, notes, cuisine, course)
+      const updates: Record<string, any> = {
+        title: extracted.title || recipe.title,
+        description: extracted.description ?? recipe.description,
+        servings: extracted.servings ?? recipe.servings,
+        prep_minutes: extracted.prep_minutes ?? recipe.prep_minutes,
+        cook_minutes: extracted.cook_minutes ?? recipe.cook_minutes,
+        cuisine: recipe.cuisine || extracted.cuisine,
+        course: recipe.course || extracted.course,
+        image_url: recipe.image_url || imageUrl || null,
+      };
+
+      // Remove _incomplete tag if we now have complete data
+      if (extracted.ingredients?.length && extracted.steps?.length && recipe.tags?.includes('_incomplete')) {
+        updates.tags = recipe.tags.filter((t: string) => t !== '_incomplete');
+      }
+
+      await db.from('recipes').update(updates).eq('id', recipeId);
 
       // Replace ingredients and steps with fresh data
       if (extracted.ingredients?.length) {
@@ -74,7 +89,7 @@ async function processReimports(recipeIds: string[]) {
             unit: ing.unit,
             ingredient: ing.ingredient,
             preparation: ing.preparation,
-            optional: ing.optional,
+            optional: ing.optional ?? false,
             group_label: ing.group_label,
           })),
         );
@@ -92,11 +107,10 @@ async function processReimports(recipeIds: string[]) {
           })),
         );
       }
-    } catch {
-      // skip failed recipes
+    } catch (e: any) {
+      console.error(`[reimport] ${recipe.source_url} failed:`, e.message);
     }
 
-    // Rate-limit
     await new Promise((r) => setTimeout(r, 1500));
   }
 }
@@ -118,7 +132,6 @@ export async function POST(req: Request) {
     return Response.json({ error: 'recipeIds array is required' }, { status: 400 });
   }
 
-  // Verify all recipes belong to user and have source_url
   const { data: recipes } = await db
     .from('recipes')
     .select('id, source_url')
@@ -131,7 +144,6 @@ export async function POST(req: Request) {
     return Response.json({ error: 'No valid recipes to re-import' }, { status: 400 });
   }
 
-  // Fire and forget
   processReimports(validIds).catch((e) => {
     console.error('[reimport] failed:', e);
   });

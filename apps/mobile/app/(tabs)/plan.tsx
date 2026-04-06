@@ -27,7 +27,11 @@ export default function PlanTab() {
   const { colors } = useTheme();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
-  const { plans, loading, weekStart, setWeekStart, fetchWeek } = useMealPlanStore();
+  const plans = useMealPlanStore((s) => s.plans);
+  const loading = useMealPlanStore((s) => s.loading);
+  const weekStart = useMealPlanStore((s) => s.weekStart);
+  const setWeekStart = useMealPlanStore((s) => s.setWeekStart);
+  const fetchWeek = useMealPlanStore((s) => s.fetchWeek);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 

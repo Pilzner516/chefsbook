@@ -52,7 +52,8 @@
           "photosPermission": "Chefsbook accesses photos to import recipe images."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-voice/voice"
     ],
     "experiments": {
       "typedRoutes": true

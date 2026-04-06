@@ -7,3 +7,85 @@
 body {
   font-family: 'Inter', system-ui, sans-serif;
 }
+
+/* ── Shopping list item grid ── */
+.shop-item-grid {
+  grid-template-columns: 32px 90px 60px 1fr 20px;
+}
+.shop-item-grid .shop-source {
+  display: none;
+}
+@media (min-width: 768px) {
+  .shop-item-grid {
+    grid-template-columns: 32px 100px 70px minmax(200px, 1fr) 180px 20px;
+  }
+  .shop-item-grid .shop-source {
+    display: block;
+  }
+}
+
+/* ── Print styles ── */
+@media print {
+  /* Hide navigation, controls, interactive elements */
+  aside,
+  nav,
+  .print\:hidden,
+  button:not([data-print]),
+  [data-no-print],
+  footer {
+    display: none !important;
+  }
+
+  /* Reset layout */
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  main {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Remove backgrounds and shadows */
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Keep recipe image (controlled by class) */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Avoid page breaks in the middle of content */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+  table, ol, ul, section {
+    page-break-inside: avoid;
+  }
+
+  /* Shopping list: two-column layout for long lists */
+  .print-two-col {
+    column-count: 2;
+    column-gap: 2em;
+  }
+
+  /* Print watermark */
+  .print-watermark {
+    display: block !important;
+    text-align: center;
+    font-size: 9pt;
+    color: #999;
+    margin-top: 2em;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5em;
+  }
+}
