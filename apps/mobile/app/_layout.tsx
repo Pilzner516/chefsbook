@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Linking from 'expo-linking';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { PinnedBar } from '../components/PinnedBar';
@@ -44,9 +45,29 @@ function useProtectedRoute() {
 
 function RootNav() {
   const { colors } = useTheme();
+  const router = useRouter();
   const loading = useAuthStore((s) => s.loading);
 
   useProtectedRoute();
+
+  // Handle URLs shared from browser share sheet
+  useEffect(() => {
+    const handleUrl = ({ url }: { url: string }) => {
+      if (url && /^https?:\/\//i.test(url)) {
+        router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
+      }
+    };
+
+    // Check for URL that launched the app
+    Linking.getInitialURL().then((url) => {
+      if (url && /^https?:\/\//i.test(url)) {
+        router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
+      }
+    });
+
+    const subscription = Linking.addEventListener('url', handleUrl);
+    return () => subscription.remove();
+  }, []);
 
   return (
     <View style={{ flex: 1 }}>

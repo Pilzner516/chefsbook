@@ -218,4 +218,18 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch
 - Mobile tag management calls `callClaude` + `extractJSON` from `@chefsbook/ai` directly (no CORS in React Native) for auto-tag suggestions
 - Shopping list font size preference persisted via `expo-secure-store` (key: `shopping_font_size`, values: `small`/`medium`/`large`)
-- Mobile theme only has `textPrimary` and `textSecondary` — no `textMuted` color exists
+- Mobile theme has `textPrimary`, `textSecondary`, and `textMuted` (via TRATTORIA_COLORS spread from `@chefsbook/ui`)
+
+## Navigator Agent
+Before doing any UI work, navigation, or screen testing:
+READ .claude/agents/navigator.md
+
+This file contains:
+- Every screen route and file path
+- ADB commands to navigate to any screen
+- Screen coordinate maps for tapping
+- What each screen looks like
+- How to verify you reached the right screen
+
+Update navigator.md whenever you add or modify any screen.
+Add a changelog entry with the date and what changed.

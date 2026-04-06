@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-06
+- Fixed Android build: added android.enableJetifier=true to resolve androidx/support-compat duplicate class conflict
+- Redesigned mobile Scan/Import tab: hero Speak button with pulse animation, 2x2 icon grid, collapsible URL input, clipboard paste helper, Chrome share banner
+- Registered ChefsBook as Android share target (intent filters for VIEW http/https + SEND text/plain in app.json)
+- Added expo-linking handler in _layout.tsx for incoming shared URLs with auto-import
+- Installed expo-clipboard for paste-from-clipboard workflow
+- Created .claude/agents/navigator.md — full screen map (17 mobile + 18 web screens, ADB coordinates, components, stores)
+- Created .claude/agents/wrapup.md — end-of-session navigator update check
+- Added Navigator Agent section to root CLAUDE.md and apps/mobile/agents/CLAUDE.md
+
 ## 2026-04-05 (session 5)
 - Fixed recipe detail notes rendering: paragraph splitting on newlines and labeled sections (e.g. "Rub:", "Sauce:"), proper line spacing and margins
 - Shopping list item layout overhaul: purchase unit as prominent left element in accent red (`colors.accent`), usage amount in green (`colors.accentGreen`) below item name, removed green "Buy:" label
