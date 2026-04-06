@@ -3,51 +3,75 @@ import type { UnitSystem } from './languages';
 interface ConversionResult {
   quantity: number;
   unit: string;
+  warning?: string;
 }
 
-// Volume conversions (imperial → metric)
-const VOLUME_TO_METRIC: Record<string, { factor: number; unit: string }> = {
-  'fl oz': { factor: 29.5735, unit: 'ml' },
-  'cup':   { factor: 236.588, unit: 'ml' },
-  'cups':  { factor: 236.588, unit: 'ml' },
-  'tbsp':  { factor: 14.7868, unit: 'ml' },
-  'tsp':   { factor: 4.92892, unit: 'ml' },
-  'tablespoon':  { factor: 14.7868, unit: 'ml' },
-  'tablespoons': { factor: 14.7868, unit: 'ml' },
-  'teaspoon':    { factor: 4.92892, unit: 'ml' },
-  'teaspoons':   { factor: 4.92892, unit: 'ml' },
-};
+// ── Dry ingredient detection ──
 
-// Volume conversions (metric → imperial)
-const VOLUME_TO_IMPERIAL: Record<string, { factor: number; unit: string }> = {
-  'ml':    { factor: 1 / 236.588, unit: 'cup' },
-  'milliliter':  { factor: 1 / 236.588, unit: 'cup' },
-  'milliliters': { factor: 1 / 236.588, unit: 'cup' },
-  'l':     { factor: 1000 / 236.588, unit: 'cup' },
-  'liter':  { factor: 1000 / 236.588, unit: 'cup' },
-  'liters': { factor: 1000 / 236.588, unit: 'cup' },
-};
+const LIQUID_KEYWORDS = [
+  'milk', 'water', 'oil', 'juice', 'stock', 'broth', 'cream',
+  'wine', 'vinegar', 'sauce', 'syrup', 'extract', 'liqueur',
+  'beer', 'rum', 'brandy', 'whiskey', 'vodka', 'buttermilk',
+  'coconut milk', 'almond milk', 'soy milk', 'oat milk',
+  'lemon juice', 'lime juice', 'orange juice',
+];
 
-// Weight conversions (imperial → metric)
-const WEIGHT_TO_METRIC: Record<string, { factor: number; unit: string }> = {
-  'oz':     { factor: 28.3495, unit: 'g' },
-  'ounce':  { factor: 28.3495, unit: 'g' },
-  'ounces': { factor: 28.3495, unit: 'g' },
-  'lb':     { factor: 453.592, unit: 'g' },
-  'lbs':    { factor: 453.592, unit: 'g' },
-  'pound':  { factor: 453.592, unit: 'g' },
-  'pounds': { factor: 453.592, unit: 'g' },
-};
+const DRY_KEYWORDS = [
+  'flour', 'sugar', 'salt', 'pepper', 'spice', 'butter',
+  'powder', 'starch', 'cocoa', 'yeast', 'baking', 'breadcrumb',
+  'oat', 'rice', 'pasta', 'seed', 'nut', 'cheese', 'zest',
+  'cinnamon', 'nutmeg', 'paprika', 'cumin', 'oregano', 'thyme',
+  'basil', 'parsley', 'garlic', 'onion', 'ginger',
+  'chocolate', 'pearl sugar', 'brown sugar', 'icing sugar',
+  'cornstarch', 'cornmeal', 'semolina', 'polenta',
+];
 
-// Weight conversions (metric → imperial)
-const WEIGHT_TO_IMPERIAL: Record<string, { factor: number; unit: string }> = {
-  'g':     { factor: 1 / 28.3495, unit: 'oz' },
-  'gram':  { factor: 1 / 28.3495, unit: 'oz' },
-  'grams': { factor: 1 / 28.3495, unit: 'oz' },
-  'kg':     { factor: 1000 / 453.592, unit: 'lb' },
-  'kilogram':  { factor: 1000 / 453.592, unit: 'lb' },
-  'kilograms': { factor: 1000 / 453.592, unit: 'lb' },
-};
+const LIQUID_UNITS = new Set(['ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters', 'cl', 'fl oz', 'fluid ounce', 'fluid ounces']);
+const WEIGHT_UNITS = new Set(['g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms', 'oz', 'ounce', 'ounces', 'lb', 'lbs', 'pound', 'pounds']);
+const DRY_VOLUME_UNITS = new Set(['cup', 'cups', 'tbsp', 'tsp', 'tablespoon', 'tablespoons', 'teaspoon', 'teaspoons']);
+
+function isLiquidIngredient(ingredientName: string): boolean {
+  const lower = ingredientName.toLowerCase();
+  return LIQUID_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+function isDryIngredient(ingredientName: string): boolean {
+  const lower = ingredientName.toLowerCase();
+  return DRY_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+// ── Ladders ──
+
+function applyMetricLiquidLadder(ml: number): { quantity: number; unit: string } {
+  if (ml >= 1000) return { quantity: smartRound(ml / 1000), unit: 'L' };
+  if (ml >= 1) return { quantity: Math.round(ml), unit: 'ml' };
+  return { quantity: smartRound(ml), unit: 'ml' };
+}
+
+function applyImperialLiquidLadder(ml: number): { quantity: number; unit: string } {
+  const cups = ml / 236.588;
+  if (cups >= 4) {
+    const qt = cups / 4;
+    return { quantity: smartRound(qt), unit: 'qt' };
+  }
+  if (cups >= 0.25) return { quantity: smartRound(cups), unit: 'cup' };
+
+  const tbsp = ml / 14.7868;
+  if (tbsp >= 1) return { quantity: smartRound(tbsp), unit: 'Tbsp' };
+
+  const tsp = ml / 4.92892;
+  return { quantity: smartRound(tsp), unit: 'tsp' };
+}
+
+function applyMetricWeightLadder(g: number): { quantity: number; unit: string } {
+  if (g >= 1000) return { quantity: smartRound(g / 1000), unit: 'kg' };
+  return { quantity: Math.round(g), unit: 'g' };
+}
+
+function applyImperialWeightLadder(oz: number): { quantity: number; unit: string } {
+  if (oz >= 16) return { quantity: smartRound(oz / 16), unit: 'lb' };
+  return { quantity: smartRound(oz), unit: 'oz' };
+}
 
 function smartRound(n: number): number {
   if (n >= 100) return Math.round(n);
@@ -56,80 +80,85 @@ function smartRound(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function isImperialUnit(unit: string): boolean {
-  const lower = unit.toLowerCase();
-  return lower in VOLUME_TO_METRIC || lower in WEIGHT_TO_METRIC;
-}
+// ── Unit → ml/g base conversions ──
 
-function isMetricUnit(unit: string): boolean {
-  const lower = unit.toLowerCase();
-  return lower in VOLUME_TO_IMPERIAL || lower in WEIGHT_TO_IMPERIAL;
-}
+const TO_ML: Record<string, number> = {
+  'ml': 1, 'milliliter': 1, 'milliliters': 1,
+  'cl': 10,
+  'l': 1000, 'liter': 1000, 'liters': 1000,
+  'fl oz': 29.5735, 'fluid ounce': 29.5735, 'fluid ounces': 29.5735,
+  'cup': 236.588, 'cups': 236.588,
+  'tbsp': 14.7868, 'tablespoon': 14.7868, 'tablespoons': 14.7868,
+  'tsp': 4.92892, 'teaspoon': 4.92892, 'teaspoons': 4.92892,
+};
+
+const TO_GRAMS: Record<string, number> = {
+  'g': 1, 'gram': 1, 'grams': 1,
+  'kg': 1000, 'kilogram': 1000, 'kilograms': 1000,
+  'oz': 28.3495, 'ounce': 28.3495, 'ounces': 28.3495,
+  'lb': 453.592, 'lbs': 453.592, 'pound': 453.592, 'pounds': 453.592,
+};
 
 /**
  * Convert an ingredient's quantity and unit to the target measurement system.
- * Returns unchanged if the unit is not convertible (e.g. "clove", "bunch").
+ * Ingredient name is used to classify liquid vs dry to avoid nonsensical conversions.
  */
 export function convertIngredient(
   quantity: number | null,
   unit: string | null,
   targetSystem: UnitSystem,
+  ingredientName?: string,
 ): ConversionResult {
   if (quantity === null || !unit) return { quantity: quantity ?? 0, unit: unit ?? '' };
 
   const lower = unit.toLowerCase();
+  const name = ingredientName ?? '';
+  const isLiquidUnit = LIQUID_UNITS.has(lower);
+  const isWeightUnit = WEIGHT_UNITS.has(lower);
+  const isDryVolumeUnit = DRY_VOLUME_UNITS.has(lower);
+  const ingredientIsLiquid = isLiquidIngredient(name);
+  const ingredientIsDry = isDryIngredient(name);
 
-  if (targetSystem === 'metric') {
-    // Convert imperial → metric
-    const vol = VOLUME_TO_METRIC[lower];
-    if (vol) {
-      let result = quantity * vol.factor;
-      let resultUnit = vol.unit;
-      // Upgrade ml to L if >= 1000
-      if (resultUnit === 'ml' && result >= 1000) {
-        result = result / 1000;
-        resultUnit = 'L';
-      }
-      return { quantity: smartRound(result), unit: resultUnit };
+  // ── Dry ingredient with liquid unit (ml) → ambiguous, return unchanged ──
+  if (isLiquidUnit && ingredientIsDry && !ingredientIsLiquid) {
+    if (name) console.warn('Dry ingredient with liquid unit:', name, quantity, unit);
+    return { quantity, unit, warning: 'dry ingredient with liquid unit' };
+  }
+
+  // ── Dry volume units (cups, Tbsp, tsp) → never convert to ml ──
+  // These are recipe volume measures — keep as-is regardless of system
+  if (isDryVolumeUnit && !ingredientIsLiquid) {
+    return { quantity, unit };
+  }
+
+  // ── Liquid volume conversions ──
+  if (lower in TO_ML && (isLiquidUnit || isDryVolumeUnit) && ingredientIsLiquid) {
+    const ml = quantity * TO_ML[lower]!;
+    if (targetSystem === 'metric') {
+      return applyMetricLiquidLadder(ml);
+    } else {
+      return applyImperialLiquidLadder(ml);
     }
-    const wt = WEIGHT_TO_METRIC[lower];
-    if (wt) {
-      let result = quantity * wt.factor;
-      let resultUnit = wt.unit;
-      // Upgrade g to kg if >= 1000
-      if (resultUnit === 'g' && result >= 1000) {
-        result = result / 1000;
-        resultUnit = 'kg';
-      }
-      return { quantity: smartRound(result), unit: resultUnit };
+  }
+
+  // ── Weight conversions ──
+  if (lower in TO_GRAMS && isWeightUnit) {
+    const g = quantity * TO_GRAMS[lower]!;
+    if (targetSystem === 'metric') {
+      return applyMetricWeightLadder(g);
+    } else {
+      const oz = g / 28.3495;
+      return applyImperialWeightLadder(oz);
     }
-  } else {
-    // Convert metric → imperial
-    const vol = VOLUME_TO_IMPERIAL[lower];
-    if (vol) {
-      let result = quantity * vol.factor;
-      let resultUnit = vol.unit;
-      // Use tbsp for small amounts < 0.25 cup
-      if (resultUnit === 'cup' && result < 0.25) {
-        result = quantity / 14.7868;
-        resultUnit = 'tbsp';
-        if (result < 1) {
-          result = quantity / 4.92892;
-          resultUnit = 'tsp';
-        }
-      }
-      return { quantity: smartRound(result), unit: resultUnit };
-    }
-    const wt = WEIGHT_TO_IMPERIAL[lower];
-    if (wt) {
-      let result = quantity * wt.factor;
-      let resultUnit = wt.unit;
-      // Upgrade oz to lb if >= 16
-      if (resultUnit === 'oz' && result >= 16) {
-        result = result / 16;
-        resultUnit = 'lb';
-      }
-      return { quantity: smartRound(result), unit: resultUnit };
+  }
+
+  // ── Liquid units converting between systems (confirmed liquid or unknown ingredient) ──
+  if (isLiquidUnit && !ingredientIsDry) {
+    const ml = quantity * (TO_ML[lower] ?? 1);
+    if (targetSystem === 'metric') {
+      return applyMetricLiquidLadder(ml);
+    } else {
+      return applyImperialLiquidLadder(ml);
     }
   }
 

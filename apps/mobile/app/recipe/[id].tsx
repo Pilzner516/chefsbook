@@ -212,8 +212,8 @@ function IngredientRow({
 
   // Convert units based on preference
   const converted = useMemo(() => {
-    return convertIngredient(scaled, ing.unit, units);
-  }, [scaled, ing.unit, units]);
+    return convertIngredient(scaled, ing.unit, units, ing.ingredient);
+  }, [scaled, ing.unit, units, ing.ingredient]);
 
   // Check if this ingredient matches another recipe title (sub-recipe linking)
   const linked = useMemo(() => {

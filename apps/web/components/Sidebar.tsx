@@ -78,7 +78,7 @@ export default function Sidebar({ user }: { user: User | null }) {
     });
   }, [user]);
 
-  const currentFlag = LANGUAGES.find((l) => l.code === language)?.flag ?? '🇺🇸';
+  const langCode = (language || 'en').toUpperCase().slice(0, 3);
   const priorityLangs = LANGUAGES.filter((l) => PRIORITY_LANGUAGES.includes(l.code));
   const otherLangs = LANGUAGES.filter((l) => !PRIORITY_LANGUAGES.includes(l.code));
   const filteredLangs = langSearch.trim()
@@ -104,8 +104,8 @@ export default function Sidebar({ user }: { user: User | null }) {
           <div className="flex items-center gap-1.5">
             {/* Language flag */}
             <div ref={langRef} className="relative">
-              <button onClick={() => setLangOpen(!langOpen)} className="text-lg p-1 hover:bg-cb-bg rounded transition-colors" title="Language">
-                {currentFlag}
+              <button onClick={() => setLangOpen(!langOpen)} className="text-xs font-semibold text-cb-muted p-1.5 hover:bg-cb-bg rounded transition-colors" title="Language">
+                {langCode}
               </button>
               {langOpen && (
                 <div className="absolute top-full left-0 mt-1 w-64 bg-cb-card border border-cb-border rounded-card shadow-lg z-50 max-h-80 flex flex-col">

@@ -304,7 +304,7 @@ export default function ShopTab() {
                 )}
               </View>
               {groupItems.map((item) => {
-                const converted = convertIngredient(item.quantity, item.unit, preferredUnits);
+                const converted = convertIngredient(item.quantity, item.unit, preferredUnits, item.ingredient);
                 const rawQty = [converted.quantity ? formatQty(converted.quantity) : item.quantity, converted.unit || item.unit].filter(Boolean).join(' ');
                 const displayQty = item.purchase_unit || rawQty;
                 const usageQty = item.purchase_unit ? rawQty : '';

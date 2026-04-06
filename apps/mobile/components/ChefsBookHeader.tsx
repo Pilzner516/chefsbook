@@ -17,7 +17,7 @@ export function ChefsBookHeader() {
   const setUnits = usePreferencesStore((s) => s.setUnits);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
 
-  const currentFlag = LANGUAGES.find((l) => l.code === language)?.flag ?? '🇺🇸';
+  const langCode = (language || 'en').toUpperCase().slice(0, 3);
 
   const toggleUnits = () => {
     const next = units === 'imperial' ? 'metric' : 'imperial';
@@ -49,7 +49,7 @@ export function ChefsBookHeader() {
           onPress={() => setLangPickerVisible(true)}
           style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ fontSize: 24 }}>{currentFlag}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}>{langCode}</Text>
         </TouchableOpacity>
 
         {/* Unit toggle pill */}
