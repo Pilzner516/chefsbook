@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarHeight } from '../lib/useTabBarHeight';
 import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
@@ -39,6 +41,9 @@ export default function SpeakScreen() {
   const speechLocale = SPEECH_LOCALE_MAP[language] ?? 'en-US';
   const langName = LANGUAGES.find((l) => l.code === language)?.name ?? 'English';
 
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
+
   const [step, setStep] = useState<Step>(1);
   const [transcript, setTranscript] = useState('');
   const [recording, setRecording] = useState(false);
@@ -47,10 +52,14 @@ export default function SpeakScreen() {
   const [recipe, setRecipe] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Track text accumulated before current recording session
+  const prevTranscriptRef = useRef('');
 
-  // Speech recognition events
+  // Speech recognition events — append new results to previous text
   useSpeechRecognitionEvent('result', (event) => {
-    setTranscript(event.results[0]?.transcript ?? '');
+    const newText = event.results[0]?.transcript ?? '';
+    const prev = prevTranscriptRef.current;
+    setTranscript(prev ? prev + ' ' + newText : newText);
   });
   useSpeechRecognitionEvent('error', (event) => {
     setError(`Recognition error: ${event.message}`);
@@ -61,8 +70,9 @@ export default function SpeakScreen() {
 
   const startRecording = async () => {
     try {
-      setTranscript('');
       setError('');
+      // Snapshot current transcript so new results append after it
+      prevTranscriptRef.current = transcript;
       const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!result.granted) {
         setError('Microphone permission required');
@@ -83,6 +93,13 @@ export default function SpeakScreen() {
       ExpoSpeechRecognitionModule.stop();
     } catch {}
     setRecording(false);
+  };
+
+  const clearTranscript = () => {
+    Alert.alert('Clear your recording?', '', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => { setTranscript(''); prevTranscriptRef.current = ''; } },
+    ]);
   };
 
   const generateRecipe = async () => {
@@ -137,81 +154,87 @@ export default function SpeakScreen() {
 
   // ── Step 1: Record ──
   if (step === 1) {
+    const micLabel = recording ? 'Tap to pause' : transcript.length > 0 ? 'Tap to continue' : 'Tap to speak';
+
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20, alignItems: 'center' }}>
-        <ProgressBar />
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+        <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center', paddingBottom: tabBarHeight + 80 }}>
+          <ProgressBar />
 
-        <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
-          Speak your recipe naturally. Say the name, ingredients, and steps in any order.
-        </Text>
-
-        <Card style={{ padding: 16, marginBottom: 20, width: '100%' }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Example</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontStyle: 'italic', lineHeight: 20 }}>
-            "Grandma's cookies. Two cups flour, one cup butter, two eggs, one cup chocolate chips. Cream butter and sugar, add eggs, fold in flour and chips, bake at 375 for 12 minutes."
+          <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
+            Speak your recipe naturally. Say the name, ingredients, and steps in any order.
           </Text>
-        </Card>
 
-        {/* Big mic button */}
-        <TouchableOpacity
-          onPress={recording ? stopRecording : startRecording}
-          style={{
-            width: 120, height: 120, borderRadius: 60,
-            backgroundColor: recording ? '#ef4444' : colors.accent,
-            alignItems: 'center', justifyContent: 'center',
-            marginBottom: 12,
-          }}
-        >
-          <Ionicons name="mic" size={52} color="#ffffff" />
-        </TouchableOpacity>
-        <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', marginBottom: 4 }}>
-          {recording ? 'Listening...' : 'Tap to start'}
-        </Text>
-        <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 8 }}>
-          Listening in {langName}
-        </Text>
-        {recording && (
-          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#ef4444', marginBottom: 8 }} />
-        )}
+          <Card style={{ padding: 16, marginBottom: 20, width: '100%' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 6 }}>Example</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, fontStyle: 'italic', lineHeight: 20 }}>
+              "Grandma's cookies. Two cups flour, one cup butter, two eggs, one cup chocolate chips. Cream butter and sugar, add eggs, fold in flour and chips, bake at 375 for 12 minutes."
+            </Text>
+          </Card>
 
-        {/* Live transcript */}
-        {transcript.length > 0 && (
-          <View style={{
-            backgroundColor: colors.bgBase, borderRadius: 12, padding: 16,
-            marginTop: 16, width: '100%', minHeight: 80,
-          }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 16, lineHeight: 24 }}>{transcript}</Text>
-          </View>
-        )}
-
-        {/* Controls */}
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 20, width: '100%' }}>
+          {/* Big mic button */}
+          <TouchableOpacity
+            onPress={recording ? stopRecording : startRecording}
+            style={{
+              width: 120, height: 120, borderRadius: 60,
+              backgroundColor: recording ? '#ef4444' : colors.accent,
+              alignItems: 'center', justifyContent: 'center',
+              marginBottom: 12,
+            }}
+          >
+            <Ionicons name="mic" size={52} color="#ffffff" />
+          </TouchableOpacity>
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', marginBottom: 4 }}>
+            {micLabel}
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 8 }}>
+            Listening in {langName}
+          </Text>
           {recording && (
-            <View style={{ flex: 1 }}>
-              <Button title="Stop" onPress={stopRecording} variant="secondary" />
+            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#ef4444', marginBottom: 8 }} />
+          )}
+
+          {/* Live transcript */}
+          {transcript.length > 0 && (
+            <View style={{ width: '100%', marginTop: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{transcript.length} characters</Text>
+                <TouchableOpacity onPress={clearTranscript} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
+                  <Ionicons name="refresh-outline" size={14} color={colors.textMuted} />
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{
+                backgroundColor: colors.bgBase, borderRadius: 12, padding: 16,
+                minHeight: 80,
+              }}>
+                <Text style={{ color: colors.textPrimary, fontSize: 16, lineHeight: 24 }}>{transcript}</Text>
+              </View>
             </View>
           )}
-          {!recording && transcript.length > 0 && (
-            <>
-              <View style={{ flex: 1 }}>
-                <Button title="Start Over" onPress={() => setTranscript('')} variant="ghost" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Button title="Next: Review" onPress={() => setStep(2)} />
-              </View>
-            </>
-          )}
-        </View>
 
-        {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginTop: 12 }}>{error}</Text> : null}
-      </ScrollView>
+          {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginTop: 12 }}>{error}</Text> : null}
+        </ScrollView>
+
+        {/* Sticky bottom action */}
+        {!recording && transcript.length > 0 && (
+          <View style={{
+            position: 'absolute',
+            bottom: insets.bottom + 80,
+            left: 16,
+            right: 16,
+          }}>
+            <Button title="Next: Review" onPress={() => setStep(2)} />
+          </View>
+        )}
+      </View>
     );
   }
 
   // ── Step 2: Review ──
   if (step === 2) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20, paddingBottom: tabBarHeight }}>
         <ProgressBar />
 
         <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 4 }}>Review what was captured</Text>
@@ -255,7 +278,7 @@ export default function SpeakScreen() {
 
   if (step === 3 && recipe) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20, paddingBottom: tabBarHeight }}>
         <ProgressBar />
 
         <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 8 }}>{recipe.title}</Text>
