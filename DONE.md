@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 10)
+- Release APK built: expo prebuild --clean + expo run:android --variant release, 111 MB APK at apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+- Smoke test passed: landing screen renders with chef's hat icon, Sign In/Create Account/Continue as guest buttons, no dots below tagline
+- Jetifier fix: re-added android.enableJetifier=true to gradle.properties (wiped by prebuild --clean)
+- Known: emulator screencap returns black when screen is off — must wake with KEYCODE_WAKEUP first
+
 ## 2026-04-07 (session 9)
 - Language selector limited to 5 supported languages (en/fr/es/it/de), removed search bar and priority logic
 - Removed unused LANGUAGES/PRIORITY_LANGUAGES imports from LanguagePickerModal
