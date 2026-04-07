@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { convertIngredient, formatQuantity as formatQty } from '@chefsbook/ui';
@@ -10,8 +10,11 @@ import { useAuthStore } from '../../lib/zustand/authStore';
 import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
+import { StoreAvatar } from '../../components/StoreAvatar';
 import { Button, Card, EmptyState, Loading, Input } from '../../components/UIKit';
 import type { ShoppingListItem, StoreCategory } from '@chefsbook/db';
+
+// TODO(web): replicate store-first creation flow and store grouping in apps/web/dashboard/shopping
 
 type FontSize = 'small' | 'medium' | 'large';
 const FONT_KEY = 'shopping_font_size';
@@ -67,9 +70,12 @@ export default function ShopTab() {
   const subscribeLists = useShoppingStore((s) => s.subscribeLists);
   const subscribeItems = useShoppingStore((s) => s.subscribeItems);
   const unsubscribe = useShoppingStore((s) => s.unsubscribe);
-  const [showNew, setShowNew] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [newStoreName, setNewStoreName] = useState('');
+  const [newListName, setNewListName] = useState('');
+  const [newStoreStep, setNewStoreStep] = useState<'store' | 'name'>('store');
   const [selectedStore, setSelectedStore] = useState<string | null>(null); // null = Level 1 store view
+  const [showCombined, setShowCombined] = useState<string | null>(null); // store name for combined view
   const [viewMode, setViewMode] = useState<ViewMode>('department');
   const [manualInput, setManualInput] = useState('');
   const [editingQty, setEditingQty] = useState<string | null>(null);
@@ -103,11 +109,25 @@ export default function ShopTab() {
     if (currentList?.id) subscribeItems(currentList.id);
   }, [currentList?.id]);
 
+  const openNewListModal = () => {
+    setNewStoreName('');
+    setNewListName('');
+    setNewStoreStep('store');
+    setShowNewModal(true);
+  };
+
+  const handleSelectStore = (store: string) => {
+    setNewStoreName(store);
+    setNewListName('');
+    setNewStoreStep('name');
+  };
+
   const handleCreate = async () => {
-    if (!session?.user?.id || !newName.trim()) return;
-    await addList(session.user.id, newName.trim());
-    setNewName('');
-    setShowNew(false);
+    if (!session?.user?.id || !newStoreName.trim()) return;
+    const storeName = newStoreName.trim();
+    const listName = newListName.trim() || storeName;
+    await addList(session.user.id, listName, { storeName });
+    setShowNewModal(false);
   };
 
   const handleAddManual = async () => {
@@ -210,7 +230,31 @@ export default function ShopTab() {
     return lists.filter((l) => (l.store_name || 'General') === selectedStore);
   }, [lists, selectedStore]);
 
+  // Unique store names for the creation picker
+  const existingStores = useMemo(() => {
+    const stores = new Set<string>();
+    for (const list of lists) {
+      if (list.store_name) stores.add(list.store_name);
+    }
+    return [...stores].sort();
+  }, [lists]);
+
   if (loading && !currentList) return <Loading message="Loading shopping lists..." />;
+
+  // ── Combined view: read-only merged items for a store ──
+  if (showCombined) {
+    return (
+      <CombinedStoreView
+        storeName={showCombined}
+        lists={lists.filter((l) => (l.store_name || 'General') === showCombined)}
+        colors={colors}
+        tabBarHeight={tabBarHeight}
+        preferredUnits={preferredUnits}
+        onBack={() => setShowCombined(null)}
+        onOpenList={(id) => { setShowCombined(null); fetchList(id); }}
+      />
+    );
+  }
 
   // ── List detail view ──
   if (currentList) {
@@ -410,21 +454,32 @@ export default function ShopTab() {
             <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Stores</Text>
           </TouchableOpacity>
 
-          <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>
-            {selectedStore === '__all__' ? 'All Lists' : selectedStore}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            {selectedStore !== '__all__' && <StoreAvatar storeName={selectedStore} size={48} />}
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', flex: 1 }}>
+              {selectedStore === '__all__' ? 'All Lists' : selectedStore}
+            </Text>
+          </View>
 
-          {showNew && (
-            <Card style={{ marginBottom: 16 }}>
-              <Input value={newName} onChangeText={setNewName} placeholder="List name..." />
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                <View style={{ flex: 1 }}><Button title="Create" onPress={handleCreate} /></View>
-                <View style={{ flex: 1 }}><Button title="Cancel" onPress={() => setShowNew(false)} variant="ghost" /></View>
+          {/* Concatenated "All [Store]" entry for multi-list stores */}
+          {selectedStore !== '__all__' && filteredLists.length > 1 && (
+            <Card onPress={() => setShowCombined(selectedStore)} style={{ marginBottom: 10, borderWidth: 1, borderColor: colors.accentGreen, borderStyle: 'dashed' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <Ionicons name="layers-outline" size={20} color={colors.accentGreen} />
+                  <View>
+                    <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>All {selectedStore}</Text>
+                    <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>Combined view</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
               </View>
             </Card>
           )}
 
-          {!showNew && <View style={{ marginBottom: 16 }}><Button title="+ New Shopping List" onPress={() => setShowNew(true)} /></View>}
+          <View style={{ marginBottom: 16 }}>
+            <Button title="+ New List" onPress={openNewListModal} />
+          </View>
 
           {filteredLists.length === 0 ? (
             <EmptyState icon="🛒" title="No lists here" message="Create a new shopping list." />
@@ -453,6 +508,22 @@ export default function ShopTab() {
             ))
           )}
         </ScrollView>
+
+        {/* New List Modal */}
+        <NewListModal
+          visible={showNewModal}
+          onClose={() => setShowNewModal(false)}
+          step={newStoreStep}
+          storeName={newStoreName}
+          listName={newListName}
+          existingStores={existingStores}
+          onSelectStore={handleSelectStore}
+          onChangeStoreName={setNewStoreName}
+          onChangeListName={setNewListName}
+          onBack={() => setNewStoreStep('store')}
+          onCreate={handleCreate}
+          colors={colors}
+        />
       </View>
     );
   }
@@ -464,32 +535,20 @@ export default function ShopTab() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight }}>
         <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>Shopping Lists</Text>
 
-        {/* All Lists quick access */}
-        <Card onPress={() => setSelectedStore('__all__')} style={{ marginBottom: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Text style={{ fontSize: 22 }}>{'\uD83D\uDED2'}</Text>
-              <View>
-                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>All Lists</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13 }}>{lists.length} lists</Text>
-              </View>
-            </View>
-            <Text style={{ color: colors.textMuted, fontSize: 18 }}>{'\u203A'}</Text>
-          </View>
-        </Card>
-
         {/* Store groups */}
         {storeGroups.map(([store, storeLists]) => (
           <Card key={store} onPress={() => setSelectedStore(store)} style={{ marginBottom: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Text style={{ fontSize: 22 }}>{'\uD83C\uDFEA'}</Text>
-                <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                <StoreAvatar storeName={store} size={36} />
+                <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{store}</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>{storeLists.length} {storeLists.length === 1 ? 'list' : 'lists'}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+                    {storeLists.length} {storeLists.length === 1 ? 'list' : 'lists'}
+                  </Text>
                 </View>
               </View>
-              <Text style={{ color: colors.textMuted, fontSize: 18 }}>{'\u203A'}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </View>
           </Card>
         ))}
@@ -499,9 +558,304 @@ export default function ShopTab() {
         )}
 
         <View style={{ marginTop: 12, marginBottom: 16 }}>
-          <Button title="+ New Shopping List" onPress={() => { setSelectedStore('__all__'); setShowNew(true); }} />
+          <Button title="+ New Shopping List" onPress={openNewListModal} />
         </View>
       </ScrollView>
+
+      {/* New List Modal */}
+      <NewListModal
+        visible={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        step={newStoreStep}
+        storeName={newStoreName}
+        listName={newListName}
+        existingStores={existingStores}
+        onSelectStore={handleSelectStore}
+        onChangeStoreName={setNewStoreName}
+        onChangeListName={setNewListName}
+        onBack={() => setNewStoreStep('store')}
+        onCreate={handleCreate}
+        colors={colors}
+      />
     </View>
+  );
+}
+
+// ── Combined Store View (read-only merged items) ──
+
+function CombinedStoreView({
+  storeName, lists: storeLists, colors, tabBarHeight, preferredUnits, onBack, onOpenList,
+}: {
+  storeName: string;
+  lists: any[];
+  colors: any;
+  tabBarHeight: number;
+  preferredUnits: 'metric' | 'imperial';
+  onBack: () => void;
+  onOpenList: (id: string) => void;
+}) {
+  const [allItems, setAllItems] = useState<ShoppingListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import('@chefsbook/db');
+      const listIds = storeLists.map((l) => l.id);
+      const { data } = await supabase
+        .from('shopping_list_items')
+        .select('*')
+        .in('list_id', listIds)
+        .eq('is_checked', false)
+        .order('category')
+        .order('ingredient');
+      if (!cancelled) {
+        // Merge duplicates: same ingredient + unit → sum quantities
+        const merged = new Map<string, ShoppingListItem>();
+        for (const item of (data ?? []) as ShoppingListItem[]) {
+          const key = `${item.ingredient.toLowerCase()}|${(item.unit || '').toLowerCase()}`;
+          const existing = merged.get(key);
+          if (existing) {
+            existing.quantity = (existing.quantity ?? 0) + (item.quantity ?? 0);
+            if (item.recipe_name && existing.recipe_name && !existing.recipe_name.includes(item.recipe_name)) {
+              existing.recipe_name = `${existing.recipe_name}, ${item.recipe_name}`;
+            }
+          } else {
+            merged.set(key, { ...item });
+          }
+        }
+        setAllItems([...merged.values()]);
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [storeLists.map((l) => l.id).join(',')]);
+
+  // Group by department
+  const grouped = useMemo(() => {
+    const groups: Record<string, ShoppingListItem[]> = {};
+    for (const item of allItems) {
+      const dept = item.category || 'other';
+      if (!groups[dept]) groups[dept] = [];
+      groups[dept].push(item);
+    }
+    return Object.entries(groups).sort(([a], [b]) => {
+      const ai = DEPT_ORDER.indexOf(a as any);
+      const bi = DEPT_ORDER.indexOf(b as any);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+  }, [allItems]);
+
+  if (loading) return <Loading message="Merging items..." />;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <ChefsBookHeader />
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, paddingBottom: 8, gap: 12 }}>
+        <TouchableOpacity onPress={onBack}>
+          <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'}</Text>
+        </TouchableOpacity>
+        <StoreAvatar storeName={storeName} size={36} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700' }}>All {storeName}</Text>
+          <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>Combined view — {allItems.length} items</Text>
+        </View>
+      </View>
+
+      {/* Source lists */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 36, paddingHorizontal: 16, marginBottom: 8 }}>
+        {storeLists.map((list) => (
+          <TouchableOpacity
+            key={list.id}
+            onPress={() => onOpenList(list.id)}
+            style={{
+              backgroundColor: colors.bgBase, borderRadius: 16,
+              paddingHorizontal: 12, paddingVertical: 6, marginRight: 8,
+              borderWidth: 1, borderColor: colors.borderDefault,
+            }}
+          >
+            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>{list.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
+        {grouped.map(([dept, deptItems]) => (
+          <View key={dept} style={{ marginBottom: 16 }}>
+            <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>
+              {DEPT_LABELS[dept] || dept}
+            </Text>
+            {deptItems.map((item) => {
+              const converted = convertIngredient(item.quantity, item.unit, preferredUnits, item.ingredient);
+              const rawQty = [converted.quantity ? formatQty(converted.quantity) : null, converted.unit || item.unit].filter(Boolean).join(' ');
+              const displayQty = item.purchase_unit || rawQty;
+
+              return (
+                <View key={item.id} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 }}>
+                  <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', minWidth: 60, marginRight: 8 }}>
+                    {displayQty}
+                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontSize: 14 }}>{item.ingredient}</Text>
+                    {item.recipe_name && (
+                      <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{item.recipe_name}</Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        ))}
+        <View style={{ height: tabBarHeight }} />
+      </ScrollView>
+    </View>
+  );
+}
+
+// ── New List Modal (store-first creation) ──
+
+function NewListModal({
+  visible, onClose, step, storeName, listName, existingStores,
+  onSelectStore, onChangeStoreName, onChangeListName, onBack, onCreate, colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  step: 'store' | 'name';
+  storeName: string;
+  listName: string;
+  existingStores: string[];
+  onSelectStore: (store: string) => void;
+  onChangeStoreName: (name: string) => void;
+  onChangeListName: (name: string) => void;
+  onBack: () => void;
+  onCreate: () => void;
+  colors: any;
+}) {
+  const [customStore, setCustomStore] = useState('');
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+        <View style={{
+          backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+          maxHeight: '80%', paddingTop: 16,
+        }}>
+          {/* Handle */}
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
+
+          {step === 'store' ? (
+            // Step 1: Select or create a store
+            <View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 16 }}>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Select a store</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <Ionicons name="close" size={24} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 400 }}>
+                {/* Existing stores */}
+                {existingStores.map((store) => (
+                  <TouchableOpacity
+                    key={store}
+                    onPress={() => onSelectStore(store)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
+                      borderBottomWidth: 1, borderBottomColor: colors.borderDefault, gap: 12,
+                    }}
+                  >
+                    <StoreAvatar storeName={store} size={36} />
+                    <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '500', flex: 1 }}>{store}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                ))}
+
+                {/* New store input */}
+                <View style={{ padding: 16 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>New store</Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TextInput
+                      value={customStore}
+                      onChangeText={setCustomStore}
+                      placeholder="Store name..."
+                      placeholderTextColor={colors.textSecondary}
+                      style={{
+                        flex: 1, backgroundColor: colors.bgBase, borderRadius: 10,
+                        paddingHorizontal: 14, paddingVertical: 10, fontSize: 15,
+                        color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault,
+                      }}
+                    />
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (customStore.trim()) {
+                          onSelectStore(customStore.trim());
+                          setCustomStore('');
+                        }
+                      }}
+                      disabled={!customStore.trim()}
+                      style={{
+                        backgroundColor: customStore.trim() ? colors.accent : colors.bgBase,
+                        borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ color: customStore.trim() ? '#fff' : colors.textMuted, fontWeight: '600' }}>Next</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            </View>
+          ) : (
+            // Step 2: Name the list
+            <View style={{ padding: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <TouchableOpacity onPress={onBack}>
+                  <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>
+                    <Ionicons name="chevron-back" size={16} color={colors.accent} /> Back
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose}>
+                  <Ionicons name="close" size={24} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <StoreAvatar storeName={storeName} size={48} />
+                <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700' }}>{storeName}</Text>
+              </View>
+
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+                List name (optional)
+              </Text>
+              <TextInput
+                value={listName}
+                onChangeText={onChangeListName}
+                placeholder={storeName}
+                placeholderTextColor={colors.textSecondary}
+                style={{
+                  backgroundColor: colors.bgBase, borderRadius: 10,
+                  paddingHorizontal: 14, paddingVertical: 10, fontSize: 15,
+                  color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault,
+                  marginBottom: 20,
+                }}
+              />
+
+              <TouchableOpacity
+                onPress={onCreate}
+                style={{
+                  backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14,
+                  alignItems: 'center', marginBottom: 8,
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Create List</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={onClose} style={{ alignItems: 'center', paddingVertical: 10 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 14 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
+    </Modal>
   );
 }

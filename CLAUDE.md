@@ -249,6 +249,8 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`
 - Supabase auth persistence: `configureStorage()` in `@chefsbook/db` accepts a storage adapter; mobile wires `expo-secure-store` in `_layout.tsx` at module scope (before any Supabase access)
 - Unit conversion: dry ingredients (flour, sugar, etc.) convert volume→weight (cups→g) in metric mode; liquid ingredients convert volume→volume (cups→ml)
+- Shopping lists are store-first: each list has a `store_name`; lists without a store show under "General"; `StoreAvatar` component shows Clearbit logos for known stores, initials fallback for others
+- Combined store view: virtual read-only merged list per store (not saved to DB); quantity merging on same ingredient+unit
 
 ## Builds
 

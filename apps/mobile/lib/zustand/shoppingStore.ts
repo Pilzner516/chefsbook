@@ -15,7 +15,7 @@ interface ShoppingState {
   subscribeLists: (userId: string) => void;
   subscribeItems: (listId: string) => void;
   unsubscribe: () => void;
-  addList: (userId: string, name: string, dateRange?: { start: string; end: string }) => Promise<ShoppingList>;
+  addList: (userId: string, name: string, opts?: { storeName?: string; dateRange?: { start: string; end: string } }) => Promise<ShoppingList>;
   addItemsPipeline: (
     listId: string,
     userId: string,
@@ -72,8 +72,11 @@ export const useShoppingStore = create<ShoppingState>((set, get) => ({
     if (_itemsChannel) { supabase.removeChannel(_itemsChannel); _itemsChannel = null; }
   },
 
-  addList: async (userId, name, dateRange) => {
-    const created = await createShoppingList(userId, name, dateRange ? { dateRange } : undefined);
+  addList: async (userId, name, opts) => {
+    const created = await createShoppingList(userId, name, {
+      storeName: opts?.storeName,
+      dateRange: opts?.dateRange,
+    });
     set((s) => ({ lists: [created, ...s.lists] }));
     return created;
   },

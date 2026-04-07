@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 3)
+- StoreAvatar component: logo from Clearbit for 12 known stores, initials fallback with deterministic hash color
+- Store-first list creation: 2-step modal (select/create store → optional list name), store_name passed through to DB
+- Store grouping on shopping list overview: lists grouped by store_name with StoreAvatar headers
+- Concatenated "All [Store]" view: read-only merged item list across all lists for a store, quantity merging, department grouping
+- Shopping store addList updated: Zustand store accepts storeName option, wired through to createShoppingList
+- Web parity TODOs flagged in shop.tsx and StoreAvatar.tsx
+
 ## 2026-04-07 (session 2)
 - QA Notepad: moved "Clear All" button from header to bottom of note list, added confirmation dialog with spec text
 - QA Notepad: added bottom safe area inset (insets.bottom) to "Add Item" footer button
