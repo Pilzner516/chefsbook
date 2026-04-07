@@ -18,6 +18,7 @@ import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps } 
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
+import { EditImageGallery } from '../../components/EditImageGallery';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -701,6 +702,12 @@ function RecipeDetailInner() {
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Title</Text>
           <TextInput value={editTitle} onChangeText={setEditTitle} style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 16, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 12 }} />
 
+          {/* Photo gallery — edit mode */}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Photos</Text>
+          {session?.user?.id && (
+            <EditImageGallery recipeId={currentRecipe.id} userId={session.user.id} editing={true} />
+          )}
+
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Description</Text>
           <TextInput value={editDesc} onChangeText={setEditDesc} multiline style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 12, minHeight: 60, textAlignVertical: 'top' }} />
 
@@ -893,6 +900,11 @@ function RecipeDetailInner() {
       )}
 
       <View style={{ padding: 16 }}>
+        {/* User photos gallery — read-only */}
+        {session?.user?.id && (
+          <EditImageGallery recipeId={recipe.id} userId={session.user.id} editing={false} />
+        )}
+
         <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 8 }}>{recipe.title}</Text>
         {recipe.description && (
           <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 12 }}>{recipe.description}</Text>

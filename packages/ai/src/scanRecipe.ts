@@ -41,3 +41,24 @@ export async function scanRecipe(imageBase64: string, mimeType = 'image/jpeg'): 
   const text = await callClaude({ prompt: SCAN_PROMPT, imageBase64, imageMimeType: mimeType, maxTokens: 3000 });
   return extractJSON<ScannedRecipe>(text);
 }
+
+const MULTI_PAGE_PROMPT = `You are a recipe extraction expert. The user has photographed multiple pages of a single recipe. These images are consecutive pages — treat them as one recipe and extract all information into a unified result.
+
+${SCAN_PROMPT.replace('You are a recipe extraction expert. The user has photographed a recipe — a handwritten card, cookbook page, or printed recipe. Extract every visible detail precisely.\n\n', '')}`;
+
+/**
+ * Scan multiple pages of a single recipe in one Claude Vision call.
+ * Up to 5 pages supported.
+ */
+export async function scanRecipeMultiPage(
+  pages: { base64: string; mimeType?: string }[],
+): Promise<ScannedRecipe> {
+  if (pages.length === 0) throw new Error('No pages to scan');
+  if (pages.length === 1) return scanRecipe(pages[0].base64, pages[0].mimeType);
+  const text = await callClaude({
+    prompt: MULTI_PAGE_PROMPT,
+    images: pages,
+    maxTokens: 4000,
+  });
+  return extractJSON<ScannedRecipe>(text);
+}

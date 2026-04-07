@@ -251,6 +251,9 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Unit conversion: dry ingredients (flour, sugar, etc.) convert volume→weight (cups→g) in metric mode; liquid ingredients convert volume→volume (cups→ml)
 - Shopping lists are store-first: each list has a `store_name`; lists without a store show under "General"; `StoreAvatar` component shows Clearbit logos for known stores, initials fallback for others
 - Combined store view: virtual read-only merged list per store (not saved to DB); quantity merging on same ingredient+unit
+- Multi-page scan: up to 5 pages captured before processing; all sent to Claude Vision in single API call; first page auto-saved as recipe photo
+- Recipe photos: `EditImageGallery` component handles add/delete/set-primary; uploads go to `recipe-user-photos` Supabase Storage bucket; photos are per-recipe, not per-user
+- `callClaude` supports `images[]` array for multi-image API calls (takes precedence over single `imageBase64`)
 
 ## Builds
 

@@ -1,5 +1,5 @@
 export { callClaude, extractJSON, getApiKey } from './client';
-export { scanRecipe } from './scanRecipe';
+export { scanRecipe, scanRecipeMultiPage } from './scanRecipe';
 export { importFromUrl, importUrlFull, classifyPage, hasRecipeSchema, stripHtml, fetchPage, extractJsonLdRecipe, checkJsonLdCompleteness } from './importFromUrl';
 export type { ImportCompleteness } from './importFromUrl';
 export type { RecipeClassification, ImportResult } from './importFromUrl';

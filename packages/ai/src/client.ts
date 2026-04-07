@@ -12,12 +12,19 @@ export async function callClaude(params: {
   prompt: string;
   imageBase64?: string;
   imageMimeType?: string;
+  /** Multiple images for multi-page scanning */
+  images?: { base64: string; mimeType?: string }[];
   maxTokens?: number;
 }): Promise<string> {
-  const { prompt, imageBase64, imageMimeType = 'image/jpeg', maxTokens = 2000 } = params;
+  const { prompt, imageBase64, imageMimeType = 'image/jpeg', images, maxTokens = 2000 } = params;
 
   const content: any[] = [];
-  if (imageBase64) {
+  // Multi-image support (takes precedence over single image)
+  if (images && images.length > 0) {
+    for (const img of images) {
+      content.push({ type: 'image', source: { type: 'base64', media_type: img.mimeType || 'image/jpeg', data: img.base64 } });
+    }
+  } else if (imageBase64) {
     content.push({ type: 'image', source: { type: 'base64', media_type: imageMimeType, data: imageBase64 } });
   }
   content.push({ type: 'text', text: prompt });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Alert, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Alert, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -15,11 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
-import { scanRecipe } from '@chefsbook/ai';
+import { scanRecipe, scanRecipeMultiPage } from '@chefsbook/ai';
 import { pickImage, takePhoto, processImage } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
+
+// TODO(web): replicate multi-page scan support
 
 type ImportStatus = 'idle' | 'importing' | 'success' | 'error';
 
@@ -37,6 +39,10 @@ export default function ScanTab() {
   const tabBarHeight = useTabBarHeight();
   const [clipboardUrl, setClipboardUrl] = useState<string | null>(null);
   const [hasPulsed, setHasPulsed] = useState(false);
+
+  // Multi-page scan state
+  const [scanPages, setScanPages] = useState<{ uri: string; base64: string; mimeType: string }[]>([]);
+  const [scanMode, setScanMode] = useState(false);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -110,21 +116,62 @@ export default function ScanTab() {
     }
   }, [importUrl]);
 
-  const handleScan = async (getUri: () => Promise<string | null>) => {
-    if (!session?.user?.id) return;
+  // Start multi-page scan — capture first page and enter scan mode
+  const startScan = async (getUri: () => Promise<string | null>) => {
     const uri = await getUri();
     if (!uri) return;
+    const processed = await processImage(uri);
+    setScanPages([{ uri, ...processed }]);
+    setScanMode(true);
+  };
 
+  // Add another page to the scan
+  const addScanPage = async (getUri: () => Promise<string | null>) => {
+    if (scanPages.length >= 5) {
+      Alert.alert('Maximum pages', 'You can scan up to 5 pages per recipe.');
+      return;
+    }
+    const uri = await getUri();
+    if (!uri) return;
+    const processed = await processImage(uri);
+    setScanPages((prev) => [...prev, { uri, ...processed }]);
+  };
+
+  const removeScanPage = (index: number) => {
+    setScanPages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Process all captured pages
+  const finishScan = async () => {
+    if (!session?.user?.id || scanPages.length === 0) return;
+    setScanMode(false);
     setImportStatus('importing');
     try {
-      const { base64, mimeType } = await processImage(uri);
-      const scanned = await scanRecipe(base64, mimeType);
+      const pages = scanPages.map((p) => ({ base64: p.base64, mimeType: p.mimeType }));
+      const scanned = pages.length === 1
+        ? await scanRecipe(pages[0].base64, pages[0].mimeType)
+        : await scanRecipeMultiPage(pages);
       const recipe = await addRecipe(session.user.id, scanned);
+
+      // Auto-add first scan page as recipe photo
+      try {
+        const { supabase, addRecipePhoto } = await import('@chefsbook/db');
+        const fileName = `${session.user.id}/${recipe.id}/scan_${Date.now()}.jpg`;
+        const binaryString = atob(scanPages[0].base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+        await supabase.storage.from('recipe-user-photos').upload(fileName, bytes, { contentType: 'image/jpeg' });
+        const { data: urlData } = supabase.storage.from('recipe-user-photos').getPublicUrl(fileName);
+        await addRecipePhoto(recipe.id, session.user.id, fileName, urlData.publicUrl);
+      } catch {} // non-blocking
+
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
+      setScanPages([]);
     } catch (e: any) {
       setImportStatus('error');
       Alert.alert('Scan failed', e.message);
+      setScanPages([]);
     }
   };
 
@@ -161,7 +208,7 @@ export default function ScanTab() {
       iconName: 'camera' as const,
       label: 'Scan Photo',
       subtitle: 'Cookbook or recipe card',
-      onPress: () => handleScan(takePhoto),
+      onPress: () => startScan(takePhoto),
     },
     {
       iconName: 'link' as const,
@@ -173,7 +220,7 @@ export default function ScanTab() {
       iconName: 'images' as const,
       label: 'Choose Photo',
       subtitle: 'From your gallery',
-      onPress: () => handleScan(pickImage),
+      onPress: () => startScan(pickImage),
     },
     {
       iconName: 'create' as const,
@@ -206,6 +253,63 @@ export default function ScanTab() {
           <Ionicons name="checkmark-circle" size={20} color={colors.accentGreen} />
           <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>Recipe saved! View it →</Text>
         </TouchableOpacity>
+      )}
+
+      {/* Multi-page scan mode */}
+      {scanMode && (
+        <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.borderDefault, backgroundColor: colors.bgCard }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
+            Scanning recipe — {scanPages.length}/5 page{scanPages.length !== 1 ? 's' : ''}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+            {scanPages.map((page, i) => (
+              <View key={i} style={{ marginRight: 10, position: 'relative' }}>
+                <Image source={{ uri: page.uri }} style={{ width: 80, height: 100, borderRadius: 8 }} resizeMode="cover" />
+                <TouchableOpacity
+                  onPress={() => removeScanPage(i)}
+                  style={{
+                    position: 'absolute', top: -6, right: -6,
+                    backgroundColor: '#fff', borderRadius: 10, width: 20, height: 20,
+                    alignItems: 'center', justifyContent: 'center',
+                    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 2, elevation: 3,
+                  }}
+                >
+                  <Ionicons name="close" size={14} color={colors.accent} />
+                </TouchableOpacity>
+                <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 2 }}>Page {i + 1}</Text>
+              </View>
+            ))}
+          </ScrollView>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {scanPages.length < 5 && (
+              <>
+                <TouchableOpacity
+                  onPress={() => addScanPage(takePhoto)}
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 10, paddingVertical: 12, borderWidth: 1, borderColor: colors.borderDefault }}
+                >
+                  <Ionicons name="camera-outline" size={18} color={colors.accent} />
+                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Add page</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => addScanPage(pickImage)}
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 10, paddingVertical: 12, borderWidth: 1, borderColor: colors.borderDefault }}
+                >
+                  <Ionicons name="images-outline" size={18} color={colors.accent} />
+                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>From gallery</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            <TouchableOpacity
+              onPress={finishScan}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 12 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Done scanning</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={() => { setScanMode(false); setScanPages([]); }} style={{ alignItems: 'center', paddingVertical: 8, marginTop: 4 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Cancel scan</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>

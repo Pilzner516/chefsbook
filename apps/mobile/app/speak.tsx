@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+
+// TODO(web): show image picker after Speak a Recipe save if no image
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTabBarHeight } from '../lib/useTabBarHeight';
 import {
@@ -53,6 +55,7 @@ export default function SpeakScreen() {
   const [recipe, setRecipe] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   // Ref to access latest interim in the 'end' handler
   const interimRef = useRef('');
 
@@ -158,6 +161,21 @@ export default function SpeakScreen() {
     setSaving(true);
     try {
       const saved = await addRecipe(session.user.id, recipe);
+      // Upload cover image if selected
+      if (coverImageUri) {
+        try {
+          const { processImage } = await import('../lib/image');
+          const { supabase, addRecipePhoto } = await import('@chefsbook/db');
+          const { base64 } = await processImage(coverImageUri);
+          const fileName = `${session.user.id}/${saved.id}/cover_${Date.now()}.jpg`;
+          const binaryString = atob(base64);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+          await supabase.storage.from('recipe-user-photos').upload(fileName, bytes, { contentType: 'image/jpeg' });
+          const { data: urlData } = supabase.storage.from('recipe-user-photos').getPublicUrl(fileName);
+          await addRecipePhoto(saved.id, session.user.id, fileName, urlData.publicUrl);
+        } catch {} // non-blocking
+      }
       router.replace(`/recipe/${saved.id}`);
     } catch (e: any) {
       setError(e.message);
@@ -397,6 +415,51 @@ export default function SpeakScreen() {
         ))}
 
         <Divider />
+
+        {/* Cover photo picker */}
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Cover Photo</Text>
+        {coverImageUri ? (
+          <View style={{ marginBottom: 16 }}>
+            <Image source={{ uri: coverImageUri }} style={{ width: '100%', height: 160, borderRadius: 12 }} resizeMode="cover" />
+            <TouchableOpacity
+              onPress={() => setCoverImageUri(null)}
+              style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, padding: 4 }}
+            >
+              <Ionicons name="close" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+            <TouchableOpacity
+              onPress={async () => {
+                const { takePhoto } = await import('../lib/image');
+                const uri = await takePhoto();
+                if (uri) setCoverImageUri(uri);
+              }}
+              style={{
+                flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
+              }}
+            >
+              <Ionicons name="camera-outline" size={20} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={async () => {
+                const { pickImage } = await import('../lib/image');
+                const uri = await pickImage();
+                if (uri) setCoverImageUri(uri);
+              }}
+              style={{
+                flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
+              }}
+            >
+              <Ionicons name="images-outline" size={20} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>From Library</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginBottom: 12 }}>{error}</Text> : null}
 

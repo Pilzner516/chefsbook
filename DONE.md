@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 4)
+- Recipe edit image gallery: EditImageGallery component with add/delete/set-primary, dashed placeholder for no images, upload to Supabase Storage
+- Recipe detail read-only photo gallery: horizontal scroll of user photos below hero image
+- Multi-page recipe scanning: capture up to 5 pages with thumbnail strip, "Add page" / "Done scanning" UI, cancel flow
+- Multi-page Claude Vision: scanRecipeMultiPage() sends all page images in one API call, unified recipe extraction
+- callClaude multi-image support: images[] parameter for sending multiple images in content array
+- Speak a Recipe cover photo: camera/library picker on Step 3 before save, uploads to recipe-user-photos on save
+- Scan auto-photo: first scanned page auto-uploaded as recipe photo after save
+- Web parity TODOs: flagged multi-page scan + speak image picker in scan.tsx and speak.tsx
+
 ## 2026-04-07 (session 3)
 - StoreAvatar component: logo from Clearbit for 12 known stores, initials fallback with deterministic hash color
 - Store-first list creation: 2-step modal (select/create store → optional list name), store_name passed through to DB
