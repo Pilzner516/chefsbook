@@ -5,9 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { Button, Input } from '../../components/UIKit';
+import { useTranslation } from 'react-i18next';
 
 export default function SignUpScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const signUp = useAuthStore((s) => s.signUp);
 
@@ -20,15 +22,15 @@ export default function SignUpScreen() {
   const handleSignUp = async () => {
     setError('');
     if (!displayName.trim()) {
-      setError('Please enter your name.');
+      setError(t('auth.enterName'));
       return;
     }
     if (!email.trim() || !password) {
-      setError('Please enter your email and password.');
+      setError(t('auth.enterEmail'));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t('auth.passwordLength'));
       return;
     }
     setLoading(true);
@@ -36,7 +38,7 @@ export default function SignUpScreen() {
       await signUp(email.trim(), password, displayName.trim());
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message ?? 'Sign up failed.');
+      setError(e.message ?? t('auth.signUpFailed'));
     } finally {
       setLoading(false);
     }
@@ -51,23 +53,23 @@ export default function SignUpScreen() {
         style={styles.inner}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Create Account</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.createAccountTitle')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Start building your recipe collection
+          {t('auth.signUpSubtitle')}
         </Text>
 
         <View style={styles.form}>
           <Input
             value={displayName}
             onChangeText={setDisplayName}
-            placeholder="Full name"
+            placeholder={t('auth.fullName')}
             autoCapitalize="words"
           />
           <View style={{ height: 12 }} />
           <Input
             value={email}
             onChangeText={setEmail}
-            placeholder="Email"
+            placeholder={t('auth.email')}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -75,7 +77,7 @@ export default function SignUpScreen() {
           <Input
             value={password}
             onChangeText={setPassword}
-            placeholder="Password"
+            placeholder={t('auth.password')}
             secureTextEntry
             autoCapitalize="none"
           />
@@ -85,16 +87,16 @@ export default function SignUpScreen() {
           )}
 
           <View style={{ height: 20 }} />
-          <Button title="Create Account" onPress={handleSignUp} size="lg" loading={loading} />
+          <Button title={t('auth.signUp')} onPress={handleSignUp} size="lg" loading={loading} />
 
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderDefault }]} />
-            <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or</Text>
+            <Text style={[styles.dividerText, { color: colors.textSecondary }]}>{t('common.or')}</Text>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderDefault }]} />
           </View>
 
           <Button
-            title="Sign up with Google"
+            title={t('auth.signUpWithGoogle')}
             onPress={handleGoogleSignUp}
             variant="secondary"
             size="lg"
@@ -103,13 +105,13 @@ export default function SignUpScreen() {
 
         <View style={styles.footer}>
           <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
-            Already have an account?{' '}
+            {t('auth.haveAccount')}{' '}
           </Text>
           <Text
             style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}
             onPress={() => router.replace('/auth/signin')}
           >
-            Sign In
+            {t('auth.signIn')}
           </Text>
         </View>
       </KeyboardAvoidingView>

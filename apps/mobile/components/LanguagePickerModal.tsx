@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { usePreferencesStore } from '../lib/zustand/preferencesStore';
@@ -13,6 +14,7 @@ interface Props {
 
 export function LanguagePickerModal({ visible, onClose }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const session = useAuthStore((s) => s.session);
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
@@ -60,7 +62,7 @@ export function LanguagePickerModal({ visible, onClose }: Props) {
 
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Select Language</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{t('settings.selectLanguage')}</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color={colors.textMuted} />
             </TouchableOpacity>
@@ -71,7 +73,7 @@ export function LanguagePickerModal({ visible, onClose }: Props) {
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Search languages..."
+              placeholder={t('settings.searchLanguages')}
               placeholderTextColor={colors.textSecondary}
               style={{
                 backgroundColor: colors.bgBase,

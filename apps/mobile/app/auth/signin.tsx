@@ -5,9 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { Button, Input } from '../../components/UIKit';
+import { useTranslation } from 'react-i18next';
 
 export default function SignInScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const signIn = useAuthStore((s) => s.signIn);
 
@@ -19,7 +21,7 @@ export default function SignInScreen() {
   const handleSignIn = async () => {
     setError('');
     if (!email.trim() || !password) {
-      setError('Please enter your email and password.');
+      setError(t('auth.enterEmail'));
       return;
     }
     setLoading(true);
@@ -27,7 +29,7 @@ export default function SignInScreen() {
       await signIn(email.trim(), password);
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message ?? 'Sign in failed.');
+      setError(e.message ?? t('auth.signInFailed'));
     } finally {
       setLoading(false);
     }
@@ -42,16 +44,16 @@ export default function SignInScreen() {
         style={styles.inner}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome back</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.welcomeBack')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Sign in to your ChefsBook account
+          {t('auth.signInSubtitle')}
         </Text>
 
         <View style={styles.form}>
           <Input
             value={email}
             onChangeText={setEmail}
-            placeholder="Email"
+            placeholder={t('auth.email')}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -59,7 +61,7 @@ export default function SignInScreen() {
           <Input
             value={password}
             onChangeText={setPassword}
-            placeholder="Password"
+            placeholder={t('auth.password')}
             secureTextEntry
             autoCapitalize="none"
           />
@@ -69,16 +71,16 @@ export default function SignInScreen() {
           )}
 
           <View style={{ height: 20 }} />
-          <Button title="Sign In" onPress={handleSignIn} size="lg" loading={loading} />
+          <Button title={t('auth.signIn')} onPress={handleSignIn} size="lg" loading={loading} />
 
           <View style={styles.dividerRow}>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderDefault }]} />
-            <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or</Text>
+            <Text style={[styles.dividerText, { color: colors.textSecondary }]}>{t('common.or')}</Text>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderDefault }]} />
           </View>
 
           <Button
-            title="Sign in with Google"
+            title={t('auth.signInWithGoogle')}
             onPress={handleGoogleSignIn}
             variant="secondary"
             size="lg"
@@ -87,13 +89,13 @@ export default function SignInScreen() {
 
         <View style={styles.footer}>
           <Text style={{ color: colors.textSecondary, fontSize: 14 }}>
-            Don't have an account?{' '}
+            {t('auth.noAccount')}{' '}
           </Text>
           <Text
             style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}
             onPress={() => router.replace('/auth/signup')}
           >
-            Sign Up
+            {t('auth.signUp')}
           </Text>
         </View>
       </KeyboardAvoidingView>

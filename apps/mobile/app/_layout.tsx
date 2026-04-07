@@ -12,6 +12,8 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { PinnedBar } from '../components/PinnedBar';
 import { ImportBanner } from '../components/ImportBanner';
 import { Loading } from '../components/UIKit';
+import '../lib/i18n';
+import { activateLanguage } from '../lib/i18n';
 
 // Wire SecureStore as the Supabase auth storage adapter so sessions persist across launches
 configureStorage({
@@ -29,6 +31,12 @@ function useProtectedRoute() {
   const [navReady, setNavReady] = useState(false);
   const loadFromLocal = usePreferencesStore((s) => s.loadFromLocal);
   const loadFromSupabase = usePreferencesStore((s) => s.loadFromSupabase);
+  const language = usePreferencesStore((s) => s.language);
+
+  // Sync i18n language when preference changes
+  useEffect(() => {
+    activateLanguage(language);
+  }, [language]);
 
   useEffect(() => {
     if (navRef?.isReady()) setNavReady(true);

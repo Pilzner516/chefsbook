@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Im
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { usePinStore } from '../../lib/zustand/pinStore';
@@ -50,6 +51,7 @@ function CookMode({
   onExit: () => void;
 }) {
   useKeepAwake();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState(0);
   const step = steps[currentStep];
@@ -93,7 +95,7 @@ function CookMode({
           </View>
         </View>
         <TouchableOpacity onPress={onExit} style={{ marginTop: 20, alignItems: 'center' }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>Exit cook mode</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{t('recipe.exitCookMode')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -135,6 +137,7 @@ function TimerBadge({ timer }: { timer: ParsedTimer }) {
 
 // --- Cooking Notes section (feature #4) ---
 function CookingNotesSection({ recipeId }: { recipeId: string }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const addNote = useCookingNotesStore((s) => s.addNote);
   const removeNote = useCookingNotesStore((s) => s.removeNote);
@@ -153,9 +156,9 @@ function CookingNotesSection({ recipeId }: { recipeId: string }) {
   return (
     <View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Cooking Notes</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipe.cookingNotes')}</Text>
         <TouchableOpacity onPress={() => setShowInput(!showInput)}>
-          <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{showInput ? 'Cancel' : '+ Add'}</Text>
+          <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{showInput ? t('common.cancel') : t('recipe.addNote')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -164,17 +167,17 @@ function CookingNotesSection({ recipeId }: { recipeId: string }) {
           <Input
             value={text}
             onChangeText={setText}
-            placeholder="How did it turn out? Any adjustments?"
+            placeholder={t('recipe.notePlaceholder')}
             multiline
           />
           <View style={{ marginTop: 8 }}>
-            <Button title="Save Note" onPress={handleAdd} size="sm" />
+            <Button title={t('recipe.saveNote')} onPress={handleAdd} size="sm" />
           </View>
         </View>
       )}
 
       {notes.length === 0 && !showInput && (
-        <Text style={{ color: colors.textSecondary, fontSize: 14 }}>No cooking notes yet. Tap + Add after cooking!</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{t('recipe.noNotes')}</Text>
       )}
 
       {notes.map((note) => (
@@ -271,13 +274,14 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 function SourceSection({ recipe }: { recipe: { source_url: string | null; source_type: string; tags: string[] } }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const sourceLabel = SOURCE_LABELS[recipe.source_type] ?? recipe.source_type;
   const bookmarkFolder = recipe.tags?.find((t) => !['breakfast', 'lunch', 'dinner', 'dessert', 'snack'].includes(t.toLowerCase()));
 
   return (
     <View>
-      <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Source</Text>
+      <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('recipe.sourceLabel')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
         <Badge label={sourceLabel} />
         {bookmarkFolder && <Badge label={bookmarkFolder} color={colors.accentGreen} />}
@@ -285,7 +289,7 @@ function SourceSection({ recipe }: { recipe: { source_url: string | null; source
       {recipe.source_url && (
         <TouchableOpacity onPress={() => Linking.openURL(recipe.source_url!)}>
           <Text style={{ color: colors.accent, fontSize: 14, textDecorationLine: 'underline' }} numberOfLines={1}>
-            View original recipe
+            {t('recipe.viewOriginal')}
           </Text>
           <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
             {recipe.source_url}
@@ -308,6 +312,7 @@ function TagManager({
   recipe: { title: string; cuisine: string | null; ingredients?: { ingredient: string }[]; steps?: { instruction: string }[] };
   onTagsChanged: () => void;
 }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -324,7 +329,7 @@ function TagManager({
       await updateRecipe(recipeId, { tags: [...tags, tag] });
       onTagsChanged();
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert(t('common.errorTitle'), err.message);
     }
   };
 
@@ -333,7 +338,7 @@ function TagManager({
       await updateRecipe(recipeId, { tags: tags.filter((t) => t !== tag) });
       onTagsChanged();
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert(t('common.errorTitle'), err.message);
     }
   };
 
@@ -364,7 +369,7 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
       setSuggestions(cleaned);
       setSelectedSuggestions(new Set());
     } catch (err: any) {
-      Alert.alert('Auto-tag failed', err.message);
+      Alert.alert(t('recipe.autoTagFailed'), err.message);
     } finally {
       setLoadingSuggestions(false);
     }
@@ -378,15 +383,15 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
   return (
     <View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Tags</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipe.tags')}</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <TouchableOpacity onPress={autoTag} disabled={loadingSuggestions}>
             <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>
-              {loadingSuggestions ? 'Thinking...' : '🤖 Auto-tag'}
+              {loadingSuggestions ? 'Thinking...' : t('recipe.autoTag')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowInput(!showInput)}>
-            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{showInput ? 'Cancel' : '+ Add Tag'}</Text>
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{showInput ? t('common.cancel') : t('recipe.addTag')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -394,7 +399,7 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
       {/* Existing tags */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
         {tags.length === 0 && !showInput && suggestions.length === 0 && (
-          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>No tags yet. Tap + Add Tag or Auto-tag.</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{t('recipe.noTags')}</Text>
         )}
         {tags.map((tag) => (
           <View
@@ -423,7 +428,7 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
           <TextInput
             value={inputValue}
             onChangeText={setInputValue}
-            placeholder="Type a tag..."
+            placeholder={t('recipe.tagPlaceholder')}
             placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
@@ -450,7 +455,7 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Add</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{t('common.add')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -458,7 +463,7 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
       {/* AI suggestions — multi-select */}
       {suggestions.length > 0 && (
         <View style={{ marginBottom: 10 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 6 }}>Suggested tags — select then confirm:</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 6 }}>{t('recipe.suggestedTags')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
             {suggestions.map((tag) => {
               const selected = selectedSuggestions.has(tag);
@@ -508,11 +513,11 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
               }}
             >
               <Text style={{ color: selectedSuggestions.size > 0 ? '#fff' : colors.textMuted, fontSize: 13, fontWeight: '600' }}>
-                Add {selectedSuggestions.size > 0 ? `${selectedSuggestions.size} tag${selectedSuggestions.size > 1 ? 's' : ''}` : 'selected'}
+                {selectedSuggestions.size > 0 ? t('recipe.addSelected', { count: selectedSuggestions.size }) : t('recipe.addSelectedDefault')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setSuggestions([]); setSelectedSuggestions(new Set()); }}>
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>Dismiss</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('common.dismiss')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -531,6 +536,7 @@ export default function RecipeDetail() {
 }
 
 function RecipeDetailInner() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -617,7 +623,7 @@ function RecipeDetailInner() {
         }
       } catch {}
       const result = await addItemsPipeline(listId, userId, items, aiSuggestions);
-      Alert.alert('Added!', `${result.inserted} new, ${result.merged} merged in "${listName}"`);
+      Alert.alert(t('recipe.addedTitle'), t('recipe.addedBody', { inserted: result.inserted, merged: result.merged, listName }));
     };
 
     try {
@@ -627,21 +633,21 @@ function RecipeDetailInner() {
         const newList = await addShoppingList(userId, currentRecipe.title);
         await addToList(newList.id, newList.name);
       } else {
-        Alert.alert('Add to Shopping List', 'Which list?', [
+        Alert.alert(t('recipe.addToList'), t('recipe.whichList'), [
           ...lists.slice(0, 5).map((list) => ({
             text: list.name,
             onPress: () => addToList(list.id, list.name),
           })),
-          { text: 'New List', onPress: async () => {
+          { text: t('recipe.newList'), onPress: async () => {
             const newList = await addShoppingList(userId, currentRecipe.title);
             await addToList(newList.id, newList.name);
           }},
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
         ]);
       }
     } catch (err) {
       console.error('[RecipeDetail] shopping list error:', err);
-      Alert.alert('Error', 'Failed to add ingredients to shopping list');
+      Alert.alert(t('common.errorTitle'), t('recipe.failedAddIngredients'));
     }
   };
 
@@ -707,7 +713,7 @@ function RecipeDetailInner() {
       await fetchRecipe(currentRecipe.id);
       setEditing(false);
     } catch (err: any) {
-      Alert.alert('Save failed', err.message);
+      Alert.alert(t('recipe.saveFailed'), err.message);
     } finally {
       setSavingEdit(false);
     }
@@ -731,26 +737,26 @@ function RecipeDetailInner() {
       <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
         <View style={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>Edit Recipe</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>{t('recipe.editRecipe')}</Text>
             <TouchableOpacity onPress={cancelEditing}>
-              <Text style={{ color: colors.accent, fontSize: 15 }}>Cancel</Text>
+              <Text style={{ color: colors.accent, fontSize: 15 }}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Title</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.title')}</Text>
           <TextInput value={editTitle} onChangeText={setEditTitle} style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 16, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 12 }} />
 
           {/* Photo gallery — edit mode */}
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Photos</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.photos')}</Text>
           {session?.user?.id && (
             <EditImageGallery recipeId={currentRecipe.id} userId={session.user.id} editing={true} />
           )}
 
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Description</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.description')}</Text>
           <TextInput value={editDesc} onChangeText={setEditDesc} multiline style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 12, minHeight: 60, textAlignVertical: 'top' }} />
 
           {/* Cuisine chip selector */}
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Cuisine</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>{t('search.cuisine')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, maxHeight: 40 }}>
             {CUISINE_LIST.map((c) => (
               <TouchableOpacity
@@ -772,7 +778,7 @@ function RecipeDetailInner() {
           </ScrollView>
 
           {/* Course chip selector */}
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Course</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>{t('search.course')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12, maxHeight: 40 }}>
             {COURSE_LIST.map((c) => (
               <TouchableOpacity
@@ -794,7 +800,7 @@ function RecipeDetailInner() {
           </ScrollView>
 
           {/* Dietary Flags toggle grid */}
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Dietary Flags</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>{t('recipe.dietaryFlags')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {DIETARY_FLAGS.map((flag) => {
               const active = editDietaryFlags.includes(flag.key);
@@ -840,34 +846,34 @@ function RecipeDetailInner() {
                 <Text style={{ fontSize: 13 }}>🔗</Text>
                 <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>via @{currentRecipe.attributed_to_username}</Text>
               </TouchableOpacity>
-              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>Original source — cannot be removed</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('recipe.originalSource')}</Text>
             </View>
           )}
 
           <Divider />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Ingredients</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipe.ingredients')}</Text>
             <TouchableOpacity onPress={() => setEditIngredients([...editIngredients, { quantity: '', unit: '', ingredient: '', preparation: '', optional: false }])}>
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>+ Add</Text>
+              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('recipe.addIngredient')}</Text>
             </TouchableOpacity>
           </View>
           {editIngredients.map((ing, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: 6, marginBottom: 8, alignItems: 'center' }}>
               <TextInput
-                value={ing.quantity} placeholder="Qty"
+                value={ing.quantity} placeholder={t('recipe.qty')}
                 placeholderTextColor={colors.textSecondary}
                 onChangeText={(v) => { const arr = [...editIngredients]; arr[i] = { ...arr[i], quantity: v }; setEditIngredients(arr); }}
                 style={{ width: 50, backgroundColor: colors.bgBase, borderRadius: 6, padding: 8, fontSize: 13, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, textAlign: 'center' }}
                 keyboardType="decimal-pad"
               />
               <TextInput
-                value={ing.unit} placeholder="Unit"
+                value={ing.unit} placeholder={t('recipe.unit')}
                 placeholderTextColor={colors.textSecondary}
                 onChangeText={(v) => { const arr = [...editIngredients]; arr[i] = { ...arr[i], unit: v }; setEditIngredients(arr); }}
                 style={{ width: 55, backgroundColor: colors.bgBase, borderRadius: 6, padding: 8, fontSize: 13, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault }}
               />
               <TextInput
-                value={ing.ingredient} placeholder="Ingredient"
+                value={ing.ingredient} placeholder={t('recipe.ingredientLabel')}
                 placeholderTextColor={colors.textSecondary}
                 onChangeText={(v) => { const arr = [...editIngredients]; arr[i] = { ...arr[i], ingredient: v }; setEditIngredients(arr); }}
                 style={{ flex: 1, backgroundColor: colors.bgBase, borderRadius: 6, padding: 8, fontSize: 13, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault }}
@@ -880,9 +886,9 @@ function RecipeDetailInner() {
 
           <Divider />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Steps</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipe.steps')}</Text>
             <TouchableOpacity onPress={() => setEditSteps([...editSteps, { instruction: '', timer_minutes: '' }])}>
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>+ Add</Text>
+              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('recipe.addStep')}</Text>
             </TouchableOpacity>
           </View>
           {editSteps.map((step, i) => (
@@ -892,7 +898,7 @@ function RecipeDetailInner() {
               </View>
               <View style={{ flex: 1 }}>
                 <TextInput
-                  value={step.instruction} placeholder="Step instruction..."
+                  value={step.instruction} placeholder={t('recipe.stepPlaceholder')}
                   placeholderTextColor={colors.textSecondary}
                   multiline
                   onChangeText={(v) => { const arr = [...editSteps]; arr[i] = { ...arr[i], instruction: v }; setEditSteps(arr); }}
@@ -906,10 +912,10 @@ function RecipeDetailInner() {
           ))}
 
           <Divider />
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>Notes</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.notes')}</Text>
           <TextInput value={editNotes} onChangeText={setEditNotes} multiline style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 16, minHeight: 60, textAlignVertical: 'top' }} />
 
-          <Button title={savingEdit ? 'Saving...' : 'Save Changes'} onPress={saveEditing} disabled={savingEdit} />
+          <Button title={savingEdit ? t('recipe.saving') : t('common.save')} onPress={saveEditing} disabled={savingEdit} />
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
@@ -952,14 +958,14 @@ function RecipeDetailInner() {
               try {
                 const versions = await getRecipeVersions(parentId);
                 Alert.alert(
-                  'Recipe Versions',
+                  t('recipes.recipeVersions'),
                   versions.map((v) => `Version ${v.version_number}${v.version_label ? ` — ${v.version_label}` : ''}: ${v.title}`).join('\n'),
                   [
                     ...versions.filter((v) => v.id !== recipe.id).map((v) => ({
                       text: `V${v.version_number}${v.version_label ? ` (${v.version_label})` : ''}`,
                       onPress: () => router.push(`/recipe/${v.id}`),
                     })),
-                    { text: 'Cancel', style: 'cancel' as const },
+                    { text: t('common.cancel'), style: 'cancel' as const },
                   ],
                 );
               } catch {}
@@ -967,7 +973,7 @@ function RecipeDetailInner() {
             style={{ marginBottom: 8 }}
           >
             <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>
-              Version {recipe.version_number}{recipe.version_label ? ` · ${recipe.version_label}` : ''} — tap to switch
+              {t('recipe.version')} {recipe.version_number}{recipe.version_label ? ` · ${recipe.version_label}` : ''} — {t('recipe.tapToSwitch')}
             </Text>
           </TouchableOpacity>
         )}
@@ -1008,7 +1014,7 @@ function RecipeDetailInner() {
           }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
               <Text style={{ fontSize: 16, marginRight: 6 }}>{'\u26A0\uFE0F'}</Text>
-              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>Some sections could not be imported</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>{t('recipe.missingSection')}</Text>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
               {(recipe.missing_sections ?? []).map((section: string) => (
@@ -1021,21 +1027,21 @@ function RecipeDetailInner() {
               <TouchableOpacity
                 onPress={() => {
                   if (recipe.source_url) {
-                    Alert.alert('Reimport', 'Re-fetch this recipe from the original URL?', [
-                      { text: 'Cancel' },
-                      { text: 'Reimport', onPress: () => Alert.alert('Coming soon', 'Reimport will be available soon.') },
+                    Alert.alert(t('recipe.reimportTitle'), t('recipe.reimportBody'), [
+                      { text: t('common.cancel') },
+                      { text: t('recipe.reimportTitle'), onPress: () => Alert.alert(t('recipe.comingSoon'), t('recipe.reimportSoon')) },
                     ]);
                   }
                 }}
                 style={{ flex: 1, backgroundColor: colors.bgCard, borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
               >
-                <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>Try reimporting</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>{t('recipe.tryReimport')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => Alert.alert('aiChef', 'aiChef completion will suggest missing content based on the recipe title and available data.')}
+                onPress={() => Alert.alert('aiChef', t('recipe.aiChefBody'))}
                 style={{ flex: 1, backgroundColor: colors.accentGreenSoft, borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
               >
-                <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600' }}>{'\u2728'} Complete with aiChef</Text>
+                <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600' }}>{'\u2728'} {t('recipe.completeAiChef')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1045,7 +1051,7 @@ function RecipeDetailInner() {
         {recipe.aichef_assisted && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
             <View style={{ backgroundColor: colors.accentGreenSoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
-              <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '700' }}>{'\u2728'} aiChef assisted</Text>
+              <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '700' }}>{'\u2728'} {t('recipe.aiChefAssisted')}</Text>
             </View>
           </View>
         )}
@@ -1116,7 +1122,7 @@ function RecipeDetailInner() {
         {ingredients.length > 0 && (
           <View style={{ marginBottom: 10 }}>
             <Button
-              title="🛒 Add to Shopping List"
+              title={`🛒 ${t('recipe.addToList')}`}
               onPress={() => handleAddToShoppingList()}
               variant="secondary"
             />
@@ -1125,7 +1131,7 @@ function RecipeDetailInner() {
 
         {steps.length > 0 && (
           <View style={{ marginBottom: 16 }}>
-            <Button title="Cook Mode" onPress={() => setCookMode(true)} />
+            <Button title={t('recipe.cookMode')} onPress={() => setCookMode(true)} />
           </View>
         )}
 
@@ -1134,7 +1140,7 @@ function RecipeDetailInner() {
         {/* Ingredients with serving scaler */}
         {ingredients.length > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Ingredients</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipe.ingredients')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <TouchableOpacity onPress={() => setServings((s) => Math.max(1, s - 1))}>
                 <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '700' }}>-</Text>
@@ -1161,7 +1167,7 @@ function RecipeDetailInner() {
 
         {/* Steps with auto-detected timers (feature #1) */}
         {steps.length > 0 && (
-          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Steps</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('recipe.steps')}</Text>
         )}
         {steps.map((step) => {
           const timers = parseTimers(step.instruction ?? '');
@@ -1194,7 +1200,7 @@ function RecipeDetailInner() {
         {recipe.notes && (
           <>
             <Divider />
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Notes</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>{t('recipe.notes')}</Text>
             {recipe.notes
               .split(/\n+/)
               .flatMap((line: string) =>
@@ -1228,11 +1234,11 @@ function RecipeDetailInner() {
 
         <Divider />
         <Button
-          title="Delete Recipe"
+          title={t('recipe.deleteRecipe')}
           onPress={() => {
-            Alert.alert('Delete Recipe', 'Are you sure?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Delete', style: 'destructive', onPress: async () => { await removeRecipe(recipe.id); router.back(); } },
+            Alert.alert(t('recipe.deleteRecipe'), t('recipe.areYouSure'), [
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('common.delete'), style: 'destructive', onPress: async () => { await removeRecipe(recipe.id); router.back(); } },
             ]);
           }}
           variant="ghost"

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 // TODO(web): show image picker after Speak a Recipe save if no image
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +36,7 @@ type Step = 1 | 2 | 3;
 
 export default function SpeakScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
@@ -104,7 +106,7 @@ export default function SpeakScreen() {
       setError('');
       const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!result.granted) {
-        setError('Microphone permission required');
+        setError(t('speak.micRequired'));
         return;
       }
       ExpoSpeechRecognitionModule.start({
@@ -125,9 +127,9 @@ export default function SpeakScreen() {
   };
 
   const clearTranscript = () => {
-    Alert.alert('Clear your recording?', '', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: () => {
+    Alert.alert(t('speak.clearRecording'), '', [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.clear'), style: 'destructive', onPress: () => {
         setFinalTranscript('');
         setInterimTranscript('');
         interimRef.current = '';
@@ -143,8 +145,8 @@ export default function SpeakScreen() {
     setGenerating(true);
     setError('');
     try {
-      setGenStep('Reading your recipe...');
-      setGenStep('Extracting ingredients & steps...');
+      setGenStep(t('speak.readingRecipe'));
+      setGenStep(t('speak.extractingSteps'));
       const result = await formatVoiceRecipe(fullText);
       if (!result) throw new Error('Could not extract a recipe. Try speaking with more detail.');
       setRecipe(result);
@@ -186,7 +188,7 @@ export default function SpeakScreen() {
   // ── Progress bar ──
   const ProgressBar = () => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-      {[{ n: 1, label: 'Record' }, { n: 2, label: 'Review' }, { n: 3, label: 'Recipe' }].map(({ n, label }, i) => (
+      {[{ n: 1, label: t('speak.record') }, { n: 2, label: t('speak.review') }, { n: 3, label: t('speak.recipe') }].map(({ n, label }, i) => (
         <View key={n} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 8 }}>
           <View style={{
             width: 28, height: 28, borderRadius: 14,
@@ -204,7 +206,7 @@ export default function SpeakScreen() {
 
   // ── Step 1: Record ──
   if (step === 1) {
-    const micLabel = recording ? 'Tap to pause' : fullTranscript.length > 0 ? 'Tap to continue' : 'Tap to speak';
+    const micLabel = recording ? t('speak.tapToPause') : fullTranscript.length > 0 ? t('speak.tapToContinue') : t('speak.tapToSpeak');
     const hasContent = finalTranscript.length > 0 || interimTranscript.length > 0;
 
     return (
@@ -217,7 +219,7 @@ export default function SpeakScreen() {
 
           {/* Instructions */}
           <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', marginBottom: 24 }}>
-            Speak your recipe naturally — name, ingredients, steps
+            {t('speak.speakNaturally')}
           </Text>
 
           {/* Mic button */}
@@ -236,7 +238,7 @@ export default function SpeakScreen() {
               {micLabel}
             </Text>
             <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
-              {recording ? `Listening in ${langName}...` : ''}
+              {recording ? t('speak.listeningIn', { language: langName }) : ''}
             </Text>
           </View>
 
@@ -256,7 +258,7 @@ export default function SpeakScreen() {
                 {recording && (
                   <>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, marginRight: 8 }} />
-                    <Text style={{ fontSize: 11, color: colors.accent }}>Recording...</Text>
+                    <Text style={{ fontSize: 11, color: colors.accent }}>{t('speak.recording')}</Text>
                   </>
                 )}
                 <View style={{ flex: 1 }} />
@@ -281,7 +283,7 @@ export default function SpeakScreen() {
                 </Text>
               ) : (
                 <Text style={{ fontSize: 14, color: colors.textMuted, fontStyle: 'italic', textAlign: 'center', marginTop: 20 }}>
-                  Your recipe will appear here as you speak...
+                  {t('speak.willAppear')}
                 </Text>
               )}
             </ScrollView>
@@ -310,7 +312,7 @@ export default function SpeakScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>Extract Recipe</Text>
+            <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>{t('speak.extractRecipe')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -323,8 +325,8 @@ export default function SpeakScreen() {
       <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20, paddingBottom: tabBarHeight }}>
         <ProgressBar />
 
-        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 4 }}>Review what was captured</Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 16 }}>Fix any mistakes before we generate your recipe.</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 4 }}>{t('speak.reviewCaptured')}</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 16 }}>{t('speak.fixMistakes')}</Text>
 
         <TextInput
           value={fullTranscript}
@@ -337,14 +339,14 @@ export default function SpeakScreen() {
             borderWidth: 1, borderColor: colors.borderDefault,
           }}
         />
-        <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4, marginBottom: 16 }}>{fullTranscript.length} characters</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4, marginBottom: 16 }}>{t('speak.characters', { count: fullTranscript.length })}</Text>
 
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Button title="Re-record" onPress={() => setStep(1)} variant="ghost" />
+            <Button title={t('speak.reRecord')} onPress={() => setStep(1)} variant="ghost" />
           </View>
           <View style={{ flex: 1 }}>
-            <Button title="Generate Recipe" onPress={generateRecipe} disabled={!fullTranscript.trim()} />
+            <Button title={t('speak.generateRecipe')} onPress={generateRecipe} disabled={!fullTranscript.trim()} />
           </View>
         </View>
 
@@ -357,7 +359,7 @@ export default function SpeakScreen() {
   if (step === 3 && generating) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgScreen, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Loading message={genStep || 'Creating your recipe...'} />
+        <Loading message={genStep || t('speak.creatingRecipe')} />
       </View>
     );
   }
@@ -386,7 +388,7 @@ export default function SpeakScreen() {
 
         <Divider />
 
-        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Ingredients</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('recipe.ingredients')}</Text>
         {(recipe.ingredients ?? []).map((ing: any, i: number) => (
           <View key={i} style={{ flexDirection: 'row', paddingVertical: 4 }}>
             <Text style={{ color: colors.accent, fontSize: 15, width: 80, textAlign: 'right', marginRight: 12 }}>
@@ -400,7 +402,7 @@ export default function SpeakScreen() {
 
         <Divider />
 
-        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Steps</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('recipe.steps')}</Text>
         {(recipe.steps ?? []).map((s: any, i: number) => (
           <View key={i} style={{ flexDirection: 'row', marginBottom: 12 }}>
             <View style={{
@@ -417,7 +419,7 @@ export default function SpeakScreen() {
         <Divider />
 
         {/* Cover photo picker */}
-        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Cover Photo</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>{t('speak.coverPhoto')}</Text>
         {coverImageUri ? (
           <View style={{ marginBottom: 16 }}>
             <Image source={{ uri: coverImageUri }} style={{ width: '100%', height: 160, borderRadius: 12 }} resizeMode="cover" />
@@ -442,7 +444,7 @@ export default function SpeakScreen() {
               }}
             >
               <Ionicons name="camera-outline" size={20} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>Take Photo</Text>
+              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('speak.takePhoto')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={async () => {
@@ -456,7 +458,7 @@ export default function SpeakScreen() {
               }}
             >
               <Ionicons name="images-outline" size={20} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>From Library</Text>
+              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('speak.fromLibrary')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -464,9 +466,9 @@ export default function SpeakScreen() {
         {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginBottom: 12 }}>{error}</Text> : null}
 
         <View style={{ gap: 12, marginBottom: 32 }}>
-          <Button title={saving ? 'Saving...' : 'Save to My Recipes'} onPress={saveRecipe} disabled={saving} />
-          <Button title="Re-generate" onPress={() => { setRecipe(null); generateRecipe(); }} variant="secondary" />
-          <Button title="Edit Transcript" onPress={() => setStep(2)} variant="ghost" />
+          <Button title={saving ? t('recipe.saving') : t('speak.saveToRecipes')} onPress={saveRecipe} disabled={saving} />
+          <Button title={t('speak.reGenerate')} onPress={() => { setRecipe(null); generateRecipe(); }} variant="secondary" />
+          <Button title={t('speak.editTranscript')} onPress={() => setStep(2)} variant="ghost" />
         </View>
       </ScrollView>
     );

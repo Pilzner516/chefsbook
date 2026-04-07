@@ -3,9 +3,11 @@ import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 export default function LandingScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
@@ -55,7 +57,7 @@ export default function LandingScreen() {
         marginBottom: 32,
         fontFamily,
       }}>
-        Your recipes, beautifully organized
+        {t('landing.tagline')}
       </Text>
 
       {/* Sign In button */}
@@ -70,7 +72,7 @@ export default function LandingScreen() {
           justifyContent: 'center',
         }}
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>Sign In</Text>
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>{t('landing.signIn')}</Text>
       </TouchableOpacity>
 
       {/* Create Account button */}
@@ -88,14 +90,14 @@ export default function LandingScreen() {
           marginTop: 16,
         }}
       >
-        <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700' }}>Create Account</Text>
+        <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700' }}>{t('landing.createAccount')}</Text>
       </TouchableOpacity>
 
       {/* Continue as guest */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, width: '100%' }}>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.borderDefault }} />
         <TouchableOpacity onPress={() => router.push('/(tabs)/' as any)} style={{ paddingHorizontal: 16 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 13 }}>Continue as guest</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('landing.continueGuest')}</Text>
         </TouchableOpacity>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.borderDefault }} />
       </View>

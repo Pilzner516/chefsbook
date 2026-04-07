@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient } from '@chefsbook/db';
@@ -19,34 +20,35 @@ interface ActiveFilter {
   label: string;
 }
 
-const CATEGORIES: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
-  { key: 'cuisine', label: 'Cuisine', icon: 'earth-outline' },
-  { key: 'course', label: 'Course', icon: 'restaurant-outline' },
-  { key: 'ingredient', label: 'Ingredient', icon: 'nutrition-outline' },
-  { key: 'dietary', label: 'Dietary', icon: 'leaf-outline' },
-  { key: 'tags', label: 'Tags', icon: 'pricetag-outline' },
-  { key: 'time', label: 'Cook Time', icon: 'time-outline' },
-  { key: 'source', label: 'Source', icon: 'link-outline' },
-  { key: 'favourites', label: 'Favorites', icon: 'heart' },
+const CATEGORIES: { key: string; labelKey: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { key: 'cuisine', labelKey: 'search.cuisine', icon: 'earth-outline' },
+  { key: 'course', labelKey: 'search.course', icon: 'restaurant-outline' },
+  { key: 'ingredient', labelKey: 'search.ingredient', icon: 'nutrition-outline' },
+  { key: 'dietary', labelKey: 'search.dietary', icon: 'leaf-outline' },
+  { key: 'tags', labelKey: 'search.tags', icon: 'pricetag-outline' },
+  { key: 'time', labelKey: 'search.cookTime', icon: 'time-outline' },
+  { key: 'source', labelKey: 'search.source', icon: 'link-outline' },
+  { key: 'favourites', labelKey: 'search.favorites', icon: 'heart' },
 ];
 
-const DISCOVER_CATEGORIES: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
-  { key: 'cuisine', label: 'Cuisine', icon: 'earth-outline' },
-  { key: 'course', label: 'Course', icon: 'restaurant-outline' },
-  { key: 'dietary', label: 'Dietary', icon: 'leaf-outline' },
+const DISCOVER_CATEGORIES: { key: string; labelKey: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { key: 'cuisine', labelKey: 'search.cuisine', icon: 'earth-outline' },
+  { key: 'course', labelKey: 'search.course', icon: 'restaurant-outline' },
+  { key: 'dietary', labelKey: 'search.dietary', icon: 'leaf-outline' },
 ];
 
 // Use CUISINE_LIST and COURSE_LIST from @chefsbook/ui
-const TIME_OPTIONS = [
-  { label: 'Under 15 min', value: 15 },
-  { label: 'Under 30 min', value: 30 },
-  { label: 'Under 60 min', value: 60 },
-  { label: 'Under 2 hours', value: 120 },
+const TIME_OPTION_KEYS = [
+  { labelKey: 'search.under15', value: 15 },
+  { labelKey: 'search.under30', value: 30 },
+  { labelKey: 'search.under60', value: 60 },
+  { labelKey: 'search.under2h', value: 120 },
 ];
 const SOURCE_OPTIONS = ['url', 'scan', 'manual', 'voice', 'youtube'];
 
 export default function SearchTab() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const searchRef = useRef<TextInput>(null);
@@ -178,9 +180,9 @@ export default function SearchTab() {
     setCloning(recipeId);
     try {
       await cloneRecipe(recipeId, session.user.id);
-      Alert.alert('Added!', 'Recipe added to your collection.');
+      Alert.alert(t('search.addedTitle'), t('search.addedMessage'));
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Failed to clone recipe');
+      Alert.alert(t('common.error'), e.message ?? t('search.cloneFailed'));
     }
     setCloning(null);
   };
@@ -204,9 +206,9 @@ export default function SearchTab() {
     switch (key) {
       case 'cuisine': return CUISINE_LIST.map((v) => ({ label: v, value: v }));
       case 'course': return COURSE_LIST.map((v) => ({ label: v, value: v.toLowerCase() }));
-      case 'time': return TIME_OPTIONS.map((v) => ({ label: v.label, value: String(v.value) }));
+      case 'time': return TIME_OPTION_KEYS.map((v) => ({ label: t(v.labelKey), value: String(v.value) }));
       case 'source': return SOURCE_OPTIONS.map((v) => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }));
-      case 'favourites': return [{ label: 'Favorites only', value: 'true' }];
+      case 'favourites': return [{ label: t('search.favoritesOnly'), value: 'true' }];
       case 'dietary': return DIETARY_FLAGS.map((f) => ({ label: `${f.emoji} ${f.label}`, value: f.key }));
       case 'ingredient': return []; // ingredient uses text input, not chips
       case 'tags': return []; // tags use text input
@@ -251,7 +253,7 @@ export default function SearchTab() {
                 fontWeight: '600',
               }}
             >
-              My Recipes
+              {t('search.myRecipes')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -272,7 +274,7 @@ export default function SearchTab() {
                 fontWeight: '600',
               }}
             >
-              Discover
+              {t('search.discover')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -296,7 +298,7 @@ export default function SearchTab() {
             ref={searchRef}
             value={query}
             onChangeText={setQuery}
-            placeholder={mode === 'my' ? 'Search recipes...' : 'Discover recipes...'}
+            placeholder={mode === 'my' ? t('search.searchRecipes') : t('search.discoverRecipes')}
             placeholderTextColor={colors.textMuted}
             style={{
               flex: 1,
@@ -349,7 +351,7 @@ export default function SearchTab() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Clear all</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('search.clearAll')}</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -359,7 +361,7 @@ export default function SearchTab() {
         {!hasSearched && (
           <View style={{ padding: 16, paddingTop: 8 }}>
             <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
-              {mode === 'my' ? 'Browse by Category' : 'Explore by Category'}
+              {mode === 'my' ? t('search.browseCategory') : t('search.exploreCategory')}
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
               {categories.map((cat) => (
@@ -371,7 +373,7 @@ export default function SearchTab() {
                       if (isActive) {
                         removeFilter('favourites', 'true');
                       } else {
-                        addFilter('favourites', 'true', 'Favorites only');
+                        addFilter('favourites', 'true', t('search.favoritesOnly'));
                       }
                       return;
                     }
@@ -410,7 +412,7 @@ export default function SearchTab() {
                       marginTop: 8,
                     }}
                   >
-                    {cat.label}
+                    {t(cat.labelKey)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -420,7 +422,7 @@ export default function SearchTab() {
             <FilterBottomSheet
               visible={!!filterSheetCategory}
               category={filterSheetCategory}
-              categoryLabel={categories.find((c) => c.key === filterSheetCategory)?.label ?? ''}
+              categoryLabel={filterSheetCategory ? t(categories.find((c) => c.key === filterSheetCategory)?.labelKey ?? '') : ''}
               options={filterSheetCategory ? getSubcategoryOptions(filterSheetCategory) : []}
               activeFilters={activeFilters}
               search={filterSheetSearch}
@@ -444,7 +446,7 @@ export default function SearchTab() {
             {expandedCategory && (
               <View style={{ marginTop: 16 }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>
-                  {categories.find((c) => c.key === expandedCategory)?.label}
+                  {t(categories.find((c) => c.key === expandedCategory)?.labelKey ?? '')}
                 </Text>
 
                 {/* Ingredient: text input */}
@@ -453,7 +455,7 @@ export default function SearchTab() {
                     <TextInput
                       value={ingredientInput}
                       onChangeText={setIngredientInput}
-                      placeholder="e.g. chicken, tahini..."
+                      placeholder={t('search.ingredientPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                       returnKeyType="done"
                       onSubmitEditing={() => {
@@ -499,7 +501,7 @@ export default function SearchTab() {
                     <TextInput
                       value={tagInput}
                       onChangeText={setTagInput}
-                      placeholder="Search by tag..."
+                      placeholder={t('search.tagPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                       autoCapitalize="none"
                       returnKeyType="done"
@@ -583,25 +585,25 @@ export default function SearchTab() {
         )}
 
         {/* Results */}
-        {loading && <Loading message="Searching..." />}
+        {loading && <Loading message={t('common.loading')} />}
 
         {hasSearched && !loading && (
           <View style={{ padding: 16, paddingTop: 0 }}>
             <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 12 }}>
-              {results.length} {results.length === 1 ? 'recipe' : 'recipes'} found
+              {t('search.recipesFound', { count: results.length })}
             </Text>
             {results.length === 0 ? (
               mode === 'discover' ? (
                 <EmptyState
                   icon="🌍"
-                  title="No public recipes yet"
-                  message="Be the first to share one!"
+                  title={t('search.noPublicRecipes')}
+                  message={t('search.beFirstToShare')}
                 />
               ) : (
                 <EmptyState
                   icon="🔍"
-                  title="No recipes match"
-                  message="Try different filters or search terms."
+                  title={t('search.noMatch')}
+                  message={t('search.tryDifferent')}
                 />
               )
             ) : (
@@ -634,7 +636,7 @@ export default function SearchTab() {
                     >
                       <Ionicons name="add-circle-outline" size={18} color={colors.accentGreen} />
                       <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
-                        {cloning === recipe.id ? 'Adding...' : 'Add to my collection'}
+                        {cloning === recipe.id ? t('search.adding') : t('search.addToCollection')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -669,6 +671,7 @@ function FilterBottomSheet({
   onAddText: (type: string, value: string, label: string) => void;
   colors: any;
 }) {
+  const { t } = useTranslation();
   const isTextInput = category === 'ingredient' || category === 'tags';
   const [textValue, setTextValue] = useState('');
 
@@ -684,10 +687,10 @@ function FilterBottomSheet({
         <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '75%', paddingTop: 16 }}>
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Filter by {categoryLabel}</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('search.filterBy', { category: categoryLabel })}</Text>
             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
               <TouchableOpacity onPress={onClear}>
-                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Clear</Text>
+                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('common.clear')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color={colors.textMuted} />
@@ -701,7 +704,7 @@ function FilterBottomSheet({
               <TextInput
                 value={textValue}
                 onChangeText={setTextValue}
-                placeholder={category === 'ingredient' ? 'e.g. chicken, tahini...' : 'Type a tag...'}
+                placeholder={category === 'ingredient' ? t('search.ingredientPlaceholder') : t('search.tagPlaceholder')}
                 placeholderTextColor={colors.textSecondary}
                 autoCapitalize="none"
                 returnKeyType="done"
@@ -730,7 +733,7 @@ function FilterBottomSheet({
                   borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center',
                 }}
               >
-                <Text style={{ color: textValue.trim() ? '#fff' : colors.textMuted, fontWeight: '600' }}>Add</Text>
+                <Text style={{ color: textValue.trim() ? '#fff' : colors.textMuted, fontWeight: '600' }}>{t('common.add')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -741,7 +744,7 @@ function FilterBottomSheet({
               <TextInput
                 value={search}
                 onChangeText={onSearchChange}
-                placeholder="Search..."
+                placeholder={t('search.searchPlaceholder')}
                 placeholderTextColor={colors.textSecondary}
                 style={{
                   backgroundColor: colors.bgBase, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
@@ -782,7 +785,7 @@ function FilterBottomSheet({
               onPress={onClose}
               style={{ backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
             >
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Apply</Text>
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('common.apply')}</Text>
             </TouchableOpacity>
           </View>
         </View>

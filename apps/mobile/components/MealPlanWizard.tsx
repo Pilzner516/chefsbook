@@ -1,23 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { generateMealPlan } from '@chefsbook/ai';
 import type { MealPlanSlot } from '@chefsbook/ai';
 import type { Recipe, MealSlot } from '@chefsbook/db';
 
-const DAYS_MAP: Record<string, string> = {
-  monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday',
-  friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
-};
-const DAY_KEYS = Object.keys(DAYS_MAP);
+const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
 const DIETARY_CHIPS = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb', 'Keto', 'Paleo'];
 const CUISINE_CHIPS = ['Italian', 'Asian', 'Mediterranean', 'Mexican', 'American', 'Indian', 'French', 'Japanese'];
-const EFFORT_OPTIONS = [
-  { label: 'Quick (<30min)', value: 'quick' },
-  { label: 'Medium (30-60min)', value: 'medium' },
-  { label: 'Full project', value: 'full' },
+const EFFORT_OPTION_KEYS = [
+  { labelKey: 'wizard.quickEffort', value: 'quick' },
+  { labelKey: 'wizard.mediumEffort', value: 'medium' },
+  { labelKey: 'wizard.fullEffort', value: 'full' },
 ];
 
 interface Props {
@@ -32,6 +29,7 @@ type Step = 1 | 2 | 3 | 4;
 
 export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSave }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>(1);
   const [selectedDays, setSelectedDays] = useState(new Set(DAY_KEYS));
   const [selectedSlots, setSelectedSlots] = useState(new Set(['breakfast', 'lunch', 'dinner']));
@@ -78,7 +76,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
       setPlan(result);
       setStep(4);
     } catch (e: any) {
-      Alert.alert('Generation failed', e.message);
+      Alert.alert(t('wizard.generationFailed'), e.message);
     } finally {
       setGenerating(false);
     }
@@ -124,7 +122,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
       await onSave(slots);
       onClose();
     } catch (e: any) {
-      Alert.alert('Save failed', e.message);
+      Alert.alert(t('wizard.saveFailed'), e.message);
     } finally {
       setSaving(false);
     }
@@ -159,7 +157,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
       <View style={{ flex: 1, backgroundColor: colors.bgScreen, paddingTop: 60 }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 16 }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>AI Meal Planner</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>{t('wizard.title')}</Text>
           <TouchableOpacity onPress={() => { reset(); onClose(); }}>
             <Ionicons name="close" size={24} color={colors.textMuted} />
           </TouchableOpacity>
@@ -175,21 +173,21 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
         {generating ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 16 }}>Generating your meal plan...</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 16 }}>{t('wizard.generating')}</Text>
           </View>
         ) : (
           <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
             {/* Step 1: Days & Meals */}
             {step === 1 && (
               <View>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Days & Meals</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>Which days?</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('wizard.daysAndMeals')}</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>{t('wizard.whichDays')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  {DAY_KEYS.map((d) => <Chip key={d} label={DAYS_MAP[d]!} selected={selectedDays.has(d)} onPress={() => toggleSet(selectedDays, d, setSelectedDays)} />)}
+                  {DAY_KEYS.map((d) => <Chip key={d} label={t(`days.${d}`)} selected={selectedDays.has(d)} onPress={() => toggleSet(selectedDays, d, setSelectedDays)} />)}
                 </View>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8, marginTop: 12 }}>Which meals?</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8, marginTop: 12 }}>{t('wizard.whichMeals')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  {SLOTS.map((s) => <Chip key={s} label={s.charAt(0).toUpperCase() + s.slice(1)} selected={selectedSlots.has(s)} onPress={() => toggleSet(selectedSlots, s, setSelectedSlots)} />)}
+                  {SLOTS.map((s) => <Chip key={s} label={t(`plan.${s}`)} selected={selectedSlots.has(s)} onPress={() => toggleSet(selectedSlots, s, setSelectedSlots)} />)}
                 </View>
               </View>
             )}
@@ -197,18 +195,18 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
             {/* Step 2: Preferences */}
             {step === 2 && (
               <View>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Preferences</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>Dietary</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('wizard.preferences')}</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>{t('wizard.dietaryLabel')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {DIETARY_CHIPS.map((d) => <Chip key={d} label={d} selected={dietary.includes(d)} onPress={() => toggleArray(dietary, d, setDietary)} />)}
                 </View>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8, marginTop: 12 }}>Cuisine</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8, marginTop: 12 }}>{t('wizard.cuisineLabel')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {CUISINE_CHIPS.map((c) => <Chip key={c} label={c} selected={cuisines.includes(c)} onPress={() => toggleArray(cuisines, c, setCuisines)} />)}
                 </View>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8, marginTop: 12 }}>Effort level</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8, marginTop: 12 }}>{t('wizard.effortLevel')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                  {EFFORT_OPTIONS.map((o) => <Chip key={o.value} label={o.label} selected={effort === o.value} onPress={() => setEffort(o.value)} />)}
+                  {EFFORT_OPTION_KEYS.map((o) => <Chip key={o.value} label={t(o.labelKey)} selected={effort === o.value} onPress={() => setEffort(o.value)} />)}
                 </View>
               </View>
             )}
@@ -216,11 +214,11 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
             {/* Step 3: Sources */}
             {step === 3 && (
               <View>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Recipe Sources</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('wizard.recipeSources')}</Text>
                 {[
-                  { value: 'my_recipes' as const, label: 'From my recipes only', desc: 'Claude picks from your collection' },
-                  { value: 'mix' as const, label: 'Mix my recipes + AI suggestions', desc: 'Best of both worlds' },
-                  { value: 'community' as const, label: 'Let AI suggest anything', desc: 'Claude creates new ideas' },
+                  { value: 'my_recipes' as const, label: t('wizard.fromMyRecipes'), desc: t('wizard.fromMyRecipesDesc') },
+                  { value: 'mix' as const, label: t('wizard.mixRecipes'), desc: t('wizard.mixRecipesDesc') },
+                  { value: 'community' as const, label: t('wizard.aiSuggest'), desc: t('wizard.aiSuggestDesc') },
                 ].map((opt) => (
                   <TouchableOpacity
                     key={opt.value}
@@ -241,10 +239,10 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
             {/* Step 4: Review */}
             {step === 4 && (
               <View>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>Review Your Plan</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('wizard.reviewPlan')}</Text>
                 {DAY_KEYS.filter((d) => plan.some((p) => p.day === d)).map((day) => (
                   <View key={day} style={{ marginBottom: 16 }}>
-                    <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{DAYS_MAP[day]}</Text>
+                    <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{t(`days.${day}`)}</Text>
                     {plan.filter((p) => p.day === day).map((slot) => (
                       <View key={`${slot.day}-${slot.slot}`} style={{
                         flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgCard,
@@ -278,7 +276,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
                 onPress={() => setStep((s) => (s - 1) as Step)}
                 style={{ flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
               >
-                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Back</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{t('common.back')}</Text>
               </TouchableOpacity>
             )}
             {step < 3 && (
@@ -286,7 +284,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
                 onPress={() => setStep((s) => (s + 1) as Step)}
                 style={{ flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Next</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('common.next')}</Text>
               </TouchableOpacity>
             )}
             {step === 3 && (
@@ -294,7 +292,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
                 onPress={handleGenerate}
                 style={{ flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Generate Plan</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('wizard.generatePlan')}</Text>
               </TouchableOpacity>
             )}
             {step === 4 && (
@@ -303,14 +301,14 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
                   onPress={() => setStep(3)}
                   style={{ flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
                 >
-                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Re-generate</Text>
+                  <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{t('speak.reGenerate')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleSave}
                   disabled={saving || plan.length === 0}
                   style={{ flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center', opacity: saving ? 0.6 : 1 }}
                 >
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{saving ? 'Saving...' : 'Save Plan'}</Text>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{saving ? t('common.loading') : t('wizard.savePlan')}</Text>
                 </TouchableOpacity>
               </>
             )}

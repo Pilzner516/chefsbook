@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
@@ -9,6 +10,7 @@ import { createRecipeVersion } from '@chefsbook/db';
 import type { ScannedRecipe } from '@chefsbook/db';
 
 export default function NewRecipe() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const router = useRouter();
   const { parentId } = useLocalSearchParams<{ parentId?: string }>();
@@ -27,7 +29,7 @@ export default function NewRecipe() {
 
   const handleSave = async () => {
     if (!title.trim() || !session?.user?.id) {
-      Alert.alert('Error', 'Please enter a recipe title.');
+      Alert.alert(t('common.errorTitle'), t('recipe.enterTitle'));
       return;
     }
 
@@ -80,7 +82,7 @@ export default function NewRecipe() {
       }
       router.replace(`/recipe/${created.id}`);
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('common.errorTitle'), e.message);
     } finally {
       setSaving(false);
     }
@@ -89,38 +91,38 @@ export default function NewRecipe() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
       <View style={{ padding: 16, gap: 16 }}>
-        <Input value={title} onChangeText={setTitle} placeholder="Recipe title *" />
-        <Input value={description} onChangeText={setDescription} placeholder="Description (optional)" multiline />
+        <Input value={title} onChangeText={setTitle} placeholder={t('recipe.recipeTitle')} />
+        <Input value={description} onChangeText={setDescription} placeholder={t('recipe.descOptional')} multiline />
 
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Input value={servings} onChangeText={setServings} placeholder="Servings" keyboardType="numeric" />
+            <Input value={servings} onChangeText={setServings} placeholder={t('recipe.servings')} keyboardType="numeric" />
           </View>
           <View style={{ flex: 1 }}>
-            <Input value={prepMinutes} onChangeText={setPrepMinutes} placeholder="Prep (min)" keyboardType="numeric" />
+            <Input value={prepMinutes} onChangeText={setPrepMinutes} placeholder={t('recipe.prepMin')} keyboardType="numeric" />
           </View>
           <View style={{ flex: 1 }}>
-            <Input value={cookMinutes} onChangeText={setCookMinutes} placeholder="Cook (min)" keyboardType="numeric" />
+            <Input value={cookMinutes} onChangeText={setCookMinutes} placeholder={t('recipe.cookMin')} keyboardType="numeric" />
           </View>
         </View>
 
-        <Input value={cuisine} onChangeText={setCuisine} placeholder="Cuisine (e.g. Italian)" />
+        <Input value={cuisine} onChangeText={setCuisine} placeholder={t('recipe.cuisineHint')} />
 
         <Card>
-          <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>Ingredients</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>One ingredient per line</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>{t('recipe.ingredients')}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>{t('recipe.onePerLine')}</Text>
           <Input value={ingredientsText} onChangeText={setIngredientsText} placeholder="2 cups flour\n1 tsp salt\n..." multiline />
         </Card>
 
         <Card>
-          <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>Steps</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>One step per line</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>{t('recipe.steps')}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>{t('recipe.stepsOnePerLine')}</Text>
           <Input value={stepsText} onChangeText={setStepsText} placeholder="Mix dry ingredients\nAdd wet ingredients\n..." multiline />
         </Card>
 
-        <Input value={notes} onChangeText={setNotes} placeholder="Notes (optional)" multiline />
+        <Input value={notes} onChangeText={setNotes} placeholder={t('recipe.notesOptional')} multiline />
 
-        <Button title="Save Recipe" onPress={handleSave} loading={saving} disabled={!title.trim()} />
+        <Button title={t('recipe.saveRecipe')} onPress={handleSave} loading={saving} disabled={!title.trim()} />
         <View style={{ height: 40 }} />
       </View>
     </ScrollView>

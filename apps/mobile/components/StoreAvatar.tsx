@@ -3,20 +3,31 @@ import { View, Text, Image } from 'react-native';
 
 // TODO(web): replicate StoreAvatar in apps/web for shopping list parity
 
-const KNOWN_STORE_LOGOS: Record<string, string> = {
-  'whole foods': 'https://logo.clearbit.com/wholefoodsmarket.com',
-  'shoprite': 'https://logo.clearbit.com/shoprite.com',
-  'trader joes': 'https://logo.clearbit.com/traderjoes.com',
-  'stop and shop': 'https://logo.clearbit.com/stopandshop.com',
-  'costco': 'https://logo.clearbit.com/costco.com',
-  'target': 'https://logo.clearbit.com/target.com',
-  'walmart': 'https://logo.clearbit.com/walmart.com',
-  'kroger': 'https://logo.clearbit.com/kroger.com',
-  'publix': 'https://logo.clearbit.com/publix.com',
-  'wegmans': 'https://logo.clearbit.com/wegmans.com',
-  'aldi': 'https://logo.clearbit.com/aldi.us',
-  'deciccos': 'https://logo.clearbit.com/diciccos.com',
+const LOGO_DEV_TOKEN = 'pk_EXpCeGY3QxS0VKVRKTr_pw';
+const LOGO_BASE = `https://img.logo.dev`;
+
+const KNOWN_STORE_DOMAINS: Record<string, string> = {
+  'whole foods': 'wholefoodsmarket.com',
+  'shoprite': 'shoprite.com',
+  'trader joes': 'traderjoes.com',
+  'stop and shop': 'stopandshop.com',
+  'costco': 'costco.com',
+  'target': 'target.com',
+  'walmart': 'walmart.com',
+  'kroger': 'kroger.com',
+  'publix': 'publix.com',
+  'wegmans': 'wegmans.com',
+  'aldi': 'aldi.us',
+  'deciccos': 'diciccos.com',
 };
+
+function buildLogoUrl(domain: string): string {
+  return `${LOGO_BASE}/${domain}?token=${LOGO_DEV_TOKEN}`;
+}
+
+const KNOWN_STORE_LOGOS: Record<string, string> = Object.fromEntries(
+  Object.entries(KNOWN_STORE_DOMAINS).map(([name, domain]) => [name, buildLogoUrl(domain)]),
+);
 
 // Deterministic color from store name
 const PALETTE = [

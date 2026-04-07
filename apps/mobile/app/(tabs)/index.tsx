@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Platform, Modal, ScrollView } from 'react
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
@@ -15,6 +16,7 @@ type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
 
 export default function RecipesTab() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const recipes = useRecipeStore((s) => s.recipes);
@@ -68,7 +70,7 @@ export default function RecipesTab() {
     }
   };
 
-  if (loading && recipes.length === 0) return <Loading message="Loading recipes..." />;
+  if (loading && recipes.length === 0) return <Loading message={t('common.loading')} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
@@ -92,7 +94,7 @@ export default function RecipesTab() {
           }}
         >
           <Ionicons name="search" size={18} color={colors.textMuted} />
-          <Text style={{ color: colors.textMuted, fontSize: 15, marginLeft: 8 }}>Search recipes...</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 15, marginLeft: 8 }}>{t('recipes.searchPlaceholder')}</Text>
         </TouchableOpacity>
 
         {/* Sort button */}
@@ -123,11 +125,11 @@ export default function RecipesTab() {
               }}
             >
               {([
-                { key: 'recent', label: 'Recent' },
-                { key: 'alpha', label: 'A-Z' },
-                { key: 'cuisine', label: 'Cuisine' },
-                { key: 'course', label: 'Course' },
-              ] as const).map((opt) => (
+                { key: 'recent' as SortMode, label: t('recipes.sortRecent') },
+                { key: 'alpha' as SortMode, label: t('recipes.sortAZ') },
+                { key: 'cuisine' as SortMode, label: t('recipes.sortCuisine') },
+                { key: 'course' as SortMode, label: t('recipes.sortCourse') },
+              ]).map((opt) => (
                 <TouchableOpacity
                   key={opt.key}
                   onPress={() => { setSortMode(opt.key); setShowSortMenu(false); }}
@@ -157,7 +159,7 @@ export default function RecipesTab() {
 
       {/* Recipe count */}
       <Text style={{ color: colors.textMuted, fontSize: 12, paddingHorizontal: 16, marginBottom: 8 }}>
-        {topLevelRecipes.length} {topLevelRecipes.length === 1 ? 'recipe' : 'recipes'}
+        {t('recipes.recipeCount', { count: topLevelRecipes.length })}
       </Text>
 
       <FlashList
@@ -187,9 +189,9 @@ export default function RecipesTab() {
         ListEmptyComponent={
           <EmptyState
             icon="👨‍🍳"
-            title="Your recipe collection is empty"
-            message="Import your first recipe to get started."
-            action={{ label: 'Import a Recipe', onPress: () => router.push('/(tabs)/scan') }}
+            title={t('recipes.emptyTitle')}
+            message={t('recipes.emptyMessage')}
+            action={{ label: t('recipes.importRecipe'), onPress: () => router.push('/(tabs)/scan') }}
           />
         }
       />
@@ -200,7 +202,7 @@ export default function RecipesTab() {
           <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', paddingTop: 16 }}>
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 16 }}>
-              <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Recipe Versions</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipes.recipeVersions')}</Text>
               <TouchableOpacity onPress={() => setVersionPickerRecipeId(null)}>
                 <Ionicons name="close" size={24} color={colors.textMuted} />
               </TouchableOpacity>
@@ -215,7 +217,7 @@ export default function RecipesTab() {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700', marginBottom: 2 }}>
-                        Version {v.version_number}{v.version_label ? ` · ${v.version_label}` : ''}
+                        {t('recipe.version')} {v.version_number}{v.version_label ? ` · ${v.version_label}` : ''}
                       </Text>
                       <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '500' }} numberOfLines={1}>{v.title}</Text>
                       {v.description && (
@@ -235,7 +237,7 @@ export default function RecipesTab() {
                 }}
                 style={{ backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>+ Add New Version</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('recipes.addNewVersion')}</Text>
               </TouchableOpacity>
             </View>
           </View>

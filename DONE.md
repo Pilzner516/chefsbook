@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 8)
+- Full i18n system: react-i18next installed, i18n.ts init with lazy-loaded locales, activateLanguage() synced to preferences store
+- Locale files: en.json (350+ keys), fr.json, es.json, it.json, de.json — all fully translated
+- i18n string replacement: every user-visible hardcoded English string replaced with t() calls across all screens and components
+- Language selector wired to i18n: selecting a language immediately translates the entire app UI without restart
+- Shopping list button: replaced hardcoded marginBottom with useSafeAreaInsets().bottom + 16
+- plan.tsx modal safe areas: recipe picker confirmation and shopping list picker both use insets.bottom padding
+- StoreAvatar logo.dev: updated all logo URLs from clearbit.com to img.logo.dev with API token
+
 ## 2026-04-07 (session 7)
 - Search filter bottom sheet: category cards now open a modal with scrollable options, search input for long lists, Clear/Apply buttons
 - FilterBottomSheet component: supports text input (ingredient/tags) and chip selection (cuisine/course/dietary) modes

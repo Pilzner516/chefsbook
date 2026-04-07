@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, ActionSheetIOS, Platform, Modal, TextInput, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
@@ -15,12 +17,12 @@ import { suggestPurchaseUnits } from '@chefsbook/ai';
 import { supabase } from '@chefsbook/db';
 import type { MealSlot, Recipe } from '@chefsbook/db';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const MEAL_SLOTS: { label: string; value: MealSlot }[] = [
-  { label: 'Breakfast', value: 'breakfast' },
-  { label: 'Lunch', value: 'lunch' },
-  { label: 'Dinner', value: 'dinner' },
-  { label: 'Snack', value: 'snack' },
+const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+const MEAL_SLOT_KEYS: { labelKey: string; value: MealSlot }[] = [
+  { labelKey: 'plan.breakfast', value: 'breakfast' },
+  { labelKey: 'plan.lunch', value: 'lunch' },
+  { labelKey: 'plan.dinner', value: 'dinner' },
+  { labelKey: 'plan.snack', value: 'snack' },
 ];
 
 function getWeekDates(startDate: string): string[] {
@@ -38,6 +40,8 @@ function getWeekDates(startDate: string): string[] {
 
 export default function PlanTab() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const recipes = useRecipeStore((s) => s.recipes);
@@ -72,7 +76,7 @@ export default function PlanTab() {
   const [wizardVisible, setWizardVisible] = useState(false);
 
   const showMealActions = (plan: any) => {
-    const options = ['View recipe', 'Remove from plan', 'Cancel'];
+    const options = [t('plan.viewRecipe'), t('plan.removeFromPlan'), t('common.cancel')];
     const destructiveIndex = 1;
     const cancelIndex = 2;
 
@@ -84,11 +88,11 @@ export default function PlanTab() {
     } else {
       Alert.alert(
         (plan as any).recipe?.title ?? plan.meal_slot,
-        'What would you like to do?',
+        '',
         [
-          { text: 'View recipe', onPress: () => plan.recipe_id && router.push(`/recipe/${plan.recipe_id}`) },
-          { text: 'Remove from plan', style: 'destructive', onPress: () => confirmRemove(plan) },
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('plan.viewRecipe'), onPress: () => plan.recipe_id && router.push(`/recipe/${plan.recipe_id}`) },
+          { text: t('plan.removeFromPlan'), style: 'destructive', onPress: () => confirmRemove(plan) },
+          { text: t('common.cancel'), style: 'cancel' },
         ],
       );
     }
@@ -100,9 +104,9 @@ export default function PlanTab() {
   };
 
   const confirmRemove = (plan: any) => {
-    Alert.alert('Remove meal', `Remove "${(plan as any).recipe?.title ?? plan.meal_slot}" from this day?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
+    Alert.alert(t('plan.removeMeal'), t('plan.removeMealBody', { title: (plan as any).recipe?.title ?? plan.meal_slot }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.remove'), style: 'destructive', onPress: async () => {
         await removePlan(plan.id);
         if (session?.user?.id && weekDates.length === 7) {
           fetchWeek(session.user.id, weekDates[0]!, weekDates[6]!);
@@ -165,10 +169,10 @@ export default function PlanTab() {
         await fetchWeek(session.user.id, weekDates[0]!, weekDates[6]!);
       }
       setPickerVisible(false);
-      const dayName = DAYS[weekDates.indexOf(pickerDate)] ?? pickerDate;
-      showToast(`Added to ${dayName} ${selectedSlot}`);
+      const dayName = t(`days.${DAY_KEYS[weekDates.indexOf(pickerDate)]}`);
+      showToast(`${dayName} ${selectedSlot}`);
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert(t('common.error'), err.message);
     } finally {
       setAdding(false);
     }
@@ -179,7 +183,7 @@ export default function PlanTab() {
     const dayPlans = plans.filter((p: any) => p.plan_date === date);
     const recipePlans = dayPlans.filter((p: any) => p.recipe_id);
     if (recipePlans.length === 0) {
-      Alert.alert('No recipes', `No recipes planned for ${DAYS[dayIndex]}.`);
+      Alert.alert(t('plan.noRecipes'), t('plan.noRecipesDay', { day: t(`days.${DAY_KEYS[dayIndex]}`) }));
       return;
     }
     if (session?.user?.id) {
@@ -202,7 +206,7 @@ export default function PlanTab() {
 
       const recipeIds = [...new Set(targetPlans.map((p) => p.recipe_id).filter(Boolean))] as string[];
       if (recipeIds.length === 0) {
-        Alert.alert('No recipes', 'No recipes planned for this day.');
+        Alert.alert(t('plan.noRecipes'), t('plan.noRecipesThisDay'));
         return;
       }
 
@@ -232,8 +236,8 @@ export default function PlanTab() {
 
       if (items.length === 0) {
         Alert.alert(
-          'No ingredients found',
-          'The planned recipes exist but have no ingredients stored. Try editing the recipes to add ingredients.',
+          t('plan.noIngredients'),
+          t('plan.noIngredientsBody'),
         );
         return;
       }
@@ -253,7 +257,7 @@ export default function PlanTab() {
       const result = await addItemsPipeline(listId, session.user.id, items, aiSuggestions);
       showToast(`Added to ${listName}`);
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert(t('common.error'), err.message);
     }
   };
 
@@ -262,7 +266,7 @@ export default function PlanTab() {
     setTimeout(() => setToastMessage(null), 2500);
   };
 
-  if (loading) return <Loading message="Loading meal plan..." />;
+  if (loading) return <Loading message={t('plan.loadingPlan')} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
@@ -283,7 +287,7 @@ export default function PlanTab() {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingBottom: 8 }}>
         <TouchableOpacity onPress={() => navigateWeek(-1)} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
           <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>
-            <Ionicons name="chevron-back" size={16} color={colors.accent} /> Prev
+            <Ionicons name="chevron-back" size={16} color={colors.accent} /> {t('common.prev')}
           </Text>
         </TouchableOpacity>
         <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>
@@ -291,7 +295,7 @@ export default function PlanTab() {
         </Text>
         <TouchableOpacity onPress={() => navigateWeek(1)} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' }}>
           <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>
-            Next <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+            {t('common.next')} <Ionicons name="chevron-forward" size={16} color={colors.accent} />
           </Text>
         </TouchableOpacity>
       </View>
@@ -306,7 +310,7 @@ export default function PlanTab() {
         }}
       >
         <Ionicons name="sparkles" size={18} color={colors.accent} />
-        <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>AI Plan</Text>
+        <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('plan.aiPlan')}</Text>
       </TouchableOpacity>
 
       {/* Add whole week to list */}
@@ -317,7 +321,7 @@ export default function PlanTab() {
               // Use the full week as a single "day" for cart sync
               const allRecipePlans = plans.filter((p: any) => p.recipe_id);
               if (allRecipePlans.length === 0) {
-                Alert.alert('No recipes', 'No recipes planned this week.');
+                Alert.alert(t('plan.noRecipes'), t('plan.noRecipesThisDay'));
                 return;
               }
               openCartPicker(weekDates[0]!, 0);
@@ -332,7 +336,7 @@ export default function PlanTab() {
           }}
         >
           <Ionicons name="cart" size={18} color={colors.accentGreen} />
-          <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600' }}>Add week to shopping list</Text>
+          <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600' }}>{t('plan.addWeekToList')}</Text>
         </TouchableOpacity>
       )}
 
@@ -357,7 +361,7 @@ export default function PlanTab() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <View>
                   <Text style={{ color: colors.accent, fontSize: 18, fontWeight: '700' }}>
-                    {DAYS[i]}
+                    {t(`days.${DAY_KEYS[i]}`)}
                   </Text>
                   <Text style={{ color: colors.textMuted, fontSize: 13 }}>
                     {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -375,12 +379,12 @@ export default function PlanTab() {
                     }}
                   >
                     <Ionicons name="cart-outline" size={14} color={colors.textMuted} />
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>Add to list</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>{t('plan.addToList')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
               {dayPlans.length === 0 ? (
-                <Text style={{ color: colors.textMuted, fontSize: 13 }}>No meals planned</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('plan.noMealsPlanned')}</Text>
               ) : (
                 dayPlans.map((plan: any) => (
                   <TouchableOpacity
@@ -394,7 +398,7 @@ export default function PlanTab() {
                       {plan.meal_slot}
                     </Text>
                     <Text style={{ color: colors.textPrimary, fontSize: 15 }}>
-                      {(plan as any).recipe?.title ?? plan.notes ?? 'No recipe'}
+                      {(plan as any).recipe?.title ?? plan.notes ?? t('plan.noRecipes')}
                     </Text>
                   </TouchableOpacity>
                 ))
@@ -406,7 +410,7 @@ export default function PlanTab() {
                 style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, marginTop: 4 }}
               >
                 <Ionicons name="add-circle-outline" size={18} color={colors.accent} />
-                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 4 }}>Add meal</Text>
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 4 }}>{t('plan.addMeal')}</Text>
               </TouchableOpacity>
             </Card>
           );
@@ -429,7 +433,7 @@ export default function PlanTab() {
               <View style={{ flex: 0, maxHeight: 500 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
                   <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>
-                    Add meal — {pickerDate && DAYS[weekDates.indexOf(pickerDate)]}
+                    {t('plan.addMealDay', { day: pickerDate ? t(`days.${DAY_KEYS[weekDates.indexOf(pickerDate)]}`) : '' })}
                   </Text>
                   <TouchableOpacity onPress={() => setPickerVisible(false)}>
                     <Ionicons name="close" size={24} color={colors.textMuted} />
@@ -439,7 +443,7 @@ export default function PlanTab() {
                   <TextInput
                     value={pickerSearch}
                     onChangeText={setPickerSearch}
-                    placeholder="Search recipes..."
+                    placeholder={t('plan.searchRecipes')}
                     placeholderTextColor={colors.textSecondary}
                     autoFocus
                     style={{
@@ -470,17 +474,17 @@ export default function PlanTab() {
                     </TouchableOpacity>
                   )}
                   ListEmptyComponent={
-                    <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', padding: 20 }}>No recipes found</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', padding: 20 }}>{t('plan.noRecipesFound')}</Text>
                   }
                 />
               </View>
             ) : (
               // Step 2: Confirmation
-              <View style={{ padding: 16 }}>
+              <View style={{ padding: 16, paddingBottom: insets.bottom + 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <TouchableOpacity onPress={() => setSelectedRecipe(null)}>
                     <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>
-                      <Ionicons name="chevron-back" size={16} color={colors.accent} /> Back
+                      <Ionicons name="chevron-back" size={16} color={colors.accent} /> {t('common.back')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setPickerVisible(false)}>
@@ -496,9 +500,9 @@ export default function PlanTab() {
                 </Text>
 
                 {/* Meal type selector */}
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>Meal type</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>{t('plan.mealType')}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
-                  {MEAL_SLOTS.map((slot) => (
+                  {MEAL_SLOT_KEYS.map((slot) => (
                     <TouchableOpacity
                       key={slot.value}
                       onPress={() => setSelectedSlot(slot.value)}
@@ -512,14 +516,14 @@ export default function PlanTab() {
                         color: selectedSlot === slot.value ? '#fff' : colors.textPrimary,
                         fontSize: 13, fontWeight: '600',
                       }}>
-                        {slot.label}
+                        {t(slot.labelKey)}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
 
                 {/* Servings stepper */}
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>How many servings?</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>{t('plan.howManyServings')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 4 }}>
                   <TouchableOpacity
                     onPress={() => setPlanServings(Math.max(1, planServings - 1))}
@@ -543,7 +547,7 @@ export default function PlanTab() {
                 </View>
                 {selectedRecipe && (
                   <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 16 }}>
-                    Recipe makes {selectedRecipe.servings ?? 4} servings
+                    {t('plan.recipeMakes', { count: selectedRecipe.servings ?? 4 })}
                   </Text>
                 )}
 
@@ -557,12 +561,12 @@ export default function PlanTab() {
                   }}
                 >
                   <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
-                    {adding ? 'Adding...' : `Add to ${pickerDate && DAYS[weekDates.indexOf(pickerDate)]}`}
+                    {adding ? t('search.adding') : t('plan.addToDay', { day: pickerDate ? t(`days.${DAY_KEYS[weekDates.indexOf(pickerDate)]}`) : '' })}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => setPickerVisible(false)} style={{ alignItems: 'center', paddingVertical: 10 }}>
-                  <Text style={{ color: colors.textMuted, fontSize: 14 }}>Cancel</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -575,12 +579,12 @@ export default function PlanTab() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <View style={{
             backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-            padding: 16, maxHeight: '60%',
+            padding: 16, paddingBottom: insets.bottom + 16, maxHeight: '60%',
           }}>
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>
-                Add to shopping list
+                {t('plan.addToShoppingList')}
               </Text>
               <TouchableOpacity onPress={() => setListPickerVisible(false)}>
                 <Ionicons name="close" size={24} color={colors.textMuted} />
@@ -605,7 +609,7 @@ export default function PlanTab() {
             <TouchableOpacity
               onPress={async () => {
                 if (!session?.user?.id) return;
-                const dayName = cartDate === '__week__' ? `Week of ${weekDates[0]}` : DAYS[cartDayIndex];
+                const dayName = cartDate === '__week__' ? `Week of ${weekDates[0]}` : t(`days.${DAY_KEYS[cartDayIndex]}`);
                 const newList = await addShoppingList(session.user.id, `${dayName} meals`);
                 handleAddDayToList(newList.id, newList.name);
               }}
@@ -614,7 +618,7 @@ export default function PlanTab() {
                 alignItems: 'center', marginTop: 12,
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>+ New Shopping List</Text>
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{t('plan.newShoppingList')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -640,7 +644,7 @@ export default function PlanTab() {
           if (weekDates.length === 7) {
             await fetchWeek(session.user.id, weekDates[0]!, weekDates[6]!);
           }
-          showToast('Meal plan saved!');
+          showToast(t('wizard.mealPlanSaved'));
         }}
       />
     </View>

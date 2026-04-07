@@ -4,13 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePathname, router } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 interface TabDef {
   name: string;
   route: string;
-  label: string;
+  labelKey: string;
   icon: IoniconsName;
   iconActive: IoniconsName;
 }
@@ -19,35 +20,35 @@ const TABS: TabDef[] = [
   {
     name: 'index',
     route: '/(tabs)/',
-    label: 'Recipes',
+    labelKey: 'nav.recipes',
     icon: 'book-outline',
     iconActive: 'book',
   },
   {
     name: 'search',
     route: '/(tabs)/search',
-    label: 'Search',
+    labelKey: 'nav.search',
     icon: 'search-outline',
     iconActive: 'search',
   },
   {
     name: 'scan',
     route: '/(tabs)/scan',
-    label: 'Scan',
+    labelKey: 'nav.scan',
     icon: 'camera-outline',
     iconActive: 'camera',
   },
   {
     name: 'plan',
     route: '/(tabs)/plan',
-    label: 'Plan',
+    labelKey: 'nav.plan',
     icon: 'calendar-outline',
     iconActive: 'calendar',
   },
   {
     name: 'shop',
     route: '/(tabs)/shop',
-    label: 'Cart',
+    labelKey: 'nav.cart',
     icon: 'cart-outline',
     iconActive: 'cart',
   },
@@ -62,6 +63,7 @@ function isActive(pathname: string, tab: TabDef): boolean {
 
 export function FloatingTabBar() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
 
@@ -147,7 +149,7 @@ export function FloatingTabBar() {
                     color: active ? colors.accent : colors.textMuted,
                   }}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </Text>
               </View>
             </TouchableOpacity>

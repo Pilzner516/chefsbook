@@ -211,7 +211,7 @@ adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_not
 - Followers UI not built (DB schema exists)
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
-- Multilingual support: language selector UI built and plumbed (flag emoji + code in header, persists to SecureStore + Supabase), actual translation not implemented (UI labels still English-only)
+- Multilingual support: fully implemented with react-i18next; 5 locales (en/fr/es/it/de); all UI strings use t() calls; language change triggers immediate UI translation via activateLanguage()
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
@@ -259,6 +259,9 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Search filters: bottom sheet modal pattern (not inline expansion) for all category filters; `FilterBottomSheet` component
 - AI Meal Plan Wizard: `MealPlanWizard` component in `apps/mobile/components/`; uses `generateMealPlan` from `@chefsbook/ai`
 - Meal plan servings: `servings` column already existed on `meal_plans` (numeric(6,2)); portions stepper in add-meal flow
+
+- i18n: `react-i18next` + `i18next`; locale files in `apps/mobile/locales/*.json`; `activateLanguage()` in `lib/i18n.ts` lazy-loads non-English locales; synced to preferences store in `_layout.tsx`
+- Store logos: logo.dev API (`img.logo.dev/[domain]?token=pk_EXpCeGY3QxS0VKVRKTr_pw`) replaces Clearbit; token is publishable/safe for client
 
 ## Builds
 

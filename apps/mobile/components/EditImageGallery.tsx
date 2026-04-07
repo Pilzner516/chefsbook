@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, supabase, PLAN_LIMITS } from '@chefsbook/db';
 import type { RecipeUserPhoto } from '@chefsbook/db';
@@ -15,6 +16,7 @@ interface Props {
 
 export function EditImageGallery({ recipeId, userId, editing }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const planTier = useAuthStore((s) => s.planTier);
   const [photos, setPhotos] = useState<RecipeUserPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -46,7 +48,7 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
       await addRecipePhoto(recipeId, userId, fileName, urlData.publicUrl);
       await loadPhotos();
     } catch (err: any) {
-      Alert.alert('Upload failed', err.message);
+      Alert.alert(t('notepad.uploadFailed'), err.message);
     } finally {
       setUploading(false);
     }
@@ -56,14 +58,14 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
     // Plan gate: check photo limit
     if (photos.length >= photoLimit) {
       Alert.alert(
-        'Photo limit reached',
-        `Your ${planTier} plan allows ${photoLimit} photos per recipe. Upgrade to Pro for up to 10.`,
-        [{ text: 'OK' }],
+        t('gallery.photoLimit'),
+        t('gallery.photoLimitBody', { tier: planTier, limit: photoLimit }),
+        [{ text: t('common.ok') }],
       );
       return;
     }
 
-    const options = ['Take Photo', 'Choose from Library', 'Cancel'];
+    const options = [t('gallery.takePhoto'), t('gallery.chooseLibrary'), t('common.cancel')];
     const cancelIndex = 2;
 
     if (Platform.OS === 'ios') {
@@ -75,18 +77,18 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
         },
       );
     } else {
-      Alert.alert('Add Photo', 'Choose a source', [
-        { text: 'Take Photo', onPress: async () => { const uri = await takePhoto(); if (uri) uploadPhoto(uri); } },
-        { text: 'Choose from Library', onPress: async () => { const uri = await pickImage(); if (uri) uploadPhoto(uri); } },
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('gallery.addPhoto'), t('gallery.chooseSource'), [
+        { text: t('gallery.takePhoto'), onPress: async () => { const uri = await takePhoto(); if (uri) uploadPhoto(uri); } },
+        { text: t('gallery.chooseLibrary'), onPress: async () => { const uri = await pickImage(); if (uri) uploadPhoto(uri); } },
+        { text: t('common.cancel'), style: 'cancel' },
       ]);
     }
   };
 
   const handleDelete = (photo: RecipeUserPhoto) => {
-    Alert.alert('Delete photo?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    Alert.alert(t('gallery.deletePhoto'), t('gallery.cannotUndo'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => {
         await deleteRecipePhoto(photo.id);
         await loadPhotos();
       }},
@@ -130,7 +132,7 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
       >
         <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
         <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
-          {uploading ? 'Uploading...' : 'Add photo'}
+          {uploading ? t('gallery.uploading') : t('gallery.addPhotoLabel')}
         </Text>
       </TouchableOpacity>
     );
@@ -152,7 +154,7 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
                   position: 'absolute', bottom: 4, left: 4, backgroundColor: colors.accent,
                   borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1,
                 }}>
-                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>PRIMARY</Text>
+                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('gallery.primary')}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -183,7 +185,7 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
           <Ionicons name="add" size={24} color={colors.textMuted} />
         </TouchableOpacity>
       </ScrollView>
-      <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>Long-press to set primary image</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('gallery.longPress')}</Text>
     </View>
   );
 }

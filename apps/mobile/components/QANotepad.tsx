@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, Alert, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Clipboard from 'expo-clipboard';
@@ -25,6 +26,7 @@ interface Props {
 
 export function QANotepad({ visible, onClose }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState<QAItem[]>([]);
   const [showInput, setShowInput] = useState(false);
@@ -71,16 +73,16 @@ export function QANotepad({ visible, onClose }: Props) {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Delete this item?', '', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => saveItems(items.filter((i) => i.id !== id)) },
+    Alert.alert(t('notepad.deleteItem'), '', [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => saveItems(items.filter((i) => i.id !== id)) },
     ]);
   };
 
   const handleClearAll = () => {
-    Alert.alert('Clear all notes?', 'This will permanently delete all notepad entries.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: () => saveItems([]) },
+    Alert.alert(t('notepad.clearTitle'), t('notepad.clearBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('notepad.clearAll'), style: 'destructive', onPress: () => saveItems([]) },
     ]);
   };
 
@@ -98,18 +100,18 @@ export function QANotepad({ visible, onClose }: Props) {
           await Sharing.shareAsync(tempFile, { mimeType: 'text/plain', dialogTitle: 'Share QA Report' });
         } else {
           await Clipboard.setStringAsync(report);
-          Alert.alert('Copied!', 'QA report copied to clipboard.');
+          Alert.alert(t('notepad.copied'), t('notepad.copiedBody'));
         }
       } catch {
         await Clipboard.setStringAsync(report);
-        Alert.alert('Copied!', 'QA report copied to clipboard.');
+        Alert.alert(t('notepad.copied'), t('notepad.copiedBody'));
       }
     } else {
       try {
         await Clipboard.setStringAsync(report);
-        Alert.alert('Copied!', 'QA report copied to clipboard.');
+        Alert.alert(t('notepad.copied'), t('notepad.copiedBody'));
       } catch {
-        Alert.alert('Export', report);
+        Alert.alert(t('notepad.share'), report);
       }
     }
   };
@@ -142,11 +144,11 @@ export function QANotepad({ visible, onClose }: Props) {
               } : { padding: 4 }}
             >
               <Ionicons name="share-outline" size={isStaging ? 16 : 20} color={isStaging ? '#fff' : colors.textMuted} />
-              {isStaging && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Share</Text>}
+              {isStaging && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{t('notepad.share')}</Text>}
             </TouchableOpacity>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600' }}>QA Notepad</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Tap + to log a bug or feature request</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600' }}>{t('notepad.title')}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('notepad.subtitle')}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
               <Ionicons name="close" size={24} color={colors.textMuted} />
@@ -159,7 +161,7 @@ export function QANotepad({ visible, onClose }: Props) {
               <TextInput
                 value={inputText}
                 onChangeText={setInputText}
-                placeholder="Describe the bug or feature..."
+                placeholder={t('notepad.placeholder')}
                 placeholderTextColor={colors.textSecondary}
                 multiline
                 autoFocus
@@ -180,14 +182,14 @@ export function QANotepad({ visible, onClose }: Props) {
                   onPress={() => { setShowInput(false); setInputText(''); }}
                   style={{ flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault }}
                 >
-                  <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>Cancel</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleAdd}
                   disabled={!inputText.trim()}
                   style={{ flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: inputText.trim() ? colors.accent : colors.bgBase, opacity: inputText.trim() ? 1 : 0.5 }}
                 >
-                  <Text style={{ color: inputText.trim() ? '#fff' : colors.textMuted, fontSize: 14, fontWeight: '600' }}>Add</Text>
+                  <Text style={{ color: inputText.trim() ? '#fff' : colors.textMuted, fontSize: 14, fontWeight: '600' }}>{t('common.add')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -197,8 +199,8 @@ export function QANotepad({ visible, onClose }: Props) {
           <ScrollView style={{ flex: 1, padding: 16 }}>
             {items.length === 0 ? (
               <View style={{ alignItems: 'center', paddingTop: 60 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 15 }}>No items logged yet</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4 }}>Tap + Add to log your first item</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 15 }}>{t('notepad.noItems')}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 4 }}>{t('notepad.noItemsSub')}</Text>
               </View>
             ) : (
               items.map((item, i) => (
@@ -225,7 +227,7 @@ export function QANotepad({ visible, onClose }: Props) {
             {/* Clear All — below list, separated from header actions */}
             {items.length > 0 && (
               <TouchableOpacity onPress={handleClearAll} style={{ marginTop: 24, paddingVertical: 12 }}>
-                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Clear All</Text>
+                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('notepad.clearAll')}</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
@@ -242,7 +244,7 @@ export function QANotepad({ visible, onClose }: Props) {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>+ Add Item</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('notepad.addItem')}</Text>
               </TouchableOpacity>
             </View>
           )}

@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { convertIngredient, formatQuantity as formatQty } from '@chefsbook/ui';
 import * as SecureStore from 'expo-secure-store';
@@ -52,7 +54,9 @@ type ViewMode = 'department' | 'recipe' | 'alpha';
 
 export default function ShopTab() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
   const session = useAuthStore((s) => s.session);
   const lists = useShoppingStore((s) => s.lists);
@@ -137,9 +141,9 @@ export default function ShopTab() {
   };
 
   const handleDeleteItem = (item: ShoppingListItem) => {
-    Alert.alert('Delete Item', `Remove "${item.ingredient}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteItem(item.id) },
+    Alert.alert(t('shop.deleteItem'), t('shop.removeIngredient', { name: item.ingredient }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteItem(item.id) },
     ]);
   };
 
@@ -150,12 +154,12 @@ export default function ShopTab() {
 
   const handleRemoveRecipeGroup = (groupName: string, groupItems: ShoppingListItem[]) => {
     Alert.alert(
-      'Remove recipe',
-      `Remove ${groupName} and its ${groupItems.length} ingredients from this list?`,
+      t('shop.removeRecipe'),
+      t('shop.removeRecipeBody', { name: groupName, count: groupItems.length }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: async () => {
             for (const item of groupItems) {
@@ -168,9 +172,9 @@ export default function ShopTab() {
   };
 
   const handleDeleteList = (listId: string, name: string) => {
-    Alert.alert('Delete List', `Delete "${name}" and all its items?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => removeList(listId) },
+    Alert.alert(t('shop.deleteList'), t('shop.deleteListBody', { name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removeList(listId) },
     ]);
   };
 
@@ -239,7 +243,7 @@ export default function ShopTab() {
     return [...stores].sort();
   }, [lists]);
 
-  if (loading && !currentList) return <Loading message="Loading shopping lists..." />;
+  if (loading && !currentList) return <Loading message={t('common.loading')} />;
 
   // ── Combined view: read-only merged items for a store ──
   if (showCombined) {
@@ -264,13 +268,13 @@ export default function ShopTab() {
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingBottom: 8 }}>
           <TouchableOpacity onPress={() => { useShoppingStore.setState({ currentList: null }); }}>
-            <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Lists</Text>
+            <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} {t('shop.shoppingLists')}</Text>
           </TouchableOpacity>
           <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center' }} numberOfLines={1}>{currentList.name}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {checkedCount > 0 && (
               <TouchableOpacity onPress={() => clearChecked(currentList.id)}>
-                <Text style={{ color: colors.danger, fontSize: 13 }}>Clear {checkedCount}</Text>
+                <Text style={{ color: colors.danger, fontSize: 13 }}>{t('shop.clearCount', { count: checkedCount })}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={cycleFontSize} style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: colors.bgBase }}>
@@ -296,12 +300,12 @@ export default function ShopTab() {
                 color: viewMode === mode ? '#fff' : colors.textSecondary,
                 fontSize: 13, fontWeight: '600',
               }}>
-                {mode === 'department' ? 'Dept' : mode === 'recipe' ? 'Recipe' : 'A-Z'}
+                {mode === 'department' ? t('shop.dept') : mode === 'recipe' ? t('shop.recipe2') : t('shop.az')}
               </Text>
             </TouchableOpacity>
           ))}
           <Text style={{ color: colors.textSecondary, fontSize: 13, alignSelf: 'center', marginLeft: 'auto' }}>
-            {unchecked.length} items
+            {t('shop.items', { count: unchecked.length })}
           </Text>
         </View>
 
@@ -310,7 +314,7 @@ export default function ShopTab() {
           <TextInput
             value={manualInput}
             onChangeText={setManualInput}
-            placeholder="Add item..."
+            placeholder={t('shop.addItem')}
             placeholderTextColor={colors.textSecondary}
             onSubmitEditing={handleAddManual}
             returnKeyType="done"
@@ -435,7 +439,7 @@ export default function ShopTab() {
           )}
 
           {items.length === 0 && (
-            <EmptyState icon="🛒" title="Your shopping list is empty" message="Add recipes to your meal plan to generate a shopping list." action={{ label: 'Plan Meals', onPress: () => router.push('/(tabs)/plan') }} />
+            <EmptyState icon="🛒" title={t('shop.emptyTitle')} message={t('shop.emptyMessage')} action={{ label: t('shop.planMeals'), onPress: () => router.push('/(tabs)/plan') }} />
           )}
 
           <View style={{ height: tabBarHeight }} />
@@ -451,13 +455,13 @@ export default function ShopTab() {
         <ChefsBookHeader />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight }}>
           <TouchableOpacity onPress={() => setSelectedStore(null)} style={{ marginBottom: 12 }}>
-            <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} Stores</Text>
+            <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>{'\u2190'} {t('shop.shoppingLists')}</Text>
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             {selectedStore !== '__all__' && <StoreAvatar storeName={selectedStore} size={48} />}
             <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', flex: 1 }}>
-              {selectedStore === '__all__' ? 'All Lists' : selectedStore}
+              {selectedStore === '__all__' ? t('shop.allLists') : selectedStore}
             </Text>
           </View>
 
@@ -468,8 +472,8 @@ export default function ShopTab() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
                   <Ionicons name="layers-outline" size={20} color={colors.accentGreen} />
                   <View>
-                    <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>All {selectedStore}</Text>
-                    <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>Combined view</Text>
+                    <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{t('shop.allStore', { store: selectedStore })}</Text>
+                    <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>{t('shop.combinedView')}</Text>
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -478,11 +482,11 @@ export default function ShopTab() {
           )}
 
           <View style={{ marginBottom: 16 }}>
-            <Button title="+ New List" onPress={openNewListModal} />
+            <Button title={t('shop.newListShort')} onPress={openNewListModal} />
           </View>
 
           {filteredLists.length === 0 ? (
-            <EmptyState icon="🛒" title="No lists here" message="Create a new shopping list." />
+            <EmptyState icon="🛒" title={t('shop.noListsHere')} message={t('shop.createList')} />
           ) : (
             filteredLists.map((list) => (
               <Card key={list.id} onPress={() => fetchList(list.id)} style={{ marginBottom: 10 }}>
@@ -533,7 +537,7 @@ export default function ShopTab() {
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
       <ChefsBookHeader />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight }}>
-        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>Shopping Lists</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700', marginBottom: 16 }}>{t('shop.shoppingLists')}</Text>
 
         {/* Store groups */}
         {storeGroups.map(([store, storeLists]) => (
@@ -544,7 +548,7 @@ export default function ShopTab() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{store}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 13 }}>
-                    {storeLists.length} {storeLists.length === 1 ? 'list' : 'lists'}
+                    {t('shop.listCount', { count: storeLists.length })}
                   </Text>
                 </View>
               </View>
@@ -554,11 +558,11 @@ export default function ShopTab() {
         ))}
 
         {lists.length === 0 && (
-          <EmptyState icon="🛒" title="No shopping lists" message="Create a list or generate one from your meal plan." action={{ label: 'Plan Meals', onPress: () => router.push('/(tabs)/plan') }} />
+          <EmptyState icon="🛒" title={t('shop.noLists')} message={t('shop.noListsMessage')} action={{ label: t('shop.planMeals'), onPress: () => router.push('/(tabs)/plan') }} />
         )}
 
-        <View style={{ marginTop: 12, marginBottom: 16 }}>
-          <Button title="+ New Shopping List" onPress={openNewListModal} />
+        <View style={{ marginTop: 12, marginBottom: insets.bottom + 16 }}>
+          <Button title={t('shop.newList')} onPress={openNewListModal} />
         </View>
       </ScrollView>
 
@@ -594,6 +598,7 @@ function CombinedStoreView({
   onBack: () => void;
   onOpenList: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [allItems, setAllItems] = useState<ShoppingListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -646,7 +651,7 @@ function CombinedStoreView({
     });
   }, [allItems]);
 
-  if (loading) return <Loading message="Merging items..." />;
+  if (loading) return <Loading message={t('common.loading')} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
@@ -657,8 +662,8 @@ function CombinedStoreView({
         </TouchableOpacity>
         <StoreAvatar storeName={storeName} size={36} />
         <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700' }}>All {storeName}</Text>
-          <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>Combined view — {allItems.length} items</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700' }}>{t('shop.allStore', { store: storeName })}</Text>
+          <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>{t('shop.combinedItems', { count: allItems.length })}</Text>
         </View>
       </View>
 
@@ -731,6 +736,7 @@ function NewListModal({
   onCreate: () => void;
   colors: any;
 }) {
+  const { t } = useTranslation();
   const [customStore, setCustomStore] = useState('');
 
   return (
@@ -747,7 +753,7 @@ function NewListModal({
             // Step 1: Select or create a store
             <View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 16 }}>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Select a store</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('shop.selectStore')}</Text>
                 <TouchableOpacity onPress={onClose}>
                   <Ionicons name="close" size={24} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -772,12 +778,12 @@ function NewListModal({
 
                 {/* New store input */}
                 <View style={{ padding: 16 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>New store</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>{t('shop.newStore')}</Text>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <TextInput
                       value={customStore}
                       onChangeText={setCustomStore}
-                      placeholder="Store name..."
+                      placeholder={t('shop.storePlaceholder')}
                       placeholderTextColor={colors.textSecondary}
                       style={{
                         flex: 1, backgroundColor: colors.bgBase, borderRadius: 10,
@@ -798,7 +804,7 @@ function NewListModal({
                         borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center',
                       }}
                     >
-                      <Text style={{ color: customStore.trim() ? '#fff' : colors.textMuted, fontWeight: '600' }}>Next</Text>
+                      <Text style={{ color: customStore.trim() ? '#fff' : colors.textMuted, fontWeight: '600' }}>{t('common.next')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -810,7 +816,7 @@ function NewListModal({
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <TouchableOpacity onPress={onBack}>
                   <Text style={{ color: colors.accent, fontSize: 15, fontWeight: '600' }}>
-                    <Ionicons name="chevron-back" size={16} color={colors.accent} /> Back
+                    <Ionicons name="chevron-back" size={16} color={colors.accent} /> {t('common.back')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={onClose}>
@@ -824,7 +830,7 @@ function NewListModal({
               </View>
 
               <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
-                List name (optional)
+                {t('shop.listNameOptional')}
               </Text>
               <TextInput
                 value={listName}
@@ -846,11 +852,11 @@ function NewListModal({
                   alignItems: 'center', marginBottom: 8,
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Create List</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('shop.createList2')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={onClose} style={{ alignItems: 'center', paddingVertical: 10 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 14 }}>Cancel</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           )}

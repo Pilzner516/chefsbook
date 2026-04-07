@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
@@ -27,6 +28,7 @@ type ImportStatus = 'idle' | 'importing' | 'success' | 'error';
 
 export default function ScanTab() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const { importUrl } = useLocalSearchParams<{ importUrl?: string }>();
   const session = useAuthStore((s) => s.session);
@@ -131,7 +133,7 @@ export default function ScanTab() {
   // Add another page to the scan
   const addScanPage = async (getUri: () => Promise<string | null>) => {
     if (scanPages.length >= 5) {
-      Alert.alert('Maximum pages', 'You can scan up to 5 pages per recipe.');
+      Alert.alert(t('scan.maxPages'), t('scan.maxPagesBody'));
       return;
     }
     const uri = await getUri();
@@ -173,7 +175,7 @@ export default function ScanTab() {
       setScanPages([]);
     } catch (e: any) {
       setImportStatus('error');
-      Alert.alert('Scan failed', e.message);
+      Alert.alert(t('scan.scanFailed'), e.message);
       setScanPages([]);
     }
   };
@@ -198,7 +200,7 @@ export default function ScanTab() {
       }
     } catch (e: any) {
       setImportStatus('error');
-      Alert.alert('Import failed', e.message);
+      Alert.alert(t('scan.importFailed'), e.message);
     }
   };
 
@@ -232,26 +234,26 @@ export default function ScanTab() {
   const gridCells = [
     {
       iconName: 'camera' as const,
-      label: 'Scan Photo',
-      subtitle: 'Cookbook or recipe card',
+      label: t('scan.scanPhoto'),
+      subtitle: t('scan.scanSubtitle'),
       onPress: () => startScan(takePhoto),
     },
     {
       iconName: 'link' as const,
-      label: 'Import URL',
-      subtitle: 'Paste any recipe link',
+      label: t('scan.importUrl'),
+      subtitle: t('scan.importSubtitle'),
       onPress: () => setShowUrlInput(!showUrlInput),
     },
     {
       iconName: 'images' as const,
-      label: 'Choose Photo',
-      subtitle: 'From your gallery',
+      label: t('scan.choosePhoto'),
+      subtitle: t('scan.chooseSubtitle'),
       onPress: () => startScan(pickImage),
     },
     {
       iconName: 'create' as const,
-      label: 'Manual Entry',
-      subtitle: 'Type it yourself',
+      label: t('scan.manualEntry'),
+      subtitle: t('scan.manualSubtitle'),
       onPress: () => router.push('/recipe/new'),
     },
   ];
@@ -264,7 +266,7 @@ export default function ScanTab() {
       {importStatus === 'importing' && (
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.bgCard, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}>
           <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500', marginLeft: 10 }}>Importing recipe...</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500', marginLeft: 10 }}>{t('scan.importing')}</Text>
         </View>
       )}
 
@@ -278,34 +280,34 @@ export default function ScanTab() {
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.accentGreenSoft, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}
         >
           <Ionicons name="checkmark-circle" size={20} color={colors.accentGreen} />
-          <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>Recipe saved! View it →</Text>
+          <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>{t('scan.recipeSaved')}</Text>
         </TouchableOpacity>
       )}
 
       {/* "Add cover photo?" prompt — shown after import with no image */}
       {showCoverPrompt && (
         <View style={{ padding: 12, paddingHorizontal: 16, backgroundColor: colors.bgCard, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Add a cover photo?</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600', marginBottom: 8 }}>{t('scan.addCoverPhoto')}</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
               onPress={() => handleCoverPhoto(takePhoto)}
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
             >
               <Ionicons name="camera-outline" size={16} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Camera</Text>
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('scan.camera')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleCoverPhoto(pickImage)}
               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
             >
               <Ionicons name="images-outline" size={16} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Library</Text>
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('scan.library')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowCoverPrompt(false)}
               style={{ paddingHorizontal: 12, justifyContent: 'center' }}
             >
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>Skip</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('common.skip')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -315,7 +317,7 @@ export default function ScanTab() {
       {scanMode && (
         <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.borderDefault, backgroundColor: colors.bgCard }}>
           <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
-            Scanning recipe — {scanPages.length}/5 page{scanPages.length !== 1 ? 's' : ''}
+            {t('scan.scanningPages', { count: scanPages.length })}
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
             {scanPages.map((page, i) => (
@@ -332,7 +334,7 @@ export default function ScanTab() {
                 >
                   <Ionicons name="close" size={14} color={colors.accent} />
                 </TouchableOpacity>
-                <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 2 }}>Page {i + 1}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 2 }}>{t('scan.page', { number: i + 1 })}</Text>
               </View>
             ))}
           </ScrollView>
@@ -344,14 +346,14 @@ export default function ScanTab() {
                   style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 10, paddingVertical: 12, borderWidth: 1, borderColor: colors.borderDefault }}
                 >
                   <Ionicons name="camera-outline" size={18} color={colors.accent} />
-                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Add page</Text>
+                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('scan.addPage')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => addScanPage(pickImage)}
                   style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 10, paddingVertical: 12, borderWidth: 1, borderColor: colors.borderDefault }}
                 >
                   <Ionicons name="images-outline" size={18} color={colors.accent} />
-                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>From gallery</Text>
+                  <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('scan.fromGallery')}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -359,19 +361,19 @@ export default function ScanTab() {
               onPress={finishScan}
               style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 12 }}
             >
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Done scanning</Text>
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{t('scan.doneScanning')}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={() => { setScanMode(false); setScanPages([]); }} style={{ alignItems: 'center', paddingVertical: 8, marginTop: 4 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Cancel scan</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('scan.cancelScan')}</Text>
           </TouchableOpacity>
         </View>
       )}
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
         {/* Header */}
-        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>Add a Recipe</Text>
-        <Text style={{ color: colors.textMuted, fontSize: 13, marginBottom: 16 }}>Choose how to add</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>{t('scan.addRecipe')}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13, marginBottom: 16 }}>{t('scan.chooseHow')}</Text>
 
         {/* Clipboard paste suggestion */}
         {clipboardUrl && showUrlInput === false && (
@@ -388,7 +390,7 @@ export default function ScanTab() {
           >
             <Ionicons name="clipboard-outline" size={18} color={colors.accent} style={{ marginRight: 8 }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Paste from clipboard</Text>
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('scan.pasteClipboard')}</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12 }} numberOfLines={1}>{clipboardUrl}</Text>
             </View>
           </TouchableOpacity>
@@ -422,9 +424,9 @@ export default function ScanTab() {
             <View style={{ alignItems: 'center' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="mic" size={36} color="white" style={{ marginRight: 10 }} />
-                <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: '700' }}>Speak a Recipe</Text>
+                <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: '700' }}>{t('scan.speakRecipe')}</Text>
               </View>
-              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 }}>Dictate and AI formats it instantly</Text>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 }}>{t('scan.speakSubtitle')}</Text>
             </View>
           </TouchableOpacity>
         </Animated.View>
@@ -447,7 +449,7 @@ export default function ScanTab() {
             <Input
               value={urlInput}
               onChangeText={setUrlInput}
-              placeholder="Paste recipe URL..."
+              placeholder={t('scan.pasteUrl')}
               autoCapitalize="none"
             />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
@@ -471,7 +473,7 @@ export default function ScanTab() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons name="clipboard-outline" size={16} color={colors.textPrimary} style={{ marginRight: 4 }} />
-                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>Paste</Text>
+                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>{t('scan.paste')}</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
@@ -487,11 +489,11 @@ export default function ScanTab() {
                   opacity: urlInput.trim() ? 1 : 0.5,
                 }}
               >
-                <Text style={{ color: urlInput.trim() ? '#ffffff' : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>Import</Text>
+                <Text style={{ color: urlInput.trim() ? '#ffffff' : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{t('scan.import')}</Text>
               </TouchableOpacity>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Or share from your browser → In Chrome, tap Share ⋮ → ChefsBook</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('scan.shareDescription')}</Text>
             </View>
           </View>
         </Animated.View>
@@ -509,13 +511,13 @@ export default function ScanTab() {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
             <Ionicons name="globe-outline" size={20} color={colors.accentGreen} style={{ marginRight: 8 }} />
-            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>Share recipes directly from Chrome</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>{t('scan.shareBanner')}</Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
-            Open any recipe in your browser, tap Share, select ChefsBook
+            {t('scan.shareDescription')}
           </Text>
           <View style={{ marginTop: 10, gap: 6 }}>
-            {['Open a recipe page in Chrome', 'Tap \u22EE menu \u2192 Share', 'Select ChefsBook from the list'].map((step, i) => (
+            {[t('scan.shareStep1'), t('scan.shareStep2'), t('scan.shareStep3')].map((step, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accentGreen, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                   <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '700' }}>{i + 1}</Text>
