@@ -379,7 +379,15 @@
     "addPhotoLabel": "Add photo",
     "uploading": "Uploading...",
     "longPress": "Long-press to set primary image",
-    "primary": "PRIMARY"
+    "primary": "PRIMARY",
+    "findPhoto": "Find a photo"
+  },
+  "pexels": {
+    "title": "Find a photo",
+    "searching": "Searching for photos…",
+    "noResults": "No photos found. Try editing the recipe title.",
+    "searchFailed": "Could not search for photos. Please try again.",
+    "attribution": "Photos provided by Pexels"
   },
   "days": {
     "monday": "Monday",

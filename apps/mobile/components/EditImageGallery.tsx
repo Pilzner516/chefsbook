@@ -7,19 +7,23 @@ import { listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, s
 import type { RecipeUserPhoto } from '@chefsbook/db';
 import { pickImage, takePhoto, processImage } from '../lib/image';
 import { useAuthStore } from '../lib/zustand/authStore';
+import { PexelsPickerSheet } from './PexelsPickerSheet';
+import type { PexelsPhoto } from '@chefsbook/ai';
 
 interface Props {
   recipeId: string;
   userId: string;
   editing: boolean;
+  recipeTitle?: string;
 }
 
-export function EditImageGallery({ recipeId, userId, editing }: Props) {
+export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const planTier = useAuthStore((s) => s.planTier);
   const [photos, setPhotos] = useState<RecipeUserPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showPexels, setShowPexels] = useState(false);
   const photoLimit = PLAN_LIMITS[planTier]?.maxPhotosPerRecipe ?? 3;
 
   useEffect(() => {
@@ -54,6 +58,34 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
     }
   };
 
+  const uploadFromPexels = async (photo: PexelsPhoto) => {
+    setShowPexels(false);
+    setUploading(true);
+    try {
+      const res = await fetch(photo.fullUrl);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1] ?? '');
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const fileName = `${userId}/${recipeId}/${Date.now()}.jpg`;
+      await supabase.storage
+        .from('recipe-user-photos')
+        .upload(fileName, decode(base64), { contentType: 'image/jpeg' });
+      const { data: urlData } = supabase.storage
+        .from('recipe-user-photos')
+        .getPublicUrl(fileName);
+      await addRecipePhoto(recipeId, userId, fileName, urlData.publicUrl);
+      await loadPhotos();
+    } catch (err: any) {
+      Alert.alert(t('notepad.uploadFailed'), err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const showImagePicker = () => {
     // Plan gate: check photo limit
     if (photos.length >= photoLimit) {
@@ -65,8 +97,8 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
       return;
     }
 
-    const options = [t('gallery.takePhoto'), t('gallery.chooseLibrary'), t('common.cancel')];
-    const cancelIndex = 2;
+    const options = [t('gallery.takePhoto'), t('gallery.chooseLibrary'), t('gallery.findPhoto'), t('common.cancel')];
+    const cancelIndex = 3;
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -74,12 +106,14 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
         async (idx) => {
           if (idx === 0) { const uri = await takePhoto(); if (uri) uploadPhoto(uri); }
           if (idx === 1) { const uri = await pickImage(); if (uri) uploadPhoto(uri); }
+          if (idx === 2) setShowPexels(true);
         },
       );
     } else {
       Alert.alert(t('gallery.addPhoto'), t('gallery.chooseSource'), [
         { text: t('gallery.takePhoto'), onPress: async () => { const uri = await takePhoto(); if (uri) uploadPhoto(uri); } },
         { text: t('gallery.chooseLibrary'), onPress: async () => { const uri = await pickImage(); if (uri) uploadPhoto(uri); } },
+        { text: t('gallery.findPhoto'), onPress: () => setShowPexels(true) },
         { text: t('common.cancel'), style: 'cancel' },
       ]);
     }
@@ -117,24 +151,42 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
     );
   }
 
+  const pexelsSheet = (
+    <PexelsPickerSheet
+      visible={showPexels}
+      query={recipeTitle ?? ''}
+      onSelect={uploadFromPexels}
+      onClose={() => setShowPexels(false)}
+    />
+  );
+
   // Edit mode — full controls
   if (photos.length === 0) {
     return (
-      <TouchableOpacity
-        onPress={showImagePicker}
-        disabled={uploading}
-        style={{
-          width: '100%', height: 120, borderRadius: 12,
-          borderWidth: 2, borderStyle: 'dashed', borderColor: colors.borderDefault,
-          alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-          backgroundColor: colors.bgBase, opacity: uploading ? 0.5 : 1,
-        }}
-      >
-        <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
-        <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
-          {uploading ? t('gallery.uploading') : t('gallery.addPhotoLabel')}
-        </Text>
-      </TouchableOpacity>
+      <>
+        <TouchableOpacity
+          onPress={showImagePicker}
+          disabled={uploading}
+          style={{
+            width: '100%', height: 120, borderRadius: 12,
+            borderWidth: 2, borderStyle: 'dashed', borderColor: colors.borderDefault,
+            alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+            backgroundColor: colors.bgBase, opacity: uploading ? 0.5 : 1,
+          }}
+        >
+          {/* Chef's hat watermark */}
+          <Image
+            source={require('../assets/icon.png')}
+            style={{ position: 'absolute', width: 48, height: 48, borderRadius: 10, opacity: 0.18 }}
+            resizeMode="contain"
+          />
+          <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
+          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
+            {uploading ? t('gallery.uploading') : t('gallery.addPhotoLabel')}
+          </Text>
+        </TouchableOpacity>
+        {pexelsSheet}
+      </>
     );
   }
 
@@ -186,6 +238,7 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
         </TouchableOpacity>
       </ScrollView>
       <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('gallery.longPress')}</Text>
+      {pexelsSheet}
     </View>
   );
 }

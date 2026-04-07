@@ -82,6 +82,7 @@
         }
       ],
       "expo-secure-store",
+      "./plugins/withCleartextTraffic",
       [
         "expo-speech-recognition",
         {

@@ -70,6 +70,7 @@ YOUTUBE_API_KEY=<key>                       # YouTube Data API v3 (optional — 
 SCRAPINGBEE_API_KEY=<key>                   # ScrapingBee (optional — fallback for 403 sites)
 CHROME_PATH=<path>                          # Chrome executable (optional — auto-detected on Windows/Mac/Linux)
 GOOGLE_BOOKS_API_KEY=<key>                  # Google Books API (optional — works without key at lower rate limit)
+PEXELS_API_KEY=<key>                        # Pexels API (recipe image search picker; EXPO_PUBLIC_ prefix for mobile)
 UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
 ```
 
@@ -262,6 +263,10 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 
 - i18n: `react-i18next` + `i18next`; locale files in `apps/mobile/locales/*.json`; `activateLanguage()` in `lib/i18n.ts` lazy-loads non-English locales; synced to preferences store in `_layout.tsx`
 - Store logos: logo.dev API (`img.logo.dev/[domain]?token=pk_EXpCeGY3QxS0VKVRKTr_pw`) replaces Clearbit; token is publishable/safe for client
+- Pexels image search: `searchPexels()` in `@chefsbook/ai` — shared by mobile and web; key via `EXPO_PUBLIC_PEXELS_API_KEY` / `PEXELS_API_KEY`
+- Recipe image fallback: `RecipeImage` component (`apps/mobile/components/RecipeImage.tsx`) shows chef's hat icon.png when no image URL; used in RecipeCard + detail hero
+- Pexels picker: `PexelsPickerSheet` modal shows 3 landscape thumbnails; wired into EditImageGallery, Speak a Recipe, scan cover prompt
+- Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.110.47.62 + localhost + 10.0.2.2; release AndroidManifest override in `src/release/`
 
 ## Builds
 

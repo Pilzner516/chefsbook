@@ -12,6 +12,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { RecipeImage } from './RecipeImage';
 
 // --- Button ---
 interface ButtonProps {
@@ -297,33 +298,20 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
       <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
-        {imageUrl ? (
-          <View>
-            <Image source={{ uri: imageUrl }} style={{ width: '100%', height: 160, backgroundColor: colors.bgBase }} />
-            {(saveCount ?? 0) > 0 && (
-              <View style={{
-                position: 'absolute', bottom: 8, left: 8,
-                flexDirection: 'row', alignItems: 'center', gap: 4,
-                backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 12,
-                paddingHorizontal: 8, paddingVertical: 4,
-              }}>
-                <Ionicons name="heart" size={12} color="#ff6b6b" />
-                <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '600' }}>{saveCount}</Text>
-              </View>
-            )}
-          </View>
-        ) : (saveCount ?? 0) > 0 ? (
-          <View style={{ paddingHorizontal: 12, paddingTop: 10 }}>
+        <View>
+          <RecipeImage uri={imageUrl} style={{ width: '100%', height: 160 }} />
+          {(saveCount ?? 0) > 0 && (
             <View style={{
+              position: 'absolute', bottom: 8, left: 8,
               flexDirection: 'row', alignItems: 'center', gap: 4,
-              backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: 12,
-              paddingHorizontal: 8, paddingVertical: 4, alignSelf: 'flex-start',
+              backgroundColor: imageUrl ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.06)', borderRadius: 12,
+              paddingHorizontal: 8, paddingVertical: 4,
             }}>
               <Ionicons name="heart" size={12} color="#ff6b6b" />
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>{saveCount}</Text>
+              <Text style={{ color: imageUrl ? '#ffffff' : colors.textSecondary, fontSize: 11, fontWeight: '600' }}>{saveCount}</Text>
             </View>
-          </View>
-        ) : null}
+          )}
+        </View>
         <View style={{ padding: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', flex: 1 }} numberOfLines={2}>

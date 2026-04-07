@@ -430,6 +430,7 @@ export default function DashboardPage() {
           {sorted.map((recipe) => (
             <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="flex items-center gap-4 bg-cb-card border border-cb-border rounded-input px-4 py-2.5 hover:border-cb-primary/50 transition-colors group">
               <div className="w-16 h-16 rounded-input overflow-hidden bg-cb-bg shrink-0 relative">
+                {/* TODO(web): replace "No img" with chef's hat logo placeholder + add Pexels picker on recipe edit */}
                 {recipe.image_url ? <img src={recipe.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-cb-border text-xs">No img</div>}
                 {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-6 h-6 rounded-full bg-red-600/90 flex items-center justify-center"><svg className="w-3 h-3 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
               </div>

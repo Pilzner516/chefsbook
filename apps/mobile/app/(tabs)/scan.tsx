@@ -21,6 +21,8 @@ import { pickImage, takePhoto, processImage } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
+import { PexelsPickerSheet } from '../../components/PexelsPickerSheet';
+import type { PexelsPhoto } from '@chefsbook/ai';
 
 // TODO(web): replicate multi-page scan support
 
@@ -48,6 +50,8 @@ export default function ScanTab() {
   // Cover photo prompt state (shown after import when no image)
   const [showCoverPrompt, setShowCoverPrompt] = useState(false);
   const [coverPromptRecipeId, setCoverPromptRecipeId] = useState<string | null>(null);
+  const [coverPromptTitle, setCoverPromptTitle] = useState('');
+  const [showPexels, setShowPexels] = useState(false);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -196,6 +200,7 @@ export default function ScanTab() {
       // Show "Add cover photo?" prompt if no image was imported
       if (!recipe.image_url) {
         setCoverPromptRecipeId(recipe.id);
+        setCoverPromptTitle(recipe.title ?? '');
         setShowCoverPrompt(true);
       }
     } catch (e: any) {
@@ -304,12 +309,28 @@ export default function ScanTab() {
               <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('scan.library')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={() => setShowPexels(true)}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
+            >
+              <Ionicons name="search-outline" size={16} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('gallery.findPhoto')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => setShowCoverPrompt(false)}
               style={{ paddingHorizontal: 12, justifyContent: 'center' }}
             >
               <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('common.skip')}</Text>
             </TouchableOpacity>
           </View>
+          <PexelsPickerSheet
+            visible={showPexels}
+            query={coverPromptTitle}
+            onSelect={async (photo: PexelsPhoto) => {
+              setShowPexels(false);
+              handleCoverPhoto(async () => photo.fullUrl);
+            }}
+            onClose={() => setShowPexels(false)}
+          />
         </View>
       )}
 

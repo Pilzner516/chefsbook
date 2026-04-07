@@ -351,7 +351,15 @@
     "addPhotoLabel": "Ajouter une photo",
     "uploading": "Envoi en cours...",
     "longPress": "Appui long pour définir comme image principale",
-    "primary": "PRINCIPALE"
+    "primary": "PRINCIPALE",
+    "findPhoto": "Trouver une photo"
+  },
+  "pexels": {
+    "title": "Trouver une photo",
+    "searching": "Recherche de photos…",
+    "noResults": "Aucune photo trouvée. Essayez de modifier le titre.",
+    "searchFailed": "Impossible de rechercher des photos. Veuillez réessayer.",
+    "attribution": "Photos fournies par Pexels"
   },
   "days": {
     "monday": "Lundi",

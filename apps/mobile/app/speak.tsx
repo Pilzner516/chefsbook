@@ -18,6 +18,8 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { formatVoiceRecipe } from '@chefsbook/ai';
 import { formatQuantity, LANGUAGES } from '@chefsbook/ui';
 import { Button, Card, Loading, Divider } from '../components/UIKit';
+import { PexelsPickerSheet } from '../components/PexelsPickerSheet';
+import type { PexelsPhoto } from '@chefsbook/ai';
 
 const SPEECH_LOCALE_MAP: Record<string, string> = {
   'en': 'en-US', 'fr': 'fr-FR', 'es': 'es-ES',
@@ -58,6 +60,7 @@ export default function SpeakScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
+  const [showPexels, setShowPexels] = useState(false);
   // Ref to access latest interim in the 'end' handler
   const interimRef = useRef('');
 
@@ -431,36 +434,57 @@ export default function SpeakScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
-            <TouchableOpacity
-              onPress={async () => {
-                const { takePhoto } = await import('../lib/image');
-                const uri = await takePhoto();
-                if (uri) setCoverImageUri(uri);
+          <>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+              <TouchableOpacity
+                onPress={async () => {
+                  const { takePhoto } = await import('../lib/image');
+                  const uri = await takePhoto();
+                  if (uri) setCoverImageUri(uri);
+                }}
+                style={{
+                  flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                  backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
+                }}
+              >
+                <Ionicons name="camera-outline" size={20} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('speak.takePhoto')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  const { pickImage } = await import('../lib/image');
+                  const uri = await pickImage();
+                  if (uri) setCoverImageUri(uri);
+                }}
+                style={{
+                  flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                  backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
+                }}
+              >
+                <Ionicons name="images-outline" size={20} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('speak.fromLibrary')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowPexels(true)}
+                style={{
+                  flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
+                  backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
+                }}
+              >
+                <Ionicons name="search-outline" size={20} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('gallery.findPhoto')}</Text>
+              </TouchableOpacity>
+            </View>
+            <PexelsPickerSheet
+              visible={showPexels}
+              query={recipe?.title ?? ''}
+              onSelect={(photo: PexelsPhoto) => {
+                setShowPexels(false);
+                setCoverImageUri(photo.fullUrl);
               }}
-              style={{
-                flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
-                backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
-              }}
-            >
-              <Ionicons name="camera-outline" size={20} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('speak.takePhoto')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={async () => {
-                const { pickImage } = await import('../lib/image');
-                const uri = await pickImage();
-                if (uri) setCoverImageUri(uri);
-              }}
-              style={{
-                flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center',
-                backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault,
-              }}
-            >
-              <Ionicons name="images-outline" size={20} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 12, marginTop: 4 }}>{t('speak.fromLibrary')}</Text>
-            </TouchableOpacity>
-          </View>
+              onClose={() => setShowPexels(false)}
+            />
+          </>
         )}
 
         {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginBottom: 12 }}>{error}</Text> : null}

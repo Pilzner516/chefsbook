@@ -26,3 +26,5 @@ export { importTechnique, importTechniqueFromYouTube } from './importTechnique';
 export type { ExtractedTechnique } from './importTechnique';
 export { generateAiChefSuggestion } from './aiChefComplete';
 export type { AiChefSuggestion } from './aiChefComplete';
+export { searchPexels } from './searchPexels';
+export type { PexelsPhoto } from './searchPexels';

@@ -21,6 +21,7 @@ import { Badge, Button, Card, Divider, Loading, Input } from '../../components/U
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { EditImageGallery } from '../../components/EditImageGallery';
+import { RecipeImage } from '../../components/RecipeImage';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -749,7 +750,7 @@ function RecipeDetailInner() {
           {/* Photo gallery — edit mode */}
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.photos')}</Text>
           {session?.user?.id && (
-            <EditImageGallery recipeId={currentRecipe.id} userId={session.user.id} editing={true} />
+            <EditImageGallery recipeId={currentRecipe.id} userId={session.user.id} editing={true} recipeTitle={editTitle || currentRecipe.title} />
           )}
 
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.description')}</Text>
@@ -927,21 +928,7 @@ function RecipeDetailInner() {
       <ChefsBookHeader />
       <ScrollView style={{ flex: 1 }}>
       {/* Recipe image */}
-      {recipe.image_url && /^https?:\/\//.test(recipe.image_url) ? (
-        <Image
-          source={{ uri: recipe.image_url }}
-          style={{ width: '100%', height: 220 }}
-          resizeMode="cover"
-          onError={() => {}} // silently fail — layout still shows
-        />
-      ) : (
-        <View style={{
-          width: '100%', height: 220, backgroundColor: '#faf7f0',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Ionicons name="restaurant-outline" size={48} color={colors.textMuted} />
-        </View>
-      )}
+      <RecipeImage uri={recipe.image_url} style={{ width: '100%', height: 220 }} />
 
       <View style={{ padding: 16 }}>
         {/* User photos gallery — read-only */}

@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 11)
+- Pexels 3-image picker: shared `searchPexels()` in `@chefsbook/ai`, `PexelsPickerSheet` modal component
+- Pexels wired into EditImageGallery action sheet ("Find a photo" option), Speak a Recipe Step 3, and scan tab post-import cover prompt
+- Chef's hat default placeholder: `RecipeImage` shared component replaces all recipe image fallbacks (cards, detail hero, edit empty state watermark)
+- Chef's hat watermark at 18% opacity in EditImageGallery dashed placeholder zone
+- i18n: `gallery.findPhoto` + `pexels.*` keys added to all 5 locale files (en/fr/es/de/it)
+- `PEXELS_API_KEY` / `EXPO_PUBLIC_PEXELS_API_KEY` env var documented in CLAUDE.md
+- Web parity: TODO comment added for chef's hat placeholder + Pexels picker on web dashboard
+- Release APK network fix: `network_security_config.xml` + release AndroidManifest override to allow cleartext HTTP to Tailscale Supabase IP
+
 ## 2026-04-07 (session 10)
 - Release APK built: expo prebuild --clean + expo run:android --variant release, 111 MB APK at apps/mobile/android/app/build/outputs/apk/release/app-release.apk
 - Smoke test passed: landing screen renders with chef's hat icon, Sign In/Create Account/Continue as guest buttons, no dots below tagline
