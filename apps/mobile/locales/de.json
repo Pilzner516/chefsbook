@@ -313,7 +313,8 @@
     "savePlan": "Plan speichern",
     "generationFailed": "Erstellung fehlgeschlagen",
     "saveFailed": "Speichern fehlgeschlagen",
-    "mealPlanSaved": "Essensplan gespeichert!"
+    "mealPlanSaved": "Essensplan gespeichert!",
+    "translating": "Übersetzen…"
   },
   "settings": {
     "language": "Sprache",

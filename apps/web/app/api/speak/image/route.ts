@@ -5,7 +5,7 @@ export async function POST(req: Request) {
   const pageNum = page ?? 1;
 
   // Try Pexels API (keyword search, free)
-  const pexelsKey = process.env.PEXELS_API_KEY;
+  const pexelsKey = process.env.EXPO_PUBLIC_PEXELS_API_KEY ?? process.env.PEXELS_API_KEY;
   if (pexelsKey) {
     try {
       const res = await fetch(

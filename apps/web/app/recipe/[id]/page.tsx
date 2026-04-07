@@ -6,8 +6,10 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SocialShareModal from '@/components/SocialShareModal';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook } from '@chefsbook/db';
-import type { Cookbook } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
+import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
+import { translateRecipe } from '@chefsbook/ai';
+import type { TranslatedRecipe } from '@chefsbook/ai';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
 import type { CookingNote } from '@chefsbook/db';
@@ -59,6 +61,9 @@ export default function RecipePage() {
   const [userIsPro, setUserIsPro] = useState(false);
   const [cookbook, setCookbook] = useState<Cookbook | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [userLanguage, setUserLanguage] = useState('en');
+  const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
+  const [translating, setTranslating] = useState(false);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const seekYouTube = useCallback((seconds: number) => {
@@ -80,6 +85,9 @@ export default function RecipePage() {
       if (user) {
         setIsLoggedIn(true);
         isPro(user.id).then(setUserIsPro);
+        // Fetch user language preference
+        supabase.from('user_profiles').select('preferred_language').eq('id', user.id).maybeSingle()
+          .then(({ data: profile }) => { if (profile?.preferred_language) setUserLanguage(profile.preferred_language); });
         if (data && user.id === data.user_id) {
           setIsOwner(true);
           listCookingNotes(id).then(setCookingNotes);
@@ -89,6 +97,49 @@ export default function RecipePage() {
       setLoading(false);
     })();
   }, [id]);
+
+  // Translation: check cache or translate in background
+  useEffect(() => {
+    if (!recipe || userLanguage === 'en') { setTranslation(null); return; }
+    let cancelled = false;
+    (async () => {
+      const cached = await getRecipeTranslation(recipe.id, userLanguage);
+      if (cancelled) return;
+      if (cached) { setTranslation(cached); return; }
+      setTranslating(true);
+      try {
+        const result = await translateRecipe(
+          {
+            title: recipe.title,
+            description: recipe.description,
+            ingredients: (recipe.ingredients ?? []).map((i) => ({ quantity: i.quantity, unit: i.unit, ingredient: i.ingredient, preparation: i.preparation })),
+            steps: (recipe.steps ?? []).map((s) => ({ instruction: s.instruction })),
+            notes: recipe.notes,
+          },
+          userLanguage,
+        );
+        if (cancelled) return;
+        await saveRecipeTranslation(recipe.id, userLanguage, { title: result.title, description: result.description, ingredients: result.ingredients, steps: result.steps, notes: result.notes });
+        const saved = await getRecipeTranslation(recipe.id, userLanguage);
+        if (!cancelled) setTranslation(saved);
+      } catch (err) { console.warn('[RecipePage] Translation failed:', err); }
+      finally { if (!cancelled) setTranslating(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [recipe?.id, userLanguage]);
+
+  // Translated display values
+  const displayTitle = translation?.translated_title ?? recipe?.title ?? '';
+  const displayDescription = translation?.translated_description ?? recipe?.description ?? null;
+  const displayNotes = translation?.translated_notes ?? recipe?.notes ?? null;
+  const getDisplayIngredientName = (ing: RecipeIngredient, i: number) => {
+    const tr = (translation?.translated_ingredients as any[])?.[i];
+    return tr?.name ?? ing.ingredient;
+  };
+  const getDisplayStepInstruction = (step: RecipeStep, i: number) => {
+    const tr = (translation?.translated_steps as any[])?.[i];
+    return tr?.instruction ?? step.instruction;
+  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -629,8 +680,13 @@ export default function RecipePage() {
                   onClick={() => isOwner && setEditingTitle(true)}
                   title={isOwner ? 'Click to edit title' : undefined}
                 >
-                  {recipe.title}
+                  {displayTitle}
                 </h1>
+                {translating && (
+                  <span className="inline-flex items-center gap-1.5 bg-cb-primary/10 text-cb-primary text-xs font-semibold px-2.5 py-1 rounded-full animate-pulse">
+                    Translating…
+                  </span>
+                )}
                 {recipe.visibility === 'private' && (
                   <span className="bg-red-500 text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-full tracking-wider">PRIVATE</span>
                 )}
@@ -670,13 +726,13 @@ export default function RecipePage() {
               onBlur={(e) => saveDescription(e.target.value)}
             />
           </form>
-        ) : recipe.description ? (
+        ) : (displayDescription || recipe.description) ? (
           <p
             className={`text-cb-secondary text-lg mb-6 leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-1 -mx-1' : ''}`}
             onClick={() => isOwner && setEditingDesc(true)}
             title={isOwner ? 'Click to edit description' : undefined}
           >
-            {recipe.description}
+            {displayDescription}
           </p>
         ) : isOwner ? (
           <button
@@ -1045,7 +1101,7 @@ export default function RecipePage() {
                           {ing.unit ?? ''}
                         </td>
                         <td className="py-2 align-top">
-                          {ing.ingredient}
+                          {getDisplayIngredientName(ing, recipe.ingredients.indexOf(ing))}
                           {ing.preparation && (
                             <span className="text-cb-secondary">, {ing.preparation}</span>
                           )}
@@ -1104,13 +1160,13 @@ export default function RecipePage() {
             </div>
           ) : (
           <ol className="space-y-6">
-            {recipe.steps.map((step) => (
+            {recipe.steps.map((step, stepIdx) => (
               <li key={step.id} className="flex gap-4">
                 <div className="w-8 h-8 rounded-full bg-cb-primary text-white flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
                   {step.step_number}
                 </div>
                 <div className="flex-1">
-                  <p className="leading-relaxed">{step.instruction}</p>
+                  <p className="leading-relaxed">{getDisplayStepInstruction(step, stepIdx)}</p>
                   <div className="flex items-center gap-3 mt-1">
                     {step.timestamp_seconds != null && recipe.youtube_video_id && (
                       <button
@@ -1151,7 +1207,7 @@ export default function RecipePage() {
                 onBlur={(e) => saveNotes(e.target.value)}
               />
             </div>
-          ) : recipe.notes ? (
+          ) : (displayNotes || recipe.notes) ? (
             <div>
               <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
               <p
@@ -1159,7 +1215,7 @@ export default function RecipePage() {
                 onClick={() => isOwner && setEditingNotes(true)}
                 title={isOwner ? 'Click to edit notes' : undefined}
               >
-                {recipe.notes}
+                {displayNotes}
               </p>
             </div>
           ) : isOwner ? (

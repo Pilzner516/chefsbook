@@ -240,6 +240,8 @@ export async function replaceIngredients(
     group_label: ing.group_label,
   }));
   const { data } = await supabase.from('recipe_ingredients').insert(rows).select();
+  // Invalidate translation cache
+  await supabase.from('recipe_translations').delete().eq('recipe_id', recipeId);
   return (data ?? []) as RecipeIngredient[];
 }
 
@@ -259,6 +261,8 @@ export async function replaceSteps(
     group_label: step.group_label,
   }));
   const { data } = await supabase.from('recipe_steps').insert(rows).select();
+  // Invalidate translation cache
+  await supabase.from('recipe_translations').delete().eq('recipe_id', recipeId);
   return (data ?? []) as RecipeStep[];
 }
 

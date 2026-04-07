@@ -10,5 +10,6 @@ export * from './queries/imports';
 export * from './queries/categories';
 export * from './queries/techniques';
 export * from './queries/recipePhotos';
+export * from './queries/recipeTranslations';
 export * from './subscriptions';
 export * from './shopping/deduplication';

@@ -313,7 +313,8 @@
     "savePlan": "Salva Piano",
     "generationFailed": "Generazione non riuscita",
     "saveFailed": "Salvataggio non riuscito",
-    "mealPlanSaved": "Piano pasti salvato!"
+    "mealPlanSaved": "Piano pasti salvato!",
+    "translating": "Traduzione…"
   },
   "settings": {
     "language": "Lingua",

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -15,7 +15,10 @@ import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions } from '@chefsbook/db';
+import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
+import type { RecipeTranslation } from '@chefsbook/db';
+import { translateRecipe } from '@chefsbook/ai';
+import type { TranslatedRecipe } from '@chefsbook/ai';
 // TODO(web): add version picker UI on recipe detail
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
 import { CountdownTimer } from '../../components/CountdownTimer';
@@ -566,6 +569,9 @@ function RecipeDetailInner() {
   const [editSteps, setEditSteps] = useState<{ instruction: string; timer_minutes: string }[]>([]);
   const [editDietaryFlags, setEditDietaryFlags] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
+  const language = usePreferencesStore((s) => s.language);
+  const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     if (id) fetchRecipe(id);
@@ -584,6 +590,57 @@ function RecipeDetailInner() {
       console.log('[RecipeDetail] recipe is null after loading finished');
     }
   }, [currentRecipe?.id, loading]);
+
+  // Translation: check cache or translate in background
+  useEffect(() => {
+    if (!currentRecipe || language === 'en') {
+      setTranslation(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      // Check cache first
+      const cached = await getRecipeTranslation(currentRecipe.id, language);
+      if (cancelled) return;
+      if (cached) { setTranslation(cached); return; }
+
+      // No cache — translate in background
+      setTranslating(true);
+      try {
+        const result = await translateRecipe(
+          {
+            title: currentRecipe.title,
+            description: currentRecipe.description,
+            ingredients: (currentRecipe.ingredients ?? []).map((i) => ({
+              quantity: i.quantity,
+              unit: i.unit,
+              ingredient: i.ingredient,
+              preparation: i.preparation,
+            })),
+            steps: (currentRecipe.steps ?? []).map((s) => ({ instruction: s.instruction })),
+            notes: currentRecipe.notes,
+          },
+          language,
+        );
+        if (cancelled) return;
+        await saveRecipeTranslation(currentRecipe.id, language, {
+          title: result.title,
+          description: result.description,
+          ingredients: result.ingredients,
+          steps: result.steps,
+          notes: result.notes,
+        });
+        // Re-fetch from DB to get proper structure
+        const saved = await getRecipeTranslation(currentRecipe.id, language);
+        if (!cancelled) setTranslation(saved);
+      } catch (err) {
+        console.warn('[RecipeDetail] Translation failed:', err);
+      } finally {
+        if (!cancelled) setTranslating(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentRecipe?.id, language]);
 
   const handleAddToShoppingList = async () => {
     const userId = session?.user?.id;
@@ -728,6 +785,27 @@ function RecipeDetailInner() {
   const tags = recipe.tags ?? [];
   const originalServings = recipe.servings || 4;
   const pinned = pinnedList.some((r) => r.id === recipe.id);
+
+  // Translated display values (fall back to original when no translation)
+  const displayTitle = translation?.translated_title ?? recipe.title;
+  const displayDescription = translation?.translated_description ?? recipe.description;
+  const displayNotes = translation?.translated_notes ?? recipe.notes;
+  const displayIngredients = useMemo(() => {
+    if (!translation?.translated_ingredients) return ingredients;
+    return ingredients.map((ing, i) => {
+      const tr = (translation.translated_ingredients as any[])?.[i];
+      if (!tr) return ing;
+      return { ...ing, ingredient: tr.name ?? ing.ingredient, preparation: tr.notes ?? ing.preparation };
+    });
+  }, [ingredients, translation]);
+  const displaySteps = useMemo(() => {
+    if (!translation?.translated_steps) return steps;
+    return steps.map((step, i) => {
+      const tr = (translation.translated_steps as any[])?.[i];
+      if (!tr) return step;
+      return { ...step, instruction: tr.instruction ?? step.instruction };
+    });
+  }, [steps, translation]);
 
   if (cookMode && steps.length > 0) {
     return <CookMode steps={steps} onExit={() => setCookMode(false)} />;
@@ -936,7 +1014,15 @@ function RecipeDetailInner() {
           <EditImageGallery recipeId={recipe.id} userId={session.user.id} editing={false} />
         )}
 
-        <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 4 }}>{recipe.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', flex: 1 }}>{displayTitle}</Text>
+          {translating && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, gap: 6 }}>
+              <ActivityIndicator size="small" color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '600' }}>{t('recipe.translating')}</Text>
+            </View>
+          )}
+        </View>
         {/* Version indicator */}
         {(recipe.is_parent || recipe.parent_recipe_id) && (
           <TouchableOpacity
@@ -965,8 +1051,8 @@ function RecipeDetailInner() {
           </TouchableOpacity>
         )}
         {!recipe.is_parent && !recipe.parent_recipe_id && <View style={{ marginBottom: 4 }} />}
-        {recipe.description && (
-          <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 12 }}>{recipe.description}</Text>
+        {displayDescription && (
+          <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 12 }}>{displayDescription}</Text>
         )}
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
@@ -1141,7 +1227,7 @@ function RecipeDetailInner() {
         )}
 
         {/* Feature #6: linked sub-recipes */}
-        {ingredients.map((ing) => (
+        {displayIngredients.map((ing) => (
           <IngredientRow
             key={ing.id}
             ing={ing}
@@ -1156,7 +1242,7 @@ function RecipeDetailInner() {
         {steps.length > 0 && (
           <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('recipe.steps')}</Text>
         )}
-        {steps.map((step) => {
+        {displaySteps.map((step) => {
           const timers = parseTimers(step.instruction ?? '');
           // Include the DB timer_minutes if not already detected
           const allTimers = [...timers];
@@ -1184,11 +1270,11 @@ function RecipeDetailInner() {
         })}
 
         {/* Recipe notes */}
-        {recipe.notes && (
+        {displayNotes && (
           <>
             <Divider />
             <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>{t('recipe.notes')}</Text>
-            {recipe.notes
+            {displayNotes
               .split(/\n+/)
               .flatMap((line: string) =>
                 line.split(/(?<=\.)\s+(?=[A-Z][a-zA-Z\s/]*:\s)/)

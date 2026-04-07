@@ -181,7 +181,8 @@
     "peopleSaved": "{{count}} people saved this",
     "saveCount": "{{count}} saves",
     "addIngredient": "+ Add",
-    "addStep": "+ Add"
+    "addStep": "+ Add",
+    "translating": "Translating…"
   },
   "shop": {
     "shoppingLists": "Shopping Lists",

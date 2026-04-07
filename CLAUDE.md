@@ -267,6 +267,8 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Recipe image fallback: `RecipeImage` component (`apps/mobile/components/RecipeImage.tsx`) shows chef's hat icon.png when no image URL; used in RecipeCard + detail hero
 - Pexels picker: `PexelsPickerSheet` modal shows 3 landscape thumbnails; wired into EditImageGallery, Speak a Recipe, scan cover prompt
 - Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.110.47.62 + localhost + 10.0.2.2; release AndroidManifest override in `src/release/`
+- Recipe content translation: `translateRecipe()` in `@chefsbook/ai` translates via Claude Sonnet; cached in `recipe_translations` table per recipe+language; cache invalidated on `replaceIngredients`/`replaceSteps`; English always shows original
+- Translation flow: recipe detail checks cache → shows original → translates in background → saves → re-renders; "Translating…" indicator shown during API call
 
 ## Builds
 

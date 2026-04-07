@@ -313,7 +313,8 @@
     "savePlan": "Enregistrer le plan",
     "generationFailed": "Échec de la génération",
     "saveFailed": "Échec de l'enregistrement",
-    "mealPlanSaved": "Planning enregistré !"
+    "mealPlanSaved": "Planning enregistré !",
+    "translating": "Traduction…"
   },
   "settings": {
     "language": "Langue",

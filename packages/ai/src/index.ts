@@ -28,3 +28,5 @@ export { generateAiChefSuggestion } from './aiChefComplete';
 export type { AiChefSuggestion } from './aiChefComplete';
 export { searchPexels } from './searchPexels';
 export type { PexelsPhoto } from './searchPexels';
+export { translateRecipe } from './translateRecipe';
+export type { TranslatedRecipe, TranslatedIngredient, TranslatedStep } from './translateRecipe';

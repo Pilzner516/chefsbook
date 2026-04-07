@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 12)
+- Recipe content translation system: `translateRecipe()` in `@chefsbook/ai` via Claude Sonnet
+- Migration 016: `recipe_translations` table with RLS policies, applied to RPi5
+- DB functions: `getRecipeTranslation()`, `saveRecipeTranslation()`, `deleteRecipeTranslations()` in `@chefsbook/db`
+- Mobile recipe detail: cached translation lookup → background translate → "Translating…" pill → re-render with translated content
+- Web recipe detail: same translation flow — fetches user `preferred_language` from `user_profiles`, caches + displays
+- Cache invalidation: `replaceIngredients()` and `replaceSteps()` auto-delete all translations for edited recipe
+- English always shows original content — no translation API call
+- i18n: `recipe.translating` key added to all 5 locales
+- Web speak/image route updated to accept `EXPO_PUBLIC_PEXELS_API_KEY` env var name
+
 ## 2026-04-07 (session 11)
 - Pexels 3-image picker: shared `searchPexels()` in `@chefsbook/ai`, `PexelsPickerSheet` modal component
 - Pexels wired into EditImageGallery action sheet ("Find a photo" option), Speak a Recipe Step 3, and scan tab post-import cover prompt
