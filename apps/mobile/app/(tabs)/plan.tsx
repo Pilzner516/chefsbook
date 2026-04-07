@@ -320,41 +320,34 @@ export default function PlanTab() {
       )}
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
-        {!hasMeals ? (
-          <EmptyState
-            icon="📅"
-            title="No meals planned this week"
-            message="Tap + on any day to add a recipe."
-            action={{ label: 'Browse Recipes', onPress: () => router.push('/(tabs)/search') }}
-          />
-        ) : (
-          weekDates.map((date, i) => {
-            const SLOT_ORDER: Record<string, number> = { breakfast: 0, lunch: 1, dinner: 2 };
-            const dayPlans = plans
-              .filter((p: any) => p.plan_date === date)
-              .sort((a: any, b: any) => (SLOT_ORDER[a.meal_slot?.toLowerCase()] ?? 9) - (SLOT_ORDER[b.meal_slot?.toLowerCase()] ?? 9));
-            return (
-              <Card
-                key={date}
-                style={{
-                  marginBottom: 12,
-                  shadowColor: '#000',
-                  shadowOpacity: 0.06,
-                  shadowRadius: 8,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: 2,
-                }}
-              >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <View>
-                    <Text style={{ color: colors.accent, fontSize: 18, fontWeight: '700' }}>
-                      {DAYS[i]}
-                    </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 13 }}>
-                      {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </Text>
-                  </View>
-                  {/* Cart sync button */}
+        {weekDates.map((date, i) => {
+          const SLOT_ORDER: Record<string, number> = { breakfast: 0, lunch: 1, dinner: 2 };
+          const dayPlans = plans
+            .filter((p: any) => p.plan_date === date)
+            .sort((a: any, b: any) => (SLOT_ORDER[a.meal_slot?.toLowerCase()] ?? 9) - (SLOT_ORDER[b.meal_slot?.toLowerCase()] ?? 9));
+          return (
+            <Card
+              key={date}
+              style={{
+                marginBottom: 12,
+                shadowColor: '#000',
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 2,
+              }}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <View>
+                  <Text style={{ color: colors.accent, fontSize: 18, fontWeight: '700' }}>
+                    {DAYS[i]}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>
+                    {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </Text>
+                </View>
+                {/* Cart sync button — only show when day has meals */}
+                {dayPlans.length > 0 && (
                   <TouchableOpacity
                     onPress={() => openCartPicker(date, i)}
                     style={{
@@ -367,40 +360,40 @@ export default function PlanTab() {
                     <Ionicons name="cart-outline" size={14} color={colors.textMuted} />
                     <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>Add to list</Text>
                   </TouchableOpacity>
-                </View>
-                {dayPlans.length === 0 ? (
-                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>No meals planned</Text>
-                ) : (
-                  dayPlans.map((plan: any) => (
-                    <TouchableOpacity
-                      key={plan.id}
-                      onPress={() => plan.recipe_id && router.push(`/recipe/${plan.recipe_id}`)}
-                      onLongPress={() => showMealActions(plan)}
-                      delayLongPress={400}
-                      style={{ paddingVertical: 6, minHeight: 44, justifyContent: 'center' }}
-                    >
-                      <Text style={{ color: colors.accent, fontSize: 11, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8 }}>
-                        {plan.meal_slot}
-                      </Text>
-                      <Text style={{ color: colors.textPrimary, fontSize: 15 }}>
-                        {(plan as any).recipe?.title ?? plan.notes ?? 'No recipe'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))
                 )}
+              </View>
+              {dayPlans.length === 0 ? (
+                <Text style={{ color: colors.textMuted, fontSize: 13 }}>No meals planned</Text>
+              ) : (
+                dayPlans.map((plan: any) => (
+                  <TouchableOpacity
+                    key={plan.id}
+                    onPress={() => plan.recipe_id && router.push(`/recipe/${plan.recipe_id}`)}
+                    onLongPress={() => showMealActions(plan)}
+                    delayLongPress={400}
+                    style={{ paddingVertical: 6, minHeight: 44, justifyContent: 'center' }}
+                  >
+                    <Text style={{ color: colors.accent, fontSize: 11, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8 }}>
+                      {plan.meal_slot}
+                    </Text>
+                    <Text style={{ color: colors.textPrimary, fontSize: 15 }}>
+                      {(plan as any).recipe?.title ?? plan.notes ?? 'No recipe'}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
 
-                {/* Add meal button */}
-                <TouchableOpacity
-                  onPress={() => openPicker(date)}
-                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, marginTop: 4 }}
-                >
-                  <Ionicons name="add-circle-outline" size={18} color={colors.accent} />
-                  <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 4 }}>Add meal</Text>
-                </TouchableOpacity>
-              </Card>
-            );
-          })
-        )}
+              {/* Add meal button */}
+              <TouchableOpacity
+                onPress={() => openPicker(date)}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, marginTop: 4 }}
+              >
+                <Ionicons name="add-circle-outline" size={18} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 4 }}>Add meal</Text>
+              </TouchableOpacity>
+            </Card>
+          );
+        })}
         <View style={{ height: tabBarHeight }} />
       </ScrollView>
 

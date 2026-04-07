@@ -21,7 +21,8 @@ export function ChefsBookHeader() {
   const [langPickerVisible, setLangPickerVisible] = useState(false);
   const [qaNotepadVisible, setQaNotepadVisible] = useState(false);
 
-  const langCode = (language || 'en').toUpperCase().slice(0, 3);
+  const langEntry = LANGUAGES.find((l) => l.code === language);
+  const langLabel = langEntry ? `${langEntry.flag} ${langEntry.code.toUpperCase()}` : (language || 'en').toUpperCase();
 
   const toggleUnits = () => {
     const next = units === 'imperial' ? 'metric' : 'imperial';
@@ -69,7 +70,7 @@ export function ChefsBookHeader() {
           onPress={() => setLangPickerVisible(true)}
           style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}>{langCode}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}>{langLabel}</Text>
         </TouchableOpacity>
 
         {/* Unit toggle pill */}

@@ -643,9 +643,14 @@ function RecipeDetailInner() {
         course: (editCourse.trim() || null) as any,
         notes: editNotes.trim() || null,
       });
-      await updateRecipeMetadata(currentRecipe.id, {
-        dietary_flags: editDietaryFlags,
-      });
+      // Only update dietary_flags if they actually changed
+      const flagsChanged =
+        JSON.stringify(editDietaryFlags) !== JSON.stringify(currentRecipe.dietary_flags ?? []);
+      if (flagsChanged) {
+        await updateRecipeMetadata(currentRecipe.id, {
+          dietary_flags: editDietaryFlags,
+        });
+      }
       await replaceIngredients(currentRecipe.id, session.user.id, editIngredients.map((ing, i) => ({
         quantity: ing.quantity ? parseFloat(ing.quantity) : null,
         unit: ing.unit || null,

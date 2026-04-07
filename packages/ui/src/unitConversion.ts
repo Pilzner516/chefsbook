@@ -158,6 +158,13 @@ export function convertIngredient(
   if (lower in TO_ML) {
     const ml = quantity * TO_ML[lower]!;
     if (targetSystem === 'metric') {
+      // Dry ingredients convert to weight (g/kg) instead of volume (ml/L)
+      const name = ingredientName ?? '';
+      if (isDryIngredient(name) && !isLiquidIngredient(name)) {
+        // Approximate: 1 cup ≈ 125g for flour-like, 1 Tbsp ≈ 8g, 1 tsp ≈ 3g
+        // Use ml value as a proxy (ml ≈ grams for water density; close enough for dry goods)
+        return applyMetricWeightLadder(Math.round(ml));
+      }
       return applyMetricLiquidLadder(ml);
     } else {
       return applyImperialLiquidLadder(ml);

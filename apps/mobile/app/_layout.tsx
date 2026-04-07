@@ -4,12 +4,21 @@ import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-r
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
+import * as SecureStore from 'expo-secure-store';
+import { configureStorage } from '@chefsbook/db';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { PinnedBar } from '../components/PinnedBar';
 import { ImportBanner } from '../components/ImportBanner';
 import { Loading } from '../components/UIKit';
+
+// Wire SecureStore as the Supabase auth storage adapter so sessions persist across launches
+configureStorage({
+  getItem: (key: string) => SecureStore.getItemAsync(key),
+  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+});
 
 function useProtectedRoute() {
   const session = useAuthStore((s) => s.session);

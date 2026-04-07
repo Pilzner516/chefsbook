@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07
+- Bug fix: recipe save payload — strip undefined values from updateRecipe/updateRecipeMetadata, only send dietary_flags when changed
+- Bug fix: session persistence — wired expo-secure-store as Supabase auth storage adapter via configureStorage() in @chefsbook/db
+- Bug fix: empty meal plan week — always render 7 day cards (Mon-Sun) regardless of whether meals exist, removed EmptyState gate
+- Bug fix: favorites filter — tap Favorites card directly toggles filter (removed intermediate subcategory expansion), active state highlight
+- Bug fix: blank app icon — ran expo prebuild --clean to regenerate Android mipmap icons from correct adaptive-icon.png + backgroundColor
+- Bug fix: landing page dots — removed decorative three-dot element below tagline
+- Bug fix: dry ingredient conversion — volume units (cup/Tbsp/tsp) for dry ingredients now convert to g/kg in metric mode, not ml
+- Bug fix: language selector — header now shows flag emoji + code (e.g. "🇫🇷 FR") for clear visual feedback on language change
+
 ## 2026-04-06 (session 3)
 - Floating pill tab bar: removed elevated Scan button, all 5 tabs flat and identical inside pill
 - Meal plan add flow: bottom sheet recipe picker with meal type selector (Breakfast/Lunch/Dinner/Snack), save to plan, toast confirmation

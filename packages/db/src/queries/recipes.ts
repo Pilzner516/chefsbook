@@ -206,9 +206,13 @@ export async function updateRecipe(
   id: string,
   updates: Partial<Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'total_minutes' | 'share_token'>>,
 ): Promise<Recipe> {
+  // Strip undefined values to avoid sending non-existent columns
+  const cleaned = Object.fromEntries(
+    Object.entries(updates).filter(([, v]) => v !== undefined),
+  );
   const { data, error } = await supabase
     .from('recipes')
-    .update(updates)
+    .update(cleaned)
     .eq('id', id)
     .select()
     .single();
@@ -298,7 +302,12 @@ export async function updateRecipeMetadata(
     dietary_flags?: string[];
   },
 ): Promise<void> {
-  const { error } = await supabase.from('recipes').update(fields).eq('id', id);
+  // Strip undefined values so we only send fields that were explicitly provided
+  const cleaned = Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v !== undefined),
+  );
+  if (Object.keys(cleaned).length === 0) return;
+  const { error } = await supabase.from('recipes').update(cleaned).eq('id', id);
   if (error) throw error;
 }
 

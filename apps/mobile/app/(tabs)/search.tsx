@@ -363,14 +363,28 @@ export default function SearchTab() {
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.key}
-                  onPress={() => setExpandedCategory(expandedCategory === cat.key ? null : cat.key)}
+                  onPress={() => {
+                    if (cat.key === 'favourites') {
+                      // Toggle favorites filter directly — no subcategory expansion needed
+                      const isActive = activeFilters.some((f) => f.type === 'favourites');
+                      if (isActive) {
+                        removeFilter('favourites', 'true');
+                      } else {
+                        addFilter('favourites', 'true', 'Favorites only');
+                      }
+                      return;
+                    }
+                    setExpandedCategory(expandedCategory === cat.key ? null : cat.key);
+                  }}
                   style={{
                     width: '47%',
-                    backgroundColor: colors.bgCard,
+                    backgroundColor: cat.key === 'favourites' && activeFilters.some((f) => f.type === 'favourites')
+                      ? colors.accentSoft : colors.bgCard,
                     borderRadius: 12,
                     padding: 16,
                     borderWidth: 1,
-                    borderColor: expandedCategory === cat.key ? colors.accent : colors.borderDefault,
+                    borderColor: (cat.key === 'favourites' && activeFilters.some((f) => f.type === 'favourites'))
+                      || expandedCategory === cat.key ? colors.accent : colors.borderDefault,
                     shadowColor: '#000',
                     shadowOpacity: 0.06,
                     shadowRadius: 8,
@@ -382,7 +396,8 @@ export default function SearchTab() {
                   <Ionicons
                     name={cat.icon}
                     size={24}
-                    color={cat.key === 'favourites' ? colors.accent : expandedCategory === cat.key ? colors.accent : colors.textSecondary}
+                    color={(cat.key === 'favourites' && activeFilters.some((f) => f.type === 'favourites'))
+                      || expandedCategory === cat.key ? colors.accent : colors.textSecondary}
                   />
                   <Text
                     style={{

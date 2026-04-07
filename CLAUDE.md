@@ -211,7 +211,7 @@ adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_not
 - Followers UI not built (DB schema exists)
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
-- Multilingual support: language selector UI built, actual translation not implemented (UI labels still English-only)
+- Multilingual support: language selector UI built and plumbed (flag emoji + code in header, persists to SecureStore + Supabase), actual translation not implemented (UI labels still English-only)
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
@@ -247,6 +247,8 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - American spelling used throughout mobile app (Favorite not Favourite)
 - QA Notepad: temporary testing tool, triggered by tapping ChefsBook logo. Remove `QANotepad.tsx` + logo tap handler when done testing
 - Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`
+- Supabase auth persistence: `configureStorage()` in `@chefsbook/db` accepts a storage adapter; mobile wires `expo-secure-store` in `_layout.tsx` at module scope (before any Supabase access)
+- Unit conversion: dry ingredients (flour, sugar, etc.) convert volume→weight (cups→g) in metric mode; liquid ingredients convert volume→volume (cups→ml)
 
 ## Builds
 

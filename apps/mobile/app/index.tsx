@@ -58,13 +58,6 @@ export default function LandingScreen() {
         Your recipes, beautifully organized
       </Text>
 
-      {/* Three dots */}
-      <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
-        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.borderDefault }} />
-        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.accent }} />
-        <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.borderDefault }} />
-      </View>
-
       {/* Sign In button */}
       <TouchableOpacity
         onPress={() => router.push('/auth/signin')}
