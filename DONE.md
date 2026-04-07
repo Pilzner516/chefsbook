@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 2)
+- QA Notepad: moved "Clear All" button from header to bottom of note list, added confirmation dialog with spec text
+- QA Notepad: added bottom safe area inset (insets.bottom) to "Add Item" footer button
+- Shopping list: added marginBottom to "New Shopping List" button, consistent button label across levels
+- Safe area audit: flagged 2 modal bottom issues in plan.tsx (recipe picker + shopping list picker) — not fixed per scope
+
 ## 2026-04-07
 - Bug fix: recipe save payload — strip undefined values from updateRecipe/updateRecipeMetadata, only send dietary_flags when changed
 - Bug fix: session persistence — wired expo-secure-store as Supabase auth storage adapter via configureStorage() in @chefsbook/db

@@ -424,7 +424,7 @@ export default function ShopTab() {
             </Card>
           )}
 
-          {!showNew && <View style={{ marginBottom: 16 }}><Button title="+ New List" onPress={() => setShowNew(true)} /></View>}
+          {!showNew && <View style={{ marginBottom: 16 }}><Button title="+ New Shopping List" onPress={() => setShowNew(true)} /></View>}
 
           {filteredLists.length === 0 ? (
             <EmptyState icon="🛒" title="No lists here" message="Create a new shopping list." />
@@ -498,7 +498,7 @@ export default function ShopTab() {
           <EmptyState icon="🛒" title="No shopping lists" message="Create a list or generate one from your meal plan." action={{ label: 'Plan Meals', onPress: () => router.push('/(tabs)/plan') }} />
         )}
 
-        <View style={{ marginTop: 12 }}>
+        <View style={{ marginTop: 12, marginBottom: 16 }}>
           <Button title="+ New Shopping List" onPress={() => { setSelectedStore('__all__'); setShowNew(true); }} />
         </View>
       </ScrollView>

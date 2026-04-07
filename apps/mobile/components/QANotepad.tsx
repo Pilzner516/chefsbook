@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, Alert, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
@@ -24,6 +25,7 @@ interface Props {
 
 export function QANotepad({ visible, onClose }: Props) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [items, setItems] = useState<QAItem[]>([]);
   const [showInput, setShowInput] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -76,7 +78,7 @@ export function QANotepad({ visible, onClose }: Props) {
   };
 
   const handleClearAll = () => {
-    Alert.alert(`Clear all ${items.length} items?`, 'This cannot be undone.', [
+    Alert.alert('Clear all notes?', 'This will permanently delete all notepad entries.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Clear All', style: 'destructive', onPress: () => saveItems([]) },
     ]);
@@ -131,24 +133,17 @@ export function QANotepad({ visible, onClose }: Props) {
             borderBottomWidth: 1,
             borderBottomColor: colors.borderDefault,
           }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity
-                onPress={handleExport}
-                style={isStaging ? {
-                  flexDirection: 'row', alignItems: 'center', gap: 4,
-                  backgroundColor: colors.accent, borderRadius: 8,
-                  paddingHorizontal: 10, paddingVertical: 6,
-                } : { padding: 4 }}
-              >
-                <Ionicons name="share-outline" size={isStaging ? 16 : 20} color={isStaging ? '#fff' : colors.textMuted} />
-                {isStaging && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Share</Text>}
-              </TouchableOpacity>
-              {items.length > 0 && (
-                <TouchableOpacity onPress={handleClearAll} style={{ padding: 4 }}>
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>Clear all</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            <TouchableOpacity
+              onPress={handleExport}
+              style={isStaging ? {
+                flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: colors.accent, borderRadius: 8,
+                paddingHorizontal: 10, paddingVertical: 6,
+              } : { padding: 4 }}
+            >
+              <Ionicons name="share-outline" size={isStaging ? 16 : 20} color={isStaging ? '#fff' : colors.textMuted} />
+              {isStaging && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>Share</Text>}
+            </TouchableOpacity>
             <View style={{ alignItems: 'center', flex: 1 }}>
               <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600' }}>QA Notepad</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12 }}>Tap + to log a bug or feature request</Text>
@@ -227,11 +222,17 @@ export function QANotepad({ visible, onClose }: Props) {
                 </View>
               ))
             )}
+            {/* Clear All — below list, separated from header actions */}
+            {items.length > 0 && (
+              <TouchableOpacity onPress={handleClearAll} style={{ marginTop: 24, paddingVertical: 12 }}>
+                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Clear All</Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
 
           {/* Footer */}
           {!showInput && (
-            <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: colors.borderDefault }}>
+            <View style={{ padding: 16, paddingBottom: 16 + insets.bottom, borderTopWidth: 1, borderTopColor: colors.borderDefault }}>
               <TouchableOpacity
                 onPress={() => setShowInput(true)}
                 style={{
