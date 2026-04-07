@@ -43,6 +43,9 @@ export default function ScanTab() {
   // Multi-page scan state
   const [scanPages, setScanPages] = useState<{ uri: string; base64: string; mimeType: string }[]>([]);
   const [scanMode, setScanMode] = useState(false);
+  // Cover photo prompt state (shown after import when no image)
+  const [showCoverPrompt, setShowCoverPrompt] = useState(false);
+  const [coverPromptRecipeId, setCoverPromptRecipeId] = useState<string | null>(null);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -188,10 +191,33 @@ export default function ScanTab() {
       const recipe = await addRecipe(session.user.id, { ...scanned, source_url: target });
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
+      // Show "Add cover photo?" prompt if no image was imported
+      if (!recipe.image_url) {
+        setCoverPromptRecipeId(recipe.id);
+        setShowCoverPrompt(true);
+      }
     } catch (e: any) {
       setImportStatus('error');
       Alert.alert('Import failed', e.message);
     }
+  };
+
+  const handleCoverPhoto = async (getUri: () => Promise<string | null>) => {
+    if (!session?.user?.id || !coverPromptRecipeId) return;
+    const uri = await getUri();
+    if (!uri) return;
+    setShowCoverPrompt(false);
+    try {
+      const { base64 } = await processImage(uri);
+      const { supabase, addRecipePhoto } = await import('@chefsbook/db');
+      const fileName = `${session.user.id}/${coverPromptRecipeId}/cover_${Date.now()}.jpg`;
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+      await supabase.storage.from('recipe-user-photos').upload(fileName, bytes, { contentType: 'image/jpeg' });
+      const { data: urlData } = supabase.storage.from('recipe-user-photos').getPublicUrl(fileName);
+      await addRecipePhoto(coverPromptRecipeId, session.user.id, fileName, urlData.publicUrl);
+    } catch {} // non-blocking
   };
 
   const handleClipboardPaste = () => {
@@ -247,12 +273,42 @@ export default function ScanTab() {
           onPress={() => {
             if (importedRecipeId) router.push(`/recipe/${importedRecipeId}`);
             setImportStatus('idle');
+            setShowCoverPrompt(false);
           }}
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.accentGreenSoft, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}
         >
           <Ionicons name="checkmark-circle" size={20} color={colors.accentGreen} />
           <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>Recipe saved! View it →</Text>
         </TouchableOpacity>
+      )}
+
+      {/* "Add cover photo?" prompt — shown after import with no image */}
+      {showCoverPrompt && (
+        <View style={{ padding: 12, paddingHorizontal: 16, backgroundColor: colors.bgCard, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Add a cover photo?</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={() => handleCoverPhoto(takePhoto)}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
+            >
+              <Ionicons name="camera-outline" size={16} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleCoverPhoto(pickImage)}
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
+            >
+              <Ionicons name="images-outline" size={16} color={colors.accent} />
+              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>Library</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowCoverPrompt(false)}
+              style={{ paddingHorizontal: 12, justifyContent: 'center' }}
+            >
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>Skip</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       {/* Multi-page scan mode */}

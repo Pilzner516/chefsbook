@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, supabase } from '@chefsbook/db';
+import { listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, supabase, PLAN_LIMITS } from '@chefsbook/db';
 import type { RecipeUserPhoto } from '@chefsbook/db';
 import { pickImage, takePhoto, processImage } from '../lib/image';
+import { useAuthStore } from '../lib/zustand/authStore';
 
 interface Props {
   recipeId: string;
@@ -14,8 +15,10 @@ interface Props {
 
 export function EditImageGallery({ recipeId, userId, editing }: Props) {
   const { colors } = useTheme();
+  const planTier = useAuthStore((s) => s.planTier);
   const [photos, setPhotos] = useState<RecipeUserPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
+  const photoLimit = PLAN_LIMITS[planTier]?.maxPhotosPerRecipe ?? 3;
 
   useEffect(() => {
     loadPhotos();
@@ -50,6 +53,16 @@ export function EditImageGallery({ recipeId, userId, editing }: Props) {
   };
 
   const showImagePicker = () => {
+    // Plan gate: check photo limit
+    if (photos.length >= photoLimit) {
+      Alert.alert(
+        'Photo limit reached',
+        `Your ${planTier} plan allows ${photoLimit} photos per recipe. Upgrade to Pro for up to 10.`,
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+
     const options = ['Take Photo', 'Choose from Library', 'Cancel'];
     const cancelIndex = 2;
 

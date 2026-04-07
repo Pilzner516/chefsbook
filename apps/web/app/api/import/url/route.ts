@@ -1,3 +1,5 @@
+// TODO(web): replicate multi-page scan support (mobile sends up to 5 page images in single Claude Vision call)
+// TODO(web): show "Add cover photo?" prompt after import when no image returned
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';

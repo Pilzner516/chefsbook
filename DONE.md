@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 5)
+- Plan gate on photo uploads: maxPhotosPerRecipe (Free=3, Pro/Family=10) in PLAN_LIMITS, enforced in EditImageGallery before upload
+- "Add cover photo?" prompt: shown after URL import when no image returned, camera/library/skip options
+- Web parity TODOs: added multi-page scan + cover photo prompt comments in apps/web/app/api/import/url/route.ts
+- Fix: ScannedRecipe type error — check recipe.image_url (saved Recipe) not scanned.image_url (ScannedRecipe has no image_url)
+
 ## 2026-04-07 (session 4)
 - Recipe edit image gallery: EditImageGallery component with add/delete/set-primary, dashed placeholder for no images, upload to Supabase Storage
 - Recipe detail read-only photo gallery: horizontal scroll of user photos below hero image
