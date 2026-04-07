@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 7)
+- Search filter bottom sheet: category cards now open a modal with scrollable options, search input for long lists, Clear/Apply buttons
+- FilterBottomSheet component: supports text input (ingredient/tags) and chip selection (cuisine/course/dietary) modes
+- AI Meal Plan Wizard on mobile: 4-step full-screen modal (Days & Meals → Preferences → Sources → Review)
+- MealPlanWizard component: day/slot chips, dietary/cuisine/effort preferences, source selection, swap/remove per slot, save to plan
+- Portions stepper: +/- servings input in meal add bottom sheet, defaults to recipe's base servings, saved to meal_plans.servings
+- No migration needed: servings column already exists on meal_plans (numeric(6,2) from migration 001)
+
 ## 2026-04-07 (session 6)
 - Migration 014: recipe versioning columns (parent_recipe_id, version_number, version_label, is_parent) applied to RPi5
 - Recipe type + queries: version fields on Recipe interface, getRecipeVersions(), getVersionCount(), createRecipeVersion()

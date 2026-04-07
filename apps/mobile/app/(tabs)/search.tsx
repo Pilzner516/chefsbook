@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
@@ -58,6 +58,8 @@ export default function SearchTab() {
   const [hasSearched, setHasSearched] = useState(false);
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [filterSheetCategory, setFilterSheetCategory] = useState<string | null>(null);
+  const [filterSheetSearch, setFilterSheetSearch] = useState('');
   const [cloning, setCloning] = useState<string | null>(null);
   const tabBarHeight = useTabBarHeight();
   const [ingredientInput, setIngredientInput] = useState('');
@@ -365,7 +367,6 @@ export default function SearchTab() {
                   key={cat.key}
                   onPress={() => {
                     if (cat.key === 'favourites') {
-                      // Toggle favorites filter directly — no subcategory expansion needed
                       const isActive = activeFilters.some((f) => f.type === 'favourites');
                       if (isActive) {
                         removeFilter('favourites', 'true');
@@ -374,7 +375,9 @@ export default function SearchTab() {
                       }
                       return;
                     }
-                    setExpandedCategory(expandedCategory === cat.key ? null : cat.key);
+                    // Open bottom sheet for all other categories
+                    setFilterSheetCategory(cat.key);
+                    setFilterSheetSearch('');
                   }}
                   style={{
                     width: '47%',
@@ -413,7 +416,31 @@ export default function SearchTab() {
               ))}
             </View>
 
-            {/* Expanded subcategory chips or text input */}
+            {/* Filter bottom sheet modal */}
+            <FilterBottomSheet
+              visible={!!filterSheetCategory}
+              category={filterSheetCategory}
+              categoryLabel={categories.find((c) => c.key === filterSheetCategory)?.label ?? ''}
+              options={filterSheetCategory ? getSubcategoryOptions(filterSheetCategory) : []}
+              activeFilters={activeFilters}
+              search={filterSheetSearch}
+              onSearchChange={setFilterSheetSearch}
+              onToggle={(value, label) => {
+                if (!filterSheetCategory) return;
+                const isActive = activeFilters.some((f) => f.type === filterSheetCategory && f.value === value);
+                if (isActive) removeFilter(filterSheetCategory, value);
+                else addFilter(filterSheetCategory, value, label);
+              }}
+              onClear={() => {
+                if (!filterSheetCategory) return;
+                setActiveFilters((prev) => prev.filter((f) => f.type !== filterSheetCategory));
+              }}
+              onClose={() => setFilterSheetCategory(null)}
+              onAddText={(type, value, label) => { addFilter(type, value, label); }}
+              colors={colors}
+            />
+
+            {/* Legacy inline expansion — kept for ingredient/tags text input */}
             {expandedCategory && (
               <View style={{ marginTop: 16 }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 8 }}>
@@ -620,5 +647,146 @@ export default function SearchTab() {
         <View style={{ height: tabBarHeight }} />
       </ScrollView>
     </View>
+  );
+}
+
+// ── Filter Bottom Sheet ──
+
+function FilterBottomSheet({
+  visible, category, categoryLabel, options, activeFilters, search, onSearchChange,
+  onToggle, onClear, onClose, onAddText, colors,
+}: {
+  visible: boolean;
+  category: string | null;
+  categoryLabel: string;
+  options: { label: string; value: string }[];
+  activeFilters: { type: string; value: string; label: string }[];
+  search: string;
+  onSearchChange: (s: string) => void;
+  onToggle: (value: string, label: string) => void;
+  onClear: () => void;
+  onClose: () => void;
+  onAddText: (type: string, value: string, label: string) => void;
+  colors: any;
+}) {
+  const isTextInput = category === 'ingredient' || category === 'tags';
+  const [textValue, setTextValue] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return options;
+    const q = search.toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, search]);
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '75%', paddingTop: 16 }}>
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>Filter by {categoryLabel}</Text>
+            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+              <TouchableOpacity onPress={onClear}>
+                <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>Clear</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Text input for ingredient/tags */}
+          {isTextInput && (
+            <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 12 }}>
+              <TextInput
+                value={textValue}
+                onChangeText={setTextValue}
+                placeholder={category === 'ingredient' ? 'e.g. chicken, tahini...' : 'Type a tag...'}
+                placeholderTextColor={colors.textSecondary}
+                autoCapitalize="none"
+                returnKeyType="done"
+                onSubmitEditing={() => {
+                  if (textValue.trim() && category) {
+                    const prefix = category === 'ingredient' ? '🥕 ' : '🏷 ';
+                    onAddText(category, textValue.trim().toLowerCase(), `${prefix}${textValue.trim()}`);
+                    setTextValue('');
+                  }
+                }}
+                style={{
+                  flex: 1, backgroundColor: colors.bgBase, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
+                  fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault,
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  if (textValue.trim() && category) {
+                    const prefix = category === 'ingredient' ? '🥕 ' : '🏷 ';
+                    onAddText(category, textValue.trim().toLowerCase(), `${prefix}${textValue.trim()}`);
+                    setTextValue('');
+                  }
+                }}
+                style={{
+                  backgroundColor: textValue.trim() ? colors.accent : colors.bgBase,
+                  borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: textValue.trim() ? '#fff' : colors.textMuted, fontWeight: '600' }}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Search input for long option lists */}
+          {!isTextInput && options.length > 8 && (
+            <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+              <TextInput
+                value={search}
+                onChangeText={onSearchChange}
+                placeholder="Search..."
+                placeholderTextColor={colors.textSecondary}
+                style={{
+                  backgroundColor: colors.bgBase, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
+                  fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault,
+                }}
+              />
+            </View>
+          )}
+
+          {/* Option rows */}
+          {!isTextInput && (
+            <ScrollView style={{ maxHeight: 400 }}>
+              {filtered.map((opt) => {
+                const isActive = activeFilters.some((f) => f.type === category && f.value === opt.value);
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => onToggle(opt.value, opt.label)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                      paddingHorizontal: 16, paddingVertical: 14,
+                      borderBottomWidth: 1, borderBottomColor: colors.borderDefault,
+                    }}
+                  >
+                    <Text style={{ color: isActive ? colors.accent : colors.textPrimary, fontSize: 15, fontWeight: isActive ? '600' : '400' }}>
+                      {opt.label}
+                    </Text>
+                    {isActive && <Ionicons name="checkmark" size={20} color={colors.accent} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          {/* Apply button */}
+          <View style={{ padding: 16 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={{ backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
+            >
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }

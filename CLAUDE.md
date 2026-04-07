@@ -256,6 +256,9 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - `callClaude` supports `images[]` array for multi-image API calls (takes precedence over single `imageBase64`)
 - Recipe versioning: `parent_recipe_id` + `version_number` + `version_label` + `is_parent` on recipes table; parent is the original recipe, children link via FK; recipe list filters out children
 - Auto-tag: multi-select toggle pattern with confirm button (not single-tap-to-add)
+- Search filters: bottom sheet modal pattern (not inline expansion) for all category filters; `FilterBottomSheet` component
+- AI Meal Plan Wizard: `MealPlanWizard` component in `apps/mobile/components/`; uses `generateMealPlan` from `@chefsbook/ai`
+- Meal plan servings: `servings` column already existed on `meal_plans` (numeric(6,2)); portions stepper in add-meal flow
 
 ## Builds
 

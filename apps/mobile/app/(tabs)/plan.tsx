@@ -10,6 +10,7 @@ import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Card, EmptyState, Loading } from '../../components/UIKit';
+import { MealPlanWizard } from '../../components/MealPlanWizard';
 import { suggestPurchaseUnits } from '@chefsbook/ai';
 import { supabase } from '@chefsbook/db';
 import type { MealSlot, Recipe } from '@chefsbook/db';
@@ -61,12 +62,14 @@ export default function PlanTab() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<MealSlot>('dinner');
   const [adding, setAdding] = useState(false);
+  const [planServings, setPlanServings] = useState(4);
 
   // List picker for cart sync
   const [listPickerVisible, setListPickerVisible] = useState(false);
   const [cartDate, setCartDate] = useState<string | null>(null);
   const [cartDayIndex, setCartDayIndex] = useState<number>(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [wizardVisible, setWizardVisible] = useState(false);
 
   const showMealActions = (plan: any) => {
     const options = ['View recipe', 'Remove from plan', 'Cancel'];
@@ -143,6 +146,7 @@ export default function PlanTab() {
     setPickerSearch('');
     setSelectedRecipe(null);
     setSelectedSlot('dinner');
+    setPlanServings(4);
     setPickerVisible(true);
   };
 
@@ -154,7 +158,7 @@ export default function PlanTab() {
         plan_date: pickerDate,
         meal_slot: selectedSlot,
         recipe_id: selectedRecipe.id,
-        servings: selectedRecipe.servings ?? 4,
+        servings: planServings,
         notes: null,
       });
       if (weekDates.length === 7) {
@@ -291,6 +295,19 @@ export default function PlanTab() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* AI Plan button */}
+      <TouchableOpacity
+        onPress={() => setWizardVisible(true)}
+        style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+          marginHorizontal: 16, marginBottom: 8, paddingVertical: 10,
+          backgroundColor: colors.accentSoft, borderRadius: 10,
+        }}
+      >
+        <Ionicons name="sparkles" size={18} color={colors.accent} />
+        <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>AI Plan</Text>
+      </TouchableOpacity>
 
       {/* Add whole week to list */}
       {hasMeals && (
@@ -437,7 +454,7 @@ export default function PlanTab() {
                   style={{ maxHeight: 380 }}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-                      onPress={() => setSelectedRecipe(item)}
+                      onPress={() => { setSelectedRecipe(item); setPlanServings(item.servings ?? 4); }}
                       style={{
                         flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12,
                         borderBottomWidth: 1, borderBottomColor: colors.borderDefault,
@@ -500,6 +517,35 @@ export default function PlanTab() {
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                {/* Servings stepper */}
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>How many servings?</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 4 }}>
+                  <TouchableOpacity
+                    onPress={() => setPlanServings(Math.max(1, planServings - 1))}
+                    style={{
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: colors.bgBase,
+                      alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.borderDefault,
+                    }}
+                  >
+                    <Ionicons name="remove" size={20} color={colors.textPrimary} />
+                  </TouchableOpacity>
+                  <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700', minWidth: 30, textAlign: 'center' }}>{planServings}</Text>
+                  <TouchableOpacity
+                    onPress={() => setPlanServings(Math.min(20, planServings + 1))}
+                    style={{
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: colors.bgBase,
+                      alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.borderDefault,
+                    }}
+                  >
+                    <Ionicons name="add" size={20} color={colors.textPrimary} />
+                  </TouchableOpacity>
+                </View>
+                {selectedRecipe && (
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 16 }}>
+                    Recipe makes {selectedRecipe.servings ?? 4} servings
+                  </Text>
+                )}
 
                 {/* Add button */}
                 <TouchableOpacity
@@ -573,6 +619,30 @@ export default function PlanTab() {
           </View>
         </View>
       </Modal>
+
+      {/* AI Meal Plan Wizard */}
+      <MealPlanWizard
+        visible={wizardVisible}
+        onClose={() => setWizardVisible(false)}
+        userRecipes={recipes}
+        weekDates={weekDates}
+        onSave={async (slots) => {
+          if (!session?.user?.id) return;
+          for (const slot of slots) {
+            await addPlan(session.user.id, {
+              plan_date: slot.plan_date,
+              meal_slot: slot.meal_slot,
+              recipe_id: slot.recipe_id ?? null,
+              servings: slot.servings,
+              notes: slot.recipe_id ? null : slot.title,
+            });
+          }
+          if (weekDates.length === 7) {
+            await fetchWeek(session.user.id, weekDates[0]!, weekDates[6]!);
+          }
+          showToast('Meal plan saved!');
+        }}
+      />
     </View>
   );
 }
