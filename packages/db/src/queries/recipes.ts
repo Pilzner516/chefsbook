@@ -373,3 +373,51 @@ export async function getPublicFeed(params?: {
   if (error) throw error;
   return (data ?? []) as (Recipe & { author_name: string; author_avatar: string | null })[];
 }
+
+// ── Recipe versioning ──
+
+export async function getRecipeVersions(parentId: string): Promise<Recipe[]> {
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('*')
+    .or(`id.eq.${parentId},parent_recipe_id.eq.${parentId}`)
+    .order('version_number');
+  if (error) throw error;
+  return (data ?? []) as Recipe[];
+}
+
+export async function getVersionCount(parentId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('recipes')
+    .select('*', { count: 'exact', head: true })
+    .eq('parent_recipe_id', parentId);
+  if (error) throw error;
+  return (count ?? 0) + 1; // +1 for parent itself
+}
+
+export async function createRecipeVersion(
+  userId: string,
+  parentId: string,
+  data: Partial<Recipe> & { title: string },
+): Promise<Recipe> {
+  // Count existing versions
+  const versionCount = await getVersionCount(parentId);
+
+  // Mark parent as is_parent
+  await supabase.from('recipes').update({ is_parent: true }).eq('id', parentId);
+
+  // Create child version
+  const { data: created, error } = await supabase
+    .from('recipes')
+    .insert({
+      ...data,
+      user_id: userId,
+      parent_recipe_id: parentId,
+      version_number: versionCount + 1,
+      is_parent: false,
+    })
+    .select()
+    .single();
+  if (error || !created) throw error ?? new Error('Failed to create version');
+  return created as Recipe;
+}

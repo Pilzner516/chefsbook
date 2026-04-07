@@ -278,6 +278,7 @@ export function Divider() {
 }
 
 // --- RecipeCard ---
+// TODO(web): add recipe version sub-cards to recipe list cards
 interface RecipeCardProps {
   title: string;
   imageUrl?: string | null;
@@ -287,10 +288,11 @@ interface RecipeCardProps {
   saveCount?: number;
   sourceUrl?: string | null;
   sourceType?: string | null;
+  versionCount?: number;
   onPress: () => void;
 }
 
-export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, saveCount, sourceUrl, sourceType, onPress }: RecipeCardProps) {
+export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, saveCount, sourceUrl, sourceType, versionCount, onPress }: RecipeCardProps) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
@@ -338,6 +340,11 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
               <Text style={{ color: colors.textSecondary, fontSize: 11 }} numberOfLines={1}>
                 {new URL(sourceUrl).hostname.replace('www.', '')}
               </Text>
+            )}
+            {(versionCount ?? 0) > 1 && (
+              <View style={{ backgroundColor: colors.accentSoft, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
+                <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '600' }}>{versionCount} versions</Text>
+              </View>
             )}
           </View>
         </View>

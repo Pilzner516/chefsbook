@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 6)
+- Migration 014: recipe versioning columns (parent_recipe_id, version_number, version_label, is_parent) applied to RPi5
+- Recipe type + queries: version fields on Recipe interface, getRecipeVersions(), getVersionCount(), createRecipeVersion()
+- Version pill on recipe cards: shows "N versions" badge on multi-version recipes
+- Version picker bottom sheet: opens on tap of multi-version card, sub-cards per version with label/description
+- Child version filtering: recipe list hides child versions, only shows parent/standalone recipes
+- Add version button: copy-outline icon on recipe detail launches new recipe form with parentId
+- Version indicator on detail: "Version N · Label — tap to switch" with version switcher alert
+- New recipe form: accepts parentId param, creates version via createRecipeVersion instead of standalone
+- Auto-tag multi-select: suggestion pills toggle on/off with checkmark, "Add N tags" confirm button, Dismiss option
+- Web parity TODOs: version sub-cards (dashboard), version picker + auto-tag multi-select (recipe detail)
+
 ## 2026-04-07 (session 5)
 - Plan gate on photo uploads: maxPhotosPerRecipe (Free=3, Pro/Family=10) in PLAN_LIMITS, enforced in EditImageGallery before upload
 - "Add cover photo?" prompt: shown after URL import when no image returned, camera/library/skip options

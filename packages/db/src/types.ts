@@ -98,6 +98,10 @@ export interface Recipe {
   aichef_assisted?: boolean;
   source_author?: string | null;
   save_count: number;
+  parent_recipe_id: string | null;
+  version_number: number;
+  version_label: string | null;
+  is_parent: boolean;
   created_at: string;
   updated_at: string;
 }

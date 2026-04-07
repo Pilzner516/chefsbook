@@ -14,7 +14,8 @@ import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps } from '@chefsbook/db';
+import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions } from '@chefsbook/db';
+// TODO(web): add version picker UI on recipe detail
 import { Badge, Button, Card, Divider, Loading, Input } from '../../components/UIKit';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
@@ -311,6 +312,7 @@ function TagManager({
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const sanitizeTag = (t: string) => t.toLowerCase().replace(/[^a-z0-9-]/g, '').trim();
@@ -360,6 +362,7 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
       const result = extractJSON<string[]>(text);
       const cleaned = result.map(sanitizeTag).filter((t) => t && !tags.includes(t));
       setSuggestions(cleaned);
+      setSelectedSuggestions(new Set());
     } catch (err: any) {
       Alert.alert('Auto-tag failed', err.message);
     } finally {
@@ -452,30 +455,65 @@ Return ONLY a JSON array of strings, e.g. ["chicken","baked","comfort-food"]`;
         </View>
       )}
 
-      {/* AI suggestions */}
+      {/* AI suggestions — multi-select */}
       {suggestions.length > 0 && (
         <View style={{ marginBottom: 10 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 6 }}>Suggested tags — tap to add:</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {suggestions.map((tag) => (
-              <TouchableOpacity
-                key={tag}
-                onPress={() => addSuggestion(tag)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colors.accentGreenSoft,
-                  borderRadius: 16,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderWidth: 1,
-                  borderColor: colors.accentGreen,
-                  borderStyle: 'dashed',
-                }}
-              >
-                <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600' }}>+ {tag}</Text>
-              </TouchableOpacity>
-            ))}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 6 }}>Suggested tags — select then confirm:</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+            {suggestions.map((tag) => {
+              const selected = selectedSuggestions.has(tag);
+              return (
+                <TouchableOpacity
+                  key={tag}
+                  onPress={() => {
+                    setSelectedSuggestions((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(tag)) next.delete(tag); else next.add(tag);
+                      return next;
+                    });
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: selected ? colors.accentGreen : colors.accentGreenSoft,
+                    borderRadius: 16,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderWidth: 1,
+                    borderColor: colors.accentGreen,
+                    borderStyle: selected ? 'solid' : 'dashed',
+                    gap: 4,
+                  }}
+                >
+                  {selected && <Ionicons name="checkmark" size={14} color="#fff" />}
+                  <Text style={{ color: selected ? '#fff' : colors.accentGreen, fontSize: 13, fontWeight: '600' }}>{tag}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={async () => {
+                for (const tag of selectedSuggestions) {
+                  await addTag(tag);
+                }
+                setSuggestions([]);
+                setSelectedSuggestions(new Set());
+              }}
+              disabled={selectedSuggestions.size === 0}
+              style={{
+                backgroundColor: selectedSuggestions.size > 0 ? colors.accentGreen : colors.bgBase,
+                borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8,
+                opacity: selectedSuggestions.size > 0 ? 1 : 0.5,
+              }}
+            >
+              <Text style={{ color: selectedSuggestions.size > 0 ? '#fff' : colors.textMuted, fontSize: 13, fontWeight: '600' }}>
+                Add {selectedSuggestions.size > 0 ? `${selectedSuggestions.size} tag${selectedSuggestions.size > 1 ? 's' : ''}` : 'selected'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setSuggestions([]); setSelectedSuggestions(new Set()); }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>Dismiss</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -905,7 +943,35 @@ function RecipeDetailInner() {
           <EditImageGallery recipeId={recipe.id} userId={session.user.id} editing={false} />
         )}
 
-        <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 8 }}>{recipe.title}</Text>
+        <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 4 }}>{recipe.title}</Text>
+        {/* Version indicator */}
+        {(recipe.is_parent || recipe.parent_recipe_id) && (
+          <TouchableOpacity
+            onPress={async () => {
+              const parentId = recipe.parent_recipe_id || recipe.id;
+              try {
+                const versions = await getRecipeVersions(parentId);
+                Alert.alert(
+                  'Recipe Versions',
+                  versions.map((v) => `Version ${v.version_number}${v.version_label ? ` — ${v.version_label}` : ''}: ${v.title}`).join('\n'),
+                  [
+                    ...versions.filter((v) => v.id !== recipe.id).map((v) => ({
+                      text: `V${v.version_number}${v.version_label ? ` (${v.version_label})` : ''}`,
+                      onPress: () => router.push(`/recipe/${v.id}`),
+                    })),
+                    { text: 'Cancel', style: 'cancel' as const },
+                  ],
+                );
+              } catch {}
+            }}
+            style={{ marginBottom: 8 }}
+          >
+            <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>
+              Version {recipe.version_number}{recipe.version_label ? ` · ${recipe.version_label}` : ''} — tap to switch
+            </Text>
+          </TouchableOpacity>
+        )}
+        {!recipe.is_parent && !recipe.parent_recipe_id && <View style={{ marginBottom: 4 }} />}
         {recipe.description && (
           <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 12 }}>{recipe.description}</Text>
         )}
@@ -1035,6 +1101,15 @@ function RecipeDetailInner() {
           <TouchableOpacity onPress={startEditing} style={{ padding: 6 }}>
             <Ionicons name="create-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
+          {/* Add version — available on any recipe that could start or extend a version family */}
+          {(recipe.version_number === 1 || recipe.is_parent || recipe.parent_recipe_id) && (
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: '/recipe/new', params: { parentId: recipe.parent_recipe_id || recipe.id } })}
+              style={{ padding: 6 }}
+            >
+              <Ionicons name="copy-outline" size={22} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Add to shopping list */}

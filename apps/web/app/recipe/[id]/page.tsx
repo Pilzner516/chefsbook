@@ -1,4 +1,6 @@
 'use client';
+// TODO(web): add version picker UI on recipe detail
+// TODO(web): auto-tag should support multi-select
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';

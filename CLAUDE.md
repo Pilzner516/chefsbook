@@ -254,6 +254,8 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Multi-page scan: up to 5 pages captured before processing; all sent to Claude Vision in single API call; first page auto-saved as recipe photo
 - Recipe photos: `EditImageGallery` component handles add/delete/set-primary; uploads go to `recipe-user-photos` Supabase Storage bucket; photos are per-recipe, not per-user
 - `callClaude` supports `images[]` array for multi-image API calls (takes precedence over single `imageBase64`)
+- Recipe versioning: `parent_recipe_id` + `version_number` + `version_label` + `is_parent` on recipes table; parent is the original recipe, children link via FK; recipe list filters out children
+- Auto-tag: multi-select toggle pattern with confirm button (not single-tap-to-add)
 
 ## Builds
 
