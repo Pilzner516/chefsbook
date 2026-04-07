@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 9)
+- Language selector limited to 5 supported languages (en/fr/es/it/de), removed search bar and priority logic
+- Removed unused LANGUAGES/PRIORITY_LANGUAGES imports from LanguagePickerModal
+
 ## 2026-04-07 (session 8)
 - Full i18n system: react-i18next installed, i18n.ts init with lazy-loaded locales, activateLanguage() synced to preferences store
 - Locale files: en.json (350+ keys), fr.json, es.json, it.json, de.json — all fully translated
