@@ -60,27 +60,16 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
 
   const uploadFromPexels = async (photo: PexelsPhoto) => {
     setShowPexels(false);
+    // Reuse the same upload path as camera/library — download to local file first
     setUploading(true);
     try {
-      // Download to local file, then use the same processImage pipeline as camera/library
       const FileSystem = require('expo-file-system/legacy');
       const localUri = FileSystem.documentDirectory + `pexels_${Date.now()}.jpg`;
       const download = await FileSystem.downloadAsync(photo.fullUrl, localUri);
-      const { base64 } = await processImage(download.uri);
-      const fileName = `${userId}/${recipeId}/${Date.now()}.jpg`;
-      await supabase.storage
-        .from('recipe-user-photos')
-        .upload(fileName, decode(base64), { contentType: 'image/jpeg' });
-      const { data: urlData } = supabase.storage
-        .from('recipe-user-photos')
-        .getPublicUrl(fileName);
-      await addRecipePhoto(recipeId, userId, fileName, urlData.publicUrl);
-      await loadPhotos();
-      // Clean up temp file
+      await uploadPhoto(download.uri);
       try { await FileSystem.deleteAsync(localUri, { idempotent: true }); } catch {}
     } catch (err: any) {
       Alert.alert(t('notepad.uploadFailed'), err.message);
-    } finally {
       setUploading(false);
     }
   };
