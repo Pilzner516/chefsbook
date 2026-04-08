@@ -295,7 +295,8 @@
     "instagramFailed": "Instagram import failed",
     "instagramPrivate": "We couldn't access this Instagram post. It may be private or the link may have expired.",
     "instagramManual": "Try pasting the recipe text manually",
-    "pasteInstagramUrl": "Paste Instagram post URL..."
+    "pasteInstagramUrl": "Paste Instagram post URL...",
+    "instagramInvalidUrl": "Please paste an Instagram post or reel link."
   },
   "dishId": {
     "analysing": "Analysing image...",
@@ -323,7 +324,12 @@
     "generateFailed": "Recipe generation failed",
     "yes": "Yes",
     "noTryAgain": "No, try again",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "anyDetails": "Any details to add?",
+    "skipArrow": "Skip \u2192",
+    "contextHint": "Add cooking notes, dietary needs, or key ingredients to improve results",
+    "contextPlaceholder": "e.g. \"medium rare, no garlic, gluten-free version\"",
+    "continueArrow": "Continue \u2192"
   },
   "speak": {
     "record": "Record",

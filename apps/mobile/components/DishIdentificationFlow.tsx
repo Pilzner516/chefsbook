@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ type FlowStep =
   | 'clarifying'
   | 'dish_options'
   | 'confirm_dish'
+  | 'context_input'
   | 'action_sheet'
   | 'generating';
 
@@ -66,6 +67,7 @@ export function DishIdentificationFlow({
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [selectedDishOption, setSelectedDishOption] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [userContext, setUserContext] = useState('');
 
   const questions = analysis.clarifying_questions ?? [];
 
@@ -126,12 +128,15 @@ export function DishIdentificationFlow({
 
   const handleDishConfirmed = (name: string) => {
     setAnalysis((prev) => ({ ...prev, dish_name: name, dish_confidence: 'high' }));
-    setStep('action_sheet');
+    setStep('context_input');
   };
 
   const handleFindRecipes = () => {
     onDismiss();
-    router.push({ pathname: '/(tabs)/search', params: { q: analysis.dish_name ?? '' } });
+    const searchQuery = userContext.trim()
+      ? `${analysis.dish_name ?? ''} ${userContext.trim()}`
+      : analysis.dish_name ?? '';
+    router.push({ pathname: '/(tabs)/search', params: { q: searchQuery } });
   };
 
   const handleGenerateRecipe = async () => {
@@ -140,12 +145,16 @@ export function DishIdentificationFlow({
     setGenerating(true);
     try {
       const { generateDishRecipe } = await import('@chefsbook/ai');
+      const contextAnswers = answers.length > 0 ? [...answers] : [];
+      if (userContext.trim()) {
+        contextAnswers.push({ question: 'User notes', answer: userContext.trim() });
+      }
       const scanned = await generateDishRecipe({
         imageBase64,
         mimeType: imageMimeType,
         dishName: analysis.dish_name,
         cuisine: analysis.cuisine_guess ?? selectedCuisine ?? undefined,
-        userAnswers: answers.length > 0 ? answers : undefined,
+        userAnswers: contextAnswers.length > 0 ? contextAnswers : undefined,
       });
 
       const recipe = await addRecipe(session.user.id, scanned);
@@ -477,6 +486,68 @@ export function DishIdentificationFlow({
     </View>
   );
 
+  const renderContextInput = () => (
+    <View style={{ paddingHorizontal: 24 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700' }}>
+          {t('dishId.anyDetails')}
+        </Text>
+        <TouchableOpacity onPress={() => setStep('action_sheet')}>
+          <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('dishId.skipArrow')}</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 16 }}>
+        {t('dishId.contextHint')}
+      </Text>
+      <View style={{ position: 'relative' }}>
+        <TextInput
+          value={userContext}
+          onChangeText={(t) => setUserContext(t.slice(0, 200))}
+          placeholder={t('dishId.contextPlaceholder')}
+          placeholderTextColor={colors.textMuted}
+          multiline
+          maxLength={200}
+          style={{
+            backgroundColor: colors.bgBase,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.borderDefault,
+            padding: 14,
+            paddingBottom: 30,
+            fontSize: 15,
+            color: colors.textPrimary,
+            minHeight: 90,
+            textAlignVertical: 'top',
+          }}
+        />
+        <Text style={{
+          position: 'absolute',
+          bottom: 8,
+          right: 12,
+          color: colors.textMuted,
+          fontSize: 12,
+        }}>
+          {userContext.length}/200
+        </Text>
+      </View>
+      <TouchableOpacity
+        onPress={() => setStep('action_sheet')}
+        style={{
+          backgroundColor: colors.accent,
+          borderRadius: 12,
+          paddingVertical: 14,
+          alignItems: 'center',
+          marginTop: 16,
+          marginBottom: insets.bottom + 16,
+        }}
+      >
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>
+          {t('dishId.continueArrow')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderStep = () => {
     switch (step) {
       case 'analysing': return renderAnalysing();
@@ -485,6 +556,7 @@ export function DishIdentificationFlow({
       case 'clarifying': return renderClarifying();
       case 'dish_options': return renderDishOptions();
       case 'confirm_dish': return renderConfirmDish();
+      case 'context_input': return renderContextInput();
       case 'action_sheet': return renderActionSheet();
       case 'generating': return renderGenerating();
     }
@@ -532,7 +604,7 @@ export function DishIdentificationFlow({
           </ScrollView>
 
           {/* Cancel button (only on certain steps) */}
-          {(step === 'cuisine_select' || step === 'clarifying' || step === 'confirm_dish' || step === 'action_sheet' || step === 'dish_options') && (
+          {(step === 'cuisine_select' || step === 'clarifying' || step === 'confirm_dish' || step === 'context_input' || step === 'action_sheet' || step === 'dish_options') && (
             <TouchableOpacity
               onPress={onDismiss}
               style={{ alignItems: 'center', paddingVertical: 12 }}

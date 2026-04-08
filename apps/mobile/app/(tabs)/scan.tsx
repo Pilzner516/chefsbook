@@ -13,6 +13,7 @@ import Animated, {
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
@@ -33,6 +34,7 @@ type ImportStatus = 'idle' | 'importing' | 'success' | 'error';
 export default function ScanTab() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { importUrl, instagramUrl } = useLocalSearchParams<{ importUrl?: string; instagramUrl?: string }>();
   const session = useAuthStore((s) => s.session);
@@ -268,6 +270,11 @@ export default function ScanTab() {
     const target = url || instagramUrlInput.trim();
     if (!target || !session?.user?.id) return;
 
+    if (!isInstagramUrl(target)) {
+      Alert.alert(t('scan.instagramFailed'), t('scan.instagramInvalidUrl'));
+      return;
+    }
+
     setImportStatus('importing');
     setInstagramImageUrl(null);
     setPexelsLoading(true);
@@ -443,10 +450,17 @@ export default function ScanTab() {
 
   const handleClipboardPaste = () => {
     if (clipboardUrl) {
-      setUrlInput(clipboardUrl);
-      setShowUrlInput(true);
-      setClipboardUrl(null);
-      handleImport(clipboardUrl);
+      if (isInstagramUrl(clipboardUrl)) {
+        setInstagramUrlInput(clipboardUrl);
+        setShowInstagramInput(true);
+        setClipboardUrl(null);
+        handleInstagramImport(clipboardUrl);
+      } else {
+        setUrlInput(clipboardUrl);
+        setShowUrlInput(true);
+        setClipboardUrl(null);
+        handleImport(clipboardUrl);
+      }
     }
   };
 
@@ -564,9 +578,9 @@ export default function ScanTab() {
               </View>
             ))}
           </ScrollView>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ paddingBottom: insets.bottom + 16 }}>
             {scanPages.length < 5 && (
-              <>
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
                 <TouchableOpacity
                   onPress={() => addScanPage(takePhoto)}
                   style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 10, paddingVertical: 12, borderWidth: 1, borderColor: colors.borderDefault }}
@@ -581,18 +595,18 @@ export default function ScanTab() {
                   <Ionicons name="images-outline" size={18} color={colors.accent} />
                   <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>{t('scan.fromGallery')}</Text>
                 </TouchableOpacity>
-              </>
+              </View>
             )}
             <TouchableOpacity
               onPress={finishScan}
-              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 12 }}
+              style={{ alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 14 }}
             >
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{t('scan.doneScanning')}</Text>
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('scan.doneScanning')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setScanMode(false); setScanPages([]); }} style={{ alignItems: 'center', paddingVertical: 12, marginTop: 8 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('scan.cancelScan')}</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => { setScanMode(false); setScanPages([]); }} style={{ alignItems: 'center', paddingVertical: 8, marginTop: 4 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('scan.cancelScan')}</Text>
-          </TouchableOpacity>
         </View>
       )}
 

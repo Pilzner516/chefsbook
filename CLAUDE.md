@@ -303,6 +303,10 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Instagram no-recipe path routes to DishIdentificationFlow with pre-filled dish_name (skips cuisine select)
 - Scan tab grid: 3+2 layout (was 2+2) with smaller 48px icon circles to fit Instagram option
 - PostImportImageSheet: `instagramImageUrl` + `onSelectInstagramImage` props for "From Instagram post" cover option
+- Clipboard paste handler routes Instagram URLs to `handleInstagramImport`, non-IG URLs to `handleImport`
+- Instagram paste input validates URL format before calling import (`isInstagramUrl` check)
+- Scan mode buttons: 2-row layout (Add page + From gallery top row, Done scanning full-width below) with `insets.bottom` safe area
+- Dish identification "Additional context" step: free text (200 char, counter) between dish confirm and action sheet; text appended to search query and Claude prompt
 
 ## Builds
 
