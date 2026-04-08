@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
@@ -22,6 +23,7 @@ interface Props {
 export function LanguagePickerModal({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const session = useAuthStore((s) => s.session);
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
@@ -74,7 +76,7 @@ export function LanguagePickerModal({ visible, onClose }: Props) {
             );
           })}
 
-          <View style={{ height: 24 }} />
+          <View style={{ height: insets.bottom + 16 }} />
         </View>
       </View>
     </Modal>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { generateMealPlan } from '@chefsbook/ai';
@@ -30,6 +31,7 @@ type Step = 1 | 2 | 3 | 4;
 export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSave }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>(1);
   const [selectedDays, setSelectedDays] = useState(new Set(DAY_KEYS));
   const [selectedSlots, setSelectedSlots] = useState(new Set(['breakfast', 'lunch', 'dinner']));
@@ -176,7 +178,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
             <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 16 }}>{t('wizard.generating')}</Text>
           </View>
         ) : (
-          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
+          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingBottom: 80 }}>
             {/* Step 1: Days & Meals */}
             {step === 1 && (
               <View>
@@ -270,7 +272,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
 
         {/* Footer buttons */}
         {!generating && (
-          <View style={{ padding: 16, flexDirection: 'row', gap: 12 }}>
+          <View style={{ padding: 16, paddingBottom: insets.bottom + 16, flexDirection: 'row', gap: 12 }}>
             {step > 1 && step < 4 && (
               <TouchableOpacity
                 onPress={() => setStep((s) => (s - 1) as Step)}

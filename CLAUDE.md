@@ -74,6 +74,15 @@ PEXELS_API_KEY=<key>                        # Pexels API (recipe image search pi
 UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
 ```
 
+## Non-Negotiable UI Rules
+
+ANDROID SAFE AREA — MANDATORY ON EVERY SCREEN
+Every bottom-positioned UI element (buttons, inputs, FABs, modal footers, wizard
+navigation, bottom sheets, pin pickers, action sheets) MUST use useSafeAreaInsets()
+from react-native-safe-area-context. Never use hardcoded bottom margins or padding.
+Apply: paddingBottom: insets.bottom + 16 to all scroll containers and modal footers.
+This rule applies to every new screen and every screen touched during a session.
+
 ## Critical patterns
 
 1. ALWAYS import supabase from `@chefsbook/db` — never call createClient() directly

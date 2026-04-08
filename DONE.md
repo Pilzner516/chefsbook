@@ -1,6 +1,20 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 14)
+- Fix: removed "Staging" pill from ChefsBookHeader — was pushing kg/lb toggle off screen
+- Fix: language translation now works — `activateLanguage()` wired into `preferencesStore.setLanguage()`, `loadFromLocal()`, and `loadFromSupabase()`
+- Fix: Pexels API key added to mobile `.env.local` and `.env.staging` — key was only in monorepo root, not in Expo project dir
+- Safe area: new shopping list modal (`NewListModal`) — added `paddingBottom: insets.bottom + 16`
+- Safe area: MealPlanWizard — footer buttons + scroll container now use `insets.bottom`
+- Safe area: PexelsPickerSheet — replaced hardcoded `paddingBottom: 40` with `insets.bottom + 16`
+- Safe area: LanguagePickerModal — bottom spacer now uses `insets.bottom + 16`
+- Safe area: FilterBottomSheet (search.tsx) — apply button area uses `insets.bottom + 16`
+- Safe area: recipe picker modal (plan.tsx) — outer container uses `insets.bottom + 16`
+- Safe area: version picker modal (index.tsx) — outer container uses `insets.bottom + 16`
+- CLAUDE.md: added "Non-Negotiable UI Rules" section with mandatory Android safe area rule
+- Diagnostic: added `console.warn` to `searchPexels` for missing key debugging
+
 ## 2026-04-07 (session 13)
 - Fix: "Rendered more hooks than during previous render" crash — moved `useMemo` hooks above early return in recipe detail
 - Fix: removed copy/duplicate icon from recipe detail action bar (was confusing with version system)

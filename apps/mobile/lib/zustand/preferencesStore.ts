@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@chefsbook/db';
 import type { UnitSystem } from '@chefsbook/ui';
+import { activateLanguage } from '../i18n';
 
 const LANG_KEY = 'chefsbook_language';
 const UNITS_KEY = 'chefsbook_units';
@@ -21,6 +22,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
 
   setLanguage: async (code, userId) => {
     set({ language: code });
+    await activateLanguage(code);
     await SecureStore.setItemAsync(LANG_KEY, code);
     if (userId) {
       await supabase
@@ -44,10 +46,9 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   loadFromLocal: async () => {
     const lang = await SecureStore.getItemAsync(LANG_KEY);
     const units = await SecureStore.getItemAsync(UNITS_KEY);
-    set({
-      language: lang || 'en',
-      units: (units as UnitSystem) || 'imperial',
-    });
+    const langCode = lang || 'en';
+    set({ language: langCode, units: (units as UnitSystem) || 'imperial' });
+    if (langCode !== 'en') await activateLanguage(langCode);
   },
 
   loadFromSupabase: async (userId) => {
@@ -62,6 +63,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
       set({ language: lang, units });
       await SecureStore.setItemAsync(LANG_KEY, lang);
       await SecureStore.setItemAsync(UNITS_KEY, units);
+      if (lang !== 'en') await activateLanguage(lang);
     }
   },
 }));

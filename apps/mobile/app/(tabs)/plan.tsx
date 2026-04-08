@@ -423,7 +423,7 @@ export default function PlanTab() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <View style={{
             backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-            maxHeight: '85%', paddingTop: 16,
+            maxHeight: '85%', paddingTop: 16, paddingBottom: insets.bottom + 16,
           }}>
             {/* Handle bar */}
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />

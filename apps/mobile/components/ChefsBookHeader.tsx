@@ -8,8 +8,6 @@ import { LANGUAGES } from '@chefsbook/ui';
 import { LanguagePickerModal } from './LanguagePickerModal';
 import { QANotepad } from './QANotepad';
 
-const isStaging = process.env.EXPO_PUBLIC_APP_VARIANT === 'staging';
-
 export function ChefsBookHeader() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -50,18 +48,6 @@ export function ChefsBookHeader() {
             <Text style={{ color: colors.accent }}>Book</Text>
           </Text>
         </TouchableOpacity>
-        {isStaging && (
-          <View style={{
-            backgroundColor: colors.accentGreen,
-            borderRadius: 4,
-            paddingHorizontal: 6,
-            paddingVertical: 3,
-            marginLeft: 6,
-            marginTop: -8,
-          }}>
-            <Text style={{ color: '#ffffff', fontSize: 9, fontWeight: '700' }}>STAGING</Text>
-          </View>
-        )}
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
@@ -672,6 +673,7 @@ function FilterBottomSheet({
   colors: any;
 }) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const isTextInput = category === 'ingredient' || category === 'tags';
   const [textValue, setTextValue] = useState('');
 
@@ -780,7 +782,7 @@ function FilterBottomSheet({
           )}
 
           {/* Apply button */}
-          <View style={{ padding: 16 }}>
+          <View style={{ padding: 16, paddingBottom: insets.bottom + 16 }}>
             <TouchableOpacity
               onPress={onClose}
               style={{ backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}

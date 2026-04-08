@@ -738,13 +738,14 @@ function NewListModal({
 }) {
   const { t } = useTranslation();
   const [customStore, setCustomStore] = useState('');
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
         <View style={{
           backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-          maxHeight: '80%', paddingTop: 16,
+          maxHeight: '80%', paddingTop: 16, paddingBottom: insets.bottom + 16,
         }}>
           {/* Handle */}
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />

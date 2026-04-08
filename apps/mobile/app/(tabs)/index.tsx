@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Platform, Modal, ScrollView } from 'react
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
@@ -17,6 +18,7 @@ type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
 export default function RecipesTab() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const recipes = useRecipeStore((s) => s.recipes);
@@ -199,7 +201,7 @@ export default function RecipesTab() {
       {/* Version picker bottom sheet */}
       <Modal visible={!!versionPickerRecipeId} animationType="slide" transparent>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', paddingTop: 16 }}>
+          <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', paddingTop: 16, paddingBottom: insets.bottom + 16 }}>
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 16 }}>
               <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('recipes.recipeVersions')}</Text>

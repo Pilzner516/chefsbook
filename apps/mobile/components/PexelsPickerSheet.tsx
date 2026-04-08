@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { searchPexels } from '@chefsbook/ai';
 import type { PexelsPhoto } from '@chefsbook/ai';
@@ -21,6 +22,7 @@ interface Props {
 export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -63,7 +65,7 @@ export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) 
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             padding: 20,
-            paddingBottom: 40,
+            paddingBottom: insets.bottom + 16,
           }}
         >
           {/* Header */}
