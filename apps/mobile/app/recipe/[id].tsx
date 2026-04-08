@@ -549,6 +549,7 @@ function RecipeDetailInner() {
   const fetchRecipe = useRecipeStore((s) => s.fetchRecipe);
   const toggleFav = useRecipeStore((s) => s.toggleFav);
   const removeRecipe = useRecipeStore((s) => s.removeRecipe);
+  const addRecipe = useRecipeStore((s) => s.addRecipe);
   const pin = usePinStore((s) => s.pin);
   const unpin = usePinStore((s) => s.unpin);
   const pinnedList = usePinStore((s) => s.pinned);
@@ -777,6 +778,26 @@ function RecipeDetailInner() {
     }
   };
 
+  // Translated display values — must be above early return to maintain hook order
+  const _ingredients = currentRecipe?.ingredients ?? [];
+  const _steps = currentRecipe?.steps ?? [];
+  const displayIngredients = useMemo(() => {
+    if (!translation?.translated_ingredients) return _ingredients;
+    return _ingredients.map((ing, i) => {
+      const tr = (translation.translated_ingredients as any[])?.[i];
+      if (!tr) return ing;
+      return { ...ing, ingredient: tr.name ?? ing.ingredient, preparation: tr.notes ?? ing.preparation };
+    });
+  }, [_ingredients, translation]);
+  const displaySteps = useMemo(() => {
+    if (!translation?.translated_steps) return _steps;
+    return _steps.map((step, i) => {
+      const tr = (translation.translated_steps as any[])?.[i];
+      if (!tr) return step;
+      return { ...step, instruction: tr.instruction ?? step.instruction };
+    });
+  }, [_steps, translation]);
+
   if (loading || !currentRecipe) return <Loading message="Loading recipe..." />;
 
   const recipe = currentRecipe;
@@ -786,26 +807,9 @@ function RecipeDetailInner() {
   const originalServings = recipe.servings || 4;
   const pinned = pinnedList.some((r) => r.id === recipe.id);
 
-  // Translated display values (fall back to original when no translation)
   const displayTitle = translation?.translated_title ?? recipe.title;
   const displayDescription = translation?.translated_description ?? recipe.description;
   const displayNotes = translation?.translated_notes ?? recipe.notes;
-  const displayIngredients = useMemo(() => {
-    if (!translation?.translated_ingredients) return ingredients;
-    return ingredients.map((ing, i) => {
-      const tr = (translation.translated_ingredients as any[])?.[i];
-      if (!tr) return ing;
-      return { ...ing, ingredient: tr.name ?? ing.ingredient, preparation: tr.notes ?? ing.preparation };
-    });
-  }, [ingredients, translation]);
-  const displaySteps = useMemo(() => {
-    if (!translation?.translated_steps) return steps;
-    return steps.map((step, i) => {
-      const tr = (translation.translated_steps as any[])?.[i];
-      if (!tr) return step;
-      return { ...step, instruction: tr.instruction ?? step.instruction };
-    });
-  }, [steps, translation]);
 
   if (cookMode && steps.length > 0) {
     return <CookMode steps={steps} onExit={() => setCookMode(false)} />;
@@ -995,6 +999,67 @@ function RecipeDetailInner() {
           <TextInput value={editNotes} onChangeText={setEditNotes} multiline style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 16, minHeight: 60, textAlignVertical: 'top' }} />
 
           <Button title={savingEdit ? t('recipe.saving') : t('common.save')} onPress={saveEditing} disabled={savingEdit} />
+
+          <View style={{ marginTop: 16 }}>
+            <TouchableOpacity
+              onPress={async () => {
+                if (!session?.user?.id || !currentRecipe) return;
+                try {
+                  const copy = await addRecipe(session.user.id, {
+                    title: (currentRecipe.title ?? '') + ' (Copy)',
+                    description: currentRecipe.description ?? null,
+                    cuisine: currentRecipe.cuisine ?? null,
+                    course: currentRecipe.course as any,
+                    servings: currentRecipe.servings ?? 4,
+                    prep_minutes: currentRecipe.prep_minutes ?? null,
+                    cook_minutes: currentRecipe.cook_minutes ?? null,
+                    notes: currentRecipe.notes ?? null,
+                    source_type: 'manual' as any,
+                    ingredients: (currentRecipe.ingredients ?? []).map((i) => ({
+                      quantity: i.quantity,
+                      unit: i.unit,
+                      ingredient: i.ingredient,
+                      preparation: i.preparation,
+                      optional: i.optional,
+                      group_label: i.group_label,
+                    })),
+                    steps: (currentRecipe.steps ?? []).map((s) => ({
+                      step_number: s.step_number,
+                      instruction: s.instruction,
+                      timer_minutes: s.timer_minutes,
+                      group_label: s.group_label,
+                    })),
+                  });
+                  // Copy tags and dietary flags
+                  if ((currentRecipe.tags?.length ?? 0) > 0 || (currentRecipe.dietary_flags?.length ?? 0) > 0) {
+                    await updateRecipe(copy.id, {
+                      tags: currentRecipe.tags ?? [],
+                      dietary_flags: currentRecipe.dietary_flags ?? [],
+                    });
+                  }
+                  Alert.alert(t('recipe.copySaved'));
+                  router.replace(`/recipe/${copy.id}`);
+                } catch (err: any) {
+                  Alert.alert(t('common.errorTitle'), err.message);
+                }
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                backgroundColor: colors.bgBase,
+                borderRadius: 10,
+                paddingVertical: 12,
+                borderWidth: 1,
+                borderColor: colors.borderDefault,
+              }}
+            >
+              <Ionicons name="copy-outline" size={18} color={colors.textSecondary} />
+              <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '600' }}>{t('recipe.saveACopy')}</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
@@ -1180,15 +1245,6 @@ function RecipeDetailInner() {
           <TouchableOpacity onPress={startEditing} style={{ padding: 6 }}>
             <Ionicons name="create-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
-          {/* Add version — available on any recipe that could start or extend a version family */}
-          {(recipe.version_number === 1 || recipe.is_parent || recipe.parent_recipe_id) && (
-            <TouchableOpacity
-              onPress={() => router.push({ pathname: '/recipe/new', params: { parentId: recipe.parent_recipe_id || recipe.id } })}
-              style={{ padding: 6 }}
-            >
-              <Ionicons name="copy-outline" size={22} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Add to shopping list */}

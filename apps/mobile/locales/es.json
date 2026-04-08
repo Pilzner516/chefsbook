@@ -314,7 +314,9 @@
     "generationFailed": "Error al generar",
     "saveFailed": "Error al guardar",
     "mealPlanSaved": "¡Plan de comidas guardado!",
-    "translating": "Traduciendo…"
+    "translating": "Traduciendo…",
+    "saveACopy": "Guardar una copia",
+    "copySaved": "Receta guardada como copia."
   },
   "settings": {
     "language": "Idioma",

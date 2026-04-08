@@ -182,7 +182,9 @@
     "saveCount": "{{count}} saves",
     "addIngredient": "+ Add",
     "addStep": "+ Add",
-    "translating": "Translating…"
+    "translating": "Translating…",
+    "saveACopy": "Save a Copy",
+    "copySaved": "Recipe saved as a copy."
   },
   "shop": {
     "shoppingLists": "Shopping Lists",

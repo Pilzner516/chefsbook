@@ -314,7 +314,9 @@
     "generationFailed": "Erstellung fehlgeschlagen",
     "saveFailed": "Speichern fehlgeschlagen",
     "mealPlanSaved": "Essensplan gespeichert!",
-    "translating": "Übersetzen…"
+    "translating": "Übersetzen…",
+    "saveACopy": "Kopie speichern",
+    "copySaved": "Rezept als Kopie gespeichert."
   },
   "settings": {
     "language": "Sprache",

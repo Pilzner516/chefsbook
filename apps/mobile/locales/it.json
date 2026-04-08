@@ -314,7 +314,9 @@
     "generationFailed": "Generazione non riuscita",
     "saveFailed": "Salvataggio non riuscito",
     "mealPlanSaved": "Piano pasti salvato!",
-    "translating": "Traduzione…"
+    "translating": "Traduzione…",
+    "saveACopy": "Salva una copia",
+    "copySaved": "Ricetta salvata come copia."
   },
   "settings": {
     "language": "Lingua",

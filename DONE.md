@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 13)
+- Fix: "Rendered more hooks than during previous render" crash — moved `useMemo` hooks above early return in recipe detail
+- Fix: removed copy/duplicate icon from recipe detail action bar (was confusing with version system)
+- "Save a Copy" button added to recipe edit mode — creates fully independent recipe clone with " (Copy)" suffix, copies tags + dietary flags
+- Jetifier fix: re-added `android.enableJetifier=true` to gradle.properties (wiped by `prebuild --clean`)
+- i18n: `recipe.saveACopy` + `recipe.copySaved` keys added to all 5 locales
+
 ## 2026-04-07 (session 12)
 - Recipe content translation system: `translateRecipe()` in `@chefsbook/ai` via Claude Sonnet
 - Migration 016: `recipe_translations` table with RLS policies, applied to RPi5

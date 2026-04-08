@@ -314,7 +314,9 @@
     "generationFailed": "Échec de la génération",
     "saveFailed": "Échec de l'enregistrement",
     "mealPlanSaved": "Planning enregistré !",
-    "translating": "Traduction…"
+    "translating": "Traduction…",
+    "saveACopy": "Enregistrer une copie",
+    "copySaved": "Recette enregistrée en tant que copie."
   },
   "settings": {
     "language": "Langue",
