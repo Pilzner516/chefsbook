@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Platform, Modal, ScrollView } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -31,9 +31,12 @@ export default function RecipesTab() {
   const [versionPickerVersions, setVersionPickerVersions] = useState<any[]>([]);
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (session?.user?.id) fetchRecipes(session.user.id);
-  }, [session?.user?.id]);
+  // Refresh recipes + primary photos every time the tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.user?.id) fetchRecipes(session.user.id);
+    }, [session?.user?.id]),
+  );
 
   // Batch-fetch primary user photos for all recipes
   useEffect(() => {

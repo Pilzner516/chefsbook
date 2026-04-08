@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 20)
+- Fix stale recipe card images: `useFocusEffect` on recipe list tab refreshes recipes + primary photos on every focus
+- Fix HeroGallery not refreshing after image edits: added `refreshKey` prop, bumped on edit save/cancel
+- Fix scan prompt missing description: updated Claude Vision prompt to always extract or generate a 1-2 sentence description
+
 ## 2026-04-08 (session 19)
 - PostImportImageSheet: new bottom sheet for choosing cover photo after any import (URL, scan, file)
 - Pexels pre-fetched in parallel with import (domain guess first, refetch with actual title when available)

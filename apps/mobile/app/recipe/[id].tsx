@@ -571,6 +571,7 @@ function RecipeDetailInner() {
   const [editSteps, setEditSteps] = useState<{ instruction: string; timer_minutes: string }[]>([]);
   const [editDietaryFlags, setEditDietaryFlags] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [heroRefreshKey, setHeroRefreshKey] = useState(0);
   const language = usePreferencesStore((s) => s.language);
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
   const [translating, setTranslating] = useState(false);
@@ -735,6 +736,7 @@ function RecipeDetailInner() {
 
   const cancelEditing = () => {
     setEditing(false);
+    setHeroRefreshKey((k) => k + 1);
   };
 
   const saveEditing = async () => {
@@ -772,6 +774,7 @@ function RecipeDetailInner() {
       })));
       await fetchRecipe(currentRecipe.id);
       setEditing(false);
+      setHeroRefreshKey((k) => k + 1);
     } catch (err: any) {
       Alert.alert(t('recipe.saveFailed'), err.message);
     } finally {
@@ -1072,7 +1075,7 @@ function RecipeDetailInner() {
       <ChefsBookHeader />
       <ScrollView style={{ flex: 1 }}>
       {/* Hero image gallery — user photos or fallback to recipe.image_url / chef's hat */}
-      <HeroGallery recipeId={recipe.id} fallbackImageUrl={recipe.image_url} />
+      <HeroGallery recipeId={recipe.id} fallbackImageUrl={recipe.image_url} refreshKey={heroRefreshKey} />
 
       <View style={{ padding: 16 }}>
 

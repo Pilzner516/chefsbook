@@ -25,6 +25,7 @@ Return ONLY a JSON object, no markdown, no explanation:
 }
 
 Rules:
+- description: Extract any introductory text, headnote, or preamble before the ingredients. If no description text exists on the page, generate a 1-2 sentence description based on the recipe title, main ingredients, and cooking method. This field must NEVER be null or empty.
 - Normalize ingredient names: "AP flour" → "all-purpose flour", "s&p" → list as two separate ingredients
 - Preserve group labels like "For the sauce:" or "Dough:" as group_label on those ingredients/steps
 - If text is partially obscured or unclear, make your best inference and note it in the notes field

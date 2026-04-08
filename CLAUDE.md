@@ -291,6 +291,9 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Pexels pre-fetch: runs in parallel with import (domain guess query first, refetch with actual recipe title); results ready when sheet opens
 - Scan food photo detection: `scanRecipeMultiPage` returns `has_food_photo` + `food_photo_region`; scan image only offered when food photo detected
 - URL import image: og:image extracted from HTML on mobile side; offered as "From website" option in PostImportImageSheet
+- Recipe list refresh: `useFocusEffect` on index tab re-fetches recipes + primary photos every time tab gains focus (fixes stale images after edits)
+- HeroGallery refresh: accepts `refreshKey` prop; recipe detail bumps key on edit save/cancel so hero re-fetches photos
+- Scan description: Claude Vision prompt mandates a description — extracts headnote or generates 1-2 sentences if absent; field must never be null
 
 ## Builds
 

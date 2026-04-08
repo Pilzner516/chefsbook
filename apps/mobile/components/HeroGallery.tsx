@@ -15,6 +15,8 @@ interface Props {
   recipeId: string;
   /** Fallback image URL from recipe.image_url (imported/scraped images) */
   fallbackImageUrl?: string | null;
+  /** Bump this value to force a photo refresh (e.g. after editing images) */
+  refreshKey?: number;
 }
 
 function imageSource(uri: string) {
@@ -24,13 +26,13 @@ function imageSource(uri: string) {
     : { uri };
 }
 
-export function HeroGallery({ recipeId, fallbackImageUrl }: Props) {
+export function HeroGallery({ recipeId, fallbackImageUrl, refreshKey }: Props) {
   const [photos, setPhotos] = useState<RecipeUserPhoto[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     listRecipePhotos(recipeId).then((all) => setPhotos(all.slice(0, MAX_IMAGES)));
-  }, [recipeId]);
+  }, [recipeId, refreshKey]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
