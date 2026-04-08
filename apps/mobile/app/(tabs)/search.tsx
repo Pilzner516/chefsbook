@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
@@ -51,11 +51,12 @@ export default function SearchTab() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
+  const { q: initialQuery } = useLocalSearchParams<{ q?: string }>();
   const session = useAuthStore((s) => s.session);
   const searchRef = useRef<TextInput>(null);
 
-  const [mode, setMode] = useState<SearchMode>('my');
-  const [query, setQuery] = useState('');
+  const [mode, setMode] = useState<SearchMode>(() => initialQuery ? 'discover' : 'my');
+  const [query, setQuery] = useState(initialQuery ?? '');
   const [results, setResults] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);

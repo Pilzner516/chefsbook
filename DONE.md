@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 21)
+- Dish identification scan flow: `analyseScannedImage()` classifies image as recipe document / dish photo / unclear
+- `reanalyseDish()` re-analyses with user answers + cuisine hint; `generateDishRecipe()` creates full recipe from dish name + image
+- `DishIdentificationFlow` component: cuisine quick-select, clarifying question pills (max 3), dish options radio, confirm dish, action sheet
+- Scan tab routes single-page scans through classification first; recipe documents use existing unchanged flow
+- "Find matching recipes" navigates to search tab in discover mode with dish name pre-filled (`q` param)
+- "Generate a recipe" creates AI recipe and auto-uploads scanned dish photo as primary image
+- Unclear image handler: user can force recipe scan or enter dish identification flow
+- `dishId` i18n namespace with all new strings
+
 ## 2026-04-08 (session 20)
 - Fix stale recipe card images: `useFocusEffect` on recipe list tab refreshes recipes + primary photos on every focus
 - Fix HeroGallery not refreshing after image edits: added `refreshKey` prop, bumped on edit save/cancel

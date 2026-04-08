@@ -16,14 +16,15 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
-import { scanRecipe, scanRecipeMultiPage } from '@chefsbook/ai';
+import { scanRecipe, scanRecipeMultiPage, analyseScannedImage } from '@chefsbook/ai';
+import type { ScanImageAnalysis, PexelsPhoto } from '@chefsbook/ai';
+import { searchPexels } from '@chefsbook/ai';
 import { pickImage, takePhoto, processImage } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
 import { PostImportImageSheet } from '../../components/PostImportImageSheet';
-import type { PexelsPhoto } from '@chefsbook/ai';
-import { searchPexels } from '@chefsbook/ai';
+import { DishIdentificationFlow } from '../../components/DishIdentificationFlow';
 
 // TODO(web): replicate multi-page scan support
 
@@ -55,6 +56,12 @@ export default function ScanTab() {
   const [imageSheetScanUri, setImageSheetScanUri] = useState<string | null>(null);
   const [pexelsPhotos, setPexelsPhotos] = useState<PexelsPhoto[]>([]);
   const [pexelsLoading, setPexelsLoading] = useState(false);
+  // Dish identification flow state
+  const [showDishFlow, setShowDishFlow] = useState(false);
+  const [dishFlowImageUri, setDishFlowImageUri] = useState('');
+  const [dishFlowBase64, setDishFlowBase64] = useState('');
+  const [dishFlowMime, setDishFlowMime] = useState('image/jpeg');
+  const [dishFlowAnalysis, setDishFlowAnalysis] = useState<ScanImageAnalysis | null>(null);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -153,7 +160,7 @@ export default function ScanTab() {
     setScanPages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Process all captured pages — pre-fetch Pexels in parallel with scan
+  // Process all captured pages — classify first, then route to recipe scan or dish identification
   const finishScan = async () => {
     if (!session?.user?.id || scanPages.length === 0) return;
     setScanMode(false);
@@ -163,18 +170,34 @@ export default function ScanTab() {
     try {
       const pages = scanPages.map((p) => ({ base64: p.base64, mimeType: p.mimeType }));
 
-      // Run scan + Pexels pre-fetch in parallel (Pexels uses a guess query since we don't have the title yet)
+      // For single-page scans, classify the image first (dish vs recipe document)
+      if (pages.length === 1) {
+        const classification = await analyseScannedImage(pages[0].base64, pages[0].mimeType);
+
+        if (classification.type !== 'recipe_document') {
+          // Dish photo or unclear → show dish identification flow
+          setImportStatus('idle');
+          setPexelsLoading(false);
+          setDishFlowImageUri(scanPages[0].uri);
+          setDishFlowBase64(scanPages[0].base64);
+          setDishFlowMime(scanPages[0].mimeType);
+          setDishFlowAnalysis(classification);
+          setShowDishFlow(true);
+          setScanPages([]);
+          return;
+        }
+      }
+
+      // Recipe document path (existing flow unchanged)
       const scanPromise = pages.length === 1
         ? scanRecipe(pages[0].base64, pages[0].mimeType)
         : scanRecipeMultiPage(pages);
 
       const [scanned] = await Promise.all([
         scanPromise,
-        // Pre-fetch Pexels — title not yet known, will refetch once we have it
         searchPexels('recipe food dish').then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false)),
       ]);
 
-      // Now refetch Pexels with actual title
       if (scanned.title) {
         setPexelsLoading(true);
         searchPexels(scanned.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
@@ -184,7 +207,6 @@ export default function ScanTab() {
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
 
-      // Show image sheet — offer scan image only if food photo detected
       setImageSheetRecipeId(recipe.id);
       setImageSheetWebsiteUrl(null);
       setImageSheetScanUri(scanned.has_food_photo ? scanPages[0]?.uri : null);
@@ -195,6 +217,35 @@ export default function ScanTab() {
       setPexelsLoading(false);
       Alert.alert(t('scan.scanFailed'), e.message);
       setScanPages([]);
+    }
+  };
+
+  // Force recipe scan — called from DishIdentificationFlow when user picks "It's a recipe"
+  const forceRecipeScan = async () => {
+    if (!session?.user?.id || !dishFlowBase64) return;
+    setImportStatus('importing');
+    setPexelsLoading(true);
+    setPexelsPhotos([]);
+    try {
+      const [scanned] = await Promise.all([
+        scanRecipe(dishFlowBase64, dishFlowMime),
+        searchPexels('recipe food dish').then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false)),
+      ]);
+      if (scanned.title) {
+        setPexelsLoading(true);
+        searchPexels(scanned.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
+      }
+      const recipe = await addRecipe(session.user.id, scanned);
+      setImportedRecipeId(recipe.id);
+      setImportStatus('success');
+      setImageSheetRecipeId(recipe.id);
+      setImageSheetWebsiteUrl(null);
+      setImageSheetScanUri(scanned.has_food_photo ? dishFlowImageUri : null);
+      setShowImageSheet(true);
+    } catch (e: any) {
+      setImportStatus('error');
+      setPexelsLoading(false);
+      Alert.alert(t('scan.scanFailed'), e.message);
     }
   };
 
@@ -356,6 +407,19 @@ export default function ScanTab() {
         onPickLibrary={async () => { const uri = await pickImage(); if (uri) uploadCoverImage(uri); }}
         onSkip={() => setShowImageSheet(false)}
       />
+
+      {/* Dish identification flow */}
+      {dishFlowAnalysis && (
+        <DishIdentificationFlow
+          visible={showDishFlow}
+          imageUri={dishFlowImageUri}
+          imageBase64={dishFlowBase64}
+          imageMimeType={dishFlowMime}
+          initialAnalysis={dishFlowAnalysis}
+          onDismiss={() => { setShowDishFlow(false); setDishFlowAnalysis(null); }}
+          onForceRecipeScan={forceRecipeScan}
+        />
+      )}
 
       {/* Multi-page scan mode */}
       {scanMode && (

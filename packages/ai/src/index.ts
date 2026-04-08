@@ -30,3 +30,5 @@ export { searchPexels } from './searchPexels';
 export type { PexelsPhoto } from './searchPexels';
 export { translateRecipe } from './translateRecipe';
 export type { TranslatedRecipe, TranslatedIngredient, TranslatedStep } from './translateRecipe';
+export { analyseScannedImage, reanalyseDish, generateDishRecipe } from './dishIdentify';
+export type { ScanImageAnalysis, ClarifyingQuestion } from './dishIdentify';
