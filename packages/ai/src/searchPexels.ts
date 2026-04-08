@@ -23,18 +23,26 @@ export async function searchPexels(
     query + ' food',
   )}&per_page=${perPage}&orientation=landscape`;
 
-  const res = await fetch(url, {
-    headers: { Authorization: key },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) return [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: key },
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return [];
 
-  const data = await res.json();
-  return (data.photos ?? []).map((p: any) => ({
-    id: p.id,
-    thumbnail: p.src.medium,
-    fullUrl: p.src.large2x,
-    alt: p.alt ?? query,
-    photographer: p.photographer ?? '',
-  }));
+    const data = await res.json();
+    return (data.photos ?? []).map((p: any) => ({
+      id: p.id,
+      thumbnail: p.src.medium,
+      fullUrl: p.src.large2x,
+      alt: p.alt ?? query,
+      photographer: p.photographer ?? '',
+    }));
+  } catch {
+    clearTimeout(timer);
+    throw new Error('Pexels search failed');
+  }
 }
