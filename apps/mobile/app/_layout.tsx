@@ -78,18 +78,29 @@ function RootNav() {
 
   useProtectedRoute();
 
-  // Handle URLs shared from browser share sheet
+  // Handle URLs shared from browser / Instagram share sheet
   useEffect(() => {
+    const isInstagramUrl = (u: string) =>
+      u.includes('instagram.com/p/') || u.includes('instagram.com/reel/');
+
     const handleUrl = ({ url }: { url: string }) => {
       if (url && /^https?:\/\//i.test(url)) {
-        router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
+        if (isInstagramUrl(url)) {
+          router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
+        } else {
+          router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
+        }
       }
     };
 
     // Check for URL that launched the app
     Linking.getInitialURL().then((url) => {
       if (url && /^https?:\/\//i.test(url)) {
-        router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
+        if (isInstagramUrl(url)) {
+          router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
+        } else {
+          router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
+        }
       }
     });
 

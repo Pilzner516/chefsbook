@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 22)
+- Instagram import: `fetchInstagramPost()` extracts og:image + caption from public posts
+- `extractRecipeFromInstagram()` sends image + caption to Claude; returns recipe or dish_name if no recipe
+- Share handler routes Instagram URLs (`/p/`, `/reel/`) to dedicated Instagram import flow
+- No-recipe Instagram posts route to DishIdentificationFlow with dish_name pre-filled
+- Private/failed fetches show friendly error with manual entry fallback
+- "Instagram" grid cell added to scan tab (3+2 layout); manual paste input with clipboard button
+- PostImportImageSheet: "From Instagram post" option shown first when IG image available
+- Grid cells resized for 3-column rows (48px icons, 120px height)
+
 ## 2026-04-08 (session 21)
 - Dish identification scan flow: `analyseScannedImage()` classifies image as recipe document / dish photo / unclear
 - `reanalyseDish()` re-analyses with user answers + cuisine hint; `generateDishRecipe()` creates full recipe from dish name + image

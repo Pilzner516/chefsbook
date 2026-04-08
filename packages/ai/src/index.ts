@@ -32,3 +32,5 @@ export { translateRecipe } from './translateRecipe';
 export type { TranslatedRecipe, TranslatedIngredient, TranslatedStep } from './translateRecipe';
 export { analyseScannedImage, reanalyseDish, generateDishRecipe } from './dishIdentify';
 export type { ScanImageAnalysis, ClarifyingQuestion } from './dishIdentify';
+export { fetchInstagramPost, extractRecipeFromInstagram } from './instagramImport';
+export type { InstagramPostData, InstagramRecipeResult } from './instagramImport';

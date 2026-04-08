@@ -132,7 +132,7 @@ Storage buckets: `recipe-images` (5MB, public read) and `avatars` (2MB, public r
 
 **@chefsbook/db** — Supabase client is a lazy-init Proxy singleton (`packages/db/src/client.ts`). Query modules organized by domain: `recipes.ts`, `cookbooks.ts`, `mealPlans.ts`, `shopping.ts`, `cookingNotes.ts`, `menuTemplates.ts`, `imports.ts`, `categories.ts`, `techniques.ts`. `subscriptions.ts` defines plan limits and gate-check functions. Types define `PlanTier`, `SourceType` (includes `'youtube'`), `Course`, `MealSlot`, `VisibilityLevel`, `Technique`, `Difficulty`.
 
-**@chefsbook/ai** — `callClaude()` hits the Anthropic API (`claude-sonnet-4-20250514`), supports text + optional image input. Key exports: `scanRecipe(imageBase64)`, `importFromUrl(url)`, `importUrlFull(url)`, `classifyPage(html)`, `fetchPage(url)`, `suggestRecipes(ingredients[])`, `generateVariation(recipe, request)`, `mergeShoppingList()`, `matchFolderToCategory()`, `matchFoldersToCategories()`, `importFromYouTube()`, `classifyContent()` (recipe vs technique), `importTechnique()`, `importTechniqueFromYouTube()`, `extractJsonLdRecipe()`, `analyseScannedImage()`, `reanalyseDish()`, `generateDishRecipe()`. Uses `extractJSON()` to parse structured data from LLM output.
+**@chefsbook/ai** — `callClaude()` hits the Anthropic API (`claude-sonnet-4-20250514`), supports text + optional image input. Key exports: `scanRecipe(imageBase64)`, `importFromUrl(url)`, `importUrlFull(url)`, `classifyPage(html)`, `fetchPage(url)`, `suggestRecipes(ingredients[])`, `generateVariation(recipe, request)`, `mergeShoppingList()`, `matchFolderToCategory()`, `matchFoldersToCategories()`, `importFromYouTube()`, `classifyContent()` (recipe vs technique), `importTechnique()`, `importTechniqueFromYouTube()`, `extractJsonLdRecipe()`, `analyseScannedImage()`, `reanalyseDish()`, `generateDishRecipe()`, `fetchInstagramPost()`, `extractRecipeFromInstagram()`. Uses `extractJSON()` to parse structured data from LLM output.
 
 **@chefsbook/ui** — Pure formatters: `formatDuration()`, `formatQuantity()` (Unicode fractions like "1 3/4"), `scaleQuantity()`, `formatServings()`, `getInitials()`, `truncate()`, `groupBy()`.
 
@@ -299,6 +299,10 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Dish flow UI: cuisine quick-select → clarifying question pills (max 3, one at a time) → dish options radio → confirm dish → action sheet (find recipes / generate recipe)
 - Generated dish recipes auto-upload the scanned dish photo as primary image
 - Search tab accepts `q` query param to pre-fill search (used by dish flow "Find matching recipes")
+- Instagram import: `fetchInstagramPost()` + `extractRecipeFromInstagram()` in `packages/ai/src/instagramImport.ts`; share handler routes IG URLs to dedicated flow
+- Instagram no-recipe path routes to DishIdentificationFlow with pre-filled dish_name (skips cuisine select)
+- Scan tab grid: 3+2 layout (was 2+2) with smaller 48px icon circles to fit Instagram option
+- PostImportImageSheet: `instagramImageUrl` + `onSelectInstagramImage` props for "From Instagram post" cover option
 
 ## Builds
 

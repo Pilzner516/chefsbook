@@ -10,11 +10,11 @@ export type ClarifyingQuestion = {
 
 export type ScanImageAnalysis = {
   type: 'recipe_document' | 'dish_photo' | 'unclear';
-  dish_name?: string;
+  dish_name?: string | null;
   dish_confidence: 'high' | 'medium' | 'low';
   clarifying_questions?: ClarifyingQuestion[];
   dish_options?: string[];
-  cuisine_guess?: string;
+  cuisine_guess?: string | null;
 };
 
 // ── Analyse image: document vs dish vs unclear ──

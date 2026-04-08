@@ -288,7 +288,14 @@
     "shareStep2": "Tap \u22EE menu \u2192 Share",
     "shareStep3": "Select ChefsBook from the list",
     "scanFailed": "Scan failed",
-    "importFailed": "Import failed"
+    "importFailed": "Import failed",
+    "instagram": "Instagram",
+    "instagramSubtitle": "Import from a post",
+    "instagramImporting": "Reading Instagram post...",
+    "instagramFailed": "Instagram import failed",
+    "instagramPrivate": "We couldn't access this Instagram post. It may be private or the link may have expired.",
+    "instagramManual": "Try pasting the recipe text manually",
+    "pasteInstagramUrl": "Paste Instagram post URL..."
   },
   "dishId": {
     "analysing": "Analysing image...",
@@ -423,7 +430,9 @@
     "originalPhoto": "The recipe's original photo",
     "fromScan": "From scan",
     "scanPhoto": "Photo found in scanned page",
-    "findPhoto": "Find a photo"
+    "findPhoto": "Find a photo",
+    "fromInstagram": "From Instagram post",
+    "instagramPhoto": "Photo from the Instagram post"
   },
   "pexels": {
     "title": "Find a photo",

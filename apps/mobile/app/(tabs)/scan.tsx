@@ -34,7 +34,7 @@ export default function ScanTab() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
-  const { importUrl } = useLocalSearchParams<{ importUrl?: string }>();
+  const { importUrl, instagramUrl } = useLocalSearchParams<{ importUrl?: string; instagramUrl?: string }>();
   const session = useAuthStore((s) => s.session);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
 
@@ -62,6 +62,10 @@ export default function ScanTab() {
   const [dishFlowBase64, setDishFlowBase64] = useState('');
   const [dishFlowMime, setDishFlowMime] = useState('image/jpeg');
   const [dishFlowAnalysis, setDishFlowAnalysis] = useState<ScanImageAnalysis | null>(null);
+  // Instagram import state
+  const [instagramImageUrl, setInstagramImageUrl] = useState<string | null>(null);
+  const [showInstagramInput, setShowInstagramInput] = useState(false);
+  const [instagramUrlInput, setInstagramUrlInput] = useState('');
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -134,6 +138,13 @@ export default function ScanTab() {
       handleImport(importUrl);
     }
   }, [importUrl]);
+
+  // Auto-import from Instagram share
+  useEffect(() => {
+    if (instagramUrl) {
+      handleInstagramImport(instagramUrl);
+    }
+  }, [instagramUrl]);
 
   // Start multi-page scan — capture first page and enter scan mode
   const startScan = async (getUri: () => Promise<string | null>) => {
@@ -249,6 +260,105 @@ export default function ScanTab() {
     }
   };
 
+  // ── Instagram import ──
+  const isInstagramUrl = (u: string) =>
+    u.includes('instagram.com/p/') || u.includes('instagram.com/reel/');
+
+  const handleInstagramImport = async (url?: string) => {
+    const target = url || instagramUrlInput.trim();
+    if (!target || !session?.user?.id) return;
+
+    setImportStatus('importing');
+    setInstagramImageUrl(null);
+    setPexelsLoading(true);
+    setPexelsPhotos([]);
+    try {
+      const { fetchInstagramPost, extractRecipeFromInstagram } = await import('@chefsbook/ai');
+
+      // Fetch Instagram post data
+      const postData = await fetchInstagramPost(target);
+      setInstagramImageUrl(postData.imageUrl);
+
+      // Pre-fetch Pexels in parallel with recipe extraction
+      const pexelsPromise = searchPexels('food recipe dish')
+        .then((r) => { setPexelsPhotos(r); setPexelsLoading(false); })
+        .catch(() => setPexelsLoading(false));
+
+      const [result] = await Promise.all([
+        extractRecipeFromInstagram(postData),
+        pexelsPromise,
+      ]);
+
+      if (result.has_recipe) {
+        // Refetch Pexels with actual title
+        if (result.recipe.title) {
+          setPexelsLoading(true);
+          searchPexels(result.recipe.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
+        }
+
+        const recipe = await addRecipe(session.user.id, { ...result.recipe, source_url: target, image_url: postData.imageUrl });
+        setImportedRecipeId(recipe.id);
+        setImportStatus('success');
+
+        // Show image sheet with Instagram image as option
+        setImageSheetRecipeId(recipe.id);
+        setImageSheetWebsiteUrl(null);
+        setImageSheetScanUri(null);
+        setShowImageSheet(true);
+      } else {
+        // No recipe — route to dish identification flow
+        setImportStatus('idle');
+        setPexelsLoading(false);
+
+        // Download the IG image to get base64 for dish flow
+        if (postData.imageUrl) {
+          try {
+            const imgRes = await fetch(postData.imageUrl);
+            const buffer = await imgRes.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            const base64 = btoa(binary);
+
+            setDishFlowImageUri(postData.imageUrl);
+            setDishFlowBase64(base64);
+            setDishFlowMime('image/jpeg');
+            setDishFlowAnalysis({
+              type: 'dish_photo',
+              dish_name: result.dish_name,
+              dish_confidence: 'high',
+              cuisine_guess: null,
+            } as ScanImageAnalysis);
+            setShowDishFlow(true);
+          } catch {
+            // Image download failed — show dish flow without image
+            setDishFlowAnalysis({
+              type: 'dish_photo',
+              dish_name: result.dish_name,
+              dish_confidence: 'high',
+              cuisine_guess: null,
+            } as ScanImageAnalysis);
+            setShowDishFlow(true);
+          }
+        } else {
+          // No image at all — navigate to search with dish name
+          router.push({ pathname: '/(tabs)/search', params: { q: result.dish_name } });
+        }
+      }
+    } catch (e: any) {
+      setImportStatus('error');
+      setPexelsLoading(false);
+      Alert.alert(
+        t('scan.instagramFailed'),
+        e.message || t('scan.instagramPrivate'),
+        [
+          { text: t('scan.instagramManual'), onPress: () => router.push('/recipe/new') },
+          { text: t('dishId.cancel'), style: 'cancel' },
+        ],
+      );
+    }
+  };
+
   const handleImport = async (urlToImport?: string) => {
     const target = urlToImport || urlInput.trim();
     if (!target || !session?.user?.id) return;
@@ -351,13 +461,19 @@ export default function ScanTab() {
       iconName: 'link' as const,
       label: t('scan.importUrl'),
       subtitle: t('scan.importSubtitle'),
-      onPress: () => setShowUrlInput(!showUrlInput),
+      onPress: () => { setShowUrlInput(!showUrlInput); setShowInstagramInput(false); },
     },
     {
       iconName: 'images' as const,
       label: t('scan.choosePhoto'),
       subtitle: t('scan.chooseSubtitle'),
       onPress: () => startScan(pickImage),
+    },
+    {
+      iconName: 'camera-outline' as const,
+      label: t('scan.instagram'),
+      subtitle: t('scan.instagramSubtitle'),
+      onPress: () => { setShowInstagramInput(!showInstagramInput); setShowUrlInput(false); },
     },
     {
       iconName: 'create' as const,
@@ -398,10 +514,12 @@ export default function ScanTab() {
         visible={showImageSheet}
         websiteImageUrl={imageSheetWebsiteUrl}
         scanImageUri={imageSheetScanUri}
+        instagramImageUrl={instagramImageUrl}
         pexelsPhotos={pexelsPhotos}
         pexelsLoading={pexelsLoading}
         onSelectWebsiteImage={() => { if (imageSheetWebsiteUrl) uploadCoverFromUrl(imageSheetWebsiteUrl); }}
         onSelectScanImage={() => { if (imageSheetScanUri) uploadCoverImage(imageSheetScanUri); }}
+        onSelectInstagramImage={() => { if (instagramImageUrl) uploadCoverFromUrl(instagramImageUrl); }}
         onSelectPexels={(photo) => uploadCoverFromUrl(photo.fullUrl)}
         onTakePhoto={async () => { const uri = await takePhoto(); if (uri) uploadCoverImage(uri); }}
         onPickLibrary={async () => { const uri = await pickImage(); if (uri) uploadCoverImage(uri); }}
@@ -539,14 +657,14 @@ export default function ScanTab() {
           </TouchableOpacity>
         </Animated.View>
 
-        {/* 2x2 Grid */}
+        {/* Import grid: 3 + 2 */}
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
-          {gridCells.slice(0, 2).map((cell) => (
+          {gridCells.slice(0, 3).map((cell) => (
             <GridCell key={cell.label} {...cell} colors={colors} />
           ))}
         </View>
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-          {gridCells.slice(2, 4).map((cell) => (
+          {gridCells.slice(3, 5).map((cell) => (
             <GridCell key={cell.label} {...cell} colors={colors} />
           ))}
         </View>
@@ -606,6 +724,50 @@ export default function ScanTab() {
           </View>
         </Animated.View>
 
+        {/* Collapsible Instagram URL input */}
+        {showInstagramInput && (
+          <View style={{ marginBottom: 12 }}>
+            <Input
+              value={instagramUrlInput}
+              onChangeText={setInstagramUrlInput}
+              placeholder={t('scan.pasteInstagramUrl')}
+              autoCapitalize="none"
+            />
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const text = await Clipboard.getStringAsync();
+                    if (text) setInstagramUrlInput(text);
+                  } catch {}
+                }}
+                style={{
+                  flex: 1, height: 40, backgroundColor: colors.bgBase, borderRadius: 10,
+                  borderWidth: 1, borderColor: colors.borderDefault,
+                  alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="clipboard-outline" size={16} color={colors.textPrimary} style={{ marginRight: 4 }} />
+                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>{t('scan.paste')}</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleInstagramImport()}
+                disabled={!instagramUrlInput.trim()}
+                style={{
+                  flex: 1, height: 40,
+                  backgroundColor: instagramUrlInput.trim() ? colors.accent : colors.bgBase,
+                  borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+                  opacity: instagramUrlInput.trim() ? 1 : 0.5,
+                }}
+              >
+                <Text style={{ color: instagramUrlInput.trim() ? '#ffffff' : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{t('scan.import')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Share from browser banner */}
         <View
           style={{
@@ -663,11 +825,11 @@ function GridCell({
         flex: 1,
         backgroundColor: colors.bgScreen,
         borderRadius: 14,
-        height: 130,
+        height: 120,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 20,
+        paddingHorizontal: 8,
+        paddingVertical: 14,
         shadowColor: '#000',
         shadowOpacity: 0.07,
         shadowRadius: 8,
@@ -676,18 +838,18 @@ function GridCell({
       }}
     >
       <View style={{
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         backgroundColor: colors.accentSoft,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12,
+        marginBottom: 8,
       }}>
-        <Ionicons name={iconName} size={32} color={colors.accent} />
+        <Ionicons name={iconName} size={24} color={colors.accent} />
       </View>
-      <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600', textAlign: 'center', marginTop: 4 }}>{label}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 2 }}>{subtitle}</Text>
+      <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>{label}</Text>
+      <Text style={{ color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 1 }}>{subtitle}</Text>
     </TouchableOpacity>
   );
 }

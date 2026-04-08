@@ -20,11 +20,14 @@ interface Props {
   websiteImageUrl?: string | null;
   /** Scan page image URI — only shown if has_food_photo is true (Scenario B) */
   scanImageUri?: string | null;
+  /** Instagram post image URL (Scenario C) */
+  instagramImageUrl?: string | null;
   /** Pre-fetched Pexels results (fetched in parallel with import) */
   pexelsPhotos: PexelsPhoto[];
   pexelsLoading: boolean;
   onSelectWebsiteImage: () => void;
   onSelectScanImage: () => void;
+  onSelectInstagramImage?: () => void;
   onSelectPexels: (photo: PexelsPhoto) => void;
   onTakePhoto: () => void;
   onPickLibrary: () => void;
@@ -35,10 +38,12 @@ export function PostImportImageSheet({
   visible,
   websiteImageUrl,
   scanImageUri,
+  instagramImageUrl,
   pexelsPhotos,
   pexelsLoading,
   onSelectWebsiteImage,
   onSelectScanImage,
+  onSelectInstagramImage,
   onSelectPexels,
   onTakePhoto,
   onPickLibrary,
@@ -82,6 +87,39 @@ export function PostImportImageSheet({
           </View>
 
           <ScrollView style={{ paddingHorizontal: 20 }}>
+            {/* Option 0: Instagram image */}
+            {instagramImageUrl && onSelectInstagramImage && (
+              <TouchableOpacity
+                onPress={onSelectInstagramImage}
+                activeOpacity={0.7}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.bgBase,
+                  borderRadius: 12,
+                  padding: 12,
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: colors.borderDefault,
+                }}
+              >
+                <Image
+                  source={{ uri: instagramImageUrl }}
+                  style={{ width: 80, height: 60, borderRadius: 8 }}
+                  resizeMode="cover"
+                />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>
+                    {t('postImport.fromInstagram')}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>
+                    {t('postImport.instagramPhoto')}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+
             {/* Option 1: Website image */}
             {websiteImageUrl && (
               <TouchableOpacity
