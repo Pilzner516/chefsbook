@@ -14,10 +14,7 @@ export async function searchPexels(
   const key = apiKey ||
     process.env.EXPO_PUBLIC_PEXELS_API_KEY ||
     process.env.PEXELS_API_KEY || '';
-  if (!key || !query.trim()) {
-    console.warn('[searchPexels] skipped: key=' + (key ? 'present' : 'MISSING') + ' query=' + JSON.stringify(query));
-    return [];
-  }
+  if (!key || !query.trim()) return [];
 
   const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
     query,

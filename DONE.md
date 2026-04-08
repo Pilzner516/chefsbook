@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 23)
+- Removed `console.warn` debug artifact from `searchPexels()` in `@chefsbook/ai`
+- Built release APK via Gradle `assembleRelease` (111MB) — includes sessions 20-22 features
+- APK at `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`
+
 ## 2026-04-08 (session 22)
 - Instagram import: `fetchInstagramPost()` extracts og:image + caption from public posts
 - `extractRecipeFromInstagram()` sends image + caption to Claude; returns recipe or dish_name if no recipe
