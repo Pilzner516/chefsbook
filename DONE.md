@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-07 (session 15)
+- Pexels picker: fixed AbortSignal.timeout crash (not available in Hermes — replaced with AbortController)
+- Pexels picker: fixed env var not reaching shared package (pass key explicitly from app code)
+- Pexels picker: vertical full-width layout (was tiny side-by-side thumbnails)
+- Pexels search: removed " food" suffix causing irrelevant results (pizza for "pear pie")
+- Pexels picker: fixed tap not firing (nested TouchableOpacity swallowing events → plain View)
+- Pexels upload: replaced FileReader blob approach with expo-file-system download + processImage
+- Pexels upload: rewrote to use FileSystem.uploadAsync with manual JWT headers (bypass Supabase JS client)
+- Storage investigation: root cause is PostgreSQL 42501 on set_config in storage middleware (supabase_storage_admin role)
+- Storage investigation: granted INHERIT + anon + authenticated to supabase_storage_admin, full service restart — still fails
+- Storage investigation: disabled RLS on both storage.objects and recipe_user_photos — still fails
+- Storage investigation: ALL 9 approaches tried failed — error is in Supabase self-hosted storage middleware, not in RLS policies
+- BLOCKER: Mobile storage uploads do not work — zero files in storage.objects ever. Web uploads work fine (service role key).
+- Next step: create API route proxy in apps/web that accepts images from mobile and uploads server-side
+
 ## 2026-04-07 (session 14)
 - Fix: removed "Staging" pill from ChefsBookHeader — was pushing kg/lb toggle off screen
 - Fix: language translation now works — `activateLanguage()` wired into `preferencesStore.setLanguage()`, `loadFromLocal()`, and `loadFromSupabase()`
