@@ -21,8 +21,9 @@ import { pickImage, takePhoto, processImage } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
-import { PexelsPickerSheet } from '../../components/PexelsPickerSheet';
+import { PostImportImageSheet } from '../../components/PostImportImageSheet';
 import type { PexelsPhoto } from '@chefsbook/ai';
+import { searchPexels } from '@chefsbook/ai';
 
 // TODO(web): replicate multi-page scan support
 
@@ -47,11 +48,13 @@ export default function ScanTab() {
   // Multi-page scan state
   const [scanPages, setScanPages] = useState<{ uri: string; base64: string; mimeType: string }[]>([]);
   const [scanMode, setScanMode] = useState(false);
-  // Cover photo prompt state (shown after import when no image)
-  const [showCoverPrompt, setShowCoverPrompt] = useState(false);
-  const [coverPromptRecipeId, setCoverPromptRecipeId] = useState<string | null>(null);
-  const [coverPromptTitle, setCoverPromptTitle] = useState('');
-  const [showPexels, setShowPexels] = useState(false);
+  // Post-import image sheet state
+  const [showImageSheet, setShowImageSheet] = useState(false);
+  const [imageSheetRecipeId, setImageSheetRecipeId] = useState<string | null>(null);
+  const [imageSheetWebsiteUrl, setImageSheetWebsiteUrl] = useState<string | null>(null);
+  const [imageSheetScanUri, setImageSheetScanUri] = useState<string | null>(null);
+  const [pexelsPhotos, setPexelsPhotos] = useState<PexelsPhoto[]>([]);
+  const [pexelsLoading, setPexelsLoading] = useState(false);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -150,35 +153,46 @@ export default function ScanTab() {
     setScanPages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Process all captured pages
+  // Process all captured pages — pre-fetch Pexels in parallel with scan
   const finishScan = async () => {
     if (!session?.user?.id || scanPages.length === 0) return;
     setScanMode(false);
     setImportStatus('importing');
+    setPexelsLoading(true);
+    setPexelsPhotos([]);
     try {
       const pages = scanPages.map((p) => ({ base64: p.base64, mimeType: p.mimeType }));
-      const scanned = pages.length === 1
-        ? await scanRecipe(pages[0].base64, pages[0].mimeType)
-        : await scanRecipeMultiPage(pages);
+
+      // Run scan + Pexels pre-fetch in parallel (Pexels uses a guess query since we don't have the title yet)
+      const scanPromise = pages.length === 1
+        ? scanRecipe(pages[0].base64, pages[0].mimeType)
+        : scanRecipeMultiPage(pages);
+
+      const [scanned] = await Promise.all([
+        scanPromise,
+        // Pre-fetch Pexels — title not yet known, will refetch once we have it
+        searchPexels('recipe food dish').then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false)),
+      ]);
+
+      // Now refetch Pexels with actual title
+      if (scanned.title) {
+        setPexelsLoading(true);
+        searchPexels(scanned.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
+      }
+
       const recipe = await addRecipe(session.user.id, scanned);
-
-      // Auto-add first scan page as recipe photo
-      try {
-        const { supabase, addRecipePhoto } = await import('@chefsbook/db');
-        const fileName = `${session.user.id}/${recipe.id}/scan_${Date.now()}.jpg`;
-        const binaryString = atob(scanPages[0].base64);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-        await supabase.storage.from('recipe-user-photos').upload(fileName, bytes, { contentType: 'image/jpeg' });
-        const { data: urlData } = supabase.storage.from('recipe-user-photos').getPublicUrl(fileName);
-        await addRecipePhoto(recipe.id, session.user.id, fileName, urlData.publicUrl);
-      } catch {} // non-blocking
-
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
+
+      // Show image sheet — offer scan image only if food photo detected
+      setImageSheetRecipeId(recipe.id);
+      setImageSheetWebsiteUrl(null);
+      setImageSheetScanUri(scanned.has_food_photo ? scanPages[0]?.uri : null);
+      setShowImageSheet(true);
       setScanPages([]);
     } catch (e: any) {
       setImportStatus('error');
+      setPexelsLoading(false);
       Alert.alert(t('scan.scanFailed'), e.message);
       setScanPages([]);
     }
@@ -189,41 +203,80 @@ export default function ScanTab() {
     if (!target || !session?.user?.id) return;
 
     setImportStatus('importing');
+    setPexelsLoading(true);
+    setPexelsPhotos([]);
+
     try {
+      // Pre-fetch Pexels using URL domain as a guess query, in parallel with import
+      const domainGuess = new URL(target).hostname.replace(/^www\./, '').split('.')[0];
+      const pexelsPromise = searchPexels(domainGuess + ' food recipe')
+        .then((r) => { setPexelsPhotos(r); setPexelsLoading(false); })
+        .catch(() => setPexelsLoading(false));
+
       const res = await fetch(target);
       const html = await res.text();
       const { importFromUrl } = await import('@chefsbook/ai');
-      const scanned = await importFromUrl(html, target);
-      const recipe = await addRecipe(session.user.id, { ...scanned, source_url: target });
+
+      // Extract image URL from HTML (og:image or JSON-LD)
+      const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+        ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+      const extractedImageUrl = ogMatch?.[1] && /^https?:\/\//.test(ogMatch[1]) ? ogMatch[1] : null;
+
+      const [scanned] = await Promise.all([
+        importFromUrl(html, target),
+        pexelsPromise,
+      ]);
+
+      // Refetch Pexels with actual recipe title
+      if (scanned.title) {
+        setPexelsLoading(true);
+        searchPexels(scanned.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
+      }
+
+      const imageUrl = extractedImageUrl ?? null;
+      const recipe = await addRecipe(session.user.id, { ...scanned, source_url: target, image_url: imageUrl });
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
-      // Show "Add cover photo?" prompt if no image was imported
-      if (!recipe.image_url) {
-        setCoverPromptRecipeId(recipe.id);
-        setCoverPromptTitle(recipe.title ?? '');
-        setShowCoverPrompt(true);
-      }
+
+      // Always show image sheet — website image offered if available
+      setImageSheetRecipeId(recipe.id);
+      setImageSheetWebsiteUrl(imageUrl);
+      setImageSheetScanUri(null);
+      setShowImageSheet(true);
     } catch (e: any) {
       setImportStatus('error');
+      setPexelsLoading(false);
       Alert.alert(t('scan.importFailed'), e.message);
     }
   };
 
-  const handleCoverPhoto = async (getUri: () => Promise<string | null>) => {
-    if (!session?.user?.id || !coverPromptRecipeId) return;
-    const uri = await getUri();
-    if (!uri) return;
-    setShowCoverPrompt(false);
+  /** Upload any image URI as cover photo for the imported recipe */
+  const uploadCoverImage = async (uri: string) => {
+    if (!session?.user?.id || !imageSheetRecipeId) return;
+    setShowImageSheet(false);
     try {
       const { base64 } = await processImage(uri);
       const { supabase, addRecipePhoto } = await import('@chefsbook/db');
-      const fileName = `${session.user.id}/${coverPromptRecipeId}/cover_${Date.now()}.jpg`;
+      const fileName = `${session.user.id}/${imageSheetRecipeId}/cover_${Date.now()}.jpg`;
       const binaryString = atob(base64);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
       await supabase.storage.from('recipe-user-photos').upload(fileName, bytes, { contentType: 'image/jpeg' });
       const { data: urlData } = supabase.storage.from('recipe-user-photos').getPublicUrl(fileName);
-      await addRecipePhoto(coverPromptRecipeId, session.user.id, fileName, urlData.publicUrl);
+      await addRecipePhoto(imageSheetRecipeId, session.user.id, fileName, urlData.publicUrl);
+    } catch {} // non-blocking
+  };
+
+  /** Download a remote URL, then upload as cover */
+  const uploadCoverFromUrl = async (url: string) => {
+    if (!session?.user?.id || !imageSheetRecipeId) return;
+    setShowImageSheet(false);
+    try {
+      const FileSystem = require('expo-file-system/legacy');
+      const localUri = FileSystem.documentDirectory + `cover_dl_${Date.now()}.jpg`;
+      const download = await FileSystem.downloadAsync(url, localUri);
+      await uploadCoverImage(download.uri);
+      try { await FileSystem.deleteAsync(localUri, { idempotent: true }); } catch {}
     } catch {} // non-blocking
   };
 
@@ -280,7 +333,7 @@ export default function ScanTab() {
           onPress={() => {
             if (importedRecipeId) router.push(`/recipe/${importedRecipeId}`);
             setImportStatus('idle');
-            setShowCoverPrompt(false);
+            setShowImageSheet(false);
           }}
           style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.accentGreenSoft, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}
         >
@@ -289,50 +342,20 @@ export default function ScanTab() {
         </TouchableOpacity>
       )}
 
-      {/* "Add cover photo?" prompt — shown after import with no image */}
-      {showCoverPrompt && (
-        <View style={{ padding: 12, paddingHorizontal: 16, backgroundColor: colors.bgCard, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}>
-          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600', marginBottom: 8 }}>{t('scan.addCoverPhoto')}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TouchableOpacity
-              onPress={() => handleCoverPhoto(takePhoto)}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
-            >
-              <Ionicons name="camera-outline" size={16} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('scan.camera')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleCoverPhoto(pickImage)}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
-            >
-              <Ionicons name="images-outline" size={16} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('scan.library')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowPexels(true)}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: colors.bgBase, borderRadius: 8, paddingVertical: 8, borderWidth: 1, borderColor: colors.borderDefault }}
-            >
-              <Ionicons name="search-outline" size={16} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{t('gallery.findPhoto')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowCoverPrompt(false)}
-              style={{ paddingHorizontal: 12, justifyContent: 'center' }}
-            >
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{t('common.skip')}</Text>
-            </TouchableOpacity>
-          </View>
-          <PexelsPickerSheet
-            visible={showPexels}
-            query={coverPromptTitle}
-            onSelect={async (photo: PexelsPhoto) => {
-              setShowPexels(false);
-              handleCoverPhoto(async () => photo.fullUrl);
-            }}
-            onClose={() => setShowPexels(false)}
-          />
-        </View>
-      )}
+      {/* Post-import image selection sheet */}
+      <PostImportImageSheet
+        visible={showImageSheet}
+        websiteImageUrl={imageSheetWebsiteUrl}
+        scanImageUri={imageSheetScanUri}
+        pexelsPhotos={pexelsPhotos}
+        pexelsLoading={pexelsLoading}
+        onSelectWebsiteImage={() => { if (imageSheetWebsiteUrl) uploadCoverFromUrl(imageSheetWebsiteUrl); }}
+        onSelectScanImage={() => { if (imageSheetScanUri) uploadCoverImage(imageSheetScanUri); }}
+        onSelectPexels={(photo) => uploadCoverFromUrl(photo.fullUrl)}
+        onTakePhoto={async () => { const uri = await takePhoto(); if (uri) uploadCoverImage(uri); }}
+        onPickLibrary={async () => { const uri = await pickImage(); if (uri) uploadCoverImage(uri); }}
+        onSkip={() => setShowImageSheet(false)}
+      />
 
       {/* Multi-page scan mode */}
       {scanMode && (

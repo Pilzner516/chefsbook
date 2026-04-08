@@ -134,7 +134,7 @@ export async function listPublicRecipes(params?: {
 export async function createRecipe(
   userId: string,
   recipe: ScannedRecipe & {
-    image_url?: string; source_url?: string; cookbook_id?: string; page_number?: number;
+    image_url?: string | null; source_url?: string; cookbook_id?: string; page_number?: number;
     youtube_video_id?: string; channel_name?: string; video_only?: boolean;
   },
 ): Promise<RecipeWithDetails> {

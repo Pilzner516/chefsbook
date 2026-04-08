@@ -387,6 +387,16 @@
     "uploadFailed": "Upload failed \u2014 tap to retry",
     "coverSet": "Set as cover photo"
   },
+  "postImport": {
+    "title": "Choose a cover photo",
+    "skip": "Skip",
+    "skipArrow": "Skip \u2192",
+    "fromWebsite": "From website",
+    "originalPhoto": "The recipe's original photo",
+    "fromScan": "From scan",
+    "scanPhoto": "Photo found in scanned page",
+    "findPhoto": "Find a photo"
+  },
   "pexels": {
     "title": "Find a photo",
     "searching": "Searching for photos…",

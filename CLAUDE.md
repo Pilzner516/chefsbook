@@ -287,6 +287,10 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Recipe detail hero zone: `HeroGallery` component shows user-uploaded photos as full-width swipeable pager (max 4, dots indicator); falls back to `recipe.image_url` then chef's hat; chef's hat ONLY when zero images
 - Recipe cards: `getPrimaryPhotos()` batch query fetches primary user photo for all recipes; card shows `primaryPhoto ?? image_url ?? chef's hat`
 - `EditImageGallery` no longer renders in read-only mode (hero gallery replaces it); edit mode only
+- Post-import image flow: `PostImportImageSheet` bottom sheet replaces old inline "Add cover photo?" prompt; shown after URL import, scan, and file import
+- Pexels pre-fetch: runs in parallel with import (domain guess query first, refetch with actual recipe title); results ready when sheet opens
+- Scan food photo detection: `scanRecipeMultiPage` returns `has_food_photo` + `food_photo_region`; scan image only offered when food photo detected
+- URL import image: og:image extracted from HTML on mobile side; offered as "From website" option in PostImportImageSheet
 
 ## Builds
 

@@ -14,7 +14,7 @@ interface RecipeState {
   setFilterCourse: (c: string | null) => void;
   fetchRecipes: (userId: string) => Promise<void>;
   fetchRecipe: (id: string) => Promise<void>;
-  addRecipe: (userId: string, recipe: ScannedRecipe & { image_url?: string; source_url?: string }) => Promise<RecipeWithDetails>;
+  addRecipe: (userId: string, recipe: ScannedRecipe & { image_url?: string | null; source_url?: string }) => Promise<RecipeWithDetails>;
   editRecipe: (id: string, updates: Partial<Recipe>) => Promise<void>;
   removeRecipe: (id: string) => Promise<void>;
   toggleFav: (id: string, current: boolean) => Promise<void>;

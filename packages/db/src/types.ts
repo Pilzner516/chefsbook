@@ -272,4 +272,7 @@ export interface ScannedRecipe {
   }[];
   notes: string | null;
   source_type: SourceType;
+  has_food_photo?: boolean;
+  food_photo_region?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'full-page' | null;
+  image_url?: string | null;
 }

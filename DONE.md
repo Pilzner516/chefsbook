@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 19)
+- PostImportImageSheet: new bottom sheet for choosing cover photo after any import (URL, scan, file)
+- Pexels pre-fetched in parallel with import (domain guess first, refetch with actual title when available)
+- URL import: og:image extracted from HTML, offered as "From website" option in sheet
+- Camera scan: `scanRecipeMultiPage` prompt detects `has_food_photo` + `food_photo_region`
+- ScannedRecipe type extended with `has_food_photo`, `food_photo_region`, `image_url`
+- Scan flow: scanned page image offered as "From scan" when food photo detected by Claude Vision
+- Old "Add cover photo?" inline prompt removed, replaced by PostImportImageSheet
+- i18n: `postImport` namespace added for the new image selection sheet
+
 ## 2026-04-08 (session 18)
 - Hero image gallery: uploaded photos show as full-width hero on recipe detail, chef's hat only when 0 images
 - Swipeable hero pager with dot indicators for 2–4 images (FlatList horizontal, pagingEnabled)

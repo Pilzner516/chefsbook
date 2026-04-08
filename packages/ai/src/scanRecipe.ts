@@ -19,7 +19,9 @@ Return ONLY a JSON object, no markdown, no explanation:
     { "step_number": 1, "instruction": "string", "timer_minutes": "number|null", "group_label": "string|null" }
   ],
   "notes": "string | null",
-  "source_type": "scan"
+  "source_type": "scan",
+  "has_food_photo": "boolean",
+  "food_photo_region": "top-left|top-right|bottom-left|bottom-right|full-page|null"
 }
 
 Rules:
@@ -35,7 +37,12 @@ Timer extraction (critical for auto-timer feature):
 - Common patterns to detect: "cook for X min", "bake X minutes", "simmer X min", "let rest X minutes", "marinate for X hours", "chill X min", "set aside for X"
 - If a step says "until golden" or "until done" with no time, set timer_minutes to null
 - If a step has multiple timers ("cook 5 min, then flip and cook 3 more min"), use the total: 8
-- Implicit timers: "bring to a boil" → null (no specific time), "let cool 10 minutes" → 10`;
+- Implicit timers: "bring to a boil" → null (no specific time), "let cool 10 minutes" → 10
+
+Food photo detection:
+- Identify if the scanned page(s) contain a photograph of the finished dish (not the recipe text, not raw ingredients laid out, but an actual plated/finished food photo).
+- Return "has_food_photo": true if found, false otherwise.
+- Return "food_photo_region": one of "top-left", "top-right", "bottom-left", "bottom-right", "full-page", or null if not found.`;
 
 export async function scanRecipe(imageBase64: string, mimeType = 'image/jpeg'): Promise<ScannedRecipe> {
   const text = await callClaude({ prompt: SCAN_PROMPT, imageBase64, imageMimeType: mimeType, maxTokens: 3000 });
