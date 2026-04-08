@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useTheme } from '../context/ThemeContext';
 import { listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, supabase, PLAN_LIMITS } from '@chefsbook/db';
 import type { RecipeUserPhoto } from '@chefsbook/db';
@@ -9,6 +10,9 @@ import { pickImage, takePhoto, processImage } from '../lib/image';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { PexelsPickerSheet } from './PexelsPickerSheet';
 import type { PexelsPhoto } from '@chefsbook/ai';
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 interface Props {
   recipeId: string;
@@ -38,12 +42,36 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   const uploadPhoto = async (uri: string) => {
     setUploading(true);
     try {
+      // Resize/compress to a local JPEG file
       const { base64 } = await processImage(uri);
+      const tmpPath = FileSystem.documentDirectory + `upload_${Date.now()}.jpg`;
+      await FileSystem.writeAsStringAsync(tmpPath, base64, { encoding: FileSystem.EncodingType.Base64 });
+
+      // Get auth session for JWT
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated — please sign in again');
+
       const fileName = `${userId}/${recipeId}/${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('recipe-user-photos')
-        .upload(fileName, decode(base64), { contentType: 'image/jpeg' });
-      if (uploadError) throw uploadError;
+      const uploadUrl = `${SUPABASE_URL}/storage/v1/object/recipe-user-photos/${fileName}`;
+
+      // Upload via native HTTP — bypasses Supabase JS client encoding issues
+      const response = await FileSystem.uploadAsync(uploadUrl, tmpPath, {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: '',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: SUPABASE_ANON_KEY,
+        },
+      });
+
+      // Clean up temp file
+      try { await FileSystem.deleteAsync(tmpPath, { idempotent: true }); } catch {}
+
+      if (response.status >= 400) {
+        const body = JSON.parse(response.body || '{}');
+        throw new Error(body.message || body.error || `Upload failed (${response.status})`);
+      }
 
       const { data: urlData } = supabase.storage
         .from('recipe-user-photos')
@@ -231,12 +259,3 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   );
 }
 
-// Base64 string → Uint8Array for Supabase storage upload
-function decode(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
