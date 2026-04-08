@@ -34,7 +34,8 @@ export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) 
     setError('');
     setPhotos([]);
 
-    searchPexels(query, 3)
+    const pexelsKey = process.env.EXPO_PUBLIC_PEXELS_API_KEY || '';
+    searchPexels(query, 3, pexelsKey)
       .then((results) => {
         if (cancelled) return;
         setPhotos(results);

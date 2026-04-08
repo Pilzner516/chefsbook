@@ -9,10 +9,11 @@ export interface PexelsPhoto {
 export async function searchPexels(
   query: string,
   perPage = 3,
+  apiKey?: string,
 ): Promise<PexelsPhoto[]> {
-  const key =
-    process.env.EXPO_PUBLIC_PEXELS_API_KEY ??
-    process.env.PEXELS_API_KEY ?? '';
+  const key = apiKey ||
+    process.env.EXPO_PUBLIC_PEXELS_API_KEY ||
+    process.env.PEXELS_API_KEY || '';
   if (!key || !query.trim()) {
     console.warn('[searchPexels] skipped: key=' + (key ? 'present' : 'MISSING') + ' query=' + JSON.stringify(query));
     return [];
