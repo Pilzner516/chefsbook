@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 17)
+- Fix: image not displaying after upload — Kong gateway returns 401 on public bucket URLs without `apikey` header
+- Fix: added `apikey` header to `<Image>` sources in EditImageGallery (read-only + edit mode)
+- Fix: added conditional `apikey` header in RecipeImage component for Supabase storage URLs
+- Debug: added onError/onLoad logging to image components for future troubleshooting
+- Verified: file in storage.objects, URL uses Tailscale IP, image renders and persists after navigation
+
 ## 2026-04-07 (session 15)
 - Pexels picker: fixed AbortSignal.timeout crash (not available in Hermes — replaced with AbortController)
 - Pexels picker: fixed env var not reaching shared package (pass key explicitly from app code)

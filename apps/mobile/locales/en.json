@@ -383,7 +383,8 @@
     "uploading": "Uploading...",
     "longPress": "Long-press to set primary image",
     "primary": "PRIMARY",
-    "findPhoto": "Find a photo"
+    "findPhoto": "Find a photo",
+    "uploadFailed": "Upload failed \u2014 tap to retry"
   },
   "pexels": {
     "title": "Find a photo",

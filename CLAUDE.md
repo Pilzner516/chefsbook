@@ -227,7 +227,8 @@ adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_not
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
 - Emulator must be launched from CLI (`emulator -avd Medium_Phone_API_36.1 -no-snapshot -gpu host`) — Android Studio Device Manager launches headless/invisible window
 - Metro hostname: set `REACT_NATIVE_PACKAGER_HOSTNAME=localhost` before `npx expo start` when on Tailscale (otherwise Metro advertises Tailscale IP, unreachable from emulator)
-- **BLOCKER: Mobile storage uploads fail** — Supabase Storage middleware's `set_config` call gets PG 42501 (insufficient privilege) for `supabase_storage_admin` role. RLS is NOT the issue (disabling it doesn't help). Web uploads work (service role key). 9 approaches tried — see `memory/blocker_storage_uploads.md`. Next step: create API route proxy (`apps/web/app/api/upload/route.ts`) that accepts images from mobile and uploads server-side using service role key.
+- **Mobile storage uploads FIXED** — Root cause: `supautils` GUC check hook blocked `set_config()` for non-superuser `supabase_storage_admin` role. Fix: `ALTER ROLE supabase_storage_admin SUPERUSER;` on RPi5 PostgreSQL. Persists across restarts (stored in pg_authid). If storage breaks after full volume reset, re-run the ALTER ROLE.
+- **Supabase storage image display requires `apikey` header** — Self-hosted Kong gateway returns 401 on public bucket URLs without the `apikey` header. All `<Image>` sources loading from Supabase storage must include `headers: { apikey: SUPABASE_ANON_KEY }`. Applied in EditImageGallery and RecipeImage components.
 - APK rebuild note: always delete cached JS bundle before rebuilding (`rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`) or Gradle uses stale code
 - Jetifier: `android.enableJetifier=true` must be added to `android/gradle.properties` after every `expo prebuild --clean` (it gets wiped)
 

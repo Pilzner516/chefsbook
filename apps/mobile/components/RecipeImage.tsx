@@ -4,6 +4,9 @@ import type { ImageStyle, ViewStyle } from 'react-native';
 
 const chefsHat = require('../assets/icon.png');
 
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
 interface Props {
   uri?: string | null;
   style?: ImageStyle;
@@ -13,9 +16,14 @@ interface Props {
 
 export function RecipeImage({ uri, style, watermark }: Props) {
   if (uri && /^https?:\/\//.test(uri)) {
+    // Self-hosted Supabase requires apikey header even for public buckets (Kong gateway)
+    const isSupabase = SUPABASE_URL && uri.startsWith(SUPABASE_URL);
+    const source = isSupabase
+      ? { uri, headers: { apikey: SUPABASE_ANON_KEY } }
+      : { uri };
     return (
       <Image
-        source={{ uri }}
+        source={source}
         style={[styles.base, style]}
         resizeMode="cover"
         onError={() => {}}

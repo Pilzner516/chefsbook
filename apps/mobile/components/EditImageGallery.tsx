@@ -26,7 +26,8 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   const { t } = useTranslation();
   const planTier = useAuthStore((s) => s.planTier);
   const [photos, setPhotos] = useState<RecipeUserPhoto[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error'>('idle');
+  const [lastFailedUri, setLastFailedUri] = useState<string | null>(null);
   const [showPexels, setShowPexels] = useState(false);
   const photoLimit = PLAN_LIMITS[planTier]?.maxPhotosPerRecipe ?? 3;
 
@@ -40,7 +41,8 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   };
 
   const uploadPhoto = async (uri: string) => {
-    setUploading(true);
+    setUploadState('uploading');
+    setLastFailedUri(null);
     try {
       // Resize/compress to a local JPEG file
       const { base64 } = await processImage(uri);
@@ -54,16 +56,29 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       const fileName = `${userId}/${recipeId}/${Date.now()}.jpg`;
       const uploadUrl = `${SUPABASE_URL}/storage/v1/object/recipe-user-photos/${fileName}`;
 
+      console.log('Upload URL:', uploadUrl);
+      console.log('File URI:', tmpPath);
+      console.log('Session token (first 20 chars):', session.access_token?.substring(0, 20));
+
       // Upload via native HTTP — bypasses Supabase JS client encoding issues
-      const response = await FileSystem.uploadAsync(uploadUrl, tmpPath, {
+      const uploadPromise = FileSystem.uploadAsync(uploadUrl, tmpPath, {
         httpMethod: 'POST',
         uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-        fieldName: '',
+        fieldName: 'file',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           apikey: SUPABASE_ANON_KEY,
         },
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timed out after 30s')), 30000)
+      );
+
+      const response = await Promise.race([uploadPromise, timeoutPromise]);
+
+      console.log('Upload response status:', response.status);
+      console.log('Upload response body:', response.body);
 
       // Clean up temp file
       try { await FileSystem.deleteAsync(tmpPath, { idempotent: true }); } catch {}
@@ -79,17 +94,19 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
 
       await addRecipePhoto(recipeId, userId, fileName, urlData.publicUrl);
       await loadPhotos();
+      setUploadState('idle');
     } catch (err: any) {
+      console.error('Upload error:', err);
+      setUploadState('error');
+      setLastFailedUri(uri);
       Alert.alert(t('notepad.uploadFailed'), err.message);
-    } finally {
-      setUploading(false);
     }
   };
 
   const uploadFromPexels = async (photo: PexelsPhoto) => {
     setShowPexels(false);
     // Reuse the same upload path as camera/library — download to local file first
-    setUploading(true);
+    setUploadState('uploading');
     try {
       const FileSystem = require('expo-file-system/legacy');
       const localUri = FileSystem.documentDirectory + `pexels_${Date.now()}.jpg`;
@@ -98,9 +115,15 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       try { await FileSystem.deleteAsync(localUri, { idempotent: true }); } catch {}
     } catch (err: any) {
       Alert.alert(t('notepad.uploadFailed'), err.message);
-      setUploading(false);
+      setUploadState('error');
     }
   };
+
+  const retryUpload = () => {
+    if (lastFailedUri) uploadPhoto(lastFailedUri);
+  };
+
+  const uploading = uploadState !== 'idle';
 
   const showImagePicker = () => {
     // Plan gate: check photo limit
@@ -158,9 +181,11 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
         {photos.map((photo) => (
           <Image
             key={photo.id}
-            source={{ uri: photo.url }}
+            source={{ uri: photo.url, headers: { apikey: SUPABASE_ANON_KEY } }}
             style={{ width: 120, height: 90, borderRadius: 8, marginRight: 8 }}
             resizeMode="cover"
+            onError={(e) => console.error('Image load error:', e.nativeEvent.error, photo.url)}
+            onLoad={() => console.log('Image loaded:', photo.url)}
           />
         ))}
       </ScrollView>
@@ -176,6 +201,39 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
     />
   );
 
+  const uploadPill = uploadState === 'uploading' ? (
+    <View style={{
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      justifyContent: 'center', alignItems: 'center',
+    }}>
+      <View style={{
+        backgroundColor: colors.accent, paddingHorizontal: 16,
+        paddingVertical: 8, borderRadius: 20,
+      }}>
+        <Text style={{ color: '#ffffff', fontWeight: '600', fontSize: 14 }}>
+          {t('gallery.uploading')}
+        </Text>
+      </View>
+    </View>
+  ) : uploadState === 'error' ? (
+    <TouchableOpacity
+      onPress={retryUpload}
+      style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        justifyContent: 'center', alignItems: 'center',
+      }}
+    >
+      <View style={{
+        backgroundColor: colors.accent, paddingHorizontal: 16,
+        paddingVertical: 8, borderRadius: 20,
+      }}>
+        <Text style={{ color: '#ffffff', fontWeight: '600', fontSize: 14 }}>
+          {t('gallery.uploadFailed')}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  ) : null;
+
   // Edit mode — full controls
   if (photos.length === 0) {
     return (
@@ -187,7 +245,7 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
             width: '100%', height: 120, borderRadius: 12,
             borderWidth: 2, borderStyle: 'dashed', borderColor: colors.borderDefault,
             alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-            backgroundColor: colors.bgBase, opacity: uploading ? 0.5 : 1,
+            backgroundColor: colors.bgBase,
           }}
         >
           {/* Chef's hat watermark */}
@@ -196,10 +254,15 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
             style={{ position: 'absolute', width: 48, height: 48, borderRadius: 10, opacity: 0.18 }}
             resizeMode="contain"
           />
-          <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
-          <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
-            {uploading ? t('gallery.uploading') : t('gallery.addPhotoLabel')}
-          </Text>
+          {uploadState === 'idle' && (
+            <>
+              <Ionicons name="camera-outline" size={32} color={colors.textMuted} />
+              <Text style={{ color: colors.textMuted, fontSize: 14, marginTop: 4 }}>
+                {t('gallery.addPhotoLabel')}
+              </Text>
+            </>
+          )}
+          {uploadPill}
         </TouchableOpacity>
         {pexelsSheet}
       </>
@@ -213,9 +276,11 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
           <View key={photo.id} style={{ marginRight: 10, position: 'relative' }}>
             <TouchableOpacity onLongPress={() => handleSetPrimary(photo)} activeOpacity={0.8}>
               <Image
-                source={{ uri: photo.url }}
+                source={{ uri: photo.url, headers: { apikey: SUPABASE_ANON_KEY } }}
                 style={{ width: 100, height: 80, borderRadius: 8 }}
                 resizeMode="cover"
+                onError={(e) => console.error('Image load error:', e.nativeEvent.error, photo.url)}
+                onLoad={() => console.log('Image loaded:', photo.url)}
               />
               {photo.is_primary && (
                 <View style={{
