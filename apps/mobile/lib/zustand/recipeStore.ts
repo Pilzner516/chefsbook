@@ -48,11 +48,6 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
     set({ loading: true });
     try {
       const recipe = await getRecipe(id);
-      console.log('[recipeStore] fetchRecipe result:', recipe?.id, {
-        title: recipe?.title,
-        ingredientCount: recipe?.ingredients?.length ?? 0,
-        stepCount: recipe?.steps?.length ?? 0,
-      });
       set({ currentRecipe: recipe, loading: false });
     } catch (err) {
       console.error('[recipeStore] fetchRecipe error:', err);

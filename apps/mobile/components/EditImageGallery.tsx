@@ -56,10 +56,6 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       const fileName = `${userId}/${recipeId}/${Date.now()}.jpg`;
       const uploadUrl = `${SUPABASE_URL}/storage/v1/object/recipe-user-photos/${fileName}`;
 
-      console.log('Upload URL:', uploadUrl);
-      console.log('File URI:', tmpPath);
-      console.log('Session token (first 20 chars):', session.access_token?.substring(0, 20));
-
       // Upload via native HTTP — bypasses Supabase JS client encoding issues
       const uploadPromise = FileSystem.uploadAsync(uploadUrl, tmpPath, {
         httpMethod: 'POST',
@@ -76,9 +72,6 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       );
 
       const response = await Promise.race([uploadPromise, timeoutPromise]);
-
-      console.log('Upload response status:', response.status);
-      console.log('Upload response body:', response.body);
 
       // Clean up temp file
       try { await FileSystem.deleteAsync(tmpPath, { idempotent: true }); } catch {}
@@ -265,7 +258,6 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
                 style={{ width: 100, height: 80, borderRadius: 8 }}
                 resizeMode="cover"
                 onError={(e) => console.error('Image load error:', e.nativeEvent.error, photo.url)}
-                onLoad={() => console.log('Image loaded:', photo.url)}
               />
               {(photo.is_primary || photos.length === 1) && (
                 <View style={{

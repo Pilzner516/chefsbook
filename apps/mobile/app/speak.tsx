@@ -142,7 +142,6 @@ export default function SpeakScreen() {
 
   const generateRecipe = async () => {
     const fullText = finalTranscript + (interimTranscript ? ' ' + interimTranscript : '');
-    console.log('Sending to Claude:', fullText.length, 'chars');
     if (!fullText.trim()) return;
     setStep(3);
     setGenerating(true);

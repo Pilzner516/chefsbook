@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 25)
+- Removed debug `console.log`/`console.warn` from EditImageGallery, recipeStore, recipe detail, speak.tsx
+- Built release APK (111MB, 56s) — includes all sessions 20-24 features and fixes
+
 ## 2026-04-08 (session 24)
 - Fix Instagram paste routing: clipboard handler detects IG URLs and routes to Instagram import, not standard import
 - Instagram URL validation: non-IG URLs in IG input show friendly error instead of silent failure

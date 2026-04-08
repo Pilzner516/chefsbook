@@ -584,16 +584,6 @@ function RecipeDetailInner() {
     if (currentRecipe) setServings(currentRecipe.servings ?? 4);
   }, [currentRecipe?.id]);
 
-  useEffect(() => {
-    if (currentRecipe) {
-      console.log('[RecipeDetail] recipe loaded:', currentRecipe.id, currentRecipe.title);
-      console.log('[RecipeDetail] ingredients:', currentRecipe.ingredients?.length ?? 'MISSING');
-      console.log('[RecipeDetail] steps:', currentRecipe.steps?.length ?? 'MISSING');
-    } else if (!loading) {
-      console.log('[RecipeDetail] recipe is null after loading finished');
-    }
-  }, [currentRecipe?.id, loading]);
-
   // Translation: check cache or translate in background
   useEffect(() => {
     if (!currentRecipe || language === 'en') {
@@ -651,7 +641,6 @@ function RecipeDetailInner() {
 
     const makeItems = () => {
       const ings = currentRecipe.ingredients ?? [];
-      console.log('[RecipeDetail] Adding to shopping list:', ings.length, 'ingredients');
       return ings
         .filter((ing) => ing != null && ing.ingredient)
         .map((ing) => {
