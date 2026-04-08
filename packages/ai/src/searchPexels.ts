@@ -20,7 +20,7 @@ export async function searchPexels(
   }
 
   const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(
-    query + ' recipe',
+    query,
   )}&per_page=${perPage}&orientation=landscape`;
 
   const controller = new AbortController();
