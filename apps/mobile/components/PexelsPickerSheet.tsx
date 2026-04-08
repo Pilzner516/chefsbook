@@ -53,14 +53,9 @@ export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) 
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={onClose}
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-      >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => {}}
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View
+          onStartShouldSetResponder={() => true}
           style={{
             backgroundColor: colors.bgCard,
             borderTopLeftRadius: 20,
@@ -130,8 +125,8 @@ export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) 
               {t('common.cancel')}
             </Text>
           </TouchableOpacity>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 }
