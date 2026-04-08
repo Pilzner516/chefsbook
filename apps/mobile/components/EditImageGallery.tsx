@@ -62,14 +62,11 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
     setShowPexels(false);
     setUploading(true);
     try {
-      const res = await fetch(photo.fullUrl);
-      const blob = await res.blob();
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve((reader.result as string).split(',')[1] ?? '');
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      // Download to local file, then use the same processImage pipeline as camera/library
+      const FileSystem = require('expo-file-system/legacy');
+      const localUri = FileSystem.documentDirectory + `pexels_${Date.now()}.jpg`;
+      const download = await FileSystem.downloadAsync(photo.fullUrl, localUri);
+      const { base64 } = await processImage(download.uri);
       const fileName = `${userId}/${recipeId}/${Date.now()}.jpg`;
       await supabase.storage
         .from('recipe-user-photos')
@@ -79,6 +76,8 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
         .getPublicUrl(fileName);
       await addRecipePhoto(recipeId, userId, fileName, urlData.publicUrl);
       await loadPhotos();
+      // Clean up temp file
+      try { await FileSystem.deleteAsync(localUri, { idempotent: true }); } catch {}
     } catch (err: any) {
       Alert.alert(t('notepad.uploadFailed'), err.message);
     } finally {
