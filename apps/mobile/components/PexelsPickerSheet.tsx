@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, Modal, TouchableOpacity, Image,
+  View, Text, Modal, TouchableOpacity, Image, ScrollView,
   ActivityIndicator, Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { searchPexels } from '@chefsbook/ai';
 import type { PexelsPhoto } from '@chefsbook/ai';
 
-const THUMB_SIZE = (Dimensions.get('window').width - 64) / 3;
+const IMAGE_WIDTH = Dimensions.get('window').width - 40;
 
 interface Props {
   visible: boolean;
@@ -98,18 +98,18 @@ export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) 
 
           {/* Photo grid */}
           {!loading && photos.length > 0 && (
-            <>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+            <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.5 }} showsVerticalScrollIndicator={false}>
+              <View style={{ gap: 10 }}>
                 {photos.map((photo) => (
                   <TouchableOpacity
                     key={photo.id}
                     onPress={() => onSelect(photo)}
                     activeOpacity={0.7}
-                    style={{ borderRadius: 10, overflow: 'hidden' }}
+                    style={{ borderRadius: 12, overflow: 'hidden' }}
                   >
                     <Image
                       source={{ uri: photo.thumbnail }}
-                      style={{ width: THUMB_SIZE, height: THUMB_SIZE * 0.75, borderRadius: 10 }}
+                      style={{ width: IMAGE_WIDTH, height: IMAGE_WIDTH * 0.55, borderRadius: 12 }}
                       resizeMode="cover"
                     />
                   </TouchableOpacity>
@@ -118,7 +118,7 @@ export function PexelsPickerSheet({ visible, query, onSelect, onClose }: Props) 
               <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 10 }}>
                 {t('pexels.attribution')}
               </Text>
-            </>
+            </ScrollView>
           )}
 
           {/* Cancel */}
