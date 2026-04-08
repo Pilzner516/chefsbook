@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 18)
+- Hero image gallery: uploaded photos show as full-width hero on recipe detail, chef's hat only when 0 images
+- Swipeable hero pager with dot indicators for 2–4 images (FlatList horizontal, pagingEnabled)
+- Removed separate thumbnail strip from read-only recipe detail (replaced by hero gallery)
+- Recipe cards show primary user photo via batch `getPrimaryPhotos()` lookup, falls back to `image_url` then chef's hat
+- `listRecipePhotos` reordered by `is_primary DESC, created_at ASC` (primary always first)
+- Edit mode: star indicator on primary thumbnail, auto-primary when only 1 image, "Set as cover photo" toast on long-press
+- New `HeroGallery` component, new `getPrimaryPhotos` batch query in `@chefsbook/db`
+
 ## 2026-04-08 (session 17)
 - Fix: image not displaying after upload — Kong gateway returns 401 on public bucket URLs without `apikey` header
 - Fix: added `apikey` header to `<Image>` sources in EditImageGallery (read-only + edit mode)

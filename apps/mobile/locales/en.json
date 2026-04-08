@@ -384,7 +384,8 @@
     "longPress": "Long-press to set primary image",
     "primary": "PRIMARY",
     "findPhoto": "Find a photo",
-    "uploadFailed": "Upload failed \u2014 tap to retry"
+    "uploadFailed": "Upload failed \u2014 tap to retry",
+    "coverSet": "Set as cover photo"
   },
   "pexels": {
     "title": "Find a photo",

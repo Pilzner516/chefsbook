@@ -25,6 +25,7 @@ import { CountdownTimer } from '../../components/CountdownTimer';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { EditImageGallery } from '../../components/EditImageGallery';
 import { RecipeImage } from '../../components/RecipeImage';
+import { HeroGallery } from '../../components/HeroGallery';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -1070,14 +1071,10 @@ function RecipeDetailInner() {
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
       <ChefsBookHeader />
       <ScrollView style={{ flex: 1 }}>
-      {/* Recipe image */}
-      <RecipeImage uri={recipe.image_url} style={{ width: '100%', height: 220 }} />
+      {/* Hero image gallery — user photos or fallback to recipe.image_url / chef's hat */}
+      <HeroGallery recipeId={recipe.id} fallbackImageUrl={recipe.image_url} />
 
       <View style={{ padding: 16 }}>
-        {/* User photos gallery — read-only */}
-        {session?.user?.id && (
-          <EditImageGallery recipeId={recipe.id} userId={session.user.id} editing={false} />
-        )}
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', flex: 1 }}>{displayTitle}</Text>

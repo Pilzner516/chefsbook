@@ -171,26 +171,11 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   const handleSetPrimary = async (photo: RecipeUserPhoto) => {
     await setPhotoPrimary(photo.id, recipeId);
     await loadPhotos();
+    Alert.alert(t('gallery.coverSet'));
   };
 
-  // Read-only gallery for non-edit mode
-  if (!editing) {
-    if (photos.length === 0) return null;
-    return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-        {photos.map((photo) => (
-          <Image
-            key={photo.id}
-            source={{ uri: photo.url, headers: { apikey: SUPABASE_ANON_KEY } }}
-            style={{ width: 120, height: 90, borderRadius: 8, marginRight: 8 }}
-            resizeMode="cover"
-            onError={(e) => console.error('Image load error:', e.nativeEvent.error, photo.url)}
-            onLoad={() => console.log('Image loaded:', photo.url)}
-          />
-        ))}
-      </ScrollView>
-    );
-  }
+  // Read-only mode is handled by HeroGallery on the recipe detail screen
+  if (!editing) return null;
 
   const pexelsSheet = (
     <PexelsPickerSheet
@@ -282,12 +267,12 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
                 onError={(e) => console.error('Image load error:', e.nativeEvent.error, photo.url)}
                 onLoad={() => console.log('Image loaded:', photo.url)}
               />
-              {photo.is_primary && (
+              {(photo.is_primary || photos.length === 1) && (
                 <View style={{
                   position: 'absolute', bottom: 4, left: 4, backgroundColor: colors.accent,
                   borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1,
                 }}>
-                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{t('gallery.primary')}</Text>
+                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{'\u2605'} {t('gallery.primary')}</Text>
                 </View>
               )}
             </TouchableOpacity>

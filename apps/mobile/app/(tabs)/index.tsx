@@ -11,7 +11,7 @@ import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, EmptyState, Loading, Card } from '../../components/UIKit';
-import { getRecipeVersions } from '@chefsbook/db';
+import { getRecipeVersions, getPrimaryPhotos } from '@chefsbook/db';
 
 type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
 
@@ -29,10 +29,18 @@ export default function RecipesTab() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [versionPickerRecipeId, setVersionPickerRecipeId] = useState<string | null>(null);
   const [versionPickerVersions, setVersionPickerVersions] = useState<any[]>([]);
+  const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (session?.user?.id) fetchRecipes(session.user.id);
   }, [session?.user?.id]);
+
+  // Batch-fetch primary user photos for all recipes
+  useEffect(() => {
+    if (recipes.length === 0) return;
+    const ids = recipes.map((r) => r.id);
+    getPrimaryPhotos(ids).then(setPrimaryPhotos);
+  }, [recipes]);
 
   // Filter out child versions — only show parent/standalone recipes in the list
   const topLevelRecipes = useMemo(() => recipes.filter((r) => !r.parent_recipe_id), [recipes]);
@@ -172,7 +180,7 @@ export default function RecipesTab() {
           return (
             <RecipeCard
               title={item.title}
-              imageUrl={item.image_url}
+              imageUrl={primaryPhotos[item.id] ?? item.image_url}
               cuisine={item.cuisine}
               totalMinutes={item.total_minutes}
               isFavourite={item.is_favourite}

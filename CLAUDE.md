@@ -284,6 +284,9 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Translation flow: recipe detail checks cache → shows original → translates in background → saves → re-renders; "Translating…" indicator shown during API call
 - "Save a Copy" in edit mode creates independent recipe (no parent_recipe_id); title gets " (Copy)" suffix; tags/dietary_flags copied via separate updateRecipe call
 - Copy/duplicate icon removed from recipe detail action bar — action bar is exactly: heart · share · pin · edit
+- Recipe detail hero zone: `HeroGallery` component shows user-uploaded photos as full-width swipeable pager (max 4, dots indicator); falls back to `recipe.image_url` then chef's hat; chef's hat ONLY when zero images
+- Recipe cards: `getPrimaryPhotos()` batch query fetches primary user photo for all recipes; card shows `primaryPhoto ?? image_url ?? chef's hat`
+- `EditImageGallery` no longer renders in read-only mode (hero gallery replaces it); edit mode only
 
 ## Builds
 

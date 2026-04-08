@@ -6,8 +6,25 @@ export async function listRecipePhotos(recipeId: string): Promise<RecipeUserPhot
     .from('recipe_user_photos')
     .select('*')
     .eq('recipe_id', recipeId)
-    .order('sort_order');
+    .order('is_primary', { ascending: false })
+    .order('created_at', { ascending: true });
   return (data ?? []) as RecipeUserPhoto[];
+}
+
+/** Batch-fetch the primary photo URL for multiple recipes. Returns a map of recipeId → url. */
+export async function getPrimaryPhotos(recipeIds: string[]): Promise<Record<string, string>> {
+  if (recipeIds.length === 0) return {};
+  const { data } = await supabase
+    .from('recipe_user_photos')
+    .select('recipe_id, url, is_primary')
+    .in('recipe_id', recipeIds)
+    .order('is_primary', { ascending: false })
+    .order('created_at', { ascending: true });
+  const map: Record<string, string> = {};
+  for (const row of data ?? []) {
+    if (!map[row.recipe_id]) map[row.recipe_id] = row.url;
+  }
+  return map;
 }
 
 export async function addRecipePhoto(
