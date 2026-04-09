@@ -53,7 +53,7 @@ export interface RecipeClassification {
 }
 
 // --- Stage tracking for pipeline ---
-type PipelineStage = 'json-ld' | 'json-ld+claude' | 'microdata' | 'plugin' | 'generic-dom' | 'vision' | 'text-extraction' | 'partial';
+type PipelineStage = 'json-ld' | 'json-ld+claude' | 'claude' | 'microdata' | 'plugin' | 'generic-dom' | 'vision' | 'text-extraction' | 'partial';
 
 interface PipelinePartial {
   title?: string | null;
