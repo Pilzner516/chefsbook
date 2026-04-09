@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 37)
+- Web: Moved kg/lb unit toggle from sidebar header to bottom section above Settings (fixes clipping on narrow screens)
+- Web: Full landing page refresh — updated hero with chef's hat logo + AI headline, 4-group feature section reflecting all built features
+- Web: Added 4-tier pricing section (Free/Chef/Family/Pro) with monthly/annual toggle and 20% savings badge
+- Web: Updated "How it works" section to match actual user journey (sign up → import → organise → discover)
+- Web: Updated footer with feature/pricing/sign-in/download links and chefsbk.app branding
+- Web: Chef plan highlighted as "Most Popular" in pricing cards
+- Web: Pricing cards responsive — 1 column mobile, 2 columns tablet, 4 columns desktop
+- Fix: pre-existing TypeScript error in PDF route (Buffer type cast)
+- tsc --noEmit passes web app
+
 ## 2026-04-09 (session 36)
 - Installed `@react-pdf/renderer` in apps/web
 - `/recipe/[id]/pdf` route: plan-gated PDF generation with formatted layout (header, ingredients, steps, notes, attribution)

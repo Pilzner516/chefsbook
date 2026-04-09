@@ -65,7 +65,7 @@ export async function GET(
 
   const filename = recipe.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_');
 
-  return new Response(pdfBuffer, {
+  return new Response(pdfBuffer as unknown as BodyInit, {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}.pdf"`,
