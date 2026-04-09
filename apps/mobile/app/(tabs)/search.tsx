@@ -6,7 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient, searchUsers } from '@chefsbook/db';
+import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient, searchUsers, getFollowedRecipes, getFollowingCount } from '@chefsbook/db';
 import type { Recipe, UserProfile } from '@chefsbook/db';
 import { Avatar } from '../../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
@@ -71,6 +71,41 @@ export default function SearchTab() {
   const [ingredientInput, setIngredientInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [peopleResults, setPeopleResults] = useState<UserProfile[]>([]);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [feedRecipes, setFeedRecipes] = useState<(Recipe & { author_username: string | null; author_avatar: string | null })[]>([]);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [followingCountVal, setFollowingCountVal] = useState(0);
+  const insets = useSafeAreaInsets();
+
+  // Load following count on mount
+  useEffect(() => {
+    if (session?.user?.id) {
+      getFollowingCount(session.user.id).then(setFollowingCountVal);
+    }
+  }, [session?.user?.id]);
+
+  const loadFeed = async () => {
+    if (!session?.user?.id) return;
+    setFeedLoading(true);
+    const data = await getFollowedRecipes(session.user.id);
+    setFeedRecipes(data);
+    setFeedLoading(false);
+  };
+
+  const openWhatsNew = () => {
+    setShowWhatsNew(true);
+    loadFeed();
+  };
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return t('follow.minutesAgo', { count: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t('follow.hoursAgo', { count: hours });
+    const days = Math.floor(hours / 24);
+    return t('follow.daysAgo', { count: days });
+  };
 
   // Reset state when switching modes
   const switchMode = (newMode: SearchMode) => {
@@ -368,6 +403,43 @@ export default function SearchTab() {
       )}
 
       <ScrollView style={{ flex: 1 }}>
+        {/* What's New card */}
+        {!hasSearched && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8, marginBottom: 4 }}>
+            <TouchableOpacity
+              onPress={followingCountVal > 0 ? openWhatsNew : () => router.push('/chef/search')}
+              style={{
+                backgroundColor: colors.bgCard,
+                borderRadius: 12,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: colors.borderDefault,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <View style={{
+                width: 40, height: 40, borderRadius: 20,
+                backgroundColor: colors.accentSoft,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Ionicons name="sparkles" size={22} color={colors.accent} />
+              </View>
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700' }}>
+                  {t('follow.whatsNew')}
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+                  {followingCountVal > 0
+                    ? t('follow.whatsNewSub')
+                    : t('follow.whatsNewEmpty')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Category cards (show when no search active) */}
         {!hasSearched && (
           <View style={{ padding: 16, paddingTop: 8 }}>
@@ -685,6 +757,46 @@ export default function SearchTab() {
 
         <View style={{ height: tabBarHeight }} />
       </ScrollView>
+
+      {/* What's New Feed Modal */}
+      <Modal visible={showWhatsNew} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <View style={{ flex: 1, backgroundColor: colors.bgScreen, marginTop: 60, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.borderDefault }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="sparkles" size={20} color={colors.accent} />
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('follow.whatsNew')}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowWhatsNew(false)}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}>
+              {feedLoading ? (
+                <Loading message={t('common.loading')} />
+              ) : feedRecipes.length === 0 ? (
+                <EmptyState icon="📭" title={t('follow.noFeedRecipes')} message={t('follow.noFeedRecipesMessage')} />
+              ) : (
+                feedRecipes.map((recipe) => (
+                  <View key={recipe.id} style={{ marginBottom: 8 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 4, paddingHorizontal: 4 }}>
+                      @{recipe.author_username ?? '?'} · {timeAgo(recipe.created_at)}
+                    </Text>
+                    <RecipeCard
+                      title={recipe.title}
+                      imageUrl={recipe.image_url}
+                      cuisine={recipe.cuisine}
+                      totalMinutes={recipe.total_minutes}
+                      saveCount={recipe.save_count}
+                      onPress={() => { setShowWhatsNew(false); router.push(`/recipe/${recipe.id}`); }}
+                    />
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

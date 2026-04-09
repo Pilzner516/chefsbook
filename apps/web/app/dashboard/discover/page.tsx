@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getPublicFeed } from '@chefsbook/db';
 import type { Recipe } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
+import WhatsNewFeed from '@/components/WhatsNewFeed';
 
 type FeedRecipe = Recipe & { author_name: string; author_avatar: string | null };
 
@@ -30,6 +31,8 @@ export default function DiscoverPage() {
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-2">Discover</h1>
       <p className="text-cb-secondary text-sm mb-6">Public recipes from the ChefsBook community.</p>
+
+      <WhatsNewFeed />
 
       {cuisines.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">

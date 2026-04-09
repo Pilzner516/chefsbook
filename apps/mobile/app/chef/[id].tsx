@@ -1,17 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Modal, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { supabase, cloneRecipe, updateProfile } from '@chefsbook/db';
-import type { UserProfile, Recipe } from '@chefsbook/db';
+import {
+  supabase, cloneRecipe, updateProfile, getProfileById,
+  followUser, unfollowUser, isFollowing as checkIsFollowing,
+  getFollowers, getFollowing, getFollowedRecipes,
+  canDo, getUserPlanTier,
+} from '@chefsbook/db';
+import type { UserProfile, Recipe, PlanTier } from '@chefsbook/db';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, RecipeCard, Button, Loading, EmptyState, Input } from '../../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
 
-type ProfileTab = 'recipes' | 'about';
+type ProfileTab = 'recipes' | 'followers' | 'following';
 
 export default function ChefProfile() {
   const { colors } = useTheme();
@@ -25,7 +30,7 @@ export default function ChefProfile() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<ProfileTab>('recipes');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -34,12 +39,22 @@ export default function ChefProfile() {
   const [editDisplayName, setEditDisplayName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
+  const [followers, setFollowers] = useState<UserProfile[]>([]);
+  const [following, setFollowing] = useState<UserProfile[]>([]);
+  const [followersLoading, setFollowersLoading] = useState(false);
+  const [userPlanTier, setUserPlanTier] = useState<PlanTier>('free');
 
   const isOwnProfile = session?.user?.id === id;
 
   useEffect(() => {
     if (id) loadChef();
   }, [id]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      getUserPlanTier(session.user.id).then(setUserPlanTier);
+    }
+  }, [session?.user?.id]);
 
   const loadChef = async () => {
     const isOwn = session?.user?.id === id;
@@ -48,50 +63,103 @@ export default function ChefProfile() {
       .from('recipes')
       .select('*')
       .eq('user_id', id!)
+      .is('parent_recipe_id', null)
       .order('created_at', { ascending: false });
 
     if (!isOwn) {
       recipesQuery = recipesQuery.eq('visibility', 'public');
     }
 
-    const [{ data: profile }, { data: publicRecipes }, { count: followers }, { count: following }] = await Promise.all([
-      supabase.from('user_profiles').select('*').eq('id', id!).single(),
+    const [profile, { data: publicRecipes }] = await Promise.all([
+      getProfileById(id!),
       recipesQuery,
-      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followed_id', id!).eq('status', 'accepted'),
-      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id!).eq('status', 'accepted'),
     ]);
-    setChef(profile as UserProfile | null);
+    setChef(profile);
     setRecipes((publicRecipes ?? []) as Recipe[]);
-    setFollowerCount(followers ?? 0);
-    setFollowingCount(following ?? 0);
+    setFollowerCount(profile?.follower_count ?? 0);
+    setFollowingCount(profile?.following_count ?? 0);
 
     // Check if current user follows this chef
     if (session?.user?.id && session.user.id !== id) {
-      const { data: followRow } = await supabase
-        .from('follows')
-        .select('status')
-        .eq('follower_id', session.user.id)
-        .eq('followed_id', id!)
-        .single();
-      setIsFollowing(!!followRow);
+      const following = await checkIsFollowing(session.user.id, id!);
+      setIsFollowingUser(following);
     }
     setLoading(false);
   };
 
   const handleFollow = async () => {
     if (!session?.user?.id || !id) return;
+
+    // Plan gate
+    if (!canDo(userPlanTier, 'canFollow')) {
+      Alert.alert(
+        t('follow.planRequired'),
+        t('follow.planRequiredMessage'),
+      );
+      return;
+    }
+
+    if (isFollowingUser) {
+      // Confirm unfollow
+      Alert.alert(
+        t('follow.unfollowConfirmTitle'),
+        t('follow.unfollowConfirmMessage', { username: chef?.username ?? chef?.display_name }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('follow.unfollow'),
+            style: 'destructive',
+            onPress: async () => {
+              setFollowLoading(true);
+              setIsFollowingUser(false);
+              setFollowerCount((c) => Math.max(0, c - 1));
+              try {
+                await unfollowUser(session.user.id, id);
+              } catch {
+                setIsFollowingUser(true);
+                setFollowerCount((c) => c + 1);
+              }
+              setFollowLoading(false);
+            },
+          },
+        ],
+      );
+      return;
+    }
+
+    // Follow — optimistic update
     setFollowLoading(true);
-    if (isFollowing) {
-      await supabase.from('follows').delete().eq('follower_id', session.user.id).eq('followed_id', id);
-      setIsFollowing(false);
+    setIsFollowingUser(true);
+    setFollowerCount((c) => c + 1);
+    try {
+      await followUser(session.user.id, id);
+    } catch {
+      setIsFollowingUser(false);
       setFollowerCount((c) => Math.max(0, c - 1));
-    } else {
-      await supabase.from('follows').insert({ follower_id: session.user.id, followed_id: id, status: 'accepted' });
-      setIsFollowing(true);
-      setFollowerCount((c) => c + 1);
     }
     setFollowLoading(false);
   };
+
+  const loadFollowers = async () => {
+    if (!id) return;
+    setFollowersLoading(true);
+    const data = await getFollowers(id);
+    setFollowers(data);
+    setFollowersLoading(false);
+  };
+
+  const loadFollowing = async () => {
+    if (!id) return;
+    setFollowersLoading(true);
+    const data = await getFollowing(id);
+    setFollowing(data);
+    setFollowersLoading(false);
+  };
+
+  useEffect(() => {
+    if (tab === 'followers') loadFollowers();
+    if (tab === 'following') loadFollowing();
+  }, [tab]);
 
   const handleClone = async (recipeId: string) => {
     if (!session?.user?.id) return;
@@ -131,11 +199,37 @@ export default function ChefProfile() {
     }
   };
 
-  if (loading) return <Loading message="Loading chef profile..." />;
-  if (!chef) return <EmptyState icon="?" title="Chef not found" message="This profile doesn't exist." />;
+  const canFollow = canDo(userPlanTier, 'canFollow');
+
+  const renderUserRow = (user: UserProfile) => (
+    <TouchableOpacity
+      key={user.id}
+      onPress={() => router.push(`/chef/${user.id}`)}
+      style={{
+        flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 6,
+        backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault,
+      }}
+    >
+      <Avatar uri={user.avatar_url} initials={getInitials(user.display_name)} size={44} />
+      <View style={{ marginLeft: 12, flex: 1 }}>
+        {user.username && (
+          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600' }}>@{user.username}</Text>
+        )}
+        {user.display_name && (
+          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{user.display_name}</Text>
+        )}
+      </View>
+      <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+        {user.follower_count} {t('follow.followers').toLowerCase()}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  if (loading) return <Loading message={t('common.loading')} />;
+  if (!chef) return <EmptyState icon="?" title={t('profile.notFound')} message={t('profile.notFoundMessage')} />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
       {/* Header */}
       <View style={{ alignItems: 'center', padding: 24, paddingBottom: 16 }}>
         <Avatar uri={chef.avatar_url} initials={getInitials(chef.display_name)} size={80} />
@@ -151,18 +245,18 @@ export default function ChefProfile() {
 
         {/* Stats row */}
         <View style={{ flexDirection: 'row', gap: 24, marginTop: 16 }}>
-          <View style={{ alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setTab('recipes')} style={{ alignItems: 'center' }}>
             <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{recipes.length}</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Recipes</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t('follow.recipes')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setTab('followers')} style={{ alignItems: 'center' }}>
             <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{followerCount}</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Followers</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t('follow.followers')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setTab('following')} style={{ alignItems: 'center' }}>
             <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{followingCount}</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Following</Text>
-          </View>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t('follow.following')}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Follow / Edit Profile button */}
@@ -171,44 +265,46 @@ export default function ChefProfile() {
             <Button title={t('profile.editProfile')} onPress={openEditProfile} variant="secondary" size="sm" />
           </View>
         ) : session?.user ? (
-          <View style={{ marginTop: 12, width: 140 }}>
-            <Button
-              title={followLoading ? '...' : isFollowing ? 'Unfollow' : t('profile.follow')}
-              onPress={handleFollow}
-              variant={isFollowing ? 'secondary' : 'primary'}
-              size="sm"
-              disabled={followLoading}
-            />
+          <View style={{ marginTop: 12, width: 200 }}>
+            {canFollow ? (
+              <Button
+                title={followLoading ? '...' : isFollowingUser ? `${t('follow.followingLabel')} ✓` : `${t('follow.follow')} +`}
+                onPress={handleFollow}
+                variant={isFollowingUser ? 'secondary' : 'primary'}
+                size="sm"
+                disabled={followLoading}
+              />
+            ) : (
+              <Button
+                title={`🔒 ${t('follow.planRequired')}`}
+                onPress={() => Alert.alert(t('follow.planRequired'), t('follow.planRequiredMessage'))}
+                variant="secondary"
+                size="sm"
+              />
+            )}
           </View>
         ) : null}
       </View>
 
       {/* Tab toggle */}
       <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => setTab('recipes')}
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            paddingVertical: 10,
-            borderBottomWidth: 2,
-            borderBottomColor: tab === 'recipes' ? colors.accent : colors.borderDefault,
-          }}
-        >
-          <Text style={{ color: tab === 'recipes' ? colors.accent : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>Recipes</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setTab('about')}
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            paddingVertical: 10,
-            borderBottomWidth: 2,
-            borderBottomColor: tab === 'about' ? colors.accent : colors.borderDefault,
-          }}
-        >
-          <Text style={{ color: tab === 'about' ? colors.accent : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>About</Text>
-        </TouchableOpacity>
+        {(['recipes', 'followers', 'following'] as ProfileTab[]).map((tabKey) => (
+          <TouchableOpacity
+            key={tabKey}
+            onPress={() => setTab(tabKey)}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              paddingVertical: 10,
+              borderBottomWidth: 2,
+              borderBottomColor: tab === tabKey ? colors.accent : colors.borderDefault,
+            }}
+          >
+            <Text style={{ color: tab === tabKey ? colors.accent : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>
+              {t(`follow.${tabKey}`)}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Tab content */}
@@ -216,7 +312,7 @@ export default function ChefProfile() {
         {tab === 'recipes' && (
           <>
             {recipes.length === 0 ? (
-              <EmptyState icon="📖" title="No recipes" message={isOwnProfile ? "You haven't shared any recipes yet." : "This chef hasn't shared any recipes yet."} />
+              <EmptyState icon="📖" title={t('follow.noRecipes')} message={isOwnProfile ? t('follow.noRecipesOwn') : t('follow.noRecipesOther')} />
             ) : (
               recipes.map((r) => (
                 <View key={r.id}>
@@ -246,7 +342,7 @@ export default function ChefProfile() {
                     >
                       <Ionicons name="add-circle-outline" size={18} color={colors.accentGreen} />
                       <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
-                        {cloning === r.id ? 'Adding...' : 'Add to my collection'}
+                        {cloning === r.id ? t('search.adding') : t('search.addToCollection')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -256,25 +352,26 @@ export default function ChefProfile() {
           </>
         )}
 
-        {tab === 'about' && (
-          <View>
-            <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.borderDefault }}>
-              <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>About {chef.display_name}</Text>
-              {chef.bio ? (
-                <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 22 }}>{chef.bio}</Text>
-              ) : (
-                <Text style={{ color: colors.textMuted, fontSize: 14 }}>No bio yet.</Text>
-              )}
-              <View style={{ marginTop: 16 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                  Member since {new Date(chef.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
-                </Text>
-              </View>
-            </View>
-          </View>
+        {tab === 'followers' && (
+          followersLoading ? (
+            <Loading message={t('common.loading')} />
+          ) : followers.length === 0 ? (
+            <EmptyState icon="👥" title={t('follow.noFollowers')} message={t('follow.noFollowersMessage')} />
+          ) : (
+            followers.map(renderUserRow)
+          )
+        )}
+
+        {tab === 'following' && (
+          followersLoading ? (
+            <Loading message={t('common.loading')} />
+          ) : following.length === 0 ? (
+            <EmptyState icon="👥" title={t('follow.noFollowing')} message={t('follow.noFollowingMessage')} />
+          ) : (
+            following.map(renderUserRow)
+          )
         )}
       </View>
-      <View style={{ height: 32 }} />
 
       {/* Edit Profile Modal */}
       <Modal visible={showEditProfile} animationType="slide" transparent>
@@ -306,7 +403,7 @@ export default function ChefProfile() {
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('profile.bio')}</Text>
                 <TextInput
                   value={editBio}
-                  onChangeText={(t) => setEditBio(t.slice(0, 200))}
+                  onChangeText={(v) => setEditBio(v.slice(0, 200))}
                   placeholder={t('profile.bioPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   multiline

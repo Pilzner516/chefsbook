@@ -372,5 +372,33 @@
     "friday": "Vendredi",
     "saturday": "Samedi",
     "sunday": "Dimanche"
+  },
+  "follow": {
+    "follow": "Suivre",
+    "followingLabel": "Abonné",
+    "unfollow": "Se désabonner",
+    "followers": "Abonnés",
+    "following": "Abonnements",
+    "recipes": "Recettes",
+    "whatsNew": "Nouveautés",
+    "whatsNewSub": "Dernières recettes des personnes que vous suivez",
+    "whatsNewEmpty": "Suivez des chefs pour voir leurs dernières recettes",
+    "findPeople": "Trouver des personnes à suivre",
+    "noFollowers": "Aucun abonné",
+    "noFollowersMessage": "Personne ne suit ce chef pour l'instant.",
+    "noFollowing": "Ne suit personne",
+    "noFollowingMessage": "Cet utilisateur ne suit personne pour l'instant.",
+    "noRecipes": "Aucune recette",
+    "noRecipesOwn": "Vous n'avez pas encore partagé de recettes.",
+    "noRecipesOther": "Ce chef n'a pas encore partagé de recettes.",
+    "noFeedRecipes": "Rien de nouveau",
+    "noFeedRecipesMessage": "Pas de nouvelles recettes des personnes que vous suivez.",
+    "unfollowConfirmTitle": "Se désabonner",
+    "unfollowConfirmMessage": "Se désabonner de @{{username}} ?",
+    "planRequired": "Plan Chef requis",
+    "planRequiredMessage": "Passez au plan Chef pour suivre d'autres utilisateurs.",
+    "minutesAgo": "il y a {{count}}min",
+    "hoursAgo": "il y a {{count}}h",
+    "daysAgo": "il y a {{count}}j"
   }
 }

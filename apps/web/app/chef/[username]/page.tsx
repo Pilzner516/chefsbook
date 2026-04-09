@@ -3,6 +3,8 @@ import type { UserProfile, Recipe } from '@chefsbook/db';
 import { formatDuration, getInitials } from '@chefsbook/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import FollowButton from '@/components/FollowButton';
+import FollowTabs from '@/components/FollowTabs';
 
 export default async function ChefPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -17,16 +19,13 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
 
   const chef = profile as UserProfile;
 
-  const [{ data: recipes }, { count: followerCount }, { count: followingCount }] = await Promise.all([
-    supabase
-      .from('recipes')
-      .select('*')
-      .eq('user_id', chef.id)
-      .eq('visibility', 'public')
-      .order('created_at', { ascending: false }),
-    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followed_id', chef.id).eq('status', 'accepted'),
-    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', chef.id).eq('status', 'accepted'),
-  ]);
+  const { data: recipes } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('user_id', chef.id)
+    .eq('visibility', 'public')
+    .is('parent_recipe_id', null)
+    .order('created_at', { ascending: false });
 
   const publicRecipes = (recipes ?? []) as Recipe[];
 
@@ -50,6 +49,7 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
           <h1 className="text-2xl font-bold">{chef.display_name}</h1>
           {chef.username && <p className="text-cb-secondary">@{chef.username}</p>}
           {chef.bio && <p className="text-cb-secondary mt-2 max-w-md mx-auto">{chef.bio}</p>}
+          <FollowButton targetUserId={chef.id} targetUsername={chef.username} />
         </div>
 
         {/* Stats row */}
@@ -59,11 +59,11 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
             <p className="text-cb-secondary text-sm">Recipes</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold">{followerCount ?? 0}</p>
+            <p className="text-xl font-bold">{chef.follower_count ?? 0}</p>
             <p className="text-cb-secondary text-sm">Followers</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold">{followingCount ?? 0}</p>
+            <p className="text-xl font-bold">{chef.following_count ?? 0}</p>
             <p className="text-cb-secondary text-sm">Following</p>
           </div>
         </div>
@@ -103,6 +103,9 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
             ))}
           </div>
         )}
+
+        {/* Followers / Following tabs */}
+        <FollowTabs userId={chef.id} />
       </div>
     </main>
   );

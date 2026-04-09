@@ -372,5 +372,33 @@
     "friday": "Freitag",
     "saturday": "Samstag",
     "sunday": "Sonntag"
+  },
+  "follow": {
+    "follow": "Folgen",
+    "followingLabel": "Folge ich",
+    "unfollow": "Entfolgen",
+    "followers": "Follower",
+    "following": "Folge ich",
+    "recipes": "Rezepte",
+    "whatsNew": "Neuigkeiten",
+    "whatsNewSub": "Neueste Rezepte von Leuten, denen du folgst",
+    "whatsNewEmpty": "Folge Köchen, um ihre neuesten Rezepte zu sehen",
+    "findPeople": "Finde Leute zum Folgen",
+    "noFollowers": "Keine Follower",
+    "noFollowersMessage": "Niemand folgt diesem Koch bisher.",
+    "noFollowing": "Folgt niemandem",
+    "noFollowingMessage": "Dieser Benutzer folgt niemandem.",
+    "noRecipes": "Keine Rezepte",
+    "noRecipesOwn": "Du hast noch keine Rezepte geteilt.",
+    "noRecipesOther": "Dieser Koch hat noch keine Rezepte geteilt.",
+    "noFeedRecipes": "Noch nichts Neues",
+    "noFeedRecipesMessage": "Keine neuen Rezepte von Leuten, denen du folgst.",
+    "unfollowConfirmTitle": "Entfolgen",
+    "unfollowConfirmMessage": "@{{username}} entfolgen?",
+    "planRequired": "Chef-Plan erforderlich",
+    "planRequiredMessage": "Upgrade auf den Chef-Plan, um anderen Nutzern zu folgen.",
+    "minutesAgo": "vor {{count}}min",
+    "hoursAgo": "vor {{count}}h",
+    "daysAgo": "vor {{count}}T"
   }
 }

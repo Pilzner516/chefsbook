@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 31)
+- Migration 020: user_follows table + RLS + count triggers, notifications table + new_follower trigger
+- DB queries: followUser, unfollowUser, isFollowing, getFollowers, getFollowing, getFollowedRecipes in packages/db
+- Added `canFollow` to PLAN_LIMITS (free=false, chef/family/pro=true)
+- Mobile: Follow/Following button on chef profile with optimistic update, unfollow confirmation, plan gating
+- Mobile: Followers/Following tabs on chef profile (avatar + username list, tap to navigate)
+- Mobile: What's New card in Search tab + full-screen feed modal (recipes from followed users with @username + time ago)
+- Web: FollowButton component on /u/[username] and /chef/[username] with plan gating
+- Web: FollowTabs component showing followers/following lists on both profile pages
+- Web: WhatsNewFeed component on Discover page (expandable feed with recipe cards)
+- Web: chef/[username] page updated from old `follows` table to new `user_follows` + profile counts
+- Updated Follow type in packages/db (following_id replaces followed_id, removed status field)
+- i18n: `follow` namespace with 28 keys added to all 5 locales (en/fr/es/it/de)
+- Migration applied to RPi5, tsc --noEmit passes both apps
+
 ## 2026-04-09 (session 30)
 - Migration 018: promo_codes table, family_members table, plan billing fields on user_profiles
 - Rewrote PLAN_LIMITS with 4 tiers (free/chef/family/pro) + new feature flags (canImport, canAI, canPDF, etc.)

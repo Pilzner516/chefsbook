@@ -1,7 +1,9 @@
-import { getProfileByUsername, listPublicRecipes } from '@chefsbook/db';
+import { getProfileByUsername } from '@chefsbook/db';
 import { supabase } from '@chefsbook/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import FollowButton from '@/components/FollowButton';
+import FollowTabs from '@/components/FollowTabs';
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -13,6 +15,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     .select('*')
     .eq('user_id', profile.id)
     .eq('visibility', 'public')
+    .is('parent_recipe_id', null)
     .order('created_at', { ascending: false });
 
   return (
@@ -44,6 +47,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               <div className="text-xs text-cb-muted">Following</div>
             </div>
           </div>
+          <FollowButton targetUserId={profile.id} targetUsername={profile.username} />
         </div>
 
         {/* Public recipes */}
@@ -69,6 +73,9 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             ))}
           </div>
         )}
+
+        {/* Followers / Following tabs */}
+        <FollowTabs userId={profile.id} />
       </div>
     </div>
   );

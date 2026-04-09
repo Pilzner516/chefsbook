@@ -273,7 +273,7 @@ adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_not
 
 - No test suite (unit or integration)
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
-- Followers UI not built (DB schema exists)
+- Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
 - Multilingual support: fully implemented with react-i18next; 5 locales (en/fr/es/it/de); all UI strings use t() calls; language change triggers immediate UI translation via activateLanguage()
@@ -303,6 +303,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Recipe saves vs favorites: `is_favourite` = personal bookmark on own recipes; `recipe_saves` table = social save of others' public recipes
 - Recipe versioning: children link via `parent_recipe_id` FK; recipe list filters out children
 - Usernames are permanent after set (unique, lowercase, 3-20 chars, DB constraint)
+- Follow system: `user_follows` table (not the old `follows` table); `canFollow` plan gate (chef+); optimistic UI updates
+- Notifications table exists (foundation only — no UI yet)
 - 4 plan tiers: free / chef ($4.99) / family ($9.99) / pro ($14.99); PLAN_LIMITS in `packages/db/src/subscriptions.ts`
 - Dev mode: plan changes are instant DB updates (no Stripe); Plans page shows "Dev mode" banner
 - Promo codes: `promo_codes` table; `pro100` gives free Pro with no expiry; validated at signup

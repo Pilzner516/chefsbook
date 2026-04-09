@@ -424,7 +424,8 @@
     "saveProfile": "Save",
     "profileSaved": "Profile updated",
     "noRecipes": "No public recipes yet",
-    "notFound": "User not found"
+    "notFound": "User not found",
+    "notFoundMessage": "This profile doesn't exist."
   },
   "signup": {
     "username": "Username",
@@ -539,5 +540,33 @@
     "pdfExport": "PDF export",
     "familyMembers": "Family members",
     "unlimited": "Unlimited"
+  },
+  "follow": {
+    "follow": "Follow",
+    "followingLabel": "Following",
+    "unfollow": "Unfollow",
+    "followers": "Followers",
+    "following": "Following",
+    "recipes": "Recipes",
+    "whatsNew": "What's New",
+    "whatsNewSub": "Latest recipes from people you follow",
+    "whatsNewEmpty": "Follow chefs to see their latest recipes",
+    "findPeople": "Find people to follow",
+    "noFollowers": "No followers",
+    "noFollowersMessage": "No one is following this chef yet.",
+    "noFollowing": "Not following anyone",
+    "noFollowingMessage": "This user isn't following anyone yet.",
+    "noRecipes": "No recipes",
+    "noRecipesOwn": "You haven't shared any recipes yet.",
+    "noRecipesOther": "This chef hasn't shared any recipes yet.",
+    "noFeedRecipes": "Nothing new yet",
+    "noFeedRecipesMessage": "No new recipes from people you follow.",
+    "unfollowConfirmTitle": "Unfollow",
+    "unfollowConfirmMessage": "Unfollow @{{username}}?",
+    "planRequired": "Chef Plan Required",
+    "planRequiredMessage": "Upgrade to the Chef plan to follow other users.",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
   }
 }
