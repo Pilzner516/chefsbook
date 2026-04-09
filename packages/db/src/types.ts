@@ -11,6 +11,7 @@ export interface UserProfile {
   avatar_url: string | null;
   bio: string | null;
   is_searchable: boolean;
+  is_suspended: boolean;
   follower_count: number;
   following_count: number;
   recipe_count: number;
@@ -107,6 +108,10 @@ export interface Recipe {
   dietary_flags: string[];
   attributed_to_user_id: string | null;
   attributed_to_username: string | null;
+  original_submitter_id: string | null;
+  original_submitter_username: string | null;
+  shared_by_id: string | null;
+  shared_by_username: string | null;
   import_status?: 'complete' | 'partial';
   missing_sections?: string[];
   aichef_assisted?: boolean;

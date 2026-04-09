@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -71,12 +71,27 @@ function useProtectedRoute() {
   }, [session, loading, segments, navReady]);
 }
 
+function SuspendedNotice() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: '#faf7f0' }}>
+      <Text style={{ fontSize: 48, marginBottom: 16 }}>🚫</Text>
+      <Text style={{ fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 8, textAlign: 'center' }}>Account Suspended</Text>
+      <Text style={{ fontSize: 14, color: '#7a6a5a', textAlign: 'center' }}>
+        Your account has been suspended. If you believe this is a mistake, please contact support@chefsbk.app.
+      </Text>
+    </View>
+  );
+}
+
 function RootNav() {
   const { colors } = useTheme();
   const router = useRouter();
   const loading = useAuthStore((s) => s.loading);
+  const profile = useAuthStore((s) => s.profile);
 
   useProtectedRoute();
+
+  if (profile?.is_suspended) return <SuspendedNotice />;
 
   // Handle URLs shared from browser / Instagram share sheet
   useEffect(() => {

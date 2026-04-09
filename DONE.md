@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 32)
+- Migration 019: admin_users, is_suspended, plan_limits (DB-driven), help_requests tables
+- Super admin seeded for pilzner; plan_limits seeded for all 4 tiers
+- Admin dashboard at /admin with layout, sidebar nav, route protection (silent redirect for non-admins)
+- Overview: total users, new today, recipes, flagged comments, users by plan
+- User management: search/filter table, plan change, suspend/restore, add proctor role
+- Flagged comments, recipe moderation, promo code CRUD, plan limits display, help requests
+- Suspended user handling: mobile full-screen notice, web /suspended page
+- Added is_suspended to UserProfile type
+
 ## 2026-04-09 (session 31)
 - Migration 020: user_follows table + RLS + count triggers, notifications table + new_follower trigger
 - DB queries: followUser, unfollowUser, isFollowing, getFollowers, getFollowing, getFollowedRecipes in packages/db

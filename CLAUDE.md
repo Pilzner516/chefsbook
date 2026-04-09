@@ -309,6 +309,9 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Dev mode: plan changes are instant DB updates (no Stripe); Plans page shows "Dev mode" banner
 - Promo codes: `promo_codes` table; `pro100` gives free Pro with no expiry; validated at signup
 - Free tier cannot import/scan/AI; Chef is the minimum for recipe creation
+- Admin dashboard at `/admin` (web only); admin_users table with roles: super_admin, admin, proctor
+- `is_suspended` flag on user_profiles: mobile shows full-screen notice, web redirects to /suspended
+- `plan_limits` DB table mirrors PLAN_LIMITS constants — source of truth for admin UI, fallback to code constants in app
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
