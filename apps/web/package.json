@@ -13,6 +13,7 @@
     "@chefsbook/ai": "*",
     "@chefsbook/db": "*",
     "@chefsbook/ui": "*",
+    "@react-pdf/renderer": "^4.4.0",
     "@stripe/stripe-js": "^4.0.0",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "^2.49.0",

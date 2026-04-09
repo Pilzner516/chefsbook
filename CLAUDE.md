@@ -322,6 +322,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Share links: chefsbk.app/recipe/[id]?ref=[username]; private recipes auto-upgrade to `shared_link` visibility on share
 - Guest access: `guest_sessions` table captures email for unauthenticated recipe viewers; guests can view but not save/comment
 - Android App Links: intent filter with `autoVerify` for chefsbk.app/recipe; assetlinks.json needs release APK fingerprint
+- PDF export: `/recipe/[id]/pdf` route using `@react-pdf/renderer`; Pro plan gated (403 for non-Pro); mobile downloads via expo-file-system + expo-sharing
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)

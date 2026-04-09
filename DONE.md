@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 36)
+- Installed `@react-pdf/renderer` in apps/web
+- `/recipe/[id]/pdf` route: plan-gated PDF generation with formatted layout (header, ingredients, steps, notes, attribution)
+- Mobile: PDF download via expo-file-system + expo-sharing, wired into share action sheet
+- Web: PDF download link on recipe detail page
+- Non-Pro users see upgrade prompt on mobile
+
 ## 2026-04-09 (session 35)
 - Migration 022: guest_sessions table for share link guest email capture
 - Mobile: Share action sheet with "Share via link" + "Share as PDF" (Pro gated) options

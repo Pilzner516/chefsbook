@@ -17,7 +17,7 @@ import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe } from '@chefsbook/db';
+import { supabase, updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe } from '@chefsbook/db';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
@@ -750,11 +750,30 @@ function RecipeDetailInner() {
         { text: `🔗 ${t('share.shareViaLink')}`, onPress: doShare },
         {
           text: `📄 ${t('share.shareAsPdf')}${canDo(userPlan, 'canPDF') ? '' : ` (${t('share.proOnly')})`}`,
-          onPress: () => {
+          onPress: async () => {
             if (!canDo(userPlan, 'canPDF')) {
               Alert.alert(t('share.proOnly'), t('share.proOnlyMessage'));
+              return;
             }
-            // PDF export not yet implemented
+            try {
+              const { data: { session: sess } } = await supabase.auth.getSession();
+              if (!sess?.access_token) return;
+              const FileSystem = require('expo-file-system/legacy');
+              const Sharing = require('expo-sharing');
+              const pdfUri = FileSystem.cacheDirectory + `${r.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_')}.pdf`;
+              const result = await FileSystem.downloadAsync(
+                `https://chefsbk.app/recipe/${r.id}/pdf`,
+                pdfUri,
+                { headers: { Authorization: `Bearer ${sess.access_token}` } },
+              );
+              if (result.status === 200) {
+                await Sharing.shareAsync(result.uri, { mimeType: 'application/pdf', dialogTitle: `Share ${r.title}` });
+              } else {
+                Alert.alert(t('common.errorTitle'), 'PDF generation failed');
+              }
+            } catch (e: any) {
+              Alert.alert(t('common.errorTitle'), e.message);
+            }
           },
         },
         { text: t('common.cancel'), style: 'cancel' },

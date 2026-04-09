@@ -1497,6 +1497,14 @@ export default function RecipePage() {
         <div className="max-w-3xl mx-auto px-4 mb-8">
           <div className="flex items-center gap-4 mb-4">
             <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} />
+            <a
+              href={`/recipe/${recipe.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-sm text-cb-muted hover:text-cb-primary transition"
+            >
+              📄 PDF
+            </a>
           </div>
           {recipe.visibility === 'public' && (
             <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} commentsEnabled={recipe.comments_enabled ?? true} />
