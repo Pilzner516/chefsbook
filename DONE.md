@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 33)
+- Migration 021: Updated clone_recipe RPC to set original_submitter_id/username (chains from source recipe)
+- Added original_submitter_id/username and shared_by_id/username fields to Recipe type in packages/db
+- cloneRecipe() now accepts optional sharedByUsername param, sets shared_by after clone
+- Added removeSharedBy() function in packages/db for user-removable shared_by tags
+- Mobile recipe detail: attribution pills — locked red original_submitter pill + removable grey shared_by pill
+- Mobile recipe cards: "by @username" line shown for non-own recipes with original_submitter
+- Web recipe detail: attribution pills (locked original, shared_by) replace old attributed_to display
+- Web dashboard recipe grid + list: "by @username" for attributed recipes
+- Share URLs now include ?ref=username for attribution tracking (mobile + web)
+- Web share page: proper "Add to my Chefsbook" save button with cloneRecipe + ?ref= attribution
+- Mobile share page: save button with cloneRecipe + ref param parsing
+- i18n: `attribution` namespace added to all 5 locales (en/fr/es/it/de)
+- Migration applied to RPi5, tsc --noEmit passes both apps
+
 ## 2026-04-09 (session 32)
 - Migration 019: admin_users, is_suspended, plan_limits (DB-driven), help_requests tables
 - Super admin seeded for pilzner; plan_limits seeded for all 4 tiers

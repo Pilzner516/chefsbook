@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
-import { getRecipeByShareToken } from '@chefsbook/db';
+import { getRecipeByShareToken, cloneRecipe } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity } from '@chefsbook/ui';
 import { Badge, Button, Divider, Loading, EmptyState } from '../../components/UIKit';
@@ -19,6 +19,7 @@ export default function SharedRecipe() {
   const [loading, setLoading] = useState(true);
   const [isExternalUrl, setIsExternalUrl] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -121,6 +122,33 @@ export default function SharedRecipe() {
             <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Notes</Text>
             <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20 }}>{recipe.notes}</Text>
           </>
+        )}
+
+        {/* Save CTA */}
+        {session?.user && recipe.user_id !== session.user.id && (
+          <View style={{ marginTop: 24 }}>
+            <Button
+              title={saving ? 'Saving...' : 'Add to my Chefsbook'}
+              onPress={async () => {
+                if (!session?.user?.id) return;
+                setSaving(true);
+                try {
+                  // Extract ref from deep link if present (token may contain ?ref=)
+                  let ref: string | null = null;
+                  if (token?.includes('?ref=')) {
+                    ref = token.split('?ref=')[1];
+                  }
+                  const newId = await cloneRecipe(recipe.id, session.user.id, ref);
+                  router.replace(`/recipe/${newId}`);
+                } catch (e: any) {
+                  Alert.alert('Error', e.message ?? 'Failed to save recipe');
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              loading={saving}
+            />
+          </View>
         )}
         <View style={{ height: 40 }} />
       </View>

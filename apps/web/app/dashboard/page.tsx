@@ -400,6 +400,9 @@ export default function DashboardPage() {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold mb-1.5 group-hover:text-cb-primary transition-colors">{recipe.title}</h3>
+                    {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
+                      <p className="text-[11px] text-cb-muted mb-1">by @{recipe.original_submitter_username}</p>
+                    )}
                     <div className="flex flex-wrap items-center gap-1 text-xs text-cb-secondary">
                       {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded text-[10px]">{recipe.cuisine}</span>}
                       {recipe.course && <span className="bg-cb-green/10 text-cb-green px-1.5 py-0.5 rounded text-[10px]">{recipe.course}</span>}
@@ -436,6 +439,9 @@ export default function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm group-hover:text-cb-primary transition-colors truncate">{recipe.title}</p>
+                {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
+                  <p className="text-[10px] text-cb-muted">by @{recipe.original_submitter_username}</p>
+                )}
                 <div className="flex items-center gap-2 text-xs text-cb-secondary mt-0.5">
                   {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded text-[10px]">{recipe.cuisine}</span>}
                   {recipe.course && <span className="bg-cb-green/10 text-cb-green px-1.5 py-0.5 rounded text-[10px]">{recipe.course}</span>}

@@ -312,6 +312,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Admin dashboard at `/admin` (web only); admin_users table with roles: super_admin, admin, proctor
 - `is_suspended` flag on user_profiles: mobile shows full-screen notice, web redirects to /suspended
 - `plan_limits` DB table mirrors PLAN_LIMITS constants — source of truth for admin UI, fallback to code constants in app
+- Recipe attribution: `original_submitter` chains from source recipe (never changes); `shared_by` is immediate sharer (from `?ref=` param); `shared_by` is user-removable, `original_submitter` is locked
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)

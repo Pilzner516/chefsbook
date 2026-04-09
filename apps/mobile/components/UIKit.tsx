@@ -290,10 +290,11 @@ interface RecipeCardProps {
   sourceUrl?: string | null;
   sourceType?: string | null;
   versionCount?: number;
+  attributedTo?: string | null;
   onPress: () => void;
 }
 
-export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, saveCount, sourceUrl, sourceType, versionCount, onPress }: RecipeCardProps) {
+export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, saveCount, sourceUrl, sourceType, versionCount, attributedTo, onPress }: RecipeCardProps) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
@@ -319,6 +320,9 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
             </Text>
             {isFavourite && <Text style={{ fontSize: 16, marginLeft: 8 }}>{'\u2764'}</Text>}
           </View>
+          {attributedTo && (
+            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>by @{attributedTo}</Text>
+          )}
           <View style={{ flexDirection: 'row', marginTop: 6, gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {cuisine && <Badge label={cuisine} />}
             {totalMinutes != null && totalMinutes > 0 && (

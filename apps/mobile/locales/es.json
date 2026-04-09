@@ -400,5 +400,11 @@
     "minutesAgo": "hace {{count}}min",
     "hoursAgo": "hace {{count}}h",
     "daysAgo": "hace {{count}}d"
+  },
+  "attribution": {
+    "originalBy": "Original de",
+    "sharedBy": "Compartido por",
+    "removeSharedBy": "Eliminar atribución",
+    "removeSharedByConfirm": "¿Eliminar la etiqueta de compartido de esta receta?"
   }
 }

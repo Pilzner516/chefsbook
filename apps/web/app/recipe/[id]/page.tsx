@@ -869,14 +869,21 @@ export default function RecipePage() {
             </span>
           ))}
 
-          {/* Attribution tag */}
-          {recipe.attributed_to_username && (
+          {/* Attribution tags */}
+          {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
             <Link
-              href={`/chef/${recipe.attributed_to_username}`}
-              className="bg-cb-base text-cb-text text-sm px-3 py-1 rounded-input font-medium inline-flex items-center gap-1 hover:ring-2 hover:ring-cb-border"
+              href={`/u/${recipe.original_submitter_username}`}
+              className="bg-cb-primary-soft text-cb-primary text-sm px-3 py-1 rounded-input font-medium inline-flex items-center gap-1 hover:ring-2 hover:ring-cb-primary/30"
             >
-              🔗 via @{recipe.attributed_to_username}
+              🔒 Original by @{recipe.original_submitter_username}
             </Link>
+          )}
+          {recipe.shared_by_username && (
+            <span className="bg-cb-base text-cb-text text-sm px-3 py-1 rounded-input font-medium inline-flex items-center gap-1">
+              <Link href={`/u/${recipe.shared_by_username}`} className="hover:underline">
+                Shared by @{recipe.shared_by_username}
+              </Link>
+            </span>
           )}
         </div>
 
@@ -950,9 +957,9 @@ export default function RecipePage() {
             📖 Original recipe{recipe.source_author ? ` by ${recipe.source_author}` : ''} at {new URL(recipe.source_url).hostname.replace('www.', '')}
           </a>
         )}
-        {recipe.attributed_to_username && (
-          <a href={`/chef/${recipe.attributed_to_username}`} className="text-xs text-cb-muted hover:text-cb-primary mb-2 block">
-            🔗 via @{recipe.attributed_to_username}
+        {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
+          <a href={`/u/${recipe.original_submitter_username}`} className="text-xs text-cb-muted hover:text-cb-primary mb-2 block">
+            🔒 Original by @{recipe.original_submitter_username}
           </a>
         )}
 

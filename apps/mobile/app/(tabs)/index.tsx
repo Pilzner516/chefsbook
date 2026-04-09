@@ -189,6 +189,7 @@ export default function RecipesTab() {
               isFavourite={item.is_favourite}
               saveCount={item.save_count}
               versionCount={vc}
+              attributedTo={item.original_submitter_username && item.original_submitter_id !== item.user_id ? item.original_submitter_username : undefined}
               onPress={() => {
                 if (item.is_parent) {
                   openVersionPicker(item.id);

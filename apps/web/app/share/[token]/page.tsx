@@ -1,18 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getRecipeByShareToken } from '@chefsbook/db';
+import { useRouter } from 'next/navigation';
+import { getRecipeByShareToken, cloneRecipe, supabase } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity, scaleQuantity } from '@chefsbook/ui';
 
 export default function SharedRecipePage() {
   const { token } = useParams<{ token: string }>();
+  const searchParams = useSearchParams();
+  const refUsername = searchParams.get('ref');
+  const router = useRouter();
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [servings, setServings] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -244,12 +250,32 @@ export default function SharedRecipePage() {
             and auto-generate shopping lists.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link
-              href="/dashboard"
-              className="bg-cb-green text-white px-8 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              Add to my Chefsbook
-            </Link>
+            {saved ? (
+              <span className="bg-cb-green/10 text-cb-green px-8 py-3 rounded-input text-sm font-semibold">
+                Saved to your Chefsbook
+              </span>
+            ) : (
+              <button
+                onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) { router.push('/dashboard'); return; }
+                  setSaving(true);
+                  try {
+                    const newId = await cloneRecipe(recipe.id, user.id, refUsername);
+                    setSaved(true);
+                    setTimeout(() => router.push(`/recipe/${newId}`), 1000);
+                  } catch (e: any) {
+                    alert(e.message ?? 'Failed to save recipe');
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className="bg-cb-green text-white px-8 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Add to my Chefsbook'}
+              </button>
+            )}
             <Link
               href="/"
               className="border border-cb-border px-8 py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text hover:bg-gray-50 transition-colors"

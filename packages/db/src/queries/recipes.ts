@@ -288,13 +288,41 @@ export async function isRecipeSaved(recipeId: string, userId: string): Promise<b
   return (count ?? 0) > 0;
 }
 
-export async function cloneRecipe(sourceRecipeId: string, targetUserId: string): Promise<string> {
+export async function cloneRecipe(
+  sourceRecipeId: string,
+  targetUserId: string,
+  sharedByUsername?: string | null,
+): Promise<string> {
   const { data, error } = await supabase.rpc('clone_recipe', {
     p_source_recipe_id: sourceRecipeId,
     p_target_user_id: targetUserId,
   });
   if (error) throw error;
-  return data as string;
+  const newId = data as string;
+
+  // Set shared_by if provided (from ?ref= param on share links)
+  if (sharedByUsername) {
+    const { data: sharerProfile } = await supabase
+      .from('user_profiles')
+      .select('id, username')
+      .eq('username', sharedByUsername.toLowerCase())
+      .single();
+    if (sharerProfile) {
+      await supabase.from('recipes').update({
+        shared_by_id: sharerProfile.id,
+        shared_by_username: sharerProfile.username,
+      }).eq('id', newId);
+    }
+  }
+
+  return newId;
+}
+
+export async function removeSharedBy(recipeId: string): Promise<void> {
+  await supabase.from('recipes').update({
+    shared_by_id: null,
+    shared_by_username: null,
+  }).eq('id', recipeId);
 }
 
 export async function updateRecipeMetadata(

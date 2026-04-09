@@ -15,7 +15,7 @@ import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
+import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy } from '@chefsbook/db';
 import type { RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
 import type { TranslatedRecipe } from '@chefsbook/ai';
@@ -903,24 +903,21 @@ function RecipeDetailInner() {
             })}
           </View>
 
-          {/* Attribution tag (read-only) */}
-          {currentRecipe?.attributed_to_username && (
+          {/* Attribution tags (read-only in edit mode) */}
+          {currentRecipe?.original_submitter_username && currentRecipe.original_submitter_id !== currentRecipe.user_id && (
             <View style={{ marginBottom: 12 }}>
               <TouchableOpacity
-                onPress={() => router.push(`/chef/${currentRecipe.attributed_to_username}`)}
+                onPress={() => router.push(`/chef/${currentRecipe.original_submitter_id}`)}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colors.bgBase,
-                  borderRadius: 16,
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  alignSelf: 'flex-start',
-                  gap: 4,
+                  flexDirection: 'row', alignItems: 'center', gap: 4,
+                  backgroundColor: colors.accentSoft, borderRadius: 16,
+                  paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'flex-start',
                 }}
               >
-                <Text style={{ fontSize: 13 }}>🔗</Text>
-                <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>via @{currentRecipe.attributed_to_username}</Text>
+                <Ionicons name="lock-closed" size={12} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
+                  {t('attribution.originalBy')} @{currentRecipe.original_submitter_username}
+                </Text>
               </TouchableOpacity>
               <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('recipe.originalSource')}</Text>
             </View>
@@ -1195,25 +1192,55 @@ function RecipeDetailInner() {
           </TouchableOpacity>
         )}
 
-        {/* Attribution tag */}
-        {recipe.attributed_to_username && (
-          <TouchableOpacity
-            onPress={() => router.push(`/chef/${recipe.attributed_to_username}`)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: colors.bgBase,
-              borderRadius: 16,
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              alignSelf: 'flex-start',
-              marginBottom: 16,
-              gap: 4,
-            }}
-          >
-            <Text style={{ fontSize: 13 }}>🔗</Text>
-            <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>via @{recipe.attributed_to_username}</Text>
-          </TouchableOpacity>
+        {/* Attribution tags */}
+        {(recipe.original_submitter_username || recipe.shared_by_username) && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
+              <TouchableOpacity
+                onPress={() => router.push(`/chef/${recipe.original_submitter_id}`)}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 4,
+                  backgroundColor: colors.accentSoft, borderRadius: 16,
+                  paddingHorizontal: 12, paddingVertical: 6,
+                }}
+              >
+                <Ionicons name="lock-closed" size={12} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
+                  {t('attribution.originalBy')} @{recipe.original_submitter_username}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {recipe.shared_by_username && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: colors.bgBase, borderRadius: 16,
+                paddingHorizontal: 12, paddingVertical: 6,
+              }}>
+                <TouchableOpacity onPress={() => router.push(`/chef/${recipe.shared_by_id}`)}>
+                  <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>
+                    {t('attribution.sharedBy')} @{recipe.shared_by_username}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      t('attribution.removeSharedBy'),
+                      t('attribution.removeSharedByConfirm'),
+                      [
+                        { text: t('common.cancel'), style: 'cancel' },
+                        { text: t('common.delete'), style: 'destructive', onPress: async () => {
+                          await removeSharedBy(recipe.id);
+                          fetchRecipe(recipe.id);
+                        }},
+                      ],
+                    );
+                  }}
+                  style={{ padding: 2 }}
+                >
+                  <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
 
         {/* Action icons */}
@@ -1225,7 +1252,7 @@ function RecipeDetailInner() {
               color={recipe.is_favourite ? colors.accent : colors.textMuted}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => shareRecipe(recipe)} style={{ padding: 6 }}>
+          <TouchableOpacity onPress={() => shareRecipe(recipe, useAuthStore.getState().profile?.username)} style={{ padding: 6 }}>
             <Ionicons name="share-social-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => (pinned ? unpin(recipe.id) : pin(recipe))} style={{ padding: 6 }}>

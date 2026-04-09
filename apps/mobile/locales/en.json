@@ -568,5 +568,40 @@
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago"
+  },
+  "attribution": {
+    "originalBy": "Original by",
+    "sharedBy": "Shared by",
+    "removeSharedBy": "Remove attribution",
+    "removeSharedByConfirm": "Remove the shared-by tag from this recipe?"
+  },
+  "likes": {
+    "like": "Like",
+    "unlike": "Unlike",
+    "likedBy": "{{count}} people liked this",
+    "noLikes": "No likes yet"
+  },
+  "comments": {
+    "title": "Comments",
+    "addComment": "Add a comment...",
+    "post": "Post",
+    "posting": "Posting...",
+    "noComments": "No comments yet. Be the first!",
+    "commentsOff": "Comments are disabled for this recipe",
+    "suspended": "Your commenting privileges are suspended pending review",
+    "planRequired": "Chef plan required to comment",
+    "searchableRequired": "Make your account searchable in Settings to comment",
+    "deleteComment": "Delete comment?",
+    "deleteConfirm": "This comment will be permanently removed.",
+    "blockUser": "Block this user from commenting on your recipes?",
+    "commentsOn": "Comments on",
+    "commentsOffToggle": "Comments off",
+    "flag": "Flag",
+    "flagTitle": "Why are you flagging this?",
+    "flagInappropriate": "Inappropriate language",
+    "flagHarassment": "Harassment",
+    "flagSpam": "Spam",
+    "flagOther": "Other",
+    "flagSent": "Thanks for reporting"
   }
 }
