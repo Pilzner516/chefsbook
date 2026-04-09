@@ -1,5 +1,5 @@
 export type VisibilityLevel = 'private' | 'shared_link' | 'friends' | 'public';
-export type PlanTier = 'free' | 'pro' | 'family';
+export type PlanTier = 'free' | 'chef' | 'family' | 'pro';
 export type SourceType = 'url' | 'scan' | 'manual' | 'ai' | 'social' | 'cookbook' | 'youtube';
 export type Course = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'starter' | 'main' | 'side' | 'dessert' | 'snack' | 'drink' | 'bread' | 'other';
 export type MealSlot = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'snack' | 'other';
@@ -27,8 +27,18 @@ export interface UserProfile {
 export interface Follow {
   id: string;
   follower_id: string;
-  followed_id: string;
-  status: 'pending' | 'accepted';
+  following_id: string;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'new_follower' | 'new_comment' | 'recipe_liked' | 'comment_flagged';
+  actor_id: string | null;
+  recipe_id: string | null;
+  message: string | null;
+  is_read: boolean;
   created_at: string;
 }
 

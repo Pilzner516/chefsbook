@@ -90,6 +90,7 @@ cd apps/mobile && eas build --platform ios --profile development --local
 - **Network**: Tailscale mesh — accessible from any device on the tailnet
 - **Storage**: 54GB USB drive mounted at /mnt/chefsbook on rpi5-eth
 - **NOT using**: supabase.com cloud — everything is self-hosted
+- **Migrations**: SQL files in `supabase/migrations/` — apply manually via `psql` on rpi5-eth (no Supabase CLI migration runner; self-hosted)
 
 ## Public URLs
 
@@ -290,87 +291,40 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 
 ## Decisions log
 
-Decisions not already covered in Architecture/Infrastructure sections above:
+<!-- Keep this section to non-obvious WHY decisions only. Implementation details belong in the code. -->
 
-- All AI calls run server-side (Anthropic API blocks browser CORS)
+### Architectural choices
+- All AI calls run server-side (Anthropic API blocks browser CORS); mobile calls `@chefsbook/ai` directly (no CORS in React Native)
 - Chrome extension sends page HTML from browser to bypass Cloudflare bot protection
-- Re-import preserves user edits (title, tags, notes, custom images) — only updates AI-derived fields
 - Techniques as separate table (not a content_type on recipes) — fundamentally different fields
+- Re-import preserves user edits (title, tags, notes, custom images) — only updates AI-derived fields
 - `_unresolved` tag marks recipes where title was auto-generated from URL slug
-- Development agenda tracked in `AGENDA.md` at project root
+- Shopping pipeline shared: `addItemsWithPipeline()` in `@chefsbook/db` is the single source of truth — both web API and mobile call it directly
+- Recipe saves vs favorites: `is_favourite` = personal bookmark on own recipes; `recipe_saves` table = social save of others' public recipes
+- Recipe versioning: children link via `parent_recipe_id` FK; recipe list filters out children
+- Usernames are permanent after set (unique, lowercase, 3-20 chars, DB constraint)
+- 4 plan tiers: free / chef ($4.99) / family ($9.99) / pro ($14.99); PLAN_LIMITS in `packages/db/src/subscriptions.ts`
+- Dev mode: plan changes are instant DB updates (no Stripe); Plans page shows "Dev mode" banner
+- Promo codes: `promo_codes` table; `pro100` gives free Pro with no expiry; validated at signup
+- Free tier cannot import/scan/AI; Chef is the minimum for recipe creation
+
+### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
 - Metro blockList excludes root node_modules react/react-native to prevent duplicate bundles
-- Mobile auth: no anonymous sessions — unauthenticated users see landing screen
-- Android emulator needs `adb reverse tcp:8081 tcp:8081` + `adb reverse tcp:8000 tcp:8000` for Metro + Supabase
-- Shopping pipeline shared: `addItemsWithPipeline()` in `@chefsbook/db` is the single source of truth — both web API and mobile call it directly
-- Mobile calls `suggestPurchaseUnits` from `@chefsbook/ai` directly (no CORS in React Native)
-- Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch
-- Mobile tag management calls `callClaude` + `extractJSON` from `@chefsbook/ai` directly (no CORS in React Native) for auto-tag suggestions
-- Shopping list font size preference persisted via `expo-secure-store` (key: `shopping_font_size`, values: `small`/`medium`/`large`)
-- Mobile theme has `textPrimary`, `textSecondary`, and `textMuted` (via TRATTORIA_COLORS spread from `@chefsbook/ui`)
-- Unit conversion: everything converts — metric mode shows ml/g/kg, imperial stays cups/tsp/oz/lb. No mixing.
-- Unit conversion lives ONLY in `packages/ui/src/unitConversion.ts` — never duplicate in app code
-- Language/unit preferences: `preferencesStore` (mobile, Zustand + SecureStore) syncs to `user_profiles.preferred_language` / `preferred_units` in Supabase
-- Recipe saves vs favorites: `is_favourite` = personal bookmark on own recipes; `recipe_saves` table = social save of others' public recipes with `save_count` trigger
-- American spelling used throughout mobile app (Favorite not Favourite)
-- QA Notepad: temporary testing tool, triggered by tapping ChefsBook logo. Remove `QANotepad.tsx` + logo tap handler when done testing
 - Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`
+- Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch
+- Unit conversion lives ONLY in `packages/ui/src/unitConversion.ts` — never duplicate in app code
 - Supabase auth persistence: `configureStorage()` in `@chefsbook/db` accepts a storage adapter; mobile wires `expo-secure-store` in `_layout.tsx` at module scope (before any Supabase access)
-- Unit conversion: dry ingredients (flour, sugar, etc.) convert volume→weight (cups→g) in metric mode; liquid ingredients convert volume→volume (cups→ml)
-- Shopping lists are store-first: each list has a `store_name`; lists without a store show under "General"; `StoreAvatar` component shows Clearbit logos for known stores, initials fallback for others
-- Combined store view: virtual read-only merged list per store (not saved to DB); quantity merging on same ingredient+unit
-- Multi-page scan: up to 5 pages captured before processing; all sent to Claude Vision in single API call; first page auto-saved as recipe photo
-- Recipe photos: `EditImageGallery` component handles add/delete/set-primary; uploads go to `recipe-user-photos` Supabase Storage bucket; photos are per-recipe, not per-user
-- `callClaude` supports `images[]` array for multi-image API calls (takes precedence over single `imageBase64`)
-- Recipe versioning: `parent_recipe_id` + `version_number` + `version_label` + `is_parent` on recipes table; parent is the original recipe, children link via FK; recipe list filters out children
-- Auto-tag: multi-select toggle pattern with confirm button (not single-tap-to-add)
-- Search filters: bottom sheet modal pattern (not inline expansion) for all category filters; `FilterBottomSheet` component
-- AI Meal Plan Wizard: `MealPlanWizard` component in `apps/mobile/components/`; uses `generateMealPlan` from `@chefsbook/ai`
-- Meal plan servings: `servings` column already existed on `meal_plans` (numeric(6,2)); portions stepper in add-meal flow
+- Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.110.47.62 + localhost + 10.0.2.2
+- American spelling used throughout mobile app (Favorite not Favourite)
+- Scan description: Claude Vision prompt mandates a description — field must never be null
+- Instagram URLs must never enter standard URL import path — `handleImport()` checks `isInstagramUrl()` first and redirects
 
-- i18n: `react-i18next` + `i18next`; locale files in `apps/mobile/locales/*.json`; `activateLanguage()` in `lib/i18n.ts` lazy-loads non-English locales; synced to preferences store in `_layout.tsx`
-- Store logos: logo.dev API (`img.logo.dev/[domain]?token=pk_EXpCeGY3QxS0VKVRKTr_pw`) replaces Clearbit; token is publishable/safe for client
-- Pexels image search: `searchPexels()` in `@chefsbook/ai` — shared by mobile and web; key via `EXPO_PUBLIC_PEXELS_API_KEY` / `PEXELS_API_KEY`
-- Recipe image fallback: `RecipeImage` component (`apps/mobile/components/RecipeImage.tsx`) shows chef's hat icon.png when no image URL; used in RecipeCard + detail hero
-- Pexels picker: `PexelsPickerSheet` modal shows 3 landscape thumbnails; wired into EditImageGallery, Speak a Recipe, scan cover prompt
-- Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.110.47.62 + localhost + 10.0.2.2; release AndroidManifest override in `src/release/`
-- Recipe content translation: `translateRecipe()` in `@chefsbook/ai` translates via Claude Sonnet; cached in `recipe_translations` table per recipe+language; cache invalidated on `replaceIngredients`/`replaceSteps`; English always shows original
-- Translation flow: recipe detail checks cache → shows original → translates in background → saves → re-renders; "Translating…" indicator shown during API call
-- "Save a Copy" in edit mode creates independent recipe (no parent_recipe_id); title gets " (Copy)" suffix; tags/dietary_flags copied via separate updateRecipe call
-- Copy/duplicate icon removed from recipe detail action bar — action bar is exactly: heart · share · pin · edit
-- Recipe detail hero zone: `HeroGallery` component shows user-uploaded photos as full-width swipeable pager (max 4, dots indicator); falls back to `recipe.image_url` then chef's hat; chef's hat ONLY when zero images
-- Recipe cards: `getPrimaryPhotos()` batch query fetches primary user photo for all recipes; card shows `primaryPhoto ?? image_url ?? chef's hat`
-- `EditImageGallery` no longer renders in read-only mode (hero gallery replaces it); edit mode only
-- Post-import image flow: `PostImportImageSheet` bottom sheet replaces old inline "Add cover photo?" prompt; shown after URL import, scan, and file import
-- Pexels pre-fetch: runs in parallel with import (domain guess query first, refetch with actual recipe title); results ready when sheet opens
-- Scan food photo detection: `scanRecipeMultiPage` returns `has_food_photo` + `food_photo_region`; scan image only offered when food photo detected
-- URL import image: og:image extracted from HTML on mobile side; offered as "From website" option in PostImportImageSheet
-- Recipe list refresh: `useFocusEffect` on index tab re-fetches recipes + primary photos every time tab gains focus (fixes stale images after edits)
-- HeroGallery refresh: accepts `refreshKey` prop; recipe detail bumps key on edit save/cancel so hero re-fetches photos
-- Scan description: Claude Vision prompt mandates a description — extracts headnote or generates 1-2 sentences if absent; field must never be null
-- Dish identification scan: single-page scans classified first via `analyseScannedImage()` — recipe documents go to existing scan flow (unchanged), dish photos enter `DishIdentificationFlow` modal
-- Dish identification AI: `analyseScannedImage()`, `reanalyseDish()`, `generateDishRecipe()` in `@chefsbook/ai` (`packages/ai/src/dishIdentify.ts`)
-- Dish flow UI: cuisine quick-select → clarifying question pills (max 3, one at a time) → dish options radio → confirm dish → action sheet (find recipes / generate recipe)
-- Generated dish recipes auto-upload the scanned dish photo as primary image
-- Search tab accepts `q` query param to pre-fill search (used by dish flow "Find matching recipes")
-- Instagram import: `fetchInstagramPost()` + `extractRecipeFromInstagram()` in `packages/ai/src/instagramImport.ts`; share handler routes IG URLs to dedicated flow
-- Instagram no-recipe path routes to DishIdentificationFlow with pre-filled dish_name (skips cuisine select)
-- Scan tab grid: 3+2 layout (was 2+2) with smaller 48px icon circles to fit Instagram option
-- PostImportImageSheet: `instagramImageUrl` + `onSelectInstagramImage` props for "From Instagram post" cover option
-- Clipboard paste handler routes Instagram URLs to `handleInstagramImport`, non-IG URLs to `handleImport`
-- Instagram paste input validates URL format before calling import (`isInstagramUrl` check)
-- Scan mode buttons: 2-row layout (Add page + From gallery top row, Done scanning full-width below) with `insets.bottom` safe area
-- Dish identification "Additional context" step: free text (200 char, counter) between dish confirm and action sheet; text appended to search query and Claude prompt
-- `handleImport()` checks `isInstagramUrl()` first and redirects — IG URLs never enter standard URL import path
-- Dish flow `manual_name` step: TextInput for typing dish name when AI identification fails; reachable from unclear screen, confirm_dish "Type it myself", and dish_options "None of these"
-- Usernames: `username` column on `user_profiles` (unique, lowercase, 3-20 chars, constraint `username_format`); permanent after set
-- Profile queries in `packages/db/src/queries/profiles.ts`: getProfileById, getProfileByUsername, checkUsernameAvailable, setUsername, updateProfile, searchUsers
-- Signup flow requires username (mobile + web); debounced availability check with visual feedback
-- `is_searchable` toggle in settings; private mode hides from search and blocks new comments
-- Profile edit: display_name + bio (200 chars) editable; username read-only with lock icon
-- People search: query in Search tab searches usernames; results shown in "People" section above recipes
-- Web profile page: `/u/[username]` route shows public recipes + stats; server-rendered
-- Recipe attribution columns: `original_submitter_id`, `original_submitter_username`, `shared_by_id`, `shared_by_username` (foundation for session 31)
+### Conventions
+- Development agenda tracked in `AGENDA.md` at project root
+- Store logos: logo.dev API (publishable token, safe for client)
+- i18n: `react-i18next`; locale files in `apps/mobile/locales/*.json`; `activateLanguage()` lazy-loads non-English locales
+- Translation cached in `recipe_translations` table per recipe+language; English always shows original
 
 ## Builds
 

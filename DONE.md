@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 30)
+- Migration 018: promo_codes table, family_members table, plan billing fields on user_profiles
+- Rewrote PLAN_LIMITS with 4 tiers (free/chef/family/pro) + new feature flags (canImport, canAI, canPDF, etc.)
+- PlanTier type updated to include `chef`; promo code validation + application functions
+- Promo code field on mobile + web signup; `pro100` seeded and Bob set to Pro
+- Mobile plans page: 4 tier cards, monthly/annual toggle, dev mode instant upgrade/downgrade
+- Web plans page at `/dashboard/plans` with same layout
+- Settings modal: "Your Plan" card with See Plans navigation
+- i18n: full `plans` namespace with tier names, prices, features, gate messages
+
 ## 2026-04-09 (session 29)
 - Migration 017: username, bio, is_searchable, follower/following/recipe counts + recipe attribution columns
 - DB queries: getProfileById, getProfileByUsername, checkUsernameAvailable, setUsername, updateProfile, searchUsers

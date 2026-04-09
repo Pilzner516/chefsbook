@@ -93,16 +93,16 @@ export default function SettingsModal() {
         )}
 
         <Card>
-          <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>Subscription</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>{t('plans.yourPlan')}</Text>
           <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 4 }}>
-            Current plan: {planTier.charAt(0).toUpperCase() + planTier.slice(1)}
+            {t('plans.currentPlan')}: {planTier.charAt(0).toUpperCase() + planTier.slice(1)}
           </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            Recipes: {PLAN_LIMITS[planTier].maxRecipes === Infinity ? 'Unlimited' : PLAN_LIMITS[planTier].maxRecipes}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 4 }}>
+            {t('plans.ownRecipes')}: {PLAN_LIMITS[planTier].ownRecipes === Infinity ? t('plans.unlimited') : PLAN_LIMITS[planTier].ownRecipes}
           </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-            Scans/month: {PLAN_LIMITS[planTier].maxScansPerMonth === Infinity ? 'Unlimited' : PLAN_LIMITS[planTier].maxScansPerMonth}
-          </Text>
+          <View style={{ marginTop: 8 }}>
+            <Button title={t('plans.seePlans')} onPress={() => router.push('/plans' as any)} variant="secondary" size="sm" />
+          </View>
         </Card>
 
         {!isAnonymous && profile && (

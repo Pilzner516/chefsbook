@@ -21,6 +21,7 @@ export default function SignUpScreen() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'short'>('idle');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,6 +51,16 @@ export default function SignUpScreen() {
     setLoading(true);
     try {
       await signUp(email.trim(), password, displayName.trim(), username);
+      // Apply promo code if provided
+      if (promoCode.trim()) {
+        try {
+          const { applyPromoCode } = await import('@chefsbook/db');
+          const { data: sess } = await (await import('@chefsbook/db')).supabase.auth.getSession();
+          if (sess.session?.user?.id) {
+            await applyPromoCode(sess.session.user.id, promoCode.trim());
+          }
+        } catch {} // non-blocking — account created even if promo fails
+      }
       router.replace('/(tabs)');
     } catch (e: any) {
       setError(e.message ?? t('auth.signUpFailed'));
@@ -123,6 +134,13 @@ export default function SignUpScreen() {
             onChangeText={setPassword}
             placeholder={t('auth.password')}
             secureTextEntry
+            autoCapitalize="none"
+          />
+          <View style={{ height: 12 }} />
+          <Input
+            value={promoCode}
+            onChangeText={setPromoCode}
+            placeholder={t('plans.promoPlaceholder')}
             autoCapitalize="none"
           />
 

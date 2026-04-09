@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, checkUsernameAvailable, setUsername } from '@chefsbook/db';
+import { supabase, checkUsernameAvailable, setUsername, applyPromoCode } from '@chefsbook/db';
 import Link from 'next/link';
 
 type Mode = 'login' | 'signup';
@@ -16,6 +16,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('123456');
   const [username, setUsernameVal] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
+  const [promoCode, setPromoCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -58,6 +59,10 @@ export default function AuthPage() {
         if (signUpData?.user?.id && username) {
           await new Promise((r) => setTimeout(r, 1000));
           try { await setUsername(signUpData.user.id, username); } catch {}
+        }
+        // Apply promo code if provided
+        if (signUpData?.user?.id && promoCode.trim()) {
+          try { await applyPromoCode(signUpData.user.id, promoCode.trim()); } catch {}
         }
         setMessage('Account created! Check your email to confirm, then sign in.');
         setMode('login');
@@ -154,6 +159,21 @@ export default function AuthPage() {
                 className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
               />
             </div>
+            {mode === 'signup' && (
+              <div>
+                <label htmlFor="promo" className="block text-sm font-medium mb-1">
+                  Promo code (optional)
+                </label>
+                <input
+                  id="promo"
+                  type="text"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  placeholder="e.g. pro100"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
+                />
+              </div>
+            )}
             <button
               type="submit"
               disabled={loading}
