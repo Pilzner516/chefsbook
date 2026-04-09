@@ -349,6 +349,8 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Instagram paste input validates URL format before calling import (`isInstagramUrl` check)
 - Scan mode buttons: 2-row layout (Add page + From gallery top row, Done scanning full-width below) with `insets.bottom` safe area
 - Dish identification "Additional context" step: free text (200 char, counter) between dish confirm and action sheet; text appended to search query and Claude prompt
+- `handleImport()` checks `isInstagramUrl()` first and redirects — IG URLs never enter standard URL import path
+- Dish flow `manual_name` step: TextInput for typing dish name when AI identification fails; reachable from unclear screen, confirm_dish "Type it myself", and dish_options "None of these"
 
 ## Builds
 

@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 27)
+- Fix IG URL routing: `handleImport()` checks `isInstagramUrl()` first, redirects to IG handler — no more misroute
+- Manual dish name input: new `manual_name` step in DishIdentificationFlow with TextInput + safe area insets
+- "Type it myself" option on unclear screen, confirm_dish screen, and "None of these" on dish_options
+- Ran all 3 agent pre-flight and post-flight checklists (ui-guardian, import-pipeline, image-system)
+
 ## 2026-04-09 (session 26)
 - Installed 4 specialist agents in `.claude/agents/`: ui-guardian, import-pipeline, image-system, data-flow
 - Added AGENT SYSTEM section to CLAUDE.md with agent lookup table and invocation instructions

@@ -370,6 +370,12 @@ export default function ScanTab() {
     const target = urlToImport || urlInput.trim();
     if (!target || !session?.user?.id) return;
 
+    // Redirect Instagram URLs to the dedicated IG handler
+    if (isInstagramUrl(target)) {
+      handleInstagramImport(target);
+      return;
+    }
+
     setImportStatus('importing');
     setPexelsLoading(true);
     setPexelsPhotos([]);

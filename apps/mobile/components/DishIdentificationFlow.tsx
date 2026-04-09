@@ -22,6 +22,7 @@ type FlowStep =
   | 'clarifying'
   | 'dish_options'
   | 'confirm_dish'
+  | 'manual_name'
   | 'context_input'
   | 'action_sheet'
   | 'generating';
@@ -68,6 +69,7 @@ export function DishIdentificationFlow({
   const [selectedDishOption, setSelectedDishOption] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [userContext, setUserContext] = useState('');
+  const [manualDishName, setManualDishName] = useState('');
 
   const questions = analysis.clarifying_questions ?? [];
 
@@ -253,6 +255,19 @@ export function DishIdentificationFlow({
           {t('dishId.itsDish')}
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setStep('manual_name')}
+        style={{
+          width: '100%', backgroundColor: colors.bgCard, borderRadius: 12,
+          padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12,
+          borderWidth: 1, borderColor: colors.borderDefault,
+        }}
+      >
+        <Ionicons name="pencil-outline" size={24} color={colors.accent} style={{ marginRight: 12 }} />
+        <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>
+          {t('dishId.typeItMyself')}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -365,7 +380,7 @@ export function DishIdentificationFlow({
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={onDismiss}
+            onPress={() => setStep('manual_name')}
             style={{
               flex: 1, backgroundColor: colors.bgBase, borderRadius: 12, paddingVertical: 14,
               alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault,
@@ -417,6 +432,9 @@ export function DishIdentificationFlow({
           <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{t('dishId.noTryAgain')}</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity onPress={() => setStep('manual_name')} style={{ alignItems: 'center', marginTop: 16 }}>
+        <Text style={{ color: colors.textMuted, fontSize: 14 }}>{t('dishId.typeItMyself')}</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -483,6 +501,54 @@ export function DishIdentificationFlow({
       <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 16 }}>
         {t('dishId.generating')}
       </Text>
+    </View>
+  );
+
+  const renderManualName = () => (
+    <View style={{ paddingHorizontal: 24 }}>
+      <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>
+        {t('dishId.whatDishIsThis')}
+      </Text>
+      <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>
+        {t('dishId.manualNameHint')}
+      </Text>
+      <TextInput
+        value={manualDishName}
+        onChangeText={setManualDishName}
+        placeholder={t('dishId.manualNamePlaceholder')}
+        placeholderTextColor={colors.textMuted}
+        autoFocus
+        style={{
+          backgroundColor: colors.bgBase,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: colors.borderDefault,
+          padding: 14,
+          fontSize: 16,
+          color: colors.textPrimary,
+        }}
+      />
+      <TouchableOpacity
+        onPress={() => {
+          if (manualDishName.trim()) {
+            handleDishConfirmed(manualDishName.trim());
+          }
+        }}
+        disabled={!manualDishName.trim()}
+        style={{
+          backgroundColor: manualDishName.trim() ? colors.accent : colors.bgBase,
+          borderRadius: 12,
+          paddingVertical: 14,
+          alignItems: 'center',
+          marginTop: 16,
+          marginBottom: insets.bottom + 16,
+          opacity: manualDishName.trim() ? 1 : 0.5,
+        }}
+      >
+        <Text style={{ color: manualDishName.trim() ? '#ffffff' : colors.textMuted, fontSize: 16, fontWeight: '700' }}>
+          {t('dishId.continueArrow')}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -556,6 +622,7 @@ export function DishIdentificationFlow({
       case 'clarifying': return renderClarifying();
       case 'dish_options': return renderDishOptions();
       case 'confirm_dish': return renderConfirmDish();
+      case 'manual_name': return renderManualName();
       case 'context_input': return renderContextInput();
       case 'action_sheet': return renderActionSheet();
       case 'generating': return renderGenerating();
@@ -604,7 +671,7 @@ export function DishIdentificationFlow({
           </ScrollView>
 
           {/* Cancel button (only on certain steps) */}
-          {(step === 'cuisine_select' || step === 'clarifying' || step === 'confirm_dish' || step === 'context_input' || step === 'action_sheet' || step === 'dish_options') && (
+          {(step === 'cuisine_select' || step === 'clarifying' || step === 'confirm_dish' || step === 'manual_name' || step === 'context_input' || step === 'action_sheet' || step === 'dish_options') && (
             <TouchableOpacity
               onPress={onDismiss}
               style={{ alignItems: 'center', paddingVertical: 12 }}

@@ -329,7 +329,11 @@
     "skipArrow": "Skip \u2192",
     "contextHint": "Add cooking notes, dietary needs, or key ingredients to improve results",
     "contextPlaceholder": "e.g. \"medium rare, no garlic, gluten-free version\"",
-    "continueArrow": "Continue \u2192"
+    "continueArrow": "Continue \u2192",
+    "typeItMyself": "Type the dish name myself",
+    "whatDishIsThis": "What dish is this?",
+    "manualNameHint": "Type the name of the dish and we'll find or generate a recipe for you",
+    "manualNamePlaceholder": "e.g. Chicken Tikka Masala"
   },
   "speak": {
     "record": "Record",
