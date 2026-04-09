@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 28)
+- Cloudflare Tunnel setup: chefsbk.app live via tunnel `chefsbook` on RPi5
+- Installed cloudflared 2026.3.0, Node.js 22, PM2 on RPi5
+- Cloned repo to /mnt/chefsbook/repo, built Next.js production (35 pages)
+- DNS: chefsbk.app, www.chefsbk.app, api.chefsbk.app all routed via CNAME
+- PM2 running chefsbook-web; cloudflared running as systemd service
+- Fixed PipelineStage type (added `json-ld+claude`, `claude`) for web build
+- Added `not-found.tsx` to fix SSG 404 build error
+- Created apps/mobile/.env.production with public URLs
+- Added Public URLs section to CLAUDE.md with restart/log commands
+
 ## 2026-04-09 (session 27)
 - Fix IG URL routing: `handleImport()` checks `isInstagramUrl()` first, redirects to IG handler — no more misroute
 - Manual dish name input: new `manual_name` step in DishIdentificationFlow with TextInput + safe area insets

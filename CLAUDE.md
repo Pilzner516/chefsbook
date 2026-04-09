@@ -91,6 +91,18 @@ cd apps/mobile && eas build --platform ios --profile development --local
 - **Storage**: 54GB USB drive mounted at /mnt/chefsbook on rpi5-eth
 - **NOT using**: supabase.com cloud — everything is self-hosted
 
+## Public URLs
+
+- Web app: https://chefsbk.app (Cloudflare Tunnel → RPi5 port 3000)
+- API: https://api.chefsbk.app (Cloudflare Tunnel → RPi5 port 8000)
+- Tunnel name: chefsbook (ID: 45f6f96f-6507-488a-80fa-e552ab0ce085)
+- PM2 process: chefsbook-web
+- Web repo on Pi: /mnt/chefsbook/repo
+- Restart web: `pm2 restart chefsbook-web`
+- Restart tunnel: `sudo systemctl restart cloudflared`
+- Tunnel logs: `journalctl -u cloudflared -n 50`
+- Web logs: `pm2 logs chefsbook-web`
+
 ## Environment variables (in .env.local at monorepo root)
 
 ```
