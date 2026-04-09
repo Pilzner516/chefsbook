@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 35)
+- Migration 022: guest_sessions table for share link guest email capture
+- Mobile: Share action sheet with "Share via link" + "Share as PDF" (Pro gated) options
+- Mobile: Privacy warning for private recipes before sharing — updates visibility to shared_link
+- Mobile: Share URLs now use chefsbk.app/recipe/[id]?ref=[username] format with clipboard copy
+- Mobile: Sticky "Save to my ChefsBook" bottom bar on non-owned recipe detail with plan gating + attribution
+- Mobile: Deep link handler routes chefsbk.app/recipe/[id] URLs directly to recipe detail
+- Mobile: Intent filter in app.json with autoVerify for chefsbk.app/recipe paths (Android App Links)
+- Web: Sign-in wall overlay on /recipe/[id] for unauthenticated users (Sign in / Create account / Download app / Guest)
+- Web: Guest email capture flow — stores in guest_sessions table, shows recipe with persistent banner
+- Web: CTA card at bottom of recipe for guest/unauthenticated users ("Love this recipe? Save it")
+- Web: assetlinks.json created at /.well-known/ for Android App Links verification
+- i18n: `share` namespace with 16 keys added to all 5 locales (en/fr/es/it/de)
+- Migration applied to RPi5, tsc --noEmit passes both apps
+
 ## 2026-04-09 (session 34)
 - Migration 021: recipe_likes + trigger, recipe_comments + trigger, comment_flags, blocked_commenters tables
 - `moderateComment()` in @chefsbook/ai — Claude moderation (clean/mild/serious verdicts)

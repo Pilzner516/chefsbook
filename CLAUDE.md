@@ -280,6 +280,7 @@ adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_not
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
+- assetlinks.json has placeholder fingerprint — needs release APK signing key SHA256 (`keytool -list -v -keystore [keystore.jks]`)
 - Emulator must be launched from CLI (`emulator -avd Medium_Phone_API_36.1 -no-snapshot -gpu host`) — Android Studio Device Manager launches headless/invisible window
 - Metro hostname: set `REACT_NATIVE_PACKAGER_HOSTNAME=localhost` before `npx expo start` when on Tailscale (otherwise Metro advertises Tailscale IP, unreachable from emulator)
 - **Mobile storage uploads FIXED** — Root cause: `supautils` GUC check hook blocked `set_config()` for non-superuser `supabase_storage_admin` role. Fix: `ALTER ROLE supabase_storage_admin SUPERUSER;` on RPi5 PostgreSQL. Persists across restarts (stored in pg_authid). If storage breaks after full volume reset, re-run the ALTER ROLE.
@@ -318,6 +319,9 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - `comments_suspended` on user_profiles: set automatically on serious AI violation; restorable by admin
 - Comment flags: user reporting via `comment_flags` table; 3+ flags auto-escalate to admin; flag reasons: Inappropriate/Harassment/Spam/Other
 - Recipe owner controls: delete any comment, block commenter, toggle `comments_enabled` per recipe
+- Share links: chefsbk.app/recipe/[id]?ref=[username]; private recipes auto-upgrade to `shared_link` visibility on share
+- Guest access: `guest_sessions` table captures email for unauthenticated recipe viewers; guests can view but not save/comment
+- Android App Links: intent filter with `autoVerify` for chefsbk.app/recipe; assetlinks.json needs release APK fingerprint
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)

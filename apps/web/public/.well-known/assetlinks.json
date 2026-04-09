@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.chefsbook.app",
+    "sha256_cert_fingerprints": ["TODO_ADD_RELEASE_APK_FINGERPRINT"]
+  }
+}]

@@ -603,5 +603,20 @@
     "flagSpam": "Spam",
     "flagOther": "Other",
     "flagSent": "Thanks for reporting"
+  },
+  "share": {
+    "title": "Share this recipe",
+    "shareViaLink": "Share via ChefsBook link",
+    "shareAsPdf": "Share as PDF",
+    "proOnly": "Pro plan",
+    "proOnlyMessage": "Upgrade to Pro to share recipes as PDF.",
+    "privacyWarningTitle": "This recipe is private",
+    "privacyWarningMessage": "Sharing will allow anyone with the link to view this recipe. It will not appear in public search.",
+    "shareAnyway": "Share anyway",
+    "linkCopied": "Link copied to clipboard",
+    "saveToMyCollection": "Save to my ChefsBook",
+    "savedToCollection": "Saved to your collection",
+    "planRequired": "Chef plan required",
+    "planRequiredMessage": "Upgrade to Chef plan to save recipes."
   }
 }

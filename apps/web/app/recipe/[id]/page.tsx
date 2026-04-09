@@ -26,6 +26,8 @@ function formatTimestamp(seconds: number): string {
 export default function RecipePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refUsername = searchParams.get('ref');
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [servings, setServings] = useState<number>(0);
@@ -66,6 +68,9 @@ export default function RecipePage() {
   const [userLanguage, setUserLanguage] = useState('en');
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
   const [translating, setTranslating] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestSubmitting, setGuestSubmitting] = useState(false);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const seekYouTube = useCallback((seconds: number) => {
@@ -464,8 +469,68 @@ export default function RecipePage() {
 
   const originalServings = recipe.servings;
 
+  // Sign-in wall for unauthenticated users (not guest)
+  if (!isLoggedIn && !isGuest) {
+    return (
+      <main className="min-h-screen bg-cb-bg flex items-center justify-center">
+        <div className="max-w-sm mx-auto text-center px-6">
+          <Link href="/" className="text-2xl font-bold inline-block mb-8">
+            <span className="text-cb-primary">Chefs</span>book
+          </Link>
+          {refUsername && (
+            <p className="text-cb-secondary text-sm mb-2">@{refUsername} shared a recipe with you</p>
+          )}
+          <h2 className="text-xl font-bold text-cb-text mb-6">&ldquo;{recipe.title}&rdquo;</h2>
+          <div className="space-y-3">
+            <Link href="/auth/signin" className="block w-full bg-cb-primary text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity text-center">
+              Sign in
+            </Link>
+            <Link href="/auth/signup" className="block w-full border border-cb-border py-3 rounded-input text-sm font-semibold text-cb-text hover:bg-cb-card transition-colors text-center">
+              Create account
+            </Link>
+            <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="block w-full border border-cb-border py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors text-center">
+              📱 Download the app
+            </a>
+          </div>
+          <div className="mt-6 pt-6 border-t border-cb-border">
+            <p className="text-cb-muted text-xs mb-3">Continue as guest</p>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!guestEmail.trim() || !guestEmail.includes('@')) return;
+              setGuestSubmitting(true);
+              await supabase.from('guest_sessions').insert({ email: guestEmail.trim(), recipe_id: id });
+              setIsGuest(true);
+              setGuestSubmitting(false);
+            }} className="flex gap-2">
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 border border-cb-border rounded-input px-3 py-2 text-sm bg-white text-cb-text placeholder:text-cb-muted focus:outline-none focus:ring-2 focus:ring-cb-primary/30"
+              />
+              <button
+                type="submit"
+                disabled={guestSubmitting || !guestEmail.includes('@')}
+                className="bg-cb-base text-cb-text px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors disabled:opacity-50"
+              >
+                {guestSubmitting ? '...' : 'View'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-cb-bg">
+      {/* Guest banner */}
+      {isGuest && (
+        <div className="bg-cb-primary text-white text-center py-2 text-sm font-medium">
+          Viewing as guest · <Link href="/auth/signup" className="underline font-semibold">Sign up to save recipes</Link>
+        </div>
+      )}
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <Link href="/" className="text-xl font-bold">
@@ -1457,6 +1522,24 @@ export default function RecipePage() {
           <button onClick={() => setAddConfirm(null)} className="text-cb-secondary hover:text-cb-text shrink-0">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
           </button>
+        </div>
+      )}
+
+      {/* CTA card for non-logged-in or guest users */}
+      {(!isLoggedIn || isGuest) && (
+        <div className="max-w-3xl mx-auto px-6 pb-12">
+          <div className="bg-cb-card border border-cb-border rounded-card p-8 text-center">
+            <h3 className="text-xl font-bold mb-2">Love this recipe?</h3>
+            <p className="text-cb-secondary text-sm mb-4">Save it to your ChefsBook collection</p>
+            <div className="flex items-center justify-center gap-3">
+              <Link href="/auth/signup" className="bg-cb-green text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity">
+                Sign up free
+              </Link>
+              <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors">
+                Download the app
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </main>

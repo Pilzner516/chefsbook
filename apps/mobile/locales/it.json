@@ -406,5 +406,20 @@
     "sharedBy": "Condiviso da",
     "removeSharedBy": "Rimuovi attribuzione",
     "removeSharedByConfirm": "Rimuovere il tag condiviso-da da questa ricetta?"
+  },
+  "share": {
+    "title": "Condividi questa ricetta",
+    "shareViaLink": "Condividi tramite link ChefsBook",
+    "shareAsPdf": "Condividi come PDF",
+    "proOnly": "Piano Pro",
+    "proOnlyMessage": "Passa al piano Pro per condividere ricette come PDF.",
+    "privacyWarningTitle": "Questa ricetta è privata",
+    "privacyWarningMessage": "La condivisione permetterà a chiunque abbia il link di vedere questa ricetta.",
+    "shareAnyway": "Condividi comunque",
+    "linkCopied": "Link copiato",
+    "saveToMyCollection": "Salva nel mio ChefsBook",
+    "savedToCollection": "Salvato nella tua collezione",
+    "planRequired": "Piano Chef richiesto",
+    "planRequiredMessage": "Passa al piano Chef per salvare ricette."
   }
 }

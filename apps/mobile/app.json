@@ -43,6 +43,20 @@
           "autoVerify": true,
           "data": [
             {
+              "scheme": "https",
+              "host": "chefsbk.app",
+              "pathPrefix": "/recipe"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
               "scheme": "https"
             },
             {

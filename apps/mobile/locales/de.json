@@ -406,5 +406,20 @@
     "sharedBy": "Geteilt von",
     "removeSharedBy": "Zuordnung entfernen",
     "removeSharedByConfirm": "Das Geteilt-von-Tag von diesem Rezept entfernen?"
+  },
+  "share": {
+    "title": "Dieses Rezept teilen",
+    "shareViaLink": "Per ChefsBook-Link teilen",
+    "shareAsPdf": "Als PDF teilen",
+    "proOnly": "Pro-Plan",
+    "proOnlyMessage": "Upgrade auf Pro, um Rezepte als PDF zu teilen.",
+    "privacyWarningTitle": "Dieses Rezept ist privat",
+    "privacyWarningMessage": "Das Teilen ermöglicht jedem mit dem Link, dieses Rezept zu sehen.",
+    "shareAnyway": "Trotzdem teilen",
+    "linkCopied": "Link kopiert",
+    "saveToMyCollection": "In mein ChefsBook speichern",
+    "savedToCollection": "In deiner Sammlung gespeichert",
+    "planRequired": "Chef-Plan erforderlich",
+    "planRequiredMessage": "Upgrade auf den Chef-Plan, um Rezepte zu speichern."
   }
 }

@@ -98,24 +98,31 @@ function RootNav() {
     const isInstagramUrl = (u: string) =>
       u.includes('instagram.com/p/') || u.includes('instagram.com/reel/');
 
+    const isChefsbkRecipeUrl = (u: string) =>
+      u.includes('chefsbk.app/recipe/') || u.includes('chefsbook.app/recipe/');
+
     const handleUrl = ({ url }: { url: string }) => {
-      if (url && /^https?:\/\//i.test(url)) {
-        if (isInstagramUrl(url)) {
-          router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
-        } else {
-          router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
-        }
+      if (!url || !/^https?:\/\//i.test(url)) return;
+      if (isChefsbkRecipeUrl(url)) {
+        const recipeId = url.split('/recipe/')[1]?.split('?')[0];
+        if (recipeId) router.push(`/recipe/${recipeId}`);
+      } else if (isInstagramUrl(url)) {
+        router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
+      } else {
+        router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
       }
     };
 
     // Check for URL that launched the app
     Linking.getInitialURL().then((url) => {
-      if (url && /^https?:\/\//i.test(url)) {
-        if (isInstagramUrl(url)) {
-          router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
-        } else {
-          router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
-        }
+      if (!url || !/^https?:\/\//i.test(url)) return;
+      if (isChefsbkRecipeUrl(url)) {
+        const recipeId = url.split('/recipe/')[1]?.split('?')[0];
+        if (recipeId) router.push(`/recipe/${recipeId}`);
+      } else if (isInstagramUrl(url)) {
+        router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
+      } else {
+        router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
       }
     });
 
