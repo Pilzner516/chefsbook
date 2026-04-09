@@ -3,10 +3,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase, listRecipes, deleteRecipe, toggleFavourite, getRecipe, listShoppingLists } from '@chefsbook/db';
+import { supabase, listRecipes, deleteRecipe, toggleFavourite, getRecipe, listShoppingLists, getPrimaryPhotos } from '@chefsbook/db';
 import type { Recipe, ShoppingList } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
+import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 
 type ViewMode = 'grid' | 'list' | 'table';
 type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string | null>(null);
+  const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [tableSortCol, setTableSortCol] = useState<string>('date');
@@ -54,6 +56,9 @@ export default function DashboardPage() {
     if (user) {
       const data = await listRecipes({ userId: user.id, search: search || undefined });
       setRecipes(data);
+      if (data.length > 0) {
+        getPrimaryPhotos(data.map((r) => r.id)).then(setPrimaryPhotos);
+      }
     }
     setLoading(false);
   };
@@ -394,7 +399,7 @@ export default function DashboardPage() {
                 <div className={`bg-cb-card border rounded-card overflow-hidden transition-colors relative ${isSelected ? 'border-cb-primary ring-2 ring-cb-primary/30' : 'border-cb-border hover:border-cb-primary/50'}`}>
                   {selectMode && (<div className="absolute top-3 left-3 z-10"><span className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? 'bg-cb-primary border-cb-primary text-white' : 'bg-white/80 border-cb-border'}`}>{isSelected && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>}</span></div>)}
                   <div className="h-40 bg-cb-bg overflow-hidden flex items-center justify-center relative">
-                    {recipe.image_url ? <img src={recipe.image_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <svg className="w-12 h-12 text-cb-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M2.25 18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25H4.5A2.25 2.25 0 0 0 2.25 6v12Z" /></svg>}
+                    {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="ChefsBook" className="w-20 h-20 object-contain opacity-30" />; })()}
                     {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg"><svg className="w-5 h-5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
                     {recipe.visibility === 'private' && <div className="absolute top-2 right-2 bg-white/80 rounded-full p-0.5"><svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg></div>}
                   </div>
@@ -433,8 +438,7 @@ export default function DashboardPage() {
           {sorted.map((recipe) => (
             <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="flex items-center gap-4 bg-cb-card border border-cb-border rounded-input px-4 py-2.5 hover:border-cb-primary/50 transition-colors group">
               <div className="w-16 h-16 rounded-input overflow-hidden bg-cb-bg shrink-0 relative">
-                {/* TODO(web): replace "No img" with chef's hat logo placeholder + add Pexels picker on recipe edit */}
-                {recipe.image_url ? <img src={recipe.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-cb-border text-xs">No img</div>}
+                {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30 mx-auto mt-3" />; })()}
                 {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-6 h-6 rounded-full bg-red-600/90 flex items-center justify-center"><svg className="w-3 h-3 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
               </div>
               <div className="flex-1 min-w-0">
@@ -490,7 +494,7 @@ export default function DashboardPage() {
                 <tr key={recipe.id} className={`border-b border-cb-border/50 hover:bg-cb-bg/50 transition-colors ${i % 2 === 1 ? 'bg-cb-bg/30' : ''}`}>
                   <td className="px-3 py-1.5">
                     <Link href={`/recipe/${recipe.id}`}>
-                      {recipe.image_url ? <img src={recipe.image_url} alt="" className="w-8 h-8 rounded object-cover" /> : <div className="w-8 h-8 rounded bg-cb-bg" />}
+                      {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt="" className="w-8 h-8 rounded object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 rounded object-contain opacity-30" />; })()}
                     </Link>
                   </td>
                   <td className="px-3 py-1.5"><Link href={`/recipe/${recipe.id}`} className="font-medium hover:text-cb-primary">{recipe.title}</Link></td>

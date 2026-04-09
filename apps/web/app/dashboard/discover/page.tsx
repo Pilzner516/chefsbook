@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getPublicFeed } from '@chefsbook/db';
+import { getPublicFeed, getPrimaryPhotos } from '@chefsbook/db';
 import type { Recipe } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
 import WhatsNewFeed from '@/components/WhatsNewFeed';
+import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 
 type FeedRecipe = Recipe & { author_name: string; author_avatar: string | null };
 
@@ -13,6 +14,7 @@ export default function DiscoverPage() {
   const [recipes, setRecipes] = useState<FeedRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [cuisineFilter, setCuisineFilter] = useState('');
+  const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadFeed();
@@ -22,6 +24,9 @@ export default function DiscoverPage() {
     setLoading(true);
     const data = await getPublicFeed({ limit: 30, cuisineFilter: cuisineFilter || undefined });
     setRecipes(data as FeedRecipe[]);
+    if (data.length > 0) {
+      getPrimaryPhotos(data.map((r) => r.id)).then(setPrimaryPhotos);
+    }
     setLoading(false);
   };
 
@@ -66,13 +71,7 @@ export default function DiscoverPage() {
             <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="group">
               <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-cb-primary/50 transition-colors">
                 <div className="h-40 bg-cb-bg overflow-hidden flex items-center justify-center">
-                  {recipe.image_url ? (
-                    <img src={recipe.image_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <svg className="w-12 h-12 text-cb-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M2.25 18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25H4.5A2.25 2.25 0 0 0 2.25 6v12Z" />
-                    </svg>
-                  )}
+                  {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="ChefsBook" className="w-20 h-20 object-contain opacity-30" />; })()}
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold mb-1 group-hover:text-cb-primary transition-colors">{recipe.title}</h3>

@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 38)
+- `/api/image` proxy route for Supabase storage URLs (apikey injection, 86400s cache)
+- `getRecipeImageUrl()` + `proxyIfNeeded()` utilities in `apps/web/lib/recipeImage.ts`
+- Chef's hat asset at `apps/web/public/images/chefs-hat.png`
+- Dashboard recipe cards (grid/list/table): batch primaryPhotos, priority chain (user photo → image_url → chef's hat)
+- Recipe detail hero: userPhotos proxied via `/api/image`, falls back to image_url
+- Discover page: batch primaryPhotos for public feed with same priority
+
 ## 2026-04-09 (session 37)
 - Web: Moved kg/lb unit toggle from sidebar header to bottom section above Settings (fixes clipping on narrow screens)
 - Web: Full landing page refresh — updated hero with chef's hat logo + AI headline, 4-group feature section reflecting all built features

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import SocialShareModal from '@/components/SocialShareModal';
 import LikeButton from '@/components/LikeButton';
 import RecipeComments from '@/components/RecipeComments';
+import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
@@ -630,10 +631,10 @@ export default function RecipePage() {
               allowFullScreen
             />
           </div>
-        ) : recipe.image_url ? (
+        ) : (userPhotos.length > 0 || recipe.image_url) ? (
           <div className={`rounded-card overflow-hidden relative group ${recipe.cookbook_id ? 'bg-cb-bg flex items-center justify-center' : 'bg-cb-card'}`} style={{ height: recipe.cookbook_id ? 300 : 288 }}>
             <img
-              src={recipe.image_url}
+              src={userPhotos.length > 0 ? proxyIfNeeded(userPhotos[0].url) : recipe.image_url!}
               alt={recipe.title}
               className={`w-full h-full ${recipe.cookbook_id ? 'object-contain' : 'object-cover'}`}
             />
