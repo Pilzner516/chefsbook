@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 26)
+- Installed 4 specialist agents in `.claude/agents/`: ui-guardian, import-pipeline, image-system, data-flow
+- Added AGENT SYSTEM section to CLAUDE.md with agent lookup table and invocation instructions
+- Added SESSION START INSTRUCTIONS to CLAUDE.md (6-step mandatory launch sequence)
+- Updated wrapup.md with POST-FLIGHT AGENT CHECKS (UI, import, image, data, general)
+
 ## 2026-04-08 (session 25)
 - Removed debug `console.log`/`console.warn` from EditImageGallery, recipeStore, recipe detail, speak.tsx
 - Built release APK (111MB, 56s) — includes all sessions 20-24 features and fixes

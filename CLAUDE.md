@@ -17,6 +17,48 @@ Multi-tenant SaaS recipe app. Turborepo monorepo with two apps and three shared 
 
 See `apps/mobile/agents/CLAUDE.md` and `apps/web/CLAUDE.md` for app-specific instructions.
 
+## AGENT SYSTEM — READ BEFORE EVERY SESSION
+
+Specialist agent files live in `.claude/agents/`. Every session MUST read the relevant
+agents before writing any code.
+
+| If your session touches... | Read this agent |
+|---------------------------|----------------|
+| Any screen, modal, or component | ui-guardian.md (ALWAYS) |
+| Any import path (URL, scan, Instagram, speak, file) | import-pipeline.md |
+| Any image upload, display, or storage | image-system.md |
+| Any Zustand store, data fetch, or cache | data-flow.md |
+| Recipe detail screen (read or edit mode) | recipe-detail.md (coming soon) |
+| Shopping lists | shopping-system.md (coming soon) |
+
+Multiple agents may apply to a single session. Read all that apply.
+
+### How to invoke an agent
+At the start of your session prompt, the user will specify which agents to read.
+If not specified, you must determine which apply based on the checklist above and
+read them yourself before starting.
+
+### The agents contain:
+- Mandatory rules (violations = bugs)
+- Pre-flight checklist (run before writing any code)
+- Post-flight checklist (run before /wrapup)
+- Known failure patterns specific to this codebase (do not repeat these)
+
+## SESSION START INSTRUCTIONS
+
+Every Claude Code session must begin with:
+
+1. Read CLAUDE.md (this file) fully
+2. Read DONE.md to see what was last built
+3. Determine which specialist agents apply to this session (see AGENT SYSTEM above)
+4. Read all applicable agent files from .claude/agents/
+5. Run the pre-flight checklist from each applicable agent
+6. Only then begin writing code
+
+Do not skip any of these steps. The pre-flight checklists exist because the same
+bugs have been introduced and fixed multiple times. Reading the agents prevents
+repeating known mistakes.
+
 ## Build & dev commands
 
 ```bash
