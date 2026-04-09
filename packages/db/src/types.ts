@@ -12,6 +12,7 @@ export interface UserProfile {
   bio: string | null;
   is_searchable: boolean;
   is_suspended: boolean;
+  comments_suspended: boolean;
   follower_count: number;
   following_count: number;
   recipe_count: number;
@@ -117,6 +118,9 @@ export interface Recipe {
   aichef_assisted?: boolean;
   source_author?: string | null;
   save_count: number;
+  like_count: number;
+  comment_count: number;
+  comments_enabled: boolean;
   parent_recipe_id: string | null;
   version_number: number;
   version_label: string | null;

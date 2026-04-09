@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 34)
+- Migration 021: recipe_likes + trigger, recipe_comments + trigger, comment_flags, blocked_commenters tables
+- `moderateComment()` in @chefsbook/ai — Claude moderation (clean/mild/serious verdicts)
+- DB queries: toggleLike, isLiked, getLikers, getComments, postComment, deleteComment, flagComment, blockCommenter, toggleComments
+- Mobile: LikeButton (optimistic toggle, owner likers sheet) + RecipeComments (post w/ moderation, delete, block, flag, plan gating)
+- Web: LikeButton + RecipeComments with same features, wired into recipe detail
+- Added like_count, comment_count, comments_enabled to Recipe type; comments_suspended to UserProfile
+- i18n: likes + comments namespaces
+
 ## 2026-04-09 (session 33)
 - Migration 021: Updated clone_recipe RPC to set original_submitter_id/username (chains from source recipe)
 - Added original_submitter_id/username and shared_by_id/username fields to Recipe type in packages/db

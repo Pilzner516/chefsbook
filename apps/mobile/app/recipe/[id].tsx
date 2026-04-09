@@ -10,12 +10,15 @@ import { usePinStore } from '../../lib/zustand/pinStore';
 import { useCookingNotesStore } from '../../lib/zustand/cookingNotesStore';
 import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { shareRecipe } from '../../lib/sharing';
+import { shareRecipe, getShareUrl } from '../../lib/sharing';
+import * as Clipboard from 'expo-clipboard';
+import { canDo } from '@chefsbook/db';
 import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy } from '@chefsbook/db';
+import { updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe } from '@chefsbook/db';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
 import type { TranslatedRecipe } from '@chefsbook/ai';
@@ -25,6 +28,8 @@ import { CountdownTimer } from '../../components/CountdownTimer';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { EditImageGallery } from '../../components/EditImageGallery';
 import { RecipeImage } from '../../components/RecipeImage';
+import { LikeButton } from '../../components/LikeButton';
+import { RecipeComments } from '../../components/RecipeComments';
 import { HeroGallery } from '../../components/HeroGallery';
 
 // --- Error boundary to catch render crashes ---
@@ -562,6 +567,9 @@ function RecipeDetailInner() {
   const [servings, setServings] = useState<number>(4);
   const [cookMode, setCookMode] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [savingClone, setSavingClone] = useState(false);
+  const [savedClone, setSavedClone] = useState(false);
+  const insets = useSafeAreaInsets();
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editCuisine, setEditCuisine] = useState('');
@@ -699,6 +707,59 @@ function RecipeDetailInner() {
       console.error('[RecipeDetail] shopping list error:', err);
       Alert.alert(t('common.errorTitle'), t('recipe.failedAddIngredients'));
     }
+  };
+
+  const handleShareRecipe = (r: typeof recipe) => {
+    if (!r) return;
+    const profile = useAuthStore.getState().profile;
+    const userPlan = profile?.plan_tier ?? 'free';
+
+    const doShare = async () => {
+      // If private, warn and update to shared_link
+      if (r.visibility === 'private') {
+        Alert.alert(
+          t('share.privacyWarningTitle'),
+          t('share.privacyWarningMessage'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('share.shareAnyway'),
+              onPress: async () => {
+                await updateRecipe(r.id, { visibility: 'shared_link' });
+                fetchRecipe(r.id);
+                const url = getShareUrl(r.share_token, profile?.username);
+                await Clipboard.setStringAsync(url);
+                Alert.alert(t('share.linkCopied'));
+                shareRecipe(r, profile?.username);
+              },
+            },
+          ],
+        );
+        return;
+      }
+      const url = getShareUrl(r.share_token, profile?.username);
+      await Clipboard.setStringAsync(url);
+      Alert.alert(t('share.linkCopied'));
+      shareRecipe(r, profile?.username);
+    };
+
+    Alert.alert(
+      t('share.title'),
+      undefined,
+      [
+        { text: `🔗 ${t('share.shareViaLink')}`, onPress: doShare },
+        {
+          text: `📄 ${t('share.shareAsPdf')}${canDo(userPlan, 'canPDF') ? '' : ` (${t('share.proOnly')})`}`,
+          onPress: () => {
+            if (!canDo(userPlan, 'canPDF')) {
+              Alert.alert(t('share.proOnly'), t('share.proOnlyMessage'));
+            }
+            // PDF export not yet implemented
+          },
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
   };
 
   const startEditing = () => {
@@ -1252,7 +1313,7 @@ function RecipeDetailInner() {
               color={recipe.is_favourite ? colors.accent : colors.textMuted}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => shareRecipe(recipe, useAuthStore.getState().profile?.username)} style={{ padding: 6 }}>
+          <TouchableOpacity onPress={() => handleShareRecipe(recipe)} style={{ padding: 6 }}>
             <Ionicons name="share-social-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => (pinned ? unpin(recipe.id) : pin(recipe))} style={{ padding: 6 }}>
@@ -1377,6 +1438,20 @@ function RecipeDetailInner() {
         <Divider />
         <CookingNotesSection recipeId={recipe.id} />
 
+        {/* Likes */}
+        <Divider />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} isOwner={recipe.user_id === session?.user?.id} />
+        </View>
+
+        {/* Comments (public recipes only) */}
+        <RecipeComments
+          recipeId={recipe.id}
+          recipeOwnerId={recipe.user_id}
+          commentsEnabled={recipe.comments_enabled ?? true}
+          isPublic={recipe.visibility === 'public'}
+        />
+
         <Divider />
         <Button
           title={t('recipe.deleteRecipe')}
@@ -1388,9 +1463,45 @@ function RecipeDetailInner() {
           }}
           variant="ghost"
         />
-        <View style={{ height: 40 }} />
+        <View style={{ height: recipe.user_id !== session?.user?.id ? 100 : 40 }} />
       </View>
     </ScrollView>
+    {/* Save bar for non-owned recipes */}
+    {recipe && session?.user?.id && recipe.user_id !== session.user.id && !editing && (
+      <View style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        backgroundColor: colors.bgCard, borderTopWidth: 1, borderTopColor: colors.borderDefault,
+        paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12,
+      }}>
+        {savedClone ? (
+          <View style={{ backgroundColor: colors.accentGreenSoft, borderRadius: 10, padding: 14, alignItems: 'center' }}>
+            <Text style={{ color: colors.accentGreen, fontWeight: '700', fontSize: 15 }}>{t('share.savedToCollection')} ✓</Text>
+          </View>
+        ) : (
+          <Button
+            title={savingClone ? t('common.saving') : `💾 ${t('share.saveToMyCollection')}`}
+            onPress={async () => {
+              const profile = useAuthStore.getState().profile;
+              if (!canDo(profile?.plan_tier ?? 'free', 'canImport')) {
+                Alert.alert(t('share.planRequired'), t('share.planRequiredMessage'));
+                return;
+              }
+              setSavingClone(true);
+              try {
+                const ref = recipe.original_submitter_username ?? undefined;
+                await cloneRecipe(recipe.id, session.user.id, ref);
+                setSavedClone(true);
+              } catch (e: any) {
+                Alert.alert(t('common.errorTitle'), e.message);
+              } finally {
+                setSavingClone(false);
+              }
+            }}
+            loading={savingClone}
+          />
+        )}
+      </View>
+    )}
     </View>
   );
 }

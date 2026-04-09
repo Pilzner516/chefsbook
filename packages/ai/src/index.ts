@@ -34,3 +34,5 @@ export { analyseScannedImage, reanalyseDish, generateDishRecipe } from './dishId
 export type { ScanImageAnalysis, ClarifyingQuestion } from './dishIdentify';
 export { fetchInstagramPost, extractRecipeFromInstagram } from './instagramImport';
 export type { InstagramPostData, InstagramRecipeResult } from './instagramImport';
+export { moderateComment } from './moderateComment';
+export type { ModerationResult } from './moderateComment';

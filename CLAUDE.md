@@ -313,6 +313,11 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - `is_suspended` flag on user_profiles: mobile shows full-screen notice, web redirects to /suspended
 - `plan_limits` DB table mirrors PLAN_LIMITS constants — source of truth for admin UI, fallback to code constants in app
 - Recipe attribution: `original_submitter` chains from source recipe (never changes); `shared_by` is immediate sharer (from `?ref=` param); `shared_by` is user-removable, `original_submitter` is locked
+- Likes: any plan can like; `recipe_likes` table with trigger updating `like_count` on recipes; optimistic UI toggle
+- Comments: Chef+ plan with `is_searchable = true` required; AI moderation via `moderateComment()` before save; 3 verdicts: clean (visible), mild (visible + flagged), serious (hidden + commenter suspended)
+- `comments_suspended` on user_profiles: set automatically on serious AI violation; restorable by admin
+- Comment flags: user reporting via `comment_flags` table; 3+ flags auto-escalate to admin; flag reasons: Inappropriate/Harassment/Spam/Other
+- Recipe owner controls: delete any comment, block commenter, toggle `comments_enabled` per recipe
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)

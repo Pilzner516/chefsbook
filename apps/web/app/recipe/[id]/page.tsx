@@ -3,9 +3,11 @@
 // TODO(web): auto-tag should support multi-select
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SocialShareModal from '@/components/SocialShareModal';
+import LikeButton from '@/components/LikeButton';
+import RecipeComments from '@/components/RecipeComments';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
@@ -1422,6 +1424,18 @@ export default function RecipePage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Likes + Comments */}
+      {recipe && (
+        <div className="max-w-3xl mx-auto px-4 mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} />
+          </div>
+          {recipe.visibility === 'public' && (
+            <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} commentsEnabled={recipe.comments_enabled ?? true} />
+          )}
         </div>
       )}
 
