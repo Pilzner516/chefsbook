@@ -105,7 +105,9 @@
     "searchPlaceholder": "Search...",
     "addedTitle": "Added!",
     "addedMessage": "Recipe added to your collection.",
-    "cloneFailed": "Failed to clone recipe"
+    "cloneFailed": "Failed to clone recipe",
+    "people": "People",
+    "noPeopleFound": "No users found"
   },
   "recipe": {
     "ingredients": "Ingredients",
@@ -397,7 +399,42 @@
     "metric": "Metric",
     "imperial": "Imperial",
     "selectLanguage": "Select Language",
-    "searchLanguages": "Search languages..."
+    "searchLanguages": "Search languages...",
+    "accountPrivacy": "Account Privacy",
+    "searchable": "Make my account searchable",
+    "privateMode": "Switch to Private mode?",
+    "privateWarning1": "You won't appear in user search",
+    "privateWarning2": "You won't be able to post comments",
+    "privateWarning3": "Your existing comments stay visible",
+    "switchPrivate": "Switch to Private",
+    "switchPublic": "Switch to Public"
+  },
+  "profile": {
+    "publicRecipes": "Public Recipes",
+    "followers": "Followers",
+    "following": "Following",
+    "recipes": "Recipes",
+    "follow": "Follow",
+    "editProfile": "Edit Profile",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about your cooking style...",
+    "displayName": "Display Name",
+    "username": "Username",
+    "usernameCannotChange": "Cannot be changed",
+    "saveProfile": "Save",
+    "profileSaved": "Profile updated",
+    "noRecipes": "No public recipes yet",
+    "notFound": "User not found"
+  },
+  "signup": {
+    "username": "Username",
+    "usernamePlaceholder": "e.g. homechef42",
+    "usernameHint": "Choose carefully — this cannot be changed later",
+    "usernameAvailable": "Available",
+    "usernameTaken": "Already taken",
+    "usernameTooShort": "3-20 characters required",
+    "usernameInvalid": "Lowercase letters, numbers, underscores only",
+    "checking": "Checking..."
   },
   "notepad": {
     "title": "QA Notepad",

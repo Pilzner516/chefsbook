@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { Button, Input } from '../../components/UIKit';
 import { useTranslation } from 'react-i18next';
+import { checkUsernameAvailable } from '@chefsbook/db';
+
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
 export default function SignUpScreen() {
   const { colors } = useTheme();
@@ -14,28 +17,39 @@ export default function SignUpScreen() {
   const signUp = useAuthStore((s) => s.signUp);
 
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'short'>('idle');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUsernameChange = (text: string) => {
+    const lower = text.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    setUsername(lower);
+    if (checkTimer.current) clearTimeout(checkTimer.current);
+
+    if (!lower) { setUsernameStatus('idle'); return; }
+    if (lower.length < 3) { setUsernameStatus('short'); return; }
+    if (!USERNAME_RE.test(lower)) { setUsernameStatus('invalid'); return; }
+
+    setUsernameStatus('checking');
+    checkTimer.current = setTimeout(async () => {
+      const available = await checkUsernameAvailable(lower);
+      setUsernameStatus(available ? 'available' : 'taken');
+    }, 500);
+  };
 
   const handleSignUp = async () => {
     setError('');
-    if (!displayName.trim()) {
-      setError(t('auth.enterName'));
-      return;
-    }
-    if (!email.trim() || !password) {
-      setError(t('auth.enterEmail'));
-      return;
-    }
-    if (password.length < 6) {
-      setError(t('auth.passwordLength'));
-      return;
-    }
+    if (!displayName.trim()) { setError(t('auth.enterName')); return; }
+    if (!username || usernameStatus !== 'available') { setError(t('signup.usernameTooShort')); return; }
+    if (!email.trim() || !password) { setError(t('auth.enterEmail')); return; }
+    if (password.length < 6) { setError(t('auth.passwordLength')); return; }
     setLoading(true);
     try {
-      await signUp(email.trim(), password, displayName.trim());
+      await signUp(email.trim(), password, displayName.trim(), username);
       router.replace('/(tabs)');
     } catch (e: any) {
       setError(e.message ?? t('auth.signUpFailed'));
@@ -65,6 +79,36 @@ export default function SignUpScreen() {
             placeholder={t('auth.fullName')}
             autoCapitalize="words"
           />
+          <View style={{ height: 12 }} />
+          <View>
+            <Input
+              value={username}
+              onChangeText={handleUsernameChange}
+              placeholder={t('signup.usernamePlaceholder')}
+              autoCapitalize="none"
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, minHeight: 20 }}>
+              {usernameStatus === 'checking' && (
+                <>
+                  <ActivityIndicator size="small" color={colors.textMuted} style={{ marginRight: 4 }} />
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('signup.checking')}</Text>
+                </>
+              )}
+              {usernameStatus === 'available' && (
+                <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>{'\u2713'} {t('signup.usernameAvailable')}</Text>
+              )}
+              {usernameStatus === 'taken' && (
+                <Text style={{ color: colors.danger, fontSize: 12, fontWeight: '600' }}>{'\u2717'} {t('signup.usernameTaken')}</Text>
+              )}
+              {usernameStatus === 'short' && (
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('signup.usernameTooShort')}</Text>
+              )}
+              {usernameStatus === 'invalid' && (
+                <Text style={{ color: colors.danger, fontSize: 12 }}>{t('signup.usernameInvalid')}</Text>
+              )}
+            </View>
+            <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>{t('signup.usernameHint')}</Text>
+          </View>
           <View style={{ height: 12 }} />
           <Input
             value={email}

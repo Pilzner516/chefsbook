@@ -1,20 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@chefsbook/db';
+import { supabase, checkUsernameAvailable, setUsername } from '@chefsbook/db';
 import Link from 'next/link';
 
 type Mode = 'login' | 'signup';
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'short';
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
 export default function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('a@aol.com');
   const [password, setPassword] = useState('123456');
+  const [username, setUsernameVal] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUsernameChange = (text: string) => {
+    const lower = text.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    setUsernameVal(lower);
+    if (checkTimer.current) clearTimeout(checkTimer.current);
+    if (!lower) { setUsernameStatus('idle'); return; }
+    if (lower.length < 3) { setUsernameStatus('short'); return; }
+    if (!USERNAME_RE.test(lower)) { setUsernameStatus('invalid'); return; }
+    setUsernameStatus('checking');
+    checkTimer.current = setTimeout(async () => {
+      const available = await checkUsernameAvailable(lower);
+      setUsernameStatus(available ? 'available' : 'taken');
+    }, 500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,13 +42,23 @@ export default function AuthPage() {
     setMessage('');
 
     if (mode === 'signup') {
-      const { error: signUpError } = await supabase.auth.signUp({
+      if (usernameStatus !== 'available') {
+        setError('Please choose a valid, available username.');
+        setLoading(false);
+        return;
+      }
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
       if (signUpError) {
         setError(signUpError.message);
       } else {
+        // Set username after signup trigger creates the profile row
+        if (signUpData?.user?.id && username) {
+          await new Promise((r) => setTimeout(r, 1000));
+          try { await setUsername(signUpData.user.id, username); } catch {}
+        }
         setMessage('Account created! Check your email to confirm, then sign in.');
         setMode('login');
       }
@@ -73,6 +102,29 @@ export default function AuthPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'signup' && (
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium mb-1">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  placeholder="e.g. homechef42"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
+                />
+                <div className="mt-1 text-xs min-h-[16px]">
+                  {usernameStatus === 'checking' && <span className="text-cb-muted">Checking...</span>}
+                  {usernameStatus === 'available' && <span className="text-green-600">&#10003; Available</span>}
+                  {usernameStatus === 'taken' && <span className="text-cb-primary">&#10007; Already taken</span>}
+                  {usernameStatus === 'short' && <span className="text-cb-muted">3-20 characters required</span>}
+                  {usernameStatus === 'invalid' && <span className="text-cb-primary">Lowercase letters, numbers, underscores only</span>}
+                </div>
+                <p className="text-[11px] text-cb-muted">Choose carefully — this cannot be changed later</p>
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1">
                 Email

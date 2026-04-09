@@ -11,7 +11,7 @@ interface AuthState {
   init: () => Promise<void>;
   loadProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, username?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -52,13 +52,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (error) throw error;
   },
 
-  signUp: async (email: string, password: string, displayName: string) => {
+  signUp: async (email: string, password: string, displayName: string, username?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: displayName } },
     });
     if (error) throw error;
+    // Set username on profile (trigger creates the row, then we update it)
+    if (username) {
+      // Small delay to let the trigger create the user_profiles row
+      await new Promise((r) => setTimeout(r, 1000));
+      const { setUsername } = await import('@chefsbook/db');
+      const session = (await supabase.auth.getSession()).data.session;
+      if (session?.user?.id) {
+        await setUsername(session.user.id, username);
+      }
+    }
   },
 
   signOut: async () => {

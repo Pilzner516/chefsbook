@@ -10,6 +10,10 @@ export interface UserProfile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  is_searchable: boolean;
+  follower_count: number;
+  following_count: number;
+  recipe_count: number;
   plan_tier: PlanTier;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;

@@ -6,8 +6,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient } from '@chefsbook/db';
-import type { Recipe } from '@chefsbook/db';
+import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient, searchUsers } from '@chefsbook/db';
+import type { Recipe, UserProfile } from '@chefsbook/db';
+import { Avatar } from '../../components/UIKit';
+import { getInitials } from '@chefsbook/ui';
 import { DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST } from '@chefsbook/ui';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
@@ -68,6 +70,7 @@ export default function SearchTab() {
   const tabBarHeight = useTabBarHeight();
   const [ingredientInput, setIngredientInput] = useState('');
   const [tagInput, setTagInput] = useState('');
+  const [peopleResults, setPeopleResults] = useState<UserProfile[]>([]);
 
   // Reset state when switching modes
   const switchMode = (newMode: SearchMode) => {
@@ -103,7 +106,13 @@ export default function SearchTab() {
     }
     setLoading(true);
     setHasSearched(true);
+    setPeopleResults([]);
     const params = filterParams();
+
+    // Search people when query has content (@ prefix or plain text)
+    if (query.trim()) {
+      searchUsers(query.trim()).then(setPeopleResults).catch(() => {});
+    }
 
     // Ingredient filter: search by ingredient first, then intersect
     const ingredientFilters = activeFilters.filter((f) => f.type === 'ingredient');
@@ -588,6 +597,32 @@ export default function SearchTab() {
 
         {/* Results */}
         {loading && <Loading message={t('common.loading')} />}
+
+        {/* People results */}
+        {peopleResults.length > 0 && (
+          <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 8 }}>{t('search.people')}</Text>
+            {peopleResults.map((user) => (
+              <TouchableOpacity
+                key={user.id}
+                onPress={() => router.push(`/chef/${user.id}`)}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 6,
+                  backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault,
+                }}
+              >
+                <Avatar uri={user.avatar_url} initials={getInitials(user.display_name)} size={40} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600' }}>@{user.username}</Text>
+                  {user.display_name && (
+                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{user.display_name}</Text>
+                  )}
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{user.follower_count} {t('profile.followers').toLowerCase()}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {hasSearched && !loading && (
           <View style={{ padding: 16, paddingTop: 0 }}>

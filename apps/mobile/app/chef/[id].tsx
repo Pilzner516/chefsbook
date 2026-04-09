@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { supabase, cloneRecipe } from '@chefsbook/db';
+import { supabase, cloneRecipe, updateProfile } from '@chefsbook/db';
 import type { UserProfile, Recipe } from '@chefsbook/db';
 import { Ionicons } from '@expo/vector-icons';
-import { Avatar, RecipeCard, Button, Loading, EmptyState } from '../../components/UIKit';
+import { Avatar, RecipeCard, Button, Loading, EmptyState, Input } from '../../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
 
 type ProfileTab = 'recipes' | 'about';
 
 export default function ChefProfile() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
+  const loadAuthProfile = useAuthStore((s) => s.loadProfile);
   const [chef, setChef] = useState<UserProfile | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +30,10 @@ export default function ChefProfile() {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [cloning, setCloning] = useState<string | null>(null);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const isOwnProfile = session?.user?.id === id;
 
@@ -96,6 +105,32 @@ export default function ChefProfile() {
     setCloning(null);
   };
 
+  const openEditProfile = () => {
+    if (!chef) return;
+    setEditDisplayName(chef.display_name ?? '');
+    setEditBio(chef.bio ?? '');
+    setShowEditProfile(true);
+  };
+
+  const saveProfile = async () => {
+    if (!chef) return;
+    setSavingProfile(true);
+    try {
+      await updateProfile(chef.id, {
+        display_name: editDisplayName.trim() || null,
+        bio: editBio.trim() || null,
+      });
+      await loadChef();
+      await loadAuthProfile();
+      setShowEditProfile(false);
+      Alert.alert(t('profile.profileSaved'));
+    } catch (e: any) {
+      Alert.alert(t('common.errorTitle'), e.message);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   if (loading) return <Loading message="Loading chef profile..." />;
   if (!chef) return <EmptyState icon="?" title="Chef not found" message="This profile doesn't exist." />;
 
@@ -130,18 +165,22 @@ export default function ChefProfile() {
           </View>
         </View>
 
-        {/* Follow button */}
-        {!isOwnProfile && session?.user && (
+        {/* Follow / Edit Profile button */}
+        {isOwnProfile ? (
+          <View style={{ marginTop: 12, width: 160 }}>
+            <Button title={t('profile.editProfile')} onPress={openEditProfile} variant="secondary" size="sm" />
+          </View>
+        ) : session?.user ? (
           <View style={{ marginTop: 12, width: 140 }}>
             <Button
-              title={followLoading ? '...' : isFollowing ? 'Unfollow' : 'Follow'}
+              title={followLoading ? '...' : isFollowing ? 'Unfollow' : t('profile.follow')}
               onPress={handleFollow}
               variant={isFollowing ? 'secondary' : 'primary'}
               size="sm"
               disabled={followLoading}
             />
           </View>
-        )}
+        ) : null}
       </View>
 
       {/* Tab toggle */}
@@ -236,6 +275,54 @@ export default function ChefProfile() {
         )}
       </View>
       <View style={{ height: 32 }} />
+
+      {/* Edit Profile Modal */}
+      <Modal visible={showEditProfile} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 }}>
+              <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('profile.editProfile')}</Text>
+              <TouchableOpacity onPress={() => setShowEditProfile(false)}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <View style={{ paddingHorizontal: 20 }}>
+              {/* Username — read-only */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('profile.username')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgBase, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: colors.borderDefault }}>
+                  <Ionicons name="lock-closed" size={16} color={colors.textMuted} style={{ marginRight: 8 }} />
+                  <Text style={{ color: colors.textMuted, fontSize: 15 }}>@{chef?.username ?? '—'}</Text>
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('profile.usernameCannotChange')}</Text>
+              </View>
+              {/* Display name */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('profile.displayName')}</Text>
+                <Input value={editDisplayName} onChangeText={setEditDisplayName} placeholder={t('profile.displayName')} />
+              </View>
+              {/* Bio */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('profile.bio')}</Text>
+                <TextInput
+                  value={editBio}
+                  onChangeText={(t) => setEditBio(t.slice(0, 200))}
+                  placeholder={t('profile.bioPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  maxLength={200}
+                  style={{
+                    backgroundColor: colors.bgBase, borderRadius: 10, borderWidth: 1, borderColor: colors.borderDefault,
+                    padding: 12, paddingBottom: 28, fontSize: 15, color: colors.textPrimary, minHeight: 80, textAlignVertical: 'top',
+                  }}
+                />
+                <Text style={{ position: 'absolute', bottom: 8, right: 12, color: colors.textMuted, fontSize: 11 }}>{editBio.length}/200</Text>
+              </View>
+              <Button title={t('profile.saveProfile')} onPress={saveProfile} loading={savingProfile} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

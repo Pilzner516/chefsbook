@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, Alert, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
+import { updateProfile } from '@chefsbook/db';
 import { PLAN_LIMITS } from '@chefsbook/db/subscriptions';
 import { Avatar, Button, Card, Divider, Input, Badge } from '../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
@@ -21,6 +23,8 @@ export default function SettingsModal() {
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
+  const loadProfile = useAuthStore((s) => s.loadProfile);
 
   const isAnonymous = !session?.user?.email;
 
@@ -100,6 +104,44 @@ export default function SettingsModal() {
             Scans/month: {PLAN_LIMITS[planTier].maxScansPerMonth === Infinity ? 'Unlimited' : PLAN_LIMITS[planTier].maxScansPerMonth}
           </Text>
         </Card>
+
+        {!isAnonymous && profile && (
+          <Card>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>{t('settings.accountPrivacy')}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 14, flex: 1 }}>{t('settings.searchable')}</Text>
+              <Switch
+                value={profile.is_searchable}
+                onValueChange={(value) => {
+                  if (!value) {
+                    Alert.alert(
+                      t('settings.privateMode'),
+                      `\u2022 ${t('settings.privateWarning1')}\n\u2022 ${t('settings.privateWarning2')}\n\u2022 ${t('settings.privateWarning3')}`,
+                      [
+                        { text: t('common.cancel'), style: 'cancel' },
+                        {
+                          text: t('settings.switchPrivate'),
+                          style: 'destructive',
+                          onPress: async () => {
+                            await updateProfile(profile.id, { is_searchable: false });
+                            await loadProfile();
+                          },
+                        },
+                      ],
+                    );
+                  } else {
+                    (async () => {
+                      await updateProfile(profile.id, { is_searchable: true });
+                      await loadProfile();
+                    })();
+                  }
+                }}
+                trackColor={{ true: colors.accentGreen, false: colors.borderDefault }}
+                thumbColor="#ffffff"
+              />
+            </View>
+          </Card>
+        )}
 
         {!isAnonymous && (
           <Button

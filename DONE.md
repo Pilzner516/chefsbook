@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-09 (session 29)
+- Migration 017: username, bio, is_searchable, follower/following/recipe counts + recipe attribution columns
+- DB queries: getProfileById, getProfileByUsername, checkUsernameAvailable, setUsername, updateProfile, searchUsers
+- Mobile signup: username field with debounced availability check (green/red/spinner)
+- Mobile settings: privacy toggle with warning modal for private mode
+- Mobile profile: Edit Profile modal with read-only username, editable name/bio (200 char counter)
+- Mobile search: People section above recipe results (avatar, @username, follower count)
+- Web profile page at `/u/[username]` with stats and public recipes grid
+- Web signup: username field with same availability check
+- Set `pilzner` username for Bob's account
+- i18n: profile, signup, settings privacy, search people strings
+
 ## 2026-04-09 (session 28)
 - Cloudflare Tunnel setup: chefsbk.app live via tunnel `chefsbook` on RPi5
 - Installed cloudflared 2026.3.0, Node.js 22, PM2 on RPi5

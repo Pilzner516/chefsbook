@@ -363,6 +363,14 @@ Decisions not already covered in Architecture/Infrastructure sections above:
 - Dish identification "Additional context" step: free text (200 char, counter) between dish confirm and action sheet; text appended to search query and Claude prompt
 - `handleImport()` checks `isInstagramUrl()` first and redirects — IG URLs never enter standard URL import path
 - Dish flow `manual_name` step: TextInput for typing dish name when AI identification fails; reachable from unclear screen, confirm_dish "Type it myself", and dish_options "None of these"
+- Usernames: `username` column on `user_profiles` (unique, lowercase, 3-20 chars, constraint `username_format`); permanent after set
+- Profile queries in `packages/db/src/queries/profiles.ts`: getProfileById, getProfileByUsername, checkUsernameAvailable, setUsername, updateProfile, searchUsers
+- Signup flow requires username (mobile + web); debounced availability check with visual feedback
+- `is_searchable` toggle in settings; private mode hides from search and blocks new comments
+- Profile edit: display_name + bio (200 chars) editable; username read-only with lock icon
+- People search: query in Search tab searches usernames; results shown in "People" section above recipes
+- Web profile page: `/u/[username]` route shows public recipes + stats; server-rendered
+- Recipe attribution columns: `original_submitter_id`, `original_submitter_username`, `shared_by_id`, `shared_by_username` (foundation for session 31)
 
 ## Builds
 
