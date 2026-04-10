@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 47)
+- Verified `photo_url` column issue does NOT exist — code already uses `url` everywhere
+- Backfill SQL: 13 recipes updated with storage URLs from recipe_user_photos (fixed is_primary filter)
+- Image proxy verified for backfilled URLs (200, image/jpeg)
+- Deployed to RPi5
+
 ## 2026-04-10 (session 46)
 - Full verification sweep: 31 pass, 0 fail, 17 not tested (interactive/mobile)
 - QA report at `docs/QA-REPORT-2026-04-10.md`
