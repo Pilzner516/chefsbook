@@ -57,6 +57,7 @@ export default function RecipePage() {
   const [newListName, setNewListName] = useState('');
   const [newStoreName, setNewStoreName] = useState('');
   const [showNewListForm, setShowNewListForm] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [addConfirm, setAddConfirm] = useState<{ count: number; listName: string; listId: string } | null>(null);
   const [showSocialShare, setShowSocialShare] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -595,11 +596,38 @@ export default function RecipePage() {
                       alert('PDF export requires the Pro plan. Upgrade in Settings.');
                       return;
                     }
-                    window.open(`/recipe/${recipe.id}/pdf`, '_blank');
+                    setDownloadingPdf(true);
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session?.access_token) { alert('Please sign in to download PDFs.'); return; }
+                      const res = await fetch(`/recipe/${recipe.id}/pdf`, {
+                        headers: { Authorization: `Bearer ${session.access_token}` },
+                      });
+                      if (!res.ok) {
+                        if (res.status === 403) alert('PDF export requires the Pro plan.');
+                        else alert('PDF generation failed. Please try again.');
+                        return;
+                      }
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      const safeTitle = recipe.title.replace(/[/\\?%*:|"<>]/g, '-');
+                      a.download = `ChefsBook - ${safeTitle}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    } catch {
+                      alert('PDF generation failed. Please try again.');
+                    } finally {
+                      setDownloadingPdf(false);
+                    }
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''}`}
+                  disabled={downloadingPdf}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''} ${downloadingPdf ? 'opacity-50' : ''}`}
                 >
-                  📄 Download PDF
+                  {downloadingPdf ? '⏳ Generating...' : '📄 Download PDF'}
                   {!userIsPro && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Pro</span>}
                 </button>
                 {isOwner && (
