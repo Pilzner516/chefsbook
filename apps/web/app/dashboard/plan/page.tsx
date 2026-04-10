@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { supabase, getMealPlansForWeek, addMealPlan, deleteMealPlan, listRecipes, getRecipe, createShoppingList, listShoppingLists } from '@chefsbook/db';
+import { supabase, getMealPlansForWeek, addMealPlan, deleteMealPlan, updateMealPlan, listRecipes, getRecipe, createShoppingList, listShoppingLists } from '@chefsbook/db';
 import type { MealPlan, Recipe, ShoppingList } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import MealPlanWizard from '@/components/MealPlanWizard';
@@ -36,7 +36,7 @@ const SLOT_COLORS: Record<string, string> = {
   snack: 'bg-green-100 text-green-700',
 };
 
-function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop, onRemovePlan }: {
+function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop, onRemovePlan, onRefresh }: {
   date: string;
   dayName: string;
   plans: any[];
@@ -44,6 +44,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
   onOpenNote: (date: string) => void;
   onOpenDayShop: (date: string) => void;
   onRemovePlan: (id: string) => void;
+  onRefresh: () => void;
 }) {
   const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const hasRecipes = plans.some((p) => p.recipe_id);
@@ -70,9 +71,6 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
             {plan.recipe_id ? (
               /* Recipe entry */
               <div className="relative">
-                <span className={`absolute top-2 left-2 z-10 text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${SLOT_COLORS[plan.meal_slot] ?? 'bg-cb-bg text-cb-secondary'}`}>
-                  {plan.meal_slot}
-                </span>
                 <button
                   onClick={() => onRemovePlan(plan.id)}
                   className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -81,13 +79,44 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                 </button>
                 <Link href={`/recipe/${plan.recipe_id}`} className="block">
-                  {plan.recipe?.image_url ? (
-                    <img src={proxyIfNeeded(plan.recipe.image_url) ?? CHEFS_HAT_URL} alt={plan.recipe?.title ?? ''} className="w-full aspect-[3/2] object-cover rounded-input" />
-                  ) : (
-                    <div className="w-full aspect-[3/2] bg-cb-bg rounded-input flex items-center justify-center">
-                      <svg className="w-8 h-8 text-cb-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M2.25 18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25H4.5A2.25 2.25 0 0 0 2.25 6v12Z" /></svg>
-                    </div>
-                  )}
+                  <div className="relative">
+                    {plan.recipe?.image_url ? (
+                      <img src={proxyIfNeeded(plan.recipe.image_url) ?? CHEFS_HAT_URL} alt={plan.recipe?.title ?? ''} className="w-full aspect-[3/2] object-cover rounded-input" />
+                    ) : (
+                      <div className="w-full aspect-[3/2] bg-cb-bg rounded-input flex items-center justify-center">
+                        <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30" />
+                      </div>
+                    )}
+                    {/* Daypart pill — bottom-left */}
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        const newSlot = prompt(`Change meal type for "${plan.recipe?.title}":\nType: breakfast, lunch, dinner, or snack`, plan.meal_slot);
+                        if (newSlot && ['breakfast', 'brunch', 'lunch', 'dinner', 'snack'].includes(newSlot)) {
+                          await updateMealPlan(plan.id, { meal_slot: newSlot as any });
+                          onRefresh();
+                        }
+                      }}
+                      className="absolute bottom-2 left-2 z-10 bg-black/55 text-white text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full hover:bg-black/70 transition"
+                    >
+                      {plan.meal_slot}
+                    </button>
+                    {/* Servings pill — bottom-right */}
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        const val = prompt('Servings:', String(plan.servings ?? plan.recipe?.servings ?? 4));
+                        const num = parseInt(val ?? '');
+                        if (num && num >= 1 && num <= 20) {
+                          await updateMealPlan(plan.id, { servings: num });
+                          onRefresh();
+                        }
+                      }}
+                      className="absolute bottom-2 right-2 z-10 bg-white/90 text-gray-900 text-[11px] font-semibold px-2.5 py-1 rounded-full hover:bg-white transition"
+                    >
+                      {plan.servings ?? plan.recipe?.servings ?? 4}x Servings
+                    </button>
+                  </div>
                   <p className="text-xs font-medium mt-1.5 line-clamp-2 hover:text-cb-primary transition-colors">
                     {plan.recipe?.title ?? 'Recipe'}
                   </p>
@@ -254,6 +283,20 @@ export default function PlanPage() {
 
   const openDayShop = async (date: string) => {
     if (!userId) return;
+
+    // Check for servings mismatch
+    const dayMeals = plans.filter((p) => p.plan_date === date && p.recipe_id);
+    if (dayMeals.length >= 2) {
+      const servings = dayMeals.map((m: any) => m.servings ?? m.recipe?.servings ?? 4);
+      const min = Math.min(...servings);
+      const max = Math.max(...servings);
+      if (max / min > 2) {
+        const details = dayMeals.map((m: any) => `• ${m.recipe?.title ?? 'Recipe'} — ${m.servings ?? m.recipe?.servings ?? 4}x Servings`).join('\n');
+        const proceed = confirm(`⚠️ Serving sizes don't match\n\nYour recipes for this day have different serving counts:\n${details}\n\nThis may affect shopping list quantities. Add anyway?`);
+        if (!proceed) return;
+      }
+    }
+
     const lists = await listShoppingLists(userId);
     setShopLists(lists);
     setDayShopDate(date);
@@ -353,14 +396,14 @@ export default function PlanPage() {
           <div className="grid grid-cols-5 gap-3">
             {weekDates.slice(0, 5).map((date, i) => {
               const dayPlans = plans.filter((p: any) => p.plan_date === date);
-              return <DayCard key={date} date={date} dayName={DAYS[i]!} plans={dayPlans} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} />;
+              return <DayCard key={date} date={date} dayName={DAYS[i]!} plans={dayPlans} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} onRefresh={loadPlans} />;
             })}
           </div>
           {/* Row 2: Sat–Sun (same column width as row 1) */}
           <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(2, calc((100% - 4 * 0.75rem) / 5))' }}>
             {weekDates.slice(5, 7).map((date, i) => {
               const dayPlans = plans.filter((p: any) => p.plan_date === date);
-              return <DayCard key={date} date={date} dayName={DAYS[5 + i]!} plans={dayPlans} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} />;
+              return <DayCard key={date} date={date} dayName={DAYS[5 + i]!} plans={dayPlans} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} onRefresh={loadPlans} />;
             })}
           </div>
         </div>

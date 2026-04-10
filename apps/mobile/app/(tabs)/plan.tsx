@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActionSheetIOS, Platform, Modal, TextInput, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActionSheetIOS, Platform, Modal, TextInput, FlatList, Image } from 'react-native';
+
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -186,6 +188,37 @@ export default function PlanTab() {
       Alert.alert(t('plan.noRecipes'), t('plan.noRecipesDay', { day: t(`days.${DAY_KEYS[dayIndex]}`) }));
       return;
     }
+
+    // Check for servings mismatch
+    if (recipePlans.length >= 2) {
+      const servings = recipePlans.map((m: any) => m.servings ?? m.recipe?.servings ?? 4);
+      const min = Math.min(...servings);
+      const max = Math.max(...servings);
+      if (max / min > 2) {
+        const dayName = t(`days.${DAY_KEYS[dayIndex]}`);
+        const details = recipePlans.map((m: any) => `• ${m.recipe?.title ?? 'Recipe'} — ${m.servings ?? m.recipe?.servings ?? 4}x`).join('\n');
+        return new Promise<void>((resolve) => {
+          Alert.alert(
+            t('mealCard.mismatchTitle'),
+            t('mealCard.mismatchBody', { day: dayName }) + '\n\n' + details,
+            [
+              { text: t('mealCard.reviewServings'), style: 'cancel', onPress: () => resolve() },
+              {
+                text: t('mealCard.addAnyway'),
+                onPress: async () => {
+                  if (session?.user?.id) await fetchShoppingLists(session.user.id);
+                  setCartDate(date);
+                  setCartDayIndex(dayIndex);
+                  setListPickerVisible(true);
+                  resolve();
+                },
+              },
+            ],
+          );
+        });
+      }
+    }
+
     if (session?.user?.id) {
       await fetchShoppingLists(session.user.id);
     }
@@ -392,14 +425,33 @@ export default function PlanTab() {
                     onPress={() => plan.recipe_id && router.push(`/recipe/${plan.recipe_id}`)}
                     onLongPress={() => showMealActions(plan)}
                     delayLongPress={400}
-                    style={{ paddingVertical: 6, minHeight: 44, justifyContent: 'center' }}
+                    style={{ marginBottom: 8, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.bgBase }}
                   >
-                    <Text style={{ color: colors.accent, fontSize: 11, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.8 }}>
-                      {plan.meal_slot}
-                    </Text>
-                    <Text style={{ color: colors.textPrimary, fontSize: 15 }}>
-                      {(plan as any).recipe?.title ?? plan.notes ?? t('plan.noRecipes')}
-                    </Text>
+                    {plan.recipe?.image_url ? (
+                      <View style={{ height: 80, position: 'relative' }}>
+                        <Image source={{ uri: plan.recipe.image_url, headers: { apikey: SUPABASE_ANON_KEY } }} style={{ width: '100%', height: 80 }} resizeMode="cover" />
+                        {/* Daypart pill — bottom-left */}
+                        <View style={{ position: 'absolute', bottom: 6, left: 6, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 }}>
+                          <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 }}>{plan.meal_slot}</Text>
+                        </View>
+                        {/* Servings pill — bottom-right */}
+                        <View style={{ position: 'absolute', bottom: 6, right: 6, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 }}>
+                          <Text style={{ color: '#1a1a1a', fontSize: 11, fontWeight: '600' }}>{plan.servings ?? plan.recipe?.servings ?? 4}x</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <View style={{ backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, marginRight: 6 }}>
+                          <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '600', textTransform: 'uppercase' }}>{plan.meal_slot}</Text>
+                        </View>
+                        <Text style={{ color: colors.textMuted, fontSize: 11 }}>{plan.servings ?? 4}x</Text>
+                      </View>
+                    )}
+                    <View style={{ paddingHorizontal: 10, paddingVertical: 6 }}>
+                      <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }} numberOfLines={1}>
+                        {plan.recipe?.title ?? plan.notes ?? t('plan.noRecipes')}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))
               )}

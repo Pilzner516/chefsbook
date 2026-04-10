@@ -641,5 +641,15 @@
     "pickAnother": "Pick Another Slot",
     "planRequired": "Chef Plan Required",
     "planRequiredBody": "Adding recipes to your meal plan requires the Chef plan or above."
+  },
+  "mealCard": {
+    "changeMealType": "Change meal type",
+    "changed": "Changed to {{meal}}",
+    "servings": "{{count}}x Servings",
+    "changeServings": "Servings",
+    "mismatchTitle": "Serving sizes don't match",
+    "mismatchBody": "Your recipes for {{day}} have different serving counts. This may affect shopping list quantities.",
+    "reviewServings": "Review Servings",
+    "addAnyway": "Add Anyway"
   }
 }
