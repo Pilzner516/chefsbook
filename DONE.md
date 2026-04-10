@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 55)
+- Web: StorePickerDialog wired to recipe detail "Add to shopping list → new list" (replaces old text input form)
+- Web: StorePickerDialog wired to meal plan "add day to cart → new list" and "add week → new list"
+- Web: Shopping list button colour audit — all Create/Add/New List buttons changed from green to pomodoro red
+- Web: Recipe detail list hover colour changed from green to red
+- Mobile: StorePicker wired to recipe detail "Add to shopping list → new list" (replaces auto-create)
+- Mobile: StorePicker wired to meal plan "New shopping list" button (replaces auto-create)
+- tsc --noEmit passes both apps
+- Deployed to RPi5 (required npm install for stale node_modules), build succeeded, pm2 restarted, chefsbk.app live
+
 ## 2026-04-10 (session 54)
 - Mobile: `StorePicker` bottom sheet — store dropdown with logos/initials, new store input, auto-fill list name
 - Mobile shopping tab: replaced old NewListModal with StorePicker
