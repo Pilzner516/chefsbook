@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 52)
+- Migration 024: `stores` table + `store_id` FK on shopping_lists; backfill 5 stores from existing data
+- DB queries: getUserStores, createStore (logo.dev guess + known domains), updateStoreLogo
+- `createShoppingList()` accepts optional `storeId`
+- Web: StorePickerDialog — store dropdown with logos/initials, "New store..." input, list name auto-fill
+- Web shopping: "New List" opens StorePickerDialog; deployed to RPi5
+
 ## 2026-04-10 (session 51)
 - Web: ChefsDialog component — unified modal with backdrop, rounded container, pill buttons (primary/secondary/cancel/positive)
 - Web: useConfirmDialog + useAlertDialog hooks — imperative confirm/alert replacements using ChefsDialog
