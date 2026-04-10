@@ -104,11 +104,11 @@ export default function HomePage() {
           <Link href="#pricing" className="hidden sm:block text-cb-secondary hover:text-cb-text text-sm font-medium">
             Pricing
           </Link>
-          <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
+          <Link href="/auth" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
             Sign in
           </Link>
           <Link
-            href="/auth/signup"
+            href="/auth"
             className="bg-cb-primary text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Get started
@@ -139,13 +139,13 @@ export default function HomePage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/auth/signup"
+            href="/auth"
             className="w-full sm:w-auto bg-cb-primary text-white px-8 py-3 rounded-input text-lg font-semibold hover:opacity-90 transition-opacity text-center"
           >
             Start for free
           </Link>
           <Link
-            href="#features"
+            href="#how-it-works"
             className="w-full sm:w-auto border-2 border-cb-green text-cb-green px-8 py-3 rounded-input text-lg font-semibold hover:bg-cb-green hover:text-white transition-colors text-center"
           >
             See how it works
@@ -182,7 +182,7 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-white py-20">
+      <section id="how-it-works" className="bg-white py-20">
         <div className="max-w-5xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-12 text-cb-text">How it works</h2>
           <div className="relative">
@@ -262,7 +262,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link
-                  href="/auth/signup"
+                  href="/auth"
                   className={`block text-center py-2.5 rounded-input font-semibold text-sm transition-opacity hover:opacity-90 ${
                     tier.featured
                       ? 'bg-cb-primary text-white'
@@ -293,7 +293,7 @@ export default function HomePage() {
             <div className="flex items-center gap-6 text-sm text-cb-secondary">
               <Link href="#features" className="hover:text-cb-text transition-colors">Features</Link>
               <Link href="#pricing" className="hover:text-cb-text transition-colors">Pricing</Link>
-              <Link href="/dashboard" className="hover:text-cb-text transition-colors">Sign In</Link>
+              <Link href="/auth" className="hover:text-cb-text transition-colors">Sign In</Link>
               <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="hover:text-cb-text transition-colors">Download App</a>
             </div>
           </div>

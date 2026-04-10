@@ -483,10 +483,10 @@ export default function RecipePage() {
           )}
           <h2 className="text-xl font-bold text-cb-text mb-6">&ldquo;{recipe.title}&rdquo;</h2>
           <div className="space-y-3">
-            <Link href="/auth/signin" className="block w-full bg-cb-primary text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity text-center">
+            <Link href="/auth" className="block w-full bg-cb-primary text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity text-center">
               Sign in
             </Link>
-            <Link href="/auth/signup" className="block w-full border border-cb-border py-3 rounded-input text-sm font-semibold text-cb-text hover:bg-cb-card transition-colors text-center">
+            <Link href="/auth" className="block w-full border border-cb-border py-3 rounded-input text-sm font-semibold text-cb-text hover:bg-cb-card transition-colors text-center">
               Create account
             </Link>
             <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="block w-full border border-cb-border py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors text-center">
@@ -529,7 +529,7 @@ export default function RecipePage() {
       {/* Guest banner */}
       {isGuest && (
         <div className="bg-cb-primary text-white text-center py-2 text-sm font-medium">
-          Viewing as guest · <Link href="/auth/signup" className="underline font-semibold">Sign up to save recipes</Link>
+          Viewing as guest · <Link href="/auth" className="underline font-semibold">Sign up to save recipes</Link>
         </div>
       )}
       {/* Nav */}
@@ -1541,7 +1541,7 @@ export default function RecipePage() {
             <h3 className="text-xl font-bold mb-2">Love this recipe?</h3>
             <p className="text-cb-secondary text-sm mb-4">Save it to your ChefsBook collection</p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/auth/signup" className="bg-cb-green text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity">
+              <Link href="/auth" className="bg-cb-green text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity">
                 Sign up free
               </Link>
               <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors">
