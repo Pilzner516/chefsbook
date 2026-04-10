@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 60)
+- Fix: I18nProvider no longer blocks render — renders children immediately with English, loads user language async
+- Fix: Shopping list openList() wrapped in try/catch — shows user-friendly error instead of crash
+- Verified DB: shopping_lists.store_id column exists, stores table has 5 backfilled rows
+- Deployed to RPi5 — shopping page returns HTTP 200
+
 ## 2026-04-10 (session 59)
 - Migration 025: Shared recipe translations — RLS changed from owner-only to public-read + auth-write
 - Verified: no user_id column on recipe_translations (already correct), UNIQUE(recipe_id, language) already in place
