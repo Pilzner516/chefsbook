@@ -342,6 +342,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.110.47.62 + localhost + 10.0.2.2
 - American spelling used throughout mobile app (Favorite not Favourite)
 - Scan description: Claude Vision prompt mandates a description — field must never be null
+- Web AI calls (moderateComment, moderateRecipe) fail due to CORS — wrap in try/catch, allow action to proceed without moderation
+- Web API routes using `addItemsWithPipeline` must pass the service role client (db singleton has no JWT context → RLS fails)
 - Instagram URLs must never enter standard URL import path — `handleImport()` checks `isInstagramUrl()` first and redirects
 
 ### Conventions

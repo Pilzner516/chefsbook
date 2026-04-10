@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 49)
+- Fix: Comment post button — moderateComment() CORS error now caught separately, post goes through without moderation on web
+- Fix: Shopping list RLS — addItemsWithPipeline() accepts optional dbClient param; API route passes service role client to bypass RLS
+- Fix: Shopping list insert RLS policy updated to allow list-owner inserts (fallback for direct client calls)
+- Both fixes deployed to RPi5, tested live — comments insert to DB, shopping list API returns 401 correctly without auth
+- Comment row confirmed in recipe_comments table via psql
+
 ## 2026-04-10 (session 48)
 - Fixed duplicate Share button on web recipe detail — kept dropdown with correct share icon
 - Mobile: MealPlanPicker — week nav, colour-coded day/meal slots, conflict warning, servings stepper, Chef+ gate
