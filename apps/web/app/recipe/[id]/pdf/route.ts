@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getRecipe } from '@chefsbook/db';
+import { supabase, getRecipe, listRecipePhotos } from '@chefsbook/db';
 import { PLAN_LIMITS } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { RecipePdfDocument } from './RecipePdf';
+
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { apikey: SUPABASE_ANON_KEY },
+    });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const base64 = Buffer.from(buf).toString('base64');
+    const contentType = res.headers.get('content-type') ?? 'image/jpeg';
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +37,6 @@ export async function GET(
     const { data } = await supabase.auth.getUser(token);
     userId = data.user?.id ?? null;
   } else {
-    // Try session cookie
     const { data: { session } } = await supabase.auth.getSession();
     userId = session?.user?.id ?? null;
   }
@@ -47,28 +63,34 @@ export async function GET(
     return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
   }
 
-  // Fetch author info
-  const { data: author } = await supabase
-    .from('user_profiles')
-    .select('username, display_name')
-    .eq('id', recipe.user_id)
-    .single();
+  // Fetch primary photo (recipe_user_photos first, then image_url fallback)
+  let imageBase64: string | null = null;
+  try {
+    const photos = await listRecipePhotos(id);
+    const photoUrl = photos.length > 0 ? photos[0].url : recipe.image_url;
+    if (photoUrl) {
+      imageBase64 = await fetchImageAsBase64(photoUrl);
+    }
+  } catch {
+    // Image fetch failure should not block PDF generation
+  }
 
   // Generate PDF
   const pdfBuffer = await renderToBuffer(
     RecipePdfDocument({
       recipe,
-      authorUsername: author?.username ?? null,
-      authorName: author?.display_name ?? null,
+      imageBase64,
+      originalSubmitter: recipe.original_submitter_username ?? null,
+      sharedBy: recipe.shared_by_username ?? null,
     }),
   );
 
-  const filename = recipe.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_');
+  const safeTitle = recipe.title.replace(/[/\\?%*:|"<>]/g, '-');
 
   return new Response(pdfBuffer as unknown as BodyInit, {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}.pdf"`,
+      'Content-Disposition': `attachment; filename="ChefsBook - ${safeTitle}.pdf"`,
     },
   });
 }
