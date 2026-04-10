@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 57)
+- Fix: PDF download auth — replaced window.open() with fetch + Authorization Bearer header
+- Fix: PDF download shows "Generating..." loading state while fetching
+- Fix: Free user sees 403 error message instead of black Unauthorized screen
+- Tested live: unauthenticated → 401, Pro user → 200 + 51KB PDF, Free user → 403 "Pro plan required"
+- Verified: StorePickerDialog wired to all 3 web entry points (shop, recipe detail, meal plan)
+- Verified: StorePicker wired to all 3 mobile entry points (shop, recipe detail, meal plan)
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live
+
 ## 2026-04-10 (session 56)
 - Verified 8 agent files in .claude/agents/ (4 updated + 2 new: testing.md, deployment.md)
 - CLAUDE.md: agent lookup table updated with mandatory testing.md + deployment.md
