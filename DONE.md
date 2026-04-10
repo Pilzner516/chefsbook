@@ -1,6 +1,22 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 59)
+- Migration 025: Shared recipe translations — RLS changed from owner-only to public-read + auth-write
+- Verified: no user_id column on recipe_translations (already correct), UNIQUE(recipe_id, language) already in place
+- Verified: getRecipeTranslation/saveRecipeTranslation already have no user_id scoping
+- Verified: replaceIngredients + replaceSteps already invalidate translation cache (inline supabase.delete)
+- Verified: 2 existing French translations preserved after migration (Ramen au Poulet Frit, La Tarte aux Poires)
+- RLS tested: SELECT policy now USING(true) — any user can read translations (not just recipe owner)
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live
+
+## 2026-04-10 (session 58)
+- Web i18n: installed react-i18next, copied 5 locale files to apps/web/locales/ with `web` namespace
+- I18nProvider reads user's preferred_language from profile, wraps entire app
+- Sidebar nav labels + Settings + Sign out translated via useTranslation()
+- Language switcher calls activateLanguage() for instant translation without page reload
+- Deployed to RPi5
+
 ## 2026-04-10 (session 57)
 - Fix: PDF download auth — replaced window.open() with fetch + Authorization Bearer header
 - Fix: PDF download shows "Generating..." loading state while fetching
