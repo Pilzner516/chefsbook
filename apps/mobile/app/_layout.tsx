@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -91,7 +91,11 @@ function RootNav() {
 
   useProtectedRoute();
 
+  const [frozenDismissed, setFrozenDismissed] = useState(false);
+
   if (profile?.is_suspended) return <SuspendedNotice />;
+
+  const showFrozenBanner = profile?.recipes_frozen && !frozenDismissed;
 
   // Handle URLs shared from browser / Instagram share sheet
   useEffect(() => {
@@ -133,6 +137,22 @@ function RootNav() {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
+      {showFrozenBanner && (
+        <View style={{ backgroundColor: '#fef3c7', borderBottomWidth: 1, borderBottomColor: '#fbbf24', padding: 16 }}>
+          <Text style={{ fontWeight: '700', fontSize: 15, color: '#92400e', marginBottom: 4 }}>Account Under Review</Text>
+          <Text style={{ fontSize: 13, color: '#92400e', lineHeight: 18 }}>
+            Your public recipes have been temporarily hidden pending review. You can still access your private recipes.
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+            <TouchableOpacity onPress={() => Linking.openURL('mailto:support@chefsbk.app')} style={{ backgroundColor: '#fbbf24', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}>
+              <Text style={{ color: '#92400e', fontWeight: '600', fontSize: 13 }}>Contact Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setFrozenDismissed(true)} style={{ paddingHorizontal: 12, paddingVertical: 6 }}>
+              <Text style={{ color: '#92400e', fontSize: 13 }}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
       <ImportBanner />
       <Stack
         screenOptions={{

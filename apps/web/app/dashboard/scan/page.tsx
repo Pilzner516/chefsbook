@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, createRecipe, createTechnique, checkRecipeLimit } from '@chefsbook/db';
 import { scanRecipe } from '@chefsbook/ai';
+import { createRecipeWithModeration } from '@/lib/saveWithModeration';
 
 // ─── Bookmark types ─────────────────────────────────────────────
 
@@ -122,7 +123,8 @@ export default function ScanPage() {
       if (!gate.allowed) throw new Error(gate.reason!);
       const base64 = await fileToBase64(file);
       const scanned = await scanRecipe(base64, file.type || 'image/jpeg');
-      const recipe = await createRecipe(user.id, scanned);
+      const { recipe, moderation } = await createRecipeWithModeration(user.id, scanned);
+      if (moderation.verdict !== 'clean') alert(moderation.verdict === 'mild' ? 'Recipe saved but is under review.' : 'Recipe flagged — your account is under review.');
       router.push(`/recipe/${recipe.id}`);
     } catch (e: any) {
       setError(e.message);
@@ -180,7 +182,7 @@ export default function ScanPage() {
         router.push(`/technique/${technique.id}`);
       } else if (data.videoOnly) {
         // No content extracted — save as video bookmark
-        const recipe = await createRecipe(user.id, {
+        const { recipe } = await createRecipeWithModeration(user.id, {
           title: data.title,
           description: data.description,
           servings: null,
@@ -211,7 +213,7 @@ export default function ScanPage() {
         if (data.titleGenerated) {
           recipeData.tags = [...(recipeData.tags ?? []), '_unresolved'];
         }
-        const recipe = await createRecipe(user.id, recipeData);
+        const { recipe } = await createRecipeWithModeration(user.id, recipeData);
         router.push(`/recipe/${recipe.id}`);
       }
     } catch (e: any) {

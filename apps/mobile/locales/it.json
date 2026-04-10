@@ -421,5 +421,12 @@
     "savedToCollection": "Salvato nella tua collezione",
     "planRequired": "Piano Chef richiesto",
     "planRequiredMessage": "Passa al piano Chef per salvare ricette."
+  },
+  "moderation": {
+    "underReviewTitle": "Ricetta in revisione",
+    "underReviewMessage": "La tua ricetta è stata salvata privatamente mentre il nostro team la verifica.",
+    "accountFrozenTitle": "Account in revisione",
+    "accountFrozenMessage": "Il tuo account è in revisione. Le tue ricette pubbliche sono state temporaneamente nascoste.",
+    "contactSupport": "Contatta il supporto"
   }
 }

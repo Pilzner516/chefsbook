@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, createRecipe, isPro, checkRecipeLimit } from '@chefsbook/db';
 import RecipeReviewPanel from '@/components/RecipeReviewPanel';
+import { createRecipeWithModeration } from '@/lib/saveWithModeration';
 
 type Step = 1 | 2 | 3;
 
@@ -118,7 +119,7 @@ export default function SpeakPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
-      const saved = await createRecipe(user.id, { ...recipe, image_url: recipeImageUrl || undefined });
+      const { recipe: saved } = await createRecipeWithModeration(user.id, { ...recipe, image_url: recipeImageUrl || undefined });
       router.push(`/recipe/${saved.id}`);
     } catch (e: any) {
       setError(e.message);
@@ -269,7 +270,7 @@ export default function SpeakPage() {
               if (!user) throw new Error('Not signed in');
               const gate = await checkRecipeLimit(user.id);
               if (!gate.allowed) throw new Error(gate.reason!);
-              const saved = await createRecipe(user.id, { ...edited, image_url: imgUrl || undefined } as any);
+              const { recipe: saved } = await createRecipeWithModeration(user.id, { ...edited, image_url: imgUrl || undefined } as any);
               router.push(`/recipe/${saved.id}`);
             } catch (e: any) {
               setError(e.message);

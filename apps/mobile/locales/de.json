@@ -421,5 +421,12 @@
     "savedToCollection": "In deiner Sammlung gespeichert",
     "planRequired": "Chef-Plan erforderlich",
     "planRequiredMessage": "Upgrade auf den Chef-Plan, um Rezepte zu speichern."
+  },
+  "moderation": {
+    "underReviewTitle": "Rezept wird überprüft",
+    "underReviewMessage": "Dein Rezept wurde privat gespeichert, während unser Team es überprüft.",
+    "accountFrozenTitle": "Konto wird überprüft",
+    "accountFrozenMessage": "Dein Konto wird überprüft. Deine öffentlichen Rezepte wurden vorübergehend ausgeblendet.",
+    "contactSupport": "Support kontaktieren"
   }
 }

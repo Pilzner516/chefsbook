@@ -13,6 +13,8 @@ export interface UserProfile {
   is_searchable: boolean;
   is_suspended: boolean;
   comments_suspended: boolean;
+  recipes_frozen: boolean;
+  recipes_frozen_reason: string | null;
   follower_count: number;
   following_count: number;
   recipe_count: number;
@@ -121,6 +123,11 @@ export interface Recipe {
   like_count: number;
   comment_count: number;
   comments_enabled: boolean;
+  moderation_status: 'clean' | 'flagged_mild' | 'flagged_serious' | 'approved' | 'rejected';
+  moderation_flag_reason: string | null;
+  moderation_flagged_at: string | null;
+  moderation_reviewed_by: string | null;
+  moderation_reviewed_at: string | null;
   parent_recipe_id: string | null;
   version_number: number;
   version_label: string | null;

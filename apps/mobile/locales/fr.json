@@ -421,5 +421,12 @@
     "savedToCollection": "Enregistré dans votre collection",
     "planRequired": "Plan Chef requis",
     "planRequiredMessage": "Passez au plan Chef pour enregistrer des recettes."
+  },
+  "moderation": {
+    "underReviewTitle": "Recette en cours de vérification",
+    "underReviewMessage": "Votre recette a été enregistrée en privé pendant que notre équipe la vérifie.",
+    "accountFrozenTitle": "Compte en cours de vérification",
+    "accountFrozenMessage": "Votre compte est en cours de vérification. Vos recettes publiques ont été temporairement masquées.",
+    "contactSupport": "Contacter le support"
   }
 }

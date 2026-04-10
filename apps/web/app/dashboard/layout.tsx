@@ -10,6 +10,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
+  const [recipesFrozen, setRecipesFrozen] = useState(false);
+  const [frozenDismissed, setFrozenDismissed] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -17,6 +19,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.replace('/auth');
       } else {
         setUser(user);
+        supabase.from('user_profiles').select('recipes_frozen').eq('id', user.id).single().then(({ data }) => {
+          if (data?.recipes_frozen) setRecipesFrozen(true);
+        });
         setChecking(false);
       }
     });
@@ -39,7 +44,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen flex">
       <Sidebar user={user} />
-      <main className="flex-1 bg-cb-bg overflow-auto">{children}</main>
+      <main className="flex-1 bg-cb-bg overflow-auto">
+        {recipesFrozen && !frozenDismissed && (
+          <div className="bg-amber-50 border-b border-amber-300 px-6 py-4">
+            <div className="flex items-start gap-3 max-w-4xl">
+              <span className="text-xl">🔒</span>
+              <div className="flex-1">
+                <p className="font-semibold text-amber-900 text-sm">Account Under Review</p>
+                <p className="text-amber-800 text-xs mt-1">Your public recipes have been temporarily hidden pending review. You can still access your private recipes.</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <a href="mailto:support@chefsbk.app" className="text-xs font-semibold text-amber-900 bg-amber-200 px-3 py-1.5 rounded hover:bg-amber-300 transition-colors">Contact Support</a>
+                <button onClick={() => setFrozenDismissed(true)} className="text-xs text-amber-700 px-2 py-1.5 hover:text-amber-900">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

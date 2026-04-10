@@ -619,5 +619,12 @@
     "savedToCollection": "Saved to your collection",
     "planRequired": "Chef plan required",
     "planRequiredMessage": "Upgrade to Chef plan to save recipes."
+  },
+  "moderation": {
+    "underReviewTitle": "Recipe Under Review",
+    "underReviewMessage": "Your recipe has been saved privately while our team reviews it. This usually takes less than 24 hours.",
+    "accountFrozenTitle": "Account Under Review",
+    "accountFrozenMessage": "Your account is under review. Your public recipes have been temporarily hidden. You can still access your private recipes.",
+    "contactSupport": "Contact Support"
   }
 }

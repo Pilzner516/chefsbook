@@ -453,3 +453,55 @@ export async function createRecipeVersion(
   if (error || !created) throw error ?? new Error('Failed to create version');
   return created as Recipe;
 }
+
+export async function freezeUserRecipes(userId: string, reason: string): Promise<void> {
+  await supabase
+    .from('user_profiles')
+    .update({
+      recipes_frozen: true,
+      recipes_frozen_reason: reason,
+      recipes_frozen_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  // Hide all their public recipes
+  await supabase
+    .from('recipes')
+    .update({ visibility: 'private' })
+    .eq('user_id', userId)
+    .eq('visibility', 'public');
+}
+
+export async function unfreezeUserRecipes(userId: string): Promise<void> {
+  await supabase
+    .from('user_profiles')
+    .update({
+      recipes_frozen: false,
+      recipes_frozen_reason: null,
+      recipes_frozen_at: null,
+    })
+    .eq('id', userId);
+}
+
+export async function approveRecipeModeration(recipeId: string, reviewerId: string): Promise<void> {
+  await supabase
+    .from('recipes')
+    .update({
+      moderation_status: 'approved',
+      moderation_reviewed_by: reviewerId,
+      moderation_reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', recipeId);
+}
+
+export async function rejectRecipeModeration(recipeId: string, reviewerId: string): Promise<void> {
+  await supabase
+    .from('recipes')
+    .update({
+      moderation_status: 'rejected',
+      visibility: 'private',
+      moderation_reviewed_by: reviewerId,
+      moderation_reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', recipeId);
+}
