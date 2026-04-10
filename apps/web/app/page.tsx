@@ -6,7 +6,6 @@ import Link from 'next/link';
 const featureGroups = [
   {
     title: 'Import & Capture',
-    icon: '📸',
     items: [
       'Scan recipe photos (multi-page, cookbook pages)',
       'Import from any URL',
@@ -17,7 +16,6 @@ const featureGroups = [
   },
   {
     title: 'Organise & Plan',
-    icon: '📋',
     items: [
       'Recipe versioning (multiple versions of one recipe)',
       'AI meal planner',
@@ -27,7 +25,6 @@ const featureGroups = [
   },
   {
     title: 'Discover & Share',
-    icon: '🌍',
     items: [
       'Public recipe discovery',
       'Share recipes via link (chefsbk.app)',
@@ -38,7 +35,6 @@ const featureGroups = [
   },
   {
     title: 'AI Powered',
-    icon: '🤖',
     items: [
       'Auto-tagging',
       'Recipe translation (5 languages)',
@@ -123,7 +119,15 @@ export default function HomePage() {
       {/* Hero */}
       <section className="max-w-4xl mx-auto text-center py-20 px-6">
         <div className="flex justify-center mb-6">
-          <img src="/favicon.png" alt="ChefsBook" className="w-16 h-16" />
+          <img
+            src="/images/chefs-hat-hd.png"
+            srcSet="/images/chefs-hat-hd.png 2x"
+            width={128}
+            height={128}
+            alt="ChefsBook"
+            className="object-contain"
+            style={{ imageRendering: 'auto' }}
+          />
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight tracking-tight text-cb-text">
           Your recipes. Your community.<br />
@@ -156,10 +160,12 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {featureGroups.map((group) => (
             <div key={group.title} className="bg-cb-card border border-cb-border rounded-card p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl">{group.icon}</span>
-                <h3 className="text-lg font-semibold text-cb-text">{group.title}</h3>
-              </div>
+              <h3
+                className="text-[22px] font-semibold text-cb-text mb-4"
+                style={{ borderLeft: '3px solid #ce2b37', paddingLeft: 16 }}
+              >
+                {group.title}
+              </h3>
               <ul className="space-y-2">
                 {group.items.map((item) => (
                   <li key={item} className="text-sm text-cb-secondary flex items-start gap-2">
@@ -176,19 +182,27 @@ export default function HomePage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-cb-base py-20">
-        <div className="max-w-4xl mx-auto px-6">
+      <section className="bg-white py-20">
+        <div className="max-w-5xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-12 text-cb-text">How it works</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step) => (
-              <div key={step.num} className="text-center">
-                <div className="w-12 h-12 rounded-full bg-cb-primary text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">
-                  {step.num}
+          <div className="relative">
+            {/* Connector line (desktop only) */}
+            <div className="hidden lg:block absolute top-[24px] left-[calc(12.5%+24px)] right-[calc(12.5%+24px)] border-t-2 border-dashed border-gray-200 z-0" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+              {steps.map((step) => (
+                <div
+                  key={step.num}
+                  className="bg-white rounded-xl p-8 text-center"
+                  style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-cb-primary text-white flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                    {step.num}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2 text-cb-text">{step.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
                 </div>
-                <h3 className="font-semibold mb-1 text-cb-text">{step.title}</h3>
-                <p className="text-cb-secondary text-sm">{step.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -200,15 +214,18 @@ export default function HomePage() {
 
         {/* Monthly / Annual toggle */}
         <div className="flex items-center justify-center gap-3 mb-12">
-          <span className={`text-sm font-medium ${!annual ? 'text-cb-text' : 'text-cb-muted'}`}>Monthly</span>
+          <span className={`text-[15px] font-medium leading-none ${!annual ? 'text-cb-text' : 'text-cb-muted'}`}>Monthly</span>
           <button
             onClick={() => setAnnual(!annual)}
-            className={`relative w-12 h-6 rounded-full transition-colors ${annual ? 'bg-cb-primary' : 'bg-cb-border'}`}
+            className={`relative w-12 h-6 rounded-full transition-colors flex items-center ${annual ? 'bg-cb-primary' : 'bg-cb-border'}`}
           >
-            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${annual ? 'translate-x-6' : 'translate-x-0.5'}`} />
+            <span className={`absolute w-5 h-5 rounded-full bg-white shadow transition-transform ${annual ? 'translate-x-6' : 'translate-x-0.5'}`} />
           </button>
-          <span className={`text-sm font-medium ${annual ? 'text-cb-text' : 'text-cb-muted'}`}>
-            Annual <span className="text-cb-green text-xs font-semibold">Save 20%</span>
+          <span className={`text-[15px] font-medium leading-none flex items-center gap-1.5 ${annual ? 'text-cb-text' : 'text-cb-muted'}`}>
+            Annual
+            <span className="text-xs font-semibold text-white bg-cb-green px-2 py-0.5 rounded-full leading-snug">
+              Save 20%
+            </span>
           </span>
         </div>
 
@@ -268,7 +285,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <img src="/favicon.png" alt="" className="w-6 h-6" />
+              <img src="/images/chefs-hat-hd.png" alt="" className="w-6 h-6 object-contain" />
               <span className="text-lg font-bold text-cb-text">
                 <span className="text-cb-primary">Chefs</span>book
               </span>
