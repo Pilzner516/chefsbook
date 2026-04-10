@@ -1,6 +1,20 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 43)
+- Web: Full image proxy sweep — all 12 files with `<img>` tags now route Supabase storage URLs through `/api/image?url=`
+- Fix: Search page recipe cards (broken images → proxied)
+- Fix: Meal plan day cards + recipe picker modal (broken images → proxied)
+- Fix: Chef profile avatar + recipe images (broken → proxied)
+- Fix: Technique detail + list images (broken → proxied)
+- Fix: Settings page avatar (broken → proxied)
+- Fix: Share page hero image (broken → proxied)
+- Fix: Cookbook detail + list cover images (broken → proxied)
+- Fix: Recipe detail hero fallback to image_url (was unproxied)
+- Fix: Recipe detail "Your Photos" thumbnails (broken → proxied)
+- Fix: SocialShareModal + WhatsNewFeed recipe images (broken → proxied)
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live
+
 ## 2026-04-10 (session 42)
 - Web recipe detail: moved LikeButton below title with Public badge
 - Share dropdown: Copy link + Download PDF (Pro gated) + Social post (Pro gated)
