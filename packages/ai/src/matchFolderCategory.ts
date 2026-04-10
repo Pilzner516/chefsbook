@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export interface CategoryMatch {
   category_slug: string | null;
@@ -112,7 +112,7 @@ export async function matchFolderToCategory(
   // Call Claude for fuzzy matching
   const prompt = `${MATCH_PROMPT}\n\nFolder name: "${folderName}"`;
   try {
-    const text = await callClaude({ prompt, maxTokens: 200 });
+    const text = await callClaude({ prompt, maxTokens: 200, model: HAIKU });
     const result = extractJSON<CategoryMatch>(text);
     if (result.confidence < 0.4) return noMatch;
     return result;

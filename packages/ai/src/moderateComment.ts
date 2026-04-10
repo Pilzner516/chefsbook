@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export type ModerationResult = {
   verdict: 'clean' | 'mild' | 'serious';
@@ -32,6 +32,6 @@ Return JSON only:
 
 export async function moderateComment(content: string): Promise<ModerationResult> {
   const prompt = MODERATION_PROMPT.replace('{{content}}', content.replace(/"/g, '\\"'));
-  const text = await callClaude({ prompt, maxTokens: 200 });
+  const text = await callClaude({ prompt, maxTokens: 100, model: HAIKU });
   return extractJSON<ModerationResult>(text);
 }

@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export async function isUsernameFamilyFriendly(username: string): Promise<boolean> {
   const prompt = `Is the following username family-friendly and appropriate for a cooking app used by all ages?
@@ -15,7 +15,7 @@ Rules:
 Return JSON only: { "acceptable": true, "reason": null } or { "acceptable": false, "reason": "brief reason" }`;
 
   try {
-    const text = await callClaude({ prompt, maxTokens: 100 });
+    const text = await callClaude({ prompt, maxTokens: 50, model: HAIKU });
     const result = extractJSON<{ acceptable: boolean; reason: string | null }>(text);
     return result.acceptable;
   } catch {

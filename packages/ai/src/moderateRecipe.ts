@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export type RecipeModerationResult = {
   verdict: 'clean' | 'mild' | 'serious';
@@ -44,16 +44,16 @@ export async function moderateRecipe(recipe: {
   steps?: Array<{ instruction: string }>;
   notes?: string | null;
 }): Promise<RecipeModerationResult> {
-  const ingredientNames = recipe.ingredients?.map((i) => i.ingredient ?? i.name ?? '').join(', ') ?? '';
-  const stepsSummary = recipe.steps?.slice(0, 3).map((s) => s.instruction).join(' | ') ?? '';
+  const ingredientNames = recipe.ingredients?.slice(0, 5).map((i) => i.ingredient ?? i.name ?? '').join(', ') ?? '';
+  const stepsSummary = recipe.steps?.slice(0, 3).map((s) => s.instruction.slice(0, 100)).join(' | ') ?? '';
 
   const prompt = RECIPE_MODERATION_PROMPT
     .replace('{{title}}', (recipe.title ?? '').replace(/"/g, '\\"'))
-    .replace('{{description}}', (recipe.description ?? '').replace(/"/g, '\\"'))
+    .replace('{{description}}', (recipe.description ?? '').slice(0, 200).replace(/"/g, '\\"'))
     .replace('{{ingredients}}', ingredientNames)
     .replace('{{steps}}', stepsSummary)
-    .replace('{{notes}}', (recipe.notes ?? '').replace(/"/g, '\\"'));
+    .replace('{{notes}}', (recipe.notes ?? '').slice(0, 200).replace(/"/g, '\\"'));
 
-  const text = await callClaude({ prompt, maxTokens: 200 });
+  const text = await callClaude({ prompt, maxTokens: 150, model: HAIKU });
   return extractJSON<RecipeModerationResult>(text);
 }

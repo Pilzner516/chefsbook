@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 const PROMPT = `You are a grocery shopping assistant. For each ingredient, suggest:
 1. purchase_unit: what a shopper would actually buy at the store (e.g. "1 bottle", "1 bunch", "1 bag 5lb", "1 can 15oz", "1 stick", "1 dozen")
@@ -40,7 +40,7 @@ export async function suggestPurchaseUnits(
     .join('\n');
 
   const prompt = `${PROMPT}\n\nIngredients:\n${list}`;
-  const text = await callClaude({ prompt, maxTokens: 1500 });
+  const text = await callClaude({ prompt, maxTokens: 800, model: HAIKU });
   try {
     return extractJSON<PurchaseSuggestion[]>(text);
   } catch {

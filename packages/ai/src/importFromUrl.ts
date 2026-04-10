@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 import type { ScannedRecipe } from '@chefsbook/db';
 
 const IMPORT_PROMPT = `You are a recipe extraction expert. The user has provided text content scraped from a recipe webpage. Extract the recipe details precisely.
@@ -439,7 +439,7 @@ export async function classifyPage(
   }
 
   const prompt = `${CLASSIFY_PROMPT}\n\nPage text (first 500 chars):\n${plainText}`;
-  const text = await callClaude({ prompt, maxTokens: 200 });
+  const text = await callClaude({ prompt, maxTokens: 200, model: HAIKU });
   return extractJSON<RecipeClassification>(text);
 }
 

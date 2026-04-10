@@ -1,5 +1,8 @@
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const SONNET = 'claude-sonnet-4-20250514';
+const HAIKU = 'claude-haiku-4-5-20251001';
 const API_URL = 'https://api.anthropic.com/v1/messages';
+
+export { SONNET, HAIKU };
 
 export function getApiKey(): string {
   return (
@@ -15,8 +18,10 @@ export async function callClaude(params: {
   /** Multiple images for multi-page scanning */
   images?: { base64: string; mimeType?: string }[];
   maxTokens?: number;
+  /** Model override — defaults to Sonnet. Use HAIKU for classification tasks. */
+  model?: string;
 }): Promise<string> {
-  const { prompt, imageBase64, imageMimeType = 'image/jpeg', images, maxTokens = 2000 } = params;
+  const { prompt, imageBase64, imageMimeType = 'image/jpeg', images, maxTokens = 2000, model = SONNET } = params;
 
   const content: any[] = [];
   // Multi-image support (takes precedence over single image)
@@ -32,7 +37,7 @@ export async function callClaude(params: {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey(), 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content }] }),
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content }] }),
   });
 
   if (!response.ok) throw new Error(`Claude API error: ${response.status}`);

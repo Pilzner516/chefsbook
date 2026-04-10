@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 import type { ScannedRecipe } from '@chefsbook/db';
 
 // ── Types ──
@@ -54,6 +54,7 @@ export async function analyseScannedImage(
     imageBase64,
     imageMimeType: mimeType,
     maxTokens: 1000,
+    model: HAIKU,
   });
   return extractJSON<ScanImageAnalysis>(text);
 }
@@ -90,6 +91,7 @@ Return ONLY a JSON object:
     imageBase64,
     imageMimeType: mimeType,
     maxTokens: 1000,
+    model: HAIKU,
   });
   return extractJSON<ScanImageAnalysis>(text);
 }

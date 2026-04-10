@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 const CLASSIFY_CONTENT_PROMPT = `You are a cooking content classifier. Determine if this content is a RECIPE or a TECHNIQUE.
 
@@ -31,6 +31,6 @@ export async function classifyContent(
   url: string,
 ): Promise<ContentClassification> {
   const prompt = `${CLASSIFY_CONTENT_PROMPT}\n\nURL: ${url}\n\nContent (first 1000 chars):\n${text.slice(0, 1000)}`;
-  const response = await callClaude({ prompt, maxTokens: 200 });
+  const response = await callClaude({ prompt, maxTokens: 200, model: HAIKU });
   return extractJSON<ContentClassification>(response);
 }

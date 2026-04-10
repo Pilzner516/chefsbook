@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export interface BookMetadata {
   title: string;
@@ -70,7 +70,7 @@ export async function lookupIsbn(isbn: string): Promise<BookMetadata | null> {
  */
 export async function readBookCover(imageBase64: string, mimeType: string = 'image/jpeg'): Promise<{ title: string; author: string | null } | null> {
   const prompt = 'Read the title and author from this book cover. Return ONLY JSON: { "title": "string", "author": "string | null" }';
-  const text = await callClaude({ prompt, imageBase64, imageMimeType: mimeType, maxTokens: 200 });
+  const text = await callClaude({ prompt, imageBase64, imageMimeType: mimeType, maxTokens: 200, model: HAIKU });
   try {
     return extractJSON<{ title: string; author: string | null }>(text);
   } catch {

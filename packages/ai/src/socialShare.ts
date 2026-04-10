@@ -1,4 +1,4 @@
-import { callClaude } from './client';
+import { callClaude, HAIKU } from './client';
 
 export async function generateSocialPost(params: {
   title: string;
@@ -26,7 +26,7 @@ Style: ${platformGuide}
 
 Return ONLY the post text. No hashtags, no quotes, no explanation.`;
 
-  return await callClaude({ prompt, maxTokens: 500 });
+  return await callClaude({ prompt, maxTokens: 500, model: HAIKU });
 }
 
 export async function generateHashtags(params: {
@@ -46,6 +46,6 @@ Include a mix of broad cooking tags (#recipe #cooking #homemade #foodie), cuisin
 
 Return ONLY space-separated hashtags starting with #. Nothing else.`;
 
-  const text = await callClaude({ prompt, maxTokens: 300 });
+  const text = await callClaude({ prompt, maxTokens: 300, model: HAIKU });
   return text.trim().split(/\s+/).filter((t) => t.startsWith('#'));
 }
