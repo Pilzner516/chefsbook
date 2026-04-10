@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 56)
+- Verified 8 agent files in .claude/agents/ (4 updated + 2 new: testing.md, deployment.md)
+- CLAUDE.md: agent lookup table updated with mandatory testing.md + deployment.md
+- CLAUDE.md: SESSION START updated to 8-step sequence including schema verification
+- wrapup.md: added MANDATORY PRE-WRAPUP TESTING (DB, cross-platform, entry points, schema, deployment)
+- CLAUDE.md: added KEY TABLE SCHEMAS section (recipe_user_photos, user_follows, shopping_list_items, stores)
+
 ## 2026-04-10 (session 55)
 - Web: StorePickerDialog wired to recipe detail "Add to shopping list → new list" (replaces old text input form)
 - Web: StorePickerDialog wired to meal plan "add day to cart → new list" and "add week → new list"

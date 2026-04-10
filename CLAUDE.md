@@ -28,9 +28,10 @@ agents before writing any code.
 | Any import path (URL, scan, Instagram, speak, file) | import-pipeline.md |
 | Any image upload, display, or storage | image-system.md |
 | Any Zustand store, data fetch, or cache | data-flow.md |
-| Recipe detail screen (read or edit mode) | recipe-detail.md (coming soon) |
-| Shopping lists | shopping-system.md (coming soon) |
+| ANY feature on ANY session | testing.md (ALWAYS) |
+| Any change to apps/web | deployment.md (ALWAYS for web sessions) |
 
+`testing.md` and `deployment.md` are now MANDATORY on every session — not optional.
 Multiple agents may apply to a single session. Read all that apply.
 
 ### How to invoke an agent
@@ -46,18 +47,19 @@ read them yourself before starting.
 
 ## SESSION START INSTRUCTIONS
 
-Every Claude Code session must begin with:
+Every Claude Code session MUST begin with these steps in order:
 
 1. Read CLAUDE.md (this file) fully
-2. Read DONE.md to see what was last built
-3. Determine which specialist agents apply to this session (see AGENT SYSTEM above)
-4. Read all applicable agent files from .claude/agents/
-5. Run the pre-flight checklist from each applicable agent
-6. Only then begin writing code
+2. Read DONE.md to understand what was last built
+3. Read .claude/agents/testing.md — MANDATORY EVERY SESSION
+4. If session touches web: read .claude/agents/deployment.md — MANDATORY
+5. Read all other applicable agents based on the lookup table above
+6. Run ALL pre-flight checklists from every agent loaded
+7. For any table you will query: run `\d tablename` on RPi5 to verify columns
+8. Only then begin writing code
 
-Do not skip any of these steps. The pre-flight checklists exist because the same
-bugs have been introduced and fixed multiple times. Reading the agents prevents
-repeating known mistakes.
+Do not skip any step. Agents exist because the same bugs have been introduced
+and fixed 3-5 times each. Reading the agents prevents repeating known mistakes.
 
 ## Build & dev commands
 
@@ -268,6 +270,33 @@ adb shell run-as com.chefsbook.app sh -c 'echo "[]" > /data/data/com.chefsbook.a
 ```bash
 adb shell run-as com.chefsbook.app cat /data/data/com.chefsbook.app/files/qa_notepad.json | python -m json.tool
 ```
+
+## KEY TABLE SCHEMAS — verify before querying
+
+These columns have caused repeated bugs from wrong assumptions:
+
+recipe_user_photos:
+  url TEXT (NOT photo_url)
+  storage_path TEXT
+  is_primary BOOLEAN
+  sort_order INTEGER
+
+user_follows:
+  follower_id UUID (NOT follower)
+  following_id UUID (NOT followed_id)
+
+shopping_list_items:
+  list_id UUID (ownership via shopping_lists.user_id)
+  (no user_id column — RLS via parent list)
+
+stores:
+  user_id UUID
+  name TEXT
+  domain TEXT
+  logo_url TEXT
+  initials TEXT
+
+Always run `\d [tablename]` on RPi5 before writing any new query.
 
 ## Known issues
 

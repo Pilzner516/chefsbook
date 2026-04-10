@@ -1,6 +1,44 @@
 # ChefsBook Wrapup Agent
 # Run this at the end of every Claude Code session.
 
+## MANDATORY PRE-WRAPUP TESTING
+
+You MUST complete all of the following before updating DONE.md.
+"Verified in source" does NOT count. Only actual test execution counts.
+
+### DB verification (any session with DB writes)
+Run for EVERY table written to this session:
+```bash
+ssh rasp@rpi5-eth
+cd /mnt/chefsbook/supabase
+docker compose exec db psql -U postgres -d postgres -c \
+  "SELECT * FROM [table] ORDER BY created_at DESC LIMIT 3;"
+```
+Confirm rows exist. If not, the feature is broken — fix before /wrapup.
+
+### Cross-platform verification
+If the session was cross-platform (mobile + web):
+- Web: curl -I https://chefsbk.app/[affected-page] returns 200
+- Mobile: ADB screenshot confirms UI renders correctly
+- BOTH must pass. If only one platform tested, the session is NOT done.
+
+### Entry point verification
+If a new component was built, verify it is used in ALL required locations:
+```bash
+grep -rn "NewComponentName" apps/ --include="*.tsx"
+```
+Count the usages. If fewer than expected, wire the missing entry points first.
+
+### Schema verification
+For any new query written: confirm column names match actual DB schema.
+```bash
+docker compose exec db psql -U postgres -d postgres -c "\d [tablename]"
+```
+
+### Deployment (web sessions)
+Follow .claude/agents/deployment.md fully before /wrapup.
+Do not update DONE.md until chefsbk.app is serving the new code.
+
 ## Navigator update check
 
 After committing all changes:
