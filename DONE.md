@@ -1,6 +1,20 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 45)
+- Migration 023: recipe moderation columns (moderation_status, flag_reason, flagged_at, reviewed_by/at) + user_profiles recipes_frozen columns
+- `moderateRecipe()` in @chefsbook/ai — AI content moderation for recipe title/description/ingredients/steps/notes
+- `freezeUserRecipes()` + `unfreezeUserRecipes()` + `approveRecipeModeration()` + `rejectRecipeModeration()` in packages/db
+- Mobile: moderation runs on every addRecipe + editRecipe in recipeStore (clean/mild/serious handling)
+- Web: `createRecipeWithModeration()` wrapper used on scan + speak pages
+- Mobile: frozen account banner in _layout.tsx (amber warning with Contact Support + Dismiss)
+- Web: frozen account banner in dashboard layout (amber bar with Contact Support)
+- Admin: recipe moderation queue with approve/reject on flagged recipes, red SERIOUS / yellow MILD badges
+- Admin: approve unfreezes user + sends notification; reject keeps private + notifies user
+- i18n: `moderation` namespace added to all 5 locales (en/fr/es/it/de)
+- Migration applied to RPi5, tsc --noEmit passes both apps
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live
+
 ## 2026-04-10 (session 44)
 - Fix shopping list create crash: try/catch + default store_name + user-friendly error
 - Web settings: username read-only with lock icon, removed from save; display name helper text

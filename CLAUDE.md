@@ -325,6 +325,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - PDF export: `/recipe/[id]/pdf` route using `@react-pdf/renderer`; Pro plan gated (403 for non-Pro); mobile downloads via expo-file-system + expo-sharing
 - Web image proxy: `/api/image?url=` route proxies Supabase storage URLs with apikey header (Kong returns 401 without it); 86400s cache; only proxies Supabase/100.110.47.62 URLs
 - Web share dropdown: replaces individual share/post buttons; contains Copy link, Download PDF (Pro), Social post (Pro)
+- Recipe moderation: `moderateRecipe()` runs on every import + edit save; 3 verdicts: clean (normal), mild (private + flagged), serious (private + user frozen); admin approve/reject in `/admin/recipes`
 - Username is permanent: web settings field is read-only (lock icon); save function no longer sends username
 - `isUsernameFamilyFriendly()` in @chefsbook/ai checks usernames at signup via Claude; non-blocking (returns true on AI error)
 - Discover page removed from web sidebar nav; `/dashboard/discover` redirects to `/dashboard/search`
