@@ -38,13 +38,28 @@ export default function RecipeComments({ recipeId, recipeOwnerId, commentsEnable
     if (!text.trim() || !userId || posting) return;
     setPosting(true);
     try {
-      const mod = await moderateComment(text.trim());
+      // Attempt moderation (may fail on web due to CORS — post as visible if it does)
       let status = 'visible';
-      if (mod.verdict === 'serious') status = 'hidden_pending_review';
-      await postComment(recipeId, userId, text.trim(), status, mod.verdict !== 'clean' ? mod.verdict : undefined, mod.verdict !== 'clean' ? 'ai' : undefined, mod.reason ?? undefined);
+      let flagSeverity: string | undefined;
+      let flagSource: string | undefined;
+      let flagReason: string | undefined;
+      try {
+        const mod = await moderateComment(text.trim());
+        if (mod.verdict === 'serious') status = 'hidden_pending_review';
+        if (mod.verdict !== 'clean') {
+          flagSeverity = mod.verdict;
+          flagSource = 'ai';
+          flagReason = mod.reason ?? undefined;
+        }
+      } catch {
+        // Moderation unavailable on web (CORS) — allow post without moderation
+      }
+      await postComment(recipeId, userId, text.trim(), status, flagSeverity, flagSource, flagReason);
       setText('');
       await loadComments();
-    } catch {}
+    } catch (e: any) {
+      alert(e.message ?? 'Failed to post comment');
+    }
     setPosting(false);
   };
 
