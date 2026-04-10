@@ -310,7 +310,7 @@ export default function ShopPage() {
             placeholder="Add item..."
             className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-green"
           />
-          <button onClick={handleAddManual} disabled={!newItemText.trim()} className="bg-cb-green text-white px-4 py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Add</button>
+          <button onClick={handleAddManual} disabled={!newItemText.trim()} className="bg-cb-primary text-white px-4 py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Add</button>
         </div>
         <ConfirmDialog />
       </div>
@@ -322,7 +322,7 @@ export default function ShopPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">Shopping</h1>
-        <button onClick={() => setShowNewList(true)} className="bg-cb-green text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 flex items-center gap-2">
+        <button onClick={() => setShowNewList(true)} className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           New List
         </button>
@@ -344,7 +344,7 @@ export default function ShopPage() {
           </div>
           <h2 className="text-lg font-semibold mb-2">No shopping lists</h2>
           <p className="text-cb-secondary text-sm mb-4">Create a list or add ingredients from a recipe.</p>
-          <button onClick={() => setShowNewList(true)} className="bg-cb-green text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90">Create Your First List</button>
+          <button onClick={() => setShowNewList(true)} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90">Create Your First List</button>
         </div>
       ) : (
         <div className="space-y-2">

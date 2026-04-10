@@ -9,6 +9,7 @@ import SocialShareModal from '@/components/SocialShareModal';
 import LikeButton from '@/components/LikeButton';
 import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
+import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
@@ -1488,7 +1489,7 @@ export default function RecipePage() {
                       <button
                         key={list.id}
                         onClick={() => handleAddToShoppingList(list.id)}
-                        className="bg-cb-bg border border-cb-border rounded-card p-3 text-left hover:border-cb-green hover:bg-cb-green/5 transition-colors"
+                        className="bg-cb-bg border border-cb-border rounded-card p-3 text-left hover:border-cb-primary hover:bg-cb-primary/5 transition-colors"
                       >
                         <div className="flex items-center gap-1 mb-0.5">
                           {list.pinned && <span className="text-cb-primary text-[10px]">{'\u2605'}</span>}
@@ -1499,7 +1500,7 @@ export default function RecipePage() {
                     ))}
                     <button
                       onClick={() => setShowNewListForm(true)}
-                      className="border-2 border-dashed border-cb-border rounded-card p-3 text-center hover:border-cb-green transition-colors"
+                      className="border-2 border-dashed border-cb-border rounded-card p-3 text-center hover:border-cb-primary transition-colors"
                     >
                       <svg className="w-5 h-5 text-cb-secondary mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                       <p className="text-xs text-cb-secondary">New list</p>
@@ -1509,31 +1510,20 @@ export default function RecipePage() {
                 {shoppingLists.length === 0 && (
                   <div className="text-center py-4">
                     <p className="text-cb-secondary text-sm mb-3">No shopping lists yet</p>
-                    <button onClick={() => setShowNewListForm(true)} className="bg-cb-green text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90">Create your first list</button>
+                    <button onClick={() => setShowNewListForm(true)} className="bg-cb-primary text-white px-5 py-2 rounded-input text-sm font-semibold hover:opacity-90">Create your first list</button>
                   </div>
                 )}
               </>
             ) : (
-              <div className="space-y-2">
-                <input
-                  value={newListName}
-                  onChange={(e) => setNewListName(e.target.value)}
-                  autoFocus
-                  placeholder="List name"
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm outline-none focus:border-cb-primary"
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleNewShoppingList(); }}
-                />
-                <input
-                  value={newStoreName}
-                  onChange={(e) => setNewStoreName(e.target.value)}
-                  placeholder="Store name (optional, e.g. Whole Foods)"
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
-                />
-                <div className="flex gap-2 pt-1">
-                  <button onClick={handleNewShoppingList} disabled={!newListName.trim()} className="flex-1 bg-cb-primary text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Create & Add</button>
-                  {shoppingLists.length > 0 && <button onClick={() => setShowNewListForm(false)} className="text-sm text-cb-secondary hover:text-cb-text px-3">Back</button>}
-                </div>
-              </div>
+              <StorePickerDialog
+                onCreated={async (listId) => {
+                  setShowNewListForm(false);
+                  const lists = await listShoppingLists(recipe.user_id);
+                  setShoppingLists(lists);
+                  await handleAddToShoppingList(listId);
+                }}
+                onCancel={() => setShowNewListForm(false)}
+              />
             )}
           </div>
         </div>

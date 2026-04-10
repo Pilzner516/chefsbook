@@ -6,6 +6,7 @@ import { supabase, getMealPlansForWeek, addMealPlan, deleteMealPlan, updateMealP
 import type { MealPlan, Recipe, ShoppingList } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import MealPlanWizard from '@/components/MealPlanWizard';
+import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
 
@@ -181,6 +182,8 @@ export default function PlanPage() {
   const [addingToShop, setAddingToShop] = useState(false);
   const [dayShopDate, setDayShopDate] = useState<string | null>(null);
   const [dayShopListId, setDayShopListId] = useState<string>('');
+  const [showDayStorePicker, setShowDayStorePicker] = useState(false);
+  const [showWeekStorePicker, setShowWeekStorePicker] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
@@ -423,10 +426,16 @@ export default function PlanPage() {
               </select>
             )}
             <div className="flex gap-2">
-              <button onClick={addDayToShoppingList} disabled={addingToShop} className="flex-1 bg-cb-green text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{addingToShop ? 'Adding...' : 'Add'}</button>
-              <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `${new Date(dayShopDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })} meals`); setDayShopListId(list.id); await addDayToShoppingList(); }} disabled={addingToShop} className="text-xs text-cb-primary hover:underline">+ New list</button>
+              <button onClick={addDayToShoppingList} disabled={addingToShop} className="flex-1 bg-cb-primary text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{addingToShop ? 'Adding...' : 'Add'}</button>
+              <button onClick={() => setShowDayStorePicker(true)} disabled={addingToShop} className="text-xs text-cb-primary hover:underline">+ New list</button>
               <button onClick={() => setDayShopDate(null)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
             </div>
+            {showDayStorePicker && (
+              <StorePickerDialog
+                onCreated={async (listId) => { setShowDayStorePicker(false); setDayShopListId(listId); const lists = await listShoppingLists(userId!); setShopLists(lists); }}
+                onCancel={() => setShowDayStorePicker(false)}
+              />
+            )}
           </div>
         </div>
       )}
@@ -465,8 +474,14 @@ export default function PlanPage() {
                 ))}
               </div>
             )}
-            <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `Week of ${weekDates[0]}`); await addWeekToShoppingList(list.id); }} disabled={addingToShop} className="w-full bg-cb-primary text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mb-2">{addingToShop ? 'Adding...' : 'Create new list & add'}</button>
+            <button onClick={() => setShowWeekStorePicker(true)} disabled={addingToShop} className="w-full bg-cb-primary text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mb-2">Create new list & add</button>
             <button onClick={() => setShowShopModal(false)} className="w-full text-center text-sm text-cb-secondary py-1">Cancel</button>
+            {showWeekStorePicker && (
+              <StorePickerDialog
+                onCreated={async (listId) => { setShowWeekStorePicker(false); await addWeekToShoppingList(listId); }}
+                onCancel={() => setShowWeekStorePicker(false)}
+              />
+            )}
           </div>
         </div>
       )}

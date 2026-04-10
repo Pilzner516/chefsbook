@@ -33,6 +33,7 @@ import { RecipeComments } from '../../components/RecipeComments';
 import { MealPlanPicker } from '../../components/MealPlanPicker';
 import { HeroGallery } from '../../components/HeroGallery';
 import { useConfirmDialog } from '../../components/useDialog';
+import { StorePicker } from '../../components/StorePicker';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -568,6 +569,7 @@ function RecipeDetailInner() {
   const addShoppingList = useShoppingStore((s) => s.addList);
   const addItemsPipeline = useShoppingStore((s) => s.addItemsPipeline);
   const [confirmAction, ConfirmActionDialog] = useConfirmDialog();
+  const [showRecipeStorePicker, setShowRecipeStorePicker] = useState(false);
   const [servings, setServings] = useState<number>(4);
   const [cookMode, setCookMode] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -693,18 +695,14 @@ function RecipeDetailInner() {
       await fetchShoppingLists(userId);
       const lists = useShoppingStore.getState().lists;
       if (lists.length === 0) {
-        const newList = await addShoppingList(userId, currentRecipe.title);
-        await addToList(newList.id, newList.name);
+        setShowRecipeStorePicker(true);
       } else {
         Alert.alert(t('recipe.addToList'), t('recipe.whichList'), [
           ...lists.slice(0, 5).map((list) => ({
             text: list.name,
             onPress: () => addToList(list.id, list.name),
           })),
-          { text: t('recipe.newList'), onPress: async () => {
-            const newList = await addShoppingList(userId, currentRecipe.title);
-            await addToList(newList.id, newList.name);
-          }},
+          { text: t('recipe.newList'), onPress: () => setShowRecipeStorePicker(true) },
           { text: t('common.cancel'), style: 'cancel' },
         ]);
       }
@@ -1544,6 +1542,31 @@ function RecipeDetailInner() {
       </View>
     )}
     <ConfirmActionDialog />
+    <StorePicker
+      visible={showRecipeStorePicker}
+      onCreated={async (listId, listName) => {
+        setShowRecipeStorePicker(false);
+        if (currentRecipe && session?.user?.id) {
+          const userId = session.user.id;
+          const items = currentRecipe.ingredients.map((ing: any) => ({
+            ingredient: ing.ingredient,
+            quantity: ing.quantity,
+            unit: ing.unit,
+          }));
+          try {
+            const { suggestPurchaseUnits } = await import('@chefsbook/ai');
+            const aiResults = await suggestPurchaseUnits(items.map((i: any) => ({ name: i.ingredient, quantity: [i.quantity, i.unit].filter(Boolean).join(' ') })));
+            const aiMap: Record<string, { purchase_unit: string; store_category: string }> = {};
+            for (const s of aiResults) aiMap[s.ingredient.toLowerCase()] = { purchase_unit: s.purchase_unit, store_category: s.store_category };
+            await addItemsPipeline(listId, userId, items, aiMap);
+          } catch {
+            await addItemsPipeline(listId, userId, items);
+          }
+          Alert.alert(t('recipe.addedTitle'), t('recipe.addedBody', { inserted: items.length, merged: 0, listName }));
+        }
+      }}
+      onCancel={() => setShowRecipeStorePicker(false)}
+    />
     </View>
   );
 }

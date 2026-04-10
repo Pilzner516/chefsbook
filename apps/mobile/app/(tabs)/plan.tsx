@@ -15,6 +15,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Card, EmptyState, Loading } from '../../components/UIKit';
 import { MealPlanWizard } from '../../components/MealPlanWizard';
+import { StorePicker } from '../../components/StorePicker';
 import { suggestPurchaseUnits } from '@chefsbook/ai';
 import { supabase } from '@chefsbook/db';
 import type { MealSlot, Recipe } from '@chefsbook/db';
@@ -74,6 +75,7 @@ export default function PlanTab() {
   const [listPickerVisible, setListPickerVisible] = useState(false);
   const [cartDate, setCartDate] = useState<string | null>(null);
   const [cartDayIndex, setCartDayIndex] = useState<number>(0);
+  const [showPlanStorePicker, setShowPlanStorePicker] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [wizardVisible, setWizardVisible] = useState(false);
 
@@ -659,12 +661,7 @@ export default function PlanTab() {
               ))}
             </ScrollView>
             <TouchableOpacity
-              onPress={async () => {
-                if (!session?.user?.id) return;
-                const dayName = cartDate === '__week__' ? `Week of ${weekDates[0]}` : t(`days.${DAY_KEYS[cartDayIndex]}`);
-                const newList = await addShoppingList(session.user.id, `${dayName} meals`);
-                handleAddDayToList(newList.id, newList.name);
-              }}
+              onPress={() => setShowPlanStorePicker(true)}
               style={{
                 backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14,
                 alignItems: 'center', marginTop: 12,
@@ -698,6 +695,14 @@ export default function PlanTab() {
           }
           showToast(t('wizard.mealPlanSaved'));
         }}
+      />
+      <StorePicker
+        visible={showPlanStorePicker}
+        onCreated={(listId, listName) => {
+          setShowPlanStorePicker(false);
+          handleAddDayToList(listId, listName);
+        }}
+        onCancel={() => setShowPlanStorePicker(false)}
       />
     </View>
   );
