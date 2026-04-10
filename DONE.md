@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 44)
+- Fix shopping list create crash: try/catch + default store_name + user-friendly error
+- Web settings: username read-only with lock icon, removed from save; display name helper text
+- `isUsernameFamilyFriendly()` in @chefsbook/ai with Claude moderation
+- Family-friendly username check integrated into signup (mobile + web)
+- Fixed missing `moderateRecipe.ts` that blocked web build
+- Deployed to RPi5
+
 ## 2026-04-10 (session 43)
 - Web: Full image proxy sweep — all 12 files with `<img>` tags now route Supabase storage URLs through `/api/image?url=`
 - Fix: Search page recipe cards (broken images → proxied)
