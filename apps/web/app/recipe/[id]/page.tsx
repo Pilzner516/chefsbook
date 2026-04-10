@@ -1520,17 +1520,17 @@ export default function RecipePage() {
                   onChange={(e) => setNewListName(e.target.value)}
                   autoFocus
                   placeholder="List name"
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm outline-none focus:border-cb-green"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm outline-none focus:border-cb-primary"
                   onKeyDown={(e) => { if (e.key === 'Enter') handleNewShoppingList(); }}
                 />
                 <input
                   value={newStoreName}
                   onChange={(e) => setNewStoreName(e.target.value)}
                   placeholder="Store name (optional, e.g. Whole Foods)"
-                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-green"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
                 />
                 <div className="flex gap-2 pt-1">
-                  <button onClick={handleNewShoppingList} disabled={!newListName.trim()} className="flex-1 bg-cb-green text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Create & Add</button>
+                  <button onClick={handleNewShoppingList} disabled={!newListName.trim()} className="flex-1 bg-cb-primary text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Create & Add</button>
                   {shoppingLists.length > 0 && <button onClick={() => setShowNewListForm(false)} className="text-sm text-cb-secondary hover:text-cb-text px-3">Back</button>}
                 </div>
               </div>

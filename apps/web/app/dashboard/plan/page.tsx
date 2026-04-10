@@ -424,7 +424,7 @@ export default function PlanPage() {
             )}
             <div className="flex gap-2">
               <button onClick={addDayToShoppingList} disabled={addingToShop} className="flex-1 bg-cb-green text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{addingToShop ? 'Adding...' : 'Add'}</button>
-              <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `${new Date(dayShopDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })} meals`); setDayShopListId(list.id); await addDayToShoppingList(); }} disabled={addingToShop} className="text-xs text-cb-green hover:underline">+ New list</button>
+              <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `${new Date(dayShopDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })} meals`); setDayShopListId(list.id); await addDayToShoppingList(); }} disabled={addingToShop} className="text-xs text-cb-primary hover:underline">+ New list</button>
               <button onClick={() => setDayShopDate(null)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
             </div>
           </div>
@@ -465,7 +465,7 @@ export default function PlanPage() {
                 ))}
               </div>
             )}
-            <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `Week of ${weekDates[0]}`); await addWeekToShoppingList(list.id); }} disabled={addingToShop} className="w-full bg-cb-green text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mb-2">{addingToShop ? 'Adding...' : 'Create new list & add'}</button>
+            <button onClick={async () => { if (!userId) return; const list = await createShoppingList(userId, `Week of ${weekDates[0]}`); await addWeekToShoppingList(list.id); }} disabled={addingToShop} className="w-full bg-cb-primary text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mb-2">{addingToShop ? 'Adding...' : 'Create new list & add'}</button>
             <button onClick={() => setShowShopModal(false)} className="w-full text-center text-sm text-cb-secondary py-1">Cancel</button>
           </div>
         </div>

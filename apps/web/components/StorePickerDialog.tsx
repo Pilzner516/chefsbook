@@ -113,7 +113,7 @@ export default function StorePickerDialog({ onCreated, onCancel }: Props) {
 
         <div className="flex gap-3">
           <button onClick={onCancel} className="flex-1 border border-cb-border text-cb-text py-2 rounded-input text-sm font-medium hover:bg-cb-bg">Cancel</button>
-          <button onClick={handleCreate} disabled={creating} className="flex-1 bg-cb-green text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+          <button onClick={handleCreate} disabled={creating} className="flex-1 bg-cb-primary text-white py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
             {creating ? '...' : 'Create List'}
           </button>
         </div>

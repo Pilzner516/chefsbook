@@ -14,6 +14,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { StoreAvatar } from '../../components/StoreAvatar';
 import { Button, Card, EmptyState, Loading, Input } from '../../components/UIKit';
+import { StorePicker } from '../../components/StorePicker';
 import type { ShoppingListItem, StoreCategory } from '@chefsbook/db';
 
 // TODO(web): replicate store-first creation flow and store grouping in apps/web/dashboard/shopping
@@ -114,24 +115,12 @@ export default function ShopTab() {
   }, [currentList?.id]);
 
   const openNewListModal = () => {
-    setNewStoreName('');
-    setNewListName('');
-    setNewStoreStep('store');
     setShowNewModal(true);
   };
 
-  const handleSelectStore = (store: string) => {
-    setNewStoreName(store);
-    setNewListName('');
-    setNewStoreStep('name');
-  };
-
-  const handleCreate = async () => {
-    if (!session?.user?.id || !newStoreName.trim()) return;
-    const storeName = newStoreName.trim();
-    const listName = newListName.trim() || storeName;
-    await addList(session.user.id, listName, { storeName });
+  const handleStorePickerCreated = async (listId: string, listName: string) => {
     setShowNewModal(false);
+    if (session?.user?.id) await fetchLists(session.user.id);
   };
 
   const handleAddManual = async () => {
@@ -514,19 +503,10 @@ export default function ShopTab() {
         </ScrollView>
 
         {/* New List Modal */}
-        <NewListModal
+        <StorePicker
           visible={showNewModal}
-          onClose={() => setShowNewModal(false)}
-          step={newStoreStep}
-          storeName={newStoreName}
-          listName={newListName}
-          existingStores={existingStores}
-          onSelectStore={handleSelectStore}
-          onChangeStoreName={setNewStoreName}
-          onChangeListName={setNewListName}
-          onBack={() => setNewStoreStep('store')}
-          onCreate={handleCreate}
-          colors={colors}
+          onCreated={handleStorePickerCreated}
+          onCancel={() => setShowNewModal(false)}
         />
       </View>
     );
@@ -567,19 +547,10 @@ export default function ShopTab() {
       </ScrollView>
 
       {/* New List Modal */}
-      <NewListModal
+      <StorePicker
         visible={showNewModal}
-        onClose={() => setShowNewModal(false)}
-        step={newStoreStep}
-        storeName={newStoreName}
-        listName={newListName}
-        existingStores={existingStores}
-        onSelectStore={handleSelectStore}
-        onChangeStoreName={setNewStoreName}
-        onChangeListName={setNewListName}
-        onBack={() => setNewStoreStep('store')}
-        onCreate={handleCreate}
-        colors={colors}
+        onCreated={handleStorePickerCreated}
+        onCancel={() => setShowNewModal(false)}
       />
     </View>
   );
