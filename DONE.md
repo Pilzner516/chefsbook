@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 48)
+- Fixed duplicate Share button on web recipe detail — kept dropdown with correct share icon
+- Mobile: MealPlanPicker — week nav, colour-coded day/meal slots, conflict warning, servings stepper, Chef+ gate
+- Web: MealPlanPicker modal — same features, calendar button in header actions
+- i18n: `mealPicker` namespace
+- Deployed to RPi5
+
 ## 2026-04-10 (session 47)
 - Verified `photo_url` column issue does NOT exist — code already uses `url` everywhere
 - Backfill SQL: 13 recipes updated with storage URLs from recipe_user_photos (fixed is_primary filter)

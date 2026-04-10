@@ -329,6 +329,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Username is permanent: web settings field is read-only (lock icon); save function no longer sends username
 - `isUsernameFamilyFriendly()` in @chefsbook/ai checks usernames at signup via Claude; non-blocking (returns true on AI error)
 - Discover page removed from web sidebar nav; `/dashboard/discover` redirects to `/dashboard/search`
+- Add to Meal Plan: `MealPlanPicker` component (mobile bottom sheet + web modal); colour-coded day/meal slots; Chef+ plan gated; conflict warning for occupied slots
 - Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
