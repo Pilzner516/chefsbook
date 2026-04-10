@@ -385,7 +385,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Development agenda tracked in `AGENDA.md` at project root
 - Store logos: logo.dev API (publishable token, safe for client)
 - i18n: `react-i18next` on both mobile and web; locale files in `apps/mobile/locales/*.json` (mobile) and `apps/web/locales/*.json` (web); `activateLanguage()` lazy-loads non-English locales; web `I18nProvider` reads `preferred_language` from user profile
-- Translation cached in `recipe_translations` table per recipe+language; English always shows original
+- Translation cached in `recipe_translations` table per recipe+language; shared across all users (not per-user); RLS: public read, auth write; English always shows original; cache invalidated on replaceIngredients/replaceSteps
 
 ## Builds
 
