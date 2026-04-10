@@ -18,6 +18,7 @@ import {
 } from '@chefsbook/db';
 import type { ShoppingList, ShoppingListItem } from '@chefsbook/db';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
+import StorePickerDialog from '@/components/StorePickerDialog';
 
 type ViewMode = 'department' | 'recipe' | 'alpha';
 
@@ -328,11 +329,10 @@ export default function ShopPage() {
       </div>
 
       {showNewList && (
-        <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-6 flex gap-2">
-          <input value={newListName} onChange={(e) => setNewListName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handleCreateList(); }} autoFocus placeholder="List name..." className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-green" />
-          <button onClick={handleCreateList} disabled={!newListName.trim()} className="bg-cb-green text-white px-4 py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Create</button>
-          <button onClick={() => setShowNewList(false)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
-        </div>
+        <StorePickerDialog
+          onCreated={async (listId) => { setShowNewList(false); await loadLists(); openList(listId); }}
+          onCancel={() => setShowNewList(false)}
+        />
       )}
 
       {loading ? (

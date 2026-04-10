@@ -74,7 +74,7 @@ export async function getShoppingList(
 export async function createShoppingList(
   userId: string,
   name: string,
-  opts?: { storeName?: string; dateRange?: { start: string; end: string } },
+  opts?: { storeName?: string; storeId?: string; dateRange?: { start: string; end: string } },
 ): Promise<ShoppingList> {
   const { data, error } = await supabase
     .from('shopping_lists')
@@ -82,6 +82,7 @@ export async function createShoppingList(
       user_id: userId,
       name,
       store_name: opts?.storeName ?? null,
+      store_id: opts?.storeId ?? null,
       date_range_start: opts?.dateRange?.start,
       date_range_end: opts?.dateRange?.end,
     })

@@ -651,5 +651,13 @@
     "mismatchBody": "Your recipes for {{day}} have different serving counts. This may affect shopping list quantities.",
     "reviewServings": "Review Servings",
     "addAnyway": "Add Anyway"
+  },
+  "storePicker": {
+    "selectStore": "Select a store",
+    "newStore": "New store...",
+    "storeName": "Store name",
+    "addStore": "Add Store",
+    "listName": "List name (optional)",
+    "createList": "Create List"
   }
 }
