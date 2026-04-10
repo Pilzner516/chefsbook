@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 41)
+- Fix: All landing page CTA buttons routed from 404 `/auth/signup` to correct `/auth` route
+- Fix: Nav + footer "Sign in" links routed from `/dashboard` to `/auth`
+- Fix: "See how it works" hero button anchor changed from `#features` to `#how-it-works` with matching section id
+- Fix: Recipe sign-in wall links (`/auth/signin`, `/auth/signup`) all corrected to `/auth`
+- Fix: Guest banner "Sign up" link and bottom CTA corrected to `/auth`
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app verified with all routes working (no 404s)
+
 ## 2026-04-10 (session 40)
 - Web: HD chef's hat logo (1024x1024 from mobile assets) at 128px in hero + footer
 - Web: Feature card emoji icons removed, replaced with red left border accent (3px #ce2b37) + 22px headers
