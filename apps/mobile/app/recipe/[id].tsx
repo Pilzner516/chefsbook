@@ -30,6 +30,7 @@ import { EditImageGallery } from '../../components/EditImageGallery';
 import { RecipeImage } from '../../components/RecipeImage';
 import { LikeButton } from '../../components/LikeButton';
 import { RecipeComments } from '../../components/RecipeComments';
+import { MealPlanPicker } from '../../components/MealPlanPicker';
 import { HeroGallery } from '../../components/HeroGallery';
 
 // --- Error boundary to catch render crashes ---
@@ -561,6 +562,7 @@ function RecipeDetailInner() {
   const pinnedList = usePinStore((s) => s.pinned);
   const preferredUnits = usePreferencesStore((s) => s.units);
   const session = useAuthStore((s) => s.session);
+  const planTier = useAuthStore((s) => s.planTier);
   const fetchShoppingLists = useShoppingStore((s) => s.fetchLists);
   const addShoppingList = useShoppingStore((s) => s.addList);
   const addItemsPipeline = useShoppingStore((s) => s.addItemsPipeline);
@@ -580,6 +582,7 @@ function RecipeDetailInner() {
   const [editDietaryFlags, setEditDietaryFlags] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
   const [heroRefreshKey, setHeroRefreshKey] = useState(0);
+  const [showMealPicker, setShowMealPicker] = useState(false);
   const language = usePreferencesStore((s) => s.language);
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
   const [translating, setTranslating] = useState(false);
@@ -1341,7 +1344,26 @@ function RecipeDetailInner() {
           <TouchableOpacity onPress={startEditing} style={{ padding: 6 }}>
             <Ionicons name="create-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (!canDo(planTier, 'canMealPlan')) {
+                Alert.alert(t('mealPicker.planRequired'), t('mealPicker.planRequiredBody'));
+                return;
+              }
+              setShowMealPicker(true);
+            }}
+            style={{ padding: 6 }}
+          >
+            <Ionicons name="calendar-outline" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
+
+        <MealPlanPicker
+          visible={showMealPicker}
+          recipeId={recipe.id}
+          recipeServings={recipe.servings ?? 4}
+          onClose={() => setShowMealPicker(false)}
+        />
 
         {/* Add to shopping list */}
         {ingredients.length > 0 && (

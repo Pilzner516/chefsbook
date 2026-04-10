@@ -626,5 +626,20 @@
     "accountFrozenTitle": "Account Under Review",
     "accountFrozenMessage": "Your account is under review. Your public recipes have been temporarily hidden. You can still access your private recipes.",
     "contactSupport": "Contact Support"
+  },
+  "mealPicker": {
+    "title": "Add to Meal Plan",
+    "weekOf": "Week of",
+    "today": "Today",
+    "mealType": "Meal type",
+    "servings": "Servings",
+    "addToPlan": "Add to Plan",
+    "added": "Added to {{day}} · {{meal}}",
+    "slotOccupied": "Slot already has a recipe",
+    "slotOccupiedBody": "{{day}} · {{meal}} already has a recipe. You can add another or pick a different slot.",
+    "addAnyway": "Add Anyway",
+    "pickAnother": "Pick Another Slot",
+    "planRequired": "Chef Plan Required",
+    "planRequiredBody": "Adding recipes to your meal plan requires the Chef plan or above."
   }
 }
