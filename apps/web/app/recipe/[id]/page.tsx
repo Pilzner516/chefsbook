@@ -57,6 +57,7 @@ export default function RecipePage() {
   const [showNewListForm, setShowNewListForm] = useState(false);
   const [addConfirm, setAddConfirm] = useState<{ count: number; listName: string; listId: string } | null>(null);
   const [showSocialShare, setShowSocialShare] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   useEffect(() => { if (addConfirm) { const t = setTimeout(() => setAddConfirm(null), 4000); return () => clearTimeout(t); } }, [addConfirm]);
   const [saving, setSaving] = useState(false);
   const [cookingNotes, setCookingNotes] = useState<CookingNote[]>([]);
@@ -560,22 +561,59 @@ export default function RecipePage() {
             </svg>
             <span className="hidden sm:inline">Print</span>
           </button>
-          {isOwner && (
+          <div className="relative print:hidden">
             <button
-              onClick={() => {
-                if (!userIsPro) { alert('Social sharing is a Pro feature. Upgrade in Settings.'); return; }
-                setShowSocialShare(true);
-              }}
-              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors print:hidden"
-              title="Share to social media"
+              onClick={() => setShowShareMenu(!showShareMenu)}
+              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
               </svg>
-              <span className="hidden sm:inline">Post</span>
-              {!userIsPro && <svg className="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>}
+              <span className="hidden sm:inline">Share</span>
             </button>
-          )}
+            {showShareMenu && (
+              <div className="absolute right-0 mt-2 w-56 bg-cb-card border border-cb-border rounded-card shadow-lg z-50 py-1">
+                <button
+                  onClick={async () => {
+                    const url = `https://chefsbk.app/recipe/${recipe.id}`;
+                    await navigator.clipboard.writeText(url);
+                    setShowShareMenu(false);
+                    alert('Link copied to clipboard!');
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2"
+                >
+                  🔗 Copy link
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowShareMenu(false);
+                    if (!userIsPro) {
+                      alert('PDF export requires the Pro plan. Upgrade in Settings.');
+                      return;
+                    }
+                    window.open(`/recipe/${recipe.id}/pdf`, '_blank');
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''}`}
+                >
+                  📄 Download PDF
+                  {!userIsPro && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Pro</span>}
+                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => {
+                      setShowShareMenu(false);
+                      if (!userIsPro) { alert('Social sharing is a Pro feature.'); return; }
+                      setShowSocialShare(true);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''}`}
+                  >
+                    📣 Social post
+                    {!userIsPro && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Pro</span>}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           {isOwner && (
             <button
               onClick={async () => {
@@ -783,6 +821,11 @@ export default function RecipePage() {
             )}
           </div>
         )}
+        {/* Likes row below title */}
+        <div className="flex items-center gap-3 mb-4">
+          <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} />
+          {recipe.visibility === 'public' && <span className="text-xs text-cb-green bg-cb-green/10 px-2 py-0.5 rounded-full font-medium">Public</span>}
+        </div>
         {editingDesc ? (
           <form onSubmit={(e) => { e.preventDefault(); saveDescription((e.currentTarget.elements.namedItem('desc') as HTMLTextAreaElement).value); }} className="mb-6">
             <textarea
@@ -1493,23 +1536,10 @@ export default function RecipePage() {
         </div>
       )}
 
-      {/* Likes + Comments */}
-      {recipe && (
+      {/* Comments */}
+      {recipe && recipe.visibility === 'public' && (
         <div className="max-w-3xl mx-auto px-4 mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} />
-            <a
-              href={`/recipe/${recipe.id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm text-cb-muted hover:text-cb-primary transition"
-            >
-              📄 PDF
-            </a>
-          </div>
-          {recipe.visibility === 'public' && (
-            <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} commentsEnabled={recipe.comments_enabled ?? true} />
-          )}
+          <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} commentsEnabled={recipe.comments_enabled ?? true} />
         </div>
       )}
 
