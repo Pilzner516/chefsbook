@@ -32,6 +32,7 @@ import { LikeButton } from '../../components/LikeButton';
 import { RecipeComments } from '../../components/RecipeComments';
 import { MealPlanPicker } from '../../components/MealPlanPicker';
 import { HeroGallery } from '../../components/HeroGallery';
+import { useConfirmDialog } from '../../components/useDialog';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -566,6 +567,7 @@ function RecipeDetailInner() {
   const fetchShoppingLists = useShoppingStore((s) => s.fetchLists);
   const addShoppingList = useShoppingStore((s) => s.addList);
   const addItemsPipeline = useShoppingStore((s) => s.addItemsPipeline);
+  const [confirmAction, ConfirmActionDialog] = useConfirmDialog();
   const [servings, setServings] = useState<number>(4);
   const [cookMode, setCookMode] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -1496,11 +1498,9 @@ function RecipeDetailInner() {
         <Divider />
         <Button
           title={t('recipe.deleteRecipe')}
-          onPress={() => {
-            Alert.alert(t('recipe.deleteRecipe'), t('recipe.areYouSure'), [
-              { text: t('common.cancel'), style: 'cancel' },
-              { text: t('common.delete'), style: 'destructive', onPress: async () => { await removeRecipe(recipe.id); router.back(); } },
-            ]);
+          onPress={async () => {
+            const ok = await confirmAction({ icon: '🗑️', title: t('recipe.deleteRecipe'), body: t('recipe.areYouSure'), confirmLabel: t('common.delete') });
+            if (ok) { await removeRecipe(recipe.id); router.back(); }
           }}
           variant="ghost"
         />
@@ -1543,6 +1543,7 @@ function RecipeDetailInner() {
         )}
       </View>
     )}
+    <ConfirmActionDialog />
     </View>
   );
 }

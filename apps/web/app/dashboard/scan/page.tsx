@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase, createRecipe, createTechnique, checkRecipeLimit } from '@chefsbook/db';
 import { scanRecipe } from '@chefsbook/ai';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 // ─── Bookmark types ─────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ type BookmarkPhase = 'idle' | 'checking' | 'preview' | 'importing' | 'done';
 // ─── Main page ──────────────────────────────────────────────────
 
 export default function ScanPage() {
+  const [confirm, ConfirmDialog] = useConfirmDialog();
   const router = useRouter();
 
   // Image / URL state
@@ -156,7 +158,7 @@ export default function ScanPage() {
         .eq('source_url', url.trim())
         .limit(1);
       if (existing?.length) {
-        const proceed = confirm(`You already have "${existing[0].title}" from this URL. Import again?`);
+        const proceed = await confirm({ icon: '\u26A0\uFE0F', title: 'Duplicate URL', body: `You already have "${existing[0].title}" from this URL. Import again?`, confirmLabel: 'Import Again', variant: 'positive' });
         if (!proceed) { setLoading(null); return; }
       }
 
@@ -970,6 +972,7 @@ export default function ScanPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

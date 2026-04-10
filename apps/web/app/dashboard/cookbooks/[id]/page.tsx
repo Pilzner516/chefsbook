@@ -7,8 +7,10 @@ import { supabase, getCookbook, listCookbookRecipes, deleteCookbook, matchCookbo
 import type { Cookbook, CookbookRecipe } from '@chefsbook/db';
 import RecipeReviewPanel from '@/components/RecipeReviewPanel';
 import { proxyIfNeeded } from '@/lib/recipeImage';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 export default function CookbookDetailPage() {
+  const [confirm, ConfirmDialog] = useConfirmDialog();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [cookbook, setCookbook] = useState<Cookbook | null>(null);
@@ -195,7 +197,7 @@ export default function CookbookDetailPage() {
           </div>
           <div className="flex gap-2 mt-3">
             <Link href="/dashboard/cookbooks" className="text-sm text-cb-secondary hover:text-cb-text">Back</Link>
-            <button onClick={async () => { if (confirm('Delete this cookbook?')) { await deleteCookbook(id); router.push('/dashboard/cookbooks'); } }} className="text-sm text-cb-primary hover:underline">Delete</button>
+            <button onClick={async () => { const ok = await confirm({ icon: '\u{1F5D1}\uFE0F', title: 'Delete cookbook?', body: 'Delete this cookbook and its table of contents? This cannot be undone.', confirmLabel: 'Delete' }); if (ok) { await deleteCookbook(id); router.push('/dashboard/cookbooks'); } }} className="text-sm text-cb-primary hover:underline">Delete</button>
           </div>
         </div>
       </div>
@@ -278,6 +280,7 @@ export default function CookbookDetailPage() {
           <button onClick={fetchToc} disabled={fetchingToc} className="text-cb-primary text-sm mt-2 hover:underline">Generate table of contents with AI</button>
         </div>
       ) : null}
+      <ConfirmDialog />
     </div>
   );
 }

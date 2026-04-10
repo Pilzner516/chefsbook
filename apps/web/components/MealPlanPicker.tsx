@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, getMealPlansForWeek, addMealPlan } from '@chefsbook/db';
 import type { MealPlan, MealSlot } from '@chefsbook/db';
+import { useConfirmDialog, useAlertDialog } from './useConfirmDialog';
 
 const MEAL_SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -42,6 +43,8 @@ export default function MealPlanPicker({ recipeId, recipeServings, onClose }: Pr
   const [existing, setExisting] = useState<MealPlan[]>([]);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [confirmSlot, ConfirmSlotDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
 
   const weekDays = getWeekDays(weekStart);
   const todayStr = formatDate(new Date());
@@ -63,10 +66,11 @@ export default function MealPlanPicker({ recipeId, recipeServings, onClose }: Pr
   const isSlotOccupied = (date: string, slot: MealSlot) =>
     existing.some((m) => m.plan_date === date && m.meal_slot === slot);
 
-  const handleSlotTap = (slot: MealSlot) => {
+  const handleSlotTap = async (slot: MealSlot) => {
     if (!selectedDay) return;
     if (isSlotOccupied(selectedDay, slot)) {
-      if (!confirm(`This slot already has a recipe. Add anyway?`)) return;
+      const ok = await confirmSlot({ icon: '⚠️', title: 'Slot occupied', body: 'This slot already has a recipe. Add anyway?', confirmLabel: 'Add Anyway', variant: 'positive' });
+      if (!ok) return;
     }
     setSelectedSlot(slot);
   };
@@ -77,10 +81,10 @@ export default function MealPlanPicker({ recipeId, recipeServings, onClose }: Pr
     try {
       await addMealPlan(userId, { plan_date: selectedDay, meal_slot: selectedSlot, recipe_id: recipeId, servings, notes: null });
       const dayIdx = weekDays.findIndex((d) => formatDate(d) === selectedDay);
-      alert(`Added to ${DAY_NAMES[dayIdx]} · ${selectedSlot}`);
+      showAlert({ icon: '✓', title: 'Added to plan', body: `Added to ${DAY_NAMES[dayIdx]} · ${selectedSlot}` });
       onClose();
     } catch (e: any) {
-      alert('Failed: ' + (e.message ?? 'Unknown error'));
+      showAlert({ icon: '⚠️', title: 'Error', body: e.message ?? 'Unknown error' });
     }
     setSaving(false);
   };
@@ -179,6 +183,8 @@ export default function MealPlanPicker({ recipeId, recipeServings, onClose }: Pr
           </button>
         )}
       </div>
+      <ConfirmSlotDialog />
+      <AlertDialog />
     </div>
   );
 }

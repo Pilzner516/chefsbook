@@ -7,6 +7,7 @@ import type { MealPlan, Recipe, ShoppingList } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import MealPlanWizard from '@/components/MealPlanWizard';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MEAL_SLOTS = ['breakfast', 'brunch', 'lunch', 'dinner', 'snack'] as const;
@@ -153,6 +154,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
 }
 
 export default function PlanPage() {
+  const [confirmMismatch, ConfirmMismatchDialog] = useConfirmDialog();
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [weekStart, setWeekStart] = useState(new Date().toISOString().split('T')[0]!);
   const [loading, setLoading] = useState(true);
@@ -292,7 +294,7 @@ export default function PlanPage() {
       const max = Math.max(...servings);
       if (max / min > 2) {
         const details = dayMeals.map((m: any) => `• ${m.recipe?.title ?? 'Recipe'} — ${m.servings ?? m.recipe?.servings ?? 4}x Servings`).join('\n');
-        const proceed = confirm(`⚠️ Serving sizes don't match\n\nYour recipes for this day have different serving counts:\n${details}\n\nThis may affect shopping list quantities. Add anyway?`);
+        const proceed = await confirmMismatch({ icon: '⚠️', title: 'Serving sizes don\'t match', body: `Your recipes for this day have different serving counts. This may affect shopping list quantities.`, confirmLabel: 'Add Anyway', variant: 'positive' });
         if (!proceed) return;
       }
     }
@@ -560,6 +562,7 @@ export default function PlanPage() {
           </div>
         </div>
       )}
+      <ConfirmMismatchDialog />
     </div>
   );
 }

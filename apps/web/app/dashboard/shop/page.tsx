@@ -17,6 +17,7 @@ import {
   togglePin,
 } from '@chefsbook/db';
 import type { ShoppingList, ShoppingListItem } from '@chefsbook/db';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 type ViewMode = 'department' | 'recipe' | 'alpha';
 
@@ -30,6 +31,7 @@ const DEPT_LABELS: Record<string, string> = {
 };
 
 export default function ShopPage() {
+  const [confirm, ConfirmDialog] = useConfirmDialog();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [currentList, setCurrentList] = useState<(ShoppingList & { items: ShoppingListItem[] }) | null>(null);
   const [loading, setLoading] = useState(true);
@@ -145,7 +147,8 @@ export default function ShopPage() {
 
   const handleDeleteList = async () => {
     if (!currentList) return;
-    if (!confirm(`Delete "${currentList.name}"? This cannot be undone.`)) return;
+    const ok = await confirm({ icon: '\u{1F5D1}\uFE0F', title: 'Delete list?', body: `Delete "${currentList.name}"? This cannot be undone.`, confirmLabel: 'Delete' });
+    if (!ok) return;
     await deleteShoppingList(currentList.id);
     setCurrentList(null);
     await loadLists();
@@ -308,6 +311,7 @@ export default function ShopPage() {
           />
           <button onClick={handleAddManual} disabled={!newItemText.trim()} className="bg-cb-green text-white px-4 py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Add</button>
         </div>
+        <ConfirmDialog />
       </div>
     );
   }

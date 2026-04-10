@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { supabase, followUser, unfollowUser, isFollowing as checkIsFollowing, canDo, getUserPlanTier } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
+import { useConfirmDialog } from './useConfirmDialog';
 
 export default function FollowButton({ targetUserId, targetUsername }: { targetUserId: string; targetUsername: string | null }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [canFollow, setCanFollow] = useState(false);
+  const [confirmUnfollow, ConfirmDialog] = useConfirmDialog();
 
   useEffect(() => {
     (async () => {
@@ -30,7 +32,8 @@ export default function FollowButton({ targetUserId, targetUsername }: { targetU
   const handleFollow = async () => {
     if (!canFollow) return;
     if (isFollowing) {
-      if (!confirm(`Unfollow @${targetUsername ?? 'this user'}?`)) return;
+      const ok = await confirmUnfollow({ icon: '👋', title: 'Unfollow?', body: `Unfollow @${targetUsername ?? 'this user'}?`, confirmLabel: 'Unfollow' });
+      if (!ok) return;
       setIsFollowing(false);
       try { await unfollowUser(currentUserId, targetUserId); } catch { setIsFollowing(true); }
     } else {
@@ -48,15 +51,18 @@ export default function FollowButton({ targetUserId, targetUsername }: { targetU
   }
 
   return (
-    <button
-      onClick={handleFollow}
-      className={`mt-3 px-6 py-2 rounded-full text-sm font-semibold transition-colors ${
-        isFollowing
-          ? 'bg-cb-card border border-cb-border text-cb-secondary hover:border-red-300 hover:text-red-500'
-          : 'bg-cb-primary text-white hover:bg-cb-primary/90'
-      }`}
-    >
-      {isFollowing ? 'Following ✓' : 'Follow +'}
-    </button>
+    <>
+      <button
+        onClick={handleFollow}
+        className={`mt-3 px-6 py-2 rounded-full text-sm font-semibold transition-colors ${
+          isFollowing
+            ? 'bg-cb-card border border-cb-border text-cb-secondary hover:border-red-300 hover:text-red-500'
+            : 'bg-cb-primary text-white hover:bg-cb-primary/90'
+        }`}
+      >
+        {isFollowing ? 'Following ✓' : 'Follow +'}
+      </button>
+      <ConfirmDialog />
+    </>
   );
 }

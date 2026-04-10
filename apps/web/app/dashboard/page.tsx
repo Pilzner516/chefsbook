@@ -8,6 +8,7 @@ import type { Recipe, ShoppingList } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 type ViewMode = 'grid' | 'list' | 'table';
 type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
@@ -22,6 +23,7 @@ function getStoredSort(): SortKey {
 }
 
 export default function DashboardPage() {
+  const [confirm, ConfirmDialog] = useConfirmDialog();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
@@ -109,7 +111,8 @@ export default function DashboardPage() {
 
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} recipe${selected.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    const ok = await confirm({ icon: '\u{1F5D1}\uFE0F', title: 'Delete recipes?', body: `Delete ${selected.size} recipe${selected.size > 1 ? 's' : ''}? This cannot be undone.`, confirmLabel: 'Delete' });
+    if (!ok) return;
     setBulkAction('deleting');
     try {
       for (const id of selected) {
@@ -559,6 +562,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

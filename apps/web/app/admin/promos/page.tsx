@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@chefsbook/db';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 interface PromoRow {
   id: string;
@@ -16,6 +17,7 @@ interface PromoRow {
 }
 
 export default function PromosPage() {
+  const [confirmDel, ConfirmDialog] = useConfirmDialog();
   const [promos, setPromos] = useState<PromoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCode, setNewCode] = useState('');
@@ -55,7 +57,8 @@ export default function PromosPage() {
   };
 
   const deletePromo = async (id: string) => {
-    if (!confirm('Delete this promo code?')) return;
+    const ok = await confirmDel({ icon: '🗑️', title: 'Delete promo code?', body: 'This promo code will be permanently removed.', confirmLabel: 'Delete' });
+    if (!ok) return;
     await supabase.from('promo_codes').delete().eq('id', id);
     load();
   };
@@ -134,6 +137,7 @@ export default function PromosPage() {
           {promos.length === 0 && <p className="p-8 text-center text-gray-500">No promo codes.</p>}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

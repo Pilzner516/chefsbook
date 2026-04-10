@@ -5,6 +5,7 @@ import { supabase, getComments, postComment, deleteComment, flagComment, blockCo
 import type { CommentRow } from '@chefsbook/db';
 import { moderateComment } from '@chefsbook/ai';
 import Link from 'next/link';
+import { useConfirmDialog, useAlertDialog } from './useConfirmDialog';
 
 interface Props {
   recipeId: string;
@@ -19,6 +20,8 @@ export default function RecipeComments({ recipeId, recipeOwnerId, commentsEnable
   const [userId, setUserId] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [flagging, setFlagging] = useState<string | null>(null);
+  const [confirmDel, ConfirmDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -64,7 +67,8 @@ export default function RecipeComments({ recipeId, recipeOwnerId, commentsEnable
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this comment?')) return;
+    const ok = await confirmDel({ icon: '🗑️', title: 'Delete comment?', body: 'This comment will be permanently removed.', confirmLabel: 'Delete' });
+    if (!ok) return;
     await deleteComment(id);
     loadComments();
   };
@@ -73,7 +77,7 @@ export default function RecipeComments({ recipeId, recipeOwnerId, commentsEnable
     if (!userId) return;
     await flagComment(commentId, userId, reason);
     setFlagging(null);
-    alert('Thanks for reporting.');
+    showAlert({ icon: '✓', title: 'Thanks for reporting', body: 'We\'ll review this comment shortly.' });
   };
 
   const timeAgo = (d: string) => {
@@ -142,6 +146,8 @@ export default function RecipeComments({ recipeId, recipeOwnerId, commentsEnable
           </button>
         </div>
       )}
+      <ConfirmDialog />
+      <AlertDialog />
     </div>
   );
 }
