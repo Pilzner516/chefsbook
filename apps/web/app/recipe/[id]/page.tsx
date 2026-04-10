@@ -672,7 +672,7 @@ export default function RecipePage() {
         ) : (userPhotos.length > 0 || recipe.image_url) ? (
           <div className={`rounded-card overflow-hidden relative group ${recipe.cookbook_id ? 'bg-cb-bg flex items-center justify-center' : 'bg-cb-card'}`} style={{ height: recipe.cookbook_id ? 300 : 288 }}>
             <img
-              src={userPhotos.length > 0 ? proxyIfNeeded(userPhotos[0].url) : recipe.image_url!}
+              src={userPhotos.length > 0 ? proxyIfNeeded(userPhotos[0].url) : proxyIfNeeded(recipe.image_url!)}
               alt={recipe.title}
               className={`w-full h-full ${recipe.cookbook_id ? 'object-contain' : 'object-cover'}`}
             />
@@ -716,7 +716,7 @@ export default function RecipePage() {
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {userPhotos.map((photo) => (
                   <div key={photo.id} className="w-20 h-20 rounded-input overflow-hidden bg-cb-bg shrink-0 relative group">
-                    <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+                    <img src={proxyIfNeeded(photo.url)} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                       <button onClick={async () => { await setPhotoPrimary(photo.id, id); if (recipe) { await updateRecipe(id, { image_url: photo.url }); setRecipe({ ...recipe, image_url: photo.url }); } }} className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[10px]" title="Set as main">★</button>
                       <button onClick={async () => { await deleteRecipePhoto(photo.id); setUserPhotos((prev) => prev.filter((p) => p.id !== photo.id)); }} className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-[10px] text-cb-primary" title="Delete">✕</button>
@@ -1036,7 +1036,7 @@ export default function RecipePage() {
         {cookbook && (
           <div className="bg-cb-bg border border-cb-border rounded-card p-4 mb-6 flex items-center gap-3">
             {cookbook.cover_url ? (
-              <img src={cookbook.cover_url} alt="" className="w-12 h-16 rounded object-cover shrink-0" />
+              <img src={proxyIfNeeded(cookbook.cover_url!)} alt="" className="w-12 h-16 rounded object-cover shrink-0" />
             ) : (
               <div className="w-12 h-16 rounded bg-cb-card border border-cb-border flex items-center justify-center shrink-0 text-lg">📚</div>
             )}

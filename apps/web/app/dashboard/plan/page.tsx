@@ -6,6 +6,7 @@ import { supabase, getMealPlansForWeek, addMealPlan, deleteMealPlan, listRecipes
 import type { MealPlan, Recipe, ShoppingList } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import MealPlanWizard from '@/components/MealPlanWizard';
+import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MEAL_SLOTS = ['breakfast', 'brunch', 'lunch', 'dinner', 'snack'] as const;
@@ -81,7 +82,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
                 </button>
                 <Link href={`/recipe/${plan.recipe_id}`} className="block">
                   {plan.recipe?.image_url ? (
-                    <img src={plan.recipe.image_url} alt={plan.recipe?.title ?? ''} className="w-full aspect-[3/2] object-cover rounded-input" />
+                    <img src={proxyIfNeeded(plan.recipe.image_url) ?? CHEFS_HAT_URL} alt={plan.recipe?.title ?? ''} className="w-full aspect-[3/2] object-cover rounded-input" />
                   ) : (
                     <div className="w-full aspect-[3/2] bg-cb-bg rounded-input flex items-center justify-center">
                       <svg className="w-8 h-8 text-cb-border" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M2.25 18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V6a2.25 2.25 0 0 0-2.25-2.25H4.5A2.25 2.25 0 0 0 2.25 6v12Z" /></svg>
@@ -489,7 +490,7 @@ export default function PlanPage() {
                 filteredRecipes.map((r) => (
                   <button key={r.id} onClick={() => setSelectedRecipeId(selectedRecipeId === r.id ? null : r.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-input transition-colors text-left ${selectedRecipeId === r.id ? 'bg-cb-primary/10 ring-2 ring-cb-primary/30' : 'hover:bg-cb-bg'}`}>
                     <div className="w-12 h-12 rounded-input overflow-hidden bg-cb-bg shrink-0">
-                      {r.image_url ? <img src={r.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
+                      {r.image_url ? <img src={proxyIfNeeded(r.image_url)} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 object-contain opacity-30 mx-auto" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.title}</p>

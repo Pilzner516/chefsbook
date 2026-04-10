@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@chefsbook/db';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('');
@@ -81,7 +82,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-4 mb-4">
             <label className="cursor-pointer">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-cb-border" />
+                <img src={proxyIfNeeded(avatarUrl)} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-cb-border" />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-cb-primary/20 flex items-center justify-center text-xl font-bold text-cb-primary">
                   {displayName?.charAt(0)?.toUpperCase() || email?.charAt(0)?.toUpperCase() || '?'}

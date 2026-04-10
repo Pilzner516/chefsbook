@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { getRecipeByShareToken, cloneRecipe, supabase } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity, scaleQuantity } from '@chefsbook/ui';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 export default function SharedRecipePage() {
   const { token } = useParams<{ token: string }>();
@@ -107,7 +108,7 @@ export default function SharedRecipePage() {
         <div className="max-w-4xl mx-auto px-6 mt-8">
           <div className="h-80 rounded-card overflow-hidden bg-cb-card">
             <img
-              src={recipe.image_url}
+              src={proxyIfNeeded(recipe.image_url!)}
               alt={recipe.title}
               className="w-full h-full object-cover"
             />

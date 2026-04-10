@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase, listCookbooks, listRecipes, createCookbook } from '@chefsbook/db';
 import type { Cookbook, Recipe } from '@chefsbook/db';
 import Link from 'next/link';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 export default function CookbooksPage() {
   const [cookbooks, setCookbooks] = useState<Cookbook[]>([]);
@@ -259,7 +260,7 @@ export default function CookbooksPage() {
               <div className="flex gap-4">
                 {book.cover_url ? (
                   <img
-                    src={book.cover_url}
+                    src={proxyIfNeeded(book.cover_url!)}
                     alt={book.title}
                     className="w-16 h-20 rounded object-cover shrink-0"
                   />

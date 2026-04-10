@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, getTechnique, deleteTechnique, getRecipe } from '@chefsbook/db';
 import type { Technique, TechniqueStep, Recipe } from '@chefsbook/db';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: 'bg-green-100 text-green-700',
@@ -99,7 +100,7 @@ export default function TechniquePage() {
       {technique.image_url && (
         <div className="max-w-4xl mx-auto px-6">
           <div className="h-64 rounded-card overflow-hidden bg-cb-card">
-            <img src={technique.image_url} alt={technique.title} className="w-full h-full object-cover" />
+            <img src={proxyIfNeeded(technique.image_url!)} alt={technique.title} className="w-full h-full object-cover" />
           </div>
         </div>
       )}
@@ -243,7 +244,7 @@ export default function TechniquePage() {
                   <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-cb-primary/50 transition-colors">
                     {r.image_url && (
                       <div className="h-28 overflow-hidden">
-                        <img src={r.image_url} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        <img src={proxyIfNeeded(r.image_url!)} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                       </div>
                     )}
                     <div className="p-3">

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase, listTechniques, deleteTechnique } from '@chefsbook/db';
 import type { Technique } from '@chefsbook/db';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: 'bg-green-100 text-green-700',
@@ -86,7 +87,7 @@ export default function TechniquesPage() {
               <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-purple-400 transition-colors">
                 <div className="h-36 bg-cb-bg overflow-hidden flex items-center justify-center relative">
                   {t.image_url ? (
-                    <img src={t.image_url} alt={t.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={proxyIfNeeded(t.image_url!)} alt={t.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   ) : (
                     <svg className="w-12 h-12 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347" />

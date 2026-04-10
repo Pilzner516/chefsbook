@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import FollowButton from '@/components/FollowButton';
 import FollowTabs from '@/components/FollowTabs';
+import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 
 export default async function ChefPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -40,7 +41,7 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
         {/* Profile header */}
         <div className="text-center mb-8">
           {chef.avatar_url ? (
-            <img src={chef.avatar_url} alt={chef.display_name ?? ''} className="w-20 h-20 rounded-full mx-auto mb-4 object-cover" />
+            <img src={proxyIfNeeded(chef.avatar_url!)} alt={chef.display_name ?? ''} className="w-20 h-20 rounded-full mx-auto mb-4 object-cover" />
           ) : (
             <div className="w-20 h-20 rounded-full bg-cb-primary mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
               {getInitials(chef.display_name)}
@@ -83,7 +84,7 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
                 <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-cb-primary/50 transition-colors">
                   {recipe.image_url && (
                     <div className="h-40 overflow-hidden">
-                      <img src={recipe.image_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={proxyIfNeeded(recipe.image_url!)} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     </div>
                   )}
                   <div className="p-4">

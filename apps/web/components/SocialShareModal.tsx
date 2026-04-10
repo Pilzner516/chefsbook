@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { RecipeWithDetails } from '@chefsbook/db';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 type Platform = 'instagram' | 'pinterest' | 'facebook';
 const PLATFORMS: { key: Platform; icon: string; label: string; charLimit: number }[] = [
@@ -118,7 +119,7 @@ export default function SocialShareModal({
           {/* Image preview */}
           {recipe.image_url && (
             <div className="rounded-card overflow-hidden">
-              <img src={recipe.image_url} alt={recipe.title} className="w-full h-48 object-cover" />
+              <img src={proxyIfNeeded(recipe.image_url!)} alt={recipe.title} className="w-full h-48 object-cover" />
             </div>
           )}
 
