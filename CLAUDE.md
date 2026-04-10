@@ -333,7 +333,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Meal plan card pills: daypart pill (bottom-left, dark bg, tappable) + servings pill (bottom-right, white bg, tappable stepper); both update DB via `updateMealPlan()`
 - Portions mismatch warning: triggers on add-to-cart when >2x serving difference across day's recipes
 - Stores table: `stores` with user_id, name, domain, logo_url, initials; `store_id` FK on shopping_lists; logo guessed from known domains map + logo.dev API
-- Store picker: `StorePickerDialog` (web) replaces free-text store input; shows saved stores with logos/initials + "New store..." option
+- Store picker: `StorePickerDialog` (web) + `StorePicker` (mobile) replace free-text store input; shows saved stores with logos/initials + "New store..." option
+- Shopping list button colour: all Create/Add buttons in shopping flow use pomodoro red (`cb-primary`), never green; green reserved for positive/save actions and annual badge
 - Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
 - Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
 

@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 54)
+- Mobile: `StorePicker` bottom sheet — store dropdown with logos/initials, new store input, auto-fill list name
+- Mobile shopping tab: replaced old NewListModal with StorePicker
+- Button colour fix: all shopping creation buttons now pomodoro red (cb-primary) — web StorePickerDialog, recipe detail, meal plan
+- Deployed to RPi5
+
 ## 2026-04-10 (session 53)
 - Web: Complete PDF export redesign using @react-pdf/renderer with raw recipe data (not web page rendering)
 - PDF: Recipe hero image fetched server-side with apikey header, converted to base64 for @react-pdf/renderer Image
