@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 51)
+- Web: ChefsDialog component — unified modal with backdrop, rounded container, pill buttons (primary/secondary/cancel/positive)
+- Web: useConfirmDialog + useAlertDialog hooks — imperative confirm/alert replacements using ChefsDialog
+- Mobile: ChefsDialog component — same spec using React Native Modal + StyleSheet
+- Mobile: useConfirmDialog + useAlertDialog hooks for mobile
+- Web: Replaced all 8 native confirm() calls across 8 files with ChefsDialog (comments, follow, meal plan, dashboard, shop, cookbook, scan, admin promos)
+- Web: Replaced key alert() calls in RecipeComments + MealPlanPicker with styled dialogs
+- Mobile: Replaced delete recipe confirmation in recipe detail with ChefsDialog
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live with styled dialogs
+
 ## 2026-04-10 (session 50)
 - Web: daypart pill (bottom-left, dark bg) + servings pill (bottom-right, white bg) on meal plan cards, tappable to change
 - Mobile: meal plan cards upgraded to image cards with daypart + servings pills

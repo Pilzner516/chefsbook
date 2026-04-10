@@ -333,6 +333,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Meal plan card pills: daypart pill (bottom-left, dark bg, tappable) + servings pill (bottom-right, white bg, tappable stepper); both update DB via `updateMealPlan()`
 - Portions mismatch warning: triggers on add-to-cart when >2x serving difference across day's recipes
 - Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
+- Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
