@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 40)
+- Web: HD chef's hat logo (1024x1024 from mobile assets) at 128px in hero + footer
+- Web: Feature card emoji icons removed, replaced with red left border accent (3px #ce2b37) + 22px headers
+- Web: "How it works" redesigned as 4 white shadow cards with 48px red step number circles + dashed connector line (desktop)
+- Web: Monthly/Annual toggle fixed — labels use leading-none + flex align-items-center, "Save 20%" as green pill badge
+- Web: Section background for "How it works" changed to white for visual break from cream
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app confirmed live with all changes
+
 ## 2026-04-10 (session 39)
 - Built release APK (111MB) — includes all sessions 26-38: usernames, plan tiers, follows, likes/comments, attribution, share links, PDF export, admin, web images
 - No debug console.log artifacts; tsc --noEmit clean
