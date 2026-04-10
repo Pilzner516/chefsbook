@@ -435,7 +435,8 @@
     "usernameTaken": "Already taken",
     "usernameTooShort": "3-20 characters required",
     "usernameInvalid": "Lowercase letters, numbers, underscores only",
-    "checking": "Checking..."
+    "checking": "Checking...",
+    "usernameNotAllowed": "Please choose a different username — this one isn't allowed on ChefsBook"
   },
   "notepad": {
     "title": "QA Notepad",

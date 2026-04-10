@@ -39,7 +39,6 @@ export default function SettingsPage() {
       if (!user) throw new Error('Not signed in');
       const { error } = await supabase.from('user_profiles').update({
         display_name: displayName.trim() || null,
-        username: username.trim() || null,
         bio: bio.trim() || null,
       }).eq('id', user.id);
       if (error) throw error;
@@ -96,15 +95,17 @@ export default function SettingsPage() {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-cb-secondary block mb-1">Display name</label>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Display Name</label>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+            <p className="text-xs text-cb-muted mt-1">Your name as shown to others. Can be changed anytime.</p>
           </div>
           <div>
-            <label className="text-sm font-medium text-cb-secondary block mb-1">Username</label>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Username 🔒</label>
             <div className="flex items-center">
               <span className="text-sm text-cb-secondary mr-1">@</span>
-              <input value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="username" className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+              <input value={username} disabled className="flex-1 bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm text-cb-secondary cursor-not-allowed" />
             </div>
+            <p className="text-xs text-cb-muted mt-1">Your unique @handle used in recipe credits and search. Cannot be changed.</p>
           </div>
           <div>
             <label className="text-sm font-medium text-cb-secondary block mb-1">Email</label>

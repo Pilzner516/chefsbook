@@ -36,3 +36,6 @@ export { fetchInstagramPost, extractRecipeFromInstagram } from './instagramImpor
 export type { InstagramPostData, InstagramRecipeResult } from './instagramImport';
 export { moderateComment } from './moderateComment';
 export type { ModerationResult } from './moderateComment';
+export { moderateRecipe } from './moderateRecipe';
+export type { RecipeModerationResult } from './moderateRecipe';
+export { isUsernameFamilyFriendly } from './usernameCheck';

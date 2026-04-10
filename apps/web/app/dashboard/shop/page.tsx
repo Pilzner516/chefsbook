@@ -125,11 +125,15 @@ export default function ShopPage() {
     if (!newListName.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const list = await createShoppingList(user.id, newListName.trim());
-    setNewListName('');
-    setShowNewList(false);
-    await loadLists();
-    openList(list.id);
+    try {
+      const list = await createShoppingList(user.id, newListName.trim(), { storeName: newListName.trim() });
+      setNewListName('');
+      setShowNewList(false);
+      await loadLists();
+      if (list?.id) openList(list.id);
+    } catch (err: any) {
+      alert('Failed to create list: ' + (err.message ?? 'Please try again.'));
+    }
   };
 
   const handleSaveName = async (name: string) => {

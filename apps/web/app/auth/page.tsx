@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, checkUsernameAvailable, setUsername, applyPromoCode } from '@chefsbook/db';
+import { isUsernameFamilyFriendly } from '@chefsbook/ai';
 import Link from 'next/link';
 
 type Mode = 'login' | 'signup';
@@ -45,6 +46,13 @@ export default function AuthPage() {
     if (mode === 'signup') {
       if (usernameStatus !== 'available') {
         setError('Please choose a valid, available username.');
+        setLoading(false);
+        return;
+      }
+      // Family-friendly check
+      const friendly = await isUsernameFamilyFriendly(username);
+      if (!friendly) {
+        setError("Please choose a different username — this one isn't allowed on ChefsBook");
         setLoading(false);
         return;
       }

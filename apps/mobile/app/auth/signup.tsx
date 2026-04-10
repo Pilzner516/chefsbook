@@ -50,6 +50,10 @@ export default function SignUpScreen() {
     if (password.length < 6) { setError(t('auth.passwordLength')); return; }
     setLoading(true);
     try {
+      // Family-friendly check
+      const { isUsernameFamilyFriendly } = await import('@chefsbook/ai');
+      const friendly = await isUsernameFamilyFriendly(username);
+      if (!friendly) { setError(t('signup.usernameNotAllowed')); setLoading(false); return; }
       await signUp(email.trim(), password, displayName.trim(), username);
       // Apply promo code if provided
       if (promoCode.trim()) {
