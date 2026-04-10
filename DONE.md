@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 50)
+- Web: daypart pill (bottom-left, dark bg) + servings pill (bottom-right, white bg) on meal plan cards, tappable to change
+- Mobile: meal plan cards upgraded to image cards with daypart + servings pills
+- Portions mismatch warning when adding day to cart with >2x serving difference (mobile Alert + web confirm)
+- i18n: `mealCard` namespace
+- Deployed to RPi5
+
 ## 2026-04-10 (session 49)
 - Fix: Comment post button — moderateComment() CORS error now caught separately, post goes through without moderation on web
 - Fix: Shopping list RLS — addItemsWithPipeline() accepts optional dbClient param; API route passes service role client to bypass RLS

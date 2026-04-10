@@ -330,6 +330,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - `isUsernameFamilyFriendly()` in @chefsbook/ai checks usernames at signup via Claude; non-blocking (returns true on AI error)
 - Discover page removed from web sidebar nav; `/dashboard/discover` redirects to `/dashboard/search`
 - Add to Meal Plan: `MealPlanPicker` component (mobile bottom sheet + web modal); colour-coded day/meal slots; Chef+ plan gated; conflict warning for occupied slots
+- Meal plan card pills: daypart pill (bottom-left, dark bg, tappable) + servings pill (bottom-right, white bg, tappable stepper); both update DB via `updateMealPlan()`
+- Portions mismatch warning: triggers on add-to-cart when >2x serving difference across day's recipes
 - Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
