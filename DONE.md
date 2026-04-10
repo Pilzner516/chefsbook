@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 46)
+- Full verification sweep: 31 pass, 0 fail, 17 not tested (interactive/mobile)
+- QA report at `docs/QA-REPORT-2026-04-10.md`
+- Confirmed: PM2 online, image proxy, landing page, admin redirect, Discover removed, settings labels
+
 ## 2026-04-10 (session 45)
 - Migration 023: recipe moderation columns (moderation_status, flag_reason, flagged_at, reviewed_by/at) + user_profiles recipes_frozen columns
 - `moderateRecipe()` in @chefsbook/ai — AI content moderation for recipe title/description/ingredients/steps/notes
