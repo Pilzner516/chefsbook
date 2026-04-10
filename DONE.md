@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 42)
+- Web recipe detail: moved LikeButton below title with Public badge
+- Share dropdown: Copy link + Download PDF (Pro gated) + Social post (Pro gated)
+- Removed Discover from sidebar nav; `/dashboard/discover` redirects to `/dashboard/search`
+- Deployed to RPi5 — build successful, PM2 restarted, live at chefsbk.app
+
 ## 2026-04-10 (session 41)
 - Fix: All landing page CTA buttons routed from 404 `/auth/signup` to correct `/auth` route
 - Fix: Nav + footer "Sign in" links routed from `/dashboard` to `/auth`

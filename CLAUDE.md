@@ -324,6 +324,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Android App Links: intent filter with `autoVerify` for chefsbk.app/recipe; assetlinks.json needs release APK fingerprint
 - PDF export: `/recipe/[id]/pdf` route using `@react-pdf/renderer`; Pro plan gated (403 for non-Pro); mobile downloads via expo-file-system + expo-sharing
 - Web image proxy: `/api/image?url=` route proxies Supabase storage URLs with apikey header (Kong returns 401 without it); 86400s cache; only proxies Supabase/100.110.47.62 URLs
+- Web share dropdown: replaces individual share/post buttons; contains Copy link, Download PDF (Pro), Social post (Pro)
+- Discover page removed from web sidebar nav; `/dashboard/discover` redirects to `/dashboard/search`
 - Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
