@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 39)
+- Built release APK (111MB) — includes all sessions 26-38: usernames, plan tiers, follows, likes/comments, attribution, share links, PDF export, admin, web images
+- No debug console.log artifacts; tsc --noEmit clean
+
 ## 2026-04-09 (session 38)
 - `/api/image` proxy route for Supabase storage URLs (apikey injection, 86400s cache)
 - `getRecipeImageUrl()` + `proxyIfNeeded()` utilities in `apps/web/lib/recipeImage.ts`
