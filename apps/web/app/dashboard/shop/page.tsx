@@ -80,8 +80,12 @@ export default function ShopPage() {
   };
 
   const openList = async (id: string) => {
-    const data = await getShoppingList(id);
-    setCurrentList(data);
+    try {
+      const data = await getShoppingList(id);
+      setCurrentList(data);
+    } catch (err: any) {
+      alert('Failed to open list: ' + (err.message ?? 'Unknown error'));
+    }
   };
 
   const handleToggle = async (id: string, checked: boolean) => {
