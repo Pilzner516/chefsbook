@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 53)
+- Web: Complete PDF export redesign using @react-pdf/renderer with raw recipe data (not web page rendering)
+- PDF: Recipe hero image fetched server-side with apikey header, converted to base64 for @react-pdf/renderer Image
+- PDF: Clean layout — red header line, hero image (220px max), title (28px bold), metadata row, ingredients with bullet list, numbered steps with timer indicators, notes section
+- PDF: Attribution in hero section + footer on every page (original_submitter + shared_by)
+- PDF: Filename format "ChefsBook - [Recipe Title].pdf" with sanitized special characters
+- PDF: Footer on every page with "Saved with ChefsBook · chefsbk.app" + page numbers
+- PDF: Ingredient grouping by group_label (section headers like "For the dough:")
+- PDF: Steps use wrap={false} to prevent page breaks mid-step
+- PDF: No web UI elements (no photo strip, buttons, navigation, comments, etc.)
+- Verified: downloaded real 2-page PDF (Thai Chicken Satay, 51KB) with correct filename and layout
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live
+
 ## 2026-04-10 (session 52)
 - Migration 024: `stores` table + `store_id` FK on shopping_lists; backfill 5 stores from existing data
 - DB queries: getUserStores, createStore (logo.dev guess + known domains), updateStoreLogo

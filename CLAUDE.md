@@ -322,7 +322,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Share links: chefsbk.app/recipe/[id]?ref=[username]; private recipes auto-upgrade to `shared_link` visibility on share
 - Guest access: `guest_sessions` table captures email for unauthenticated recipe viewers; guests can view but not save/comment
 - Android App Links: intent filter with `autoVerify` for chefsbk.app/recipe; assetlinks.json needs release APK fingerprint
-- PDF export: `/recipe/[id]/pdf` route using `@react-pdf/renderer`; Pro plan gated (403 for non-Pro); mobile downloads via expo-file-system + expo-sharing
+- PDF export: `/recipe/[id]/pdf` route using `@react-pdf/renderer` from raw recipe data; hero image fetched server-side with apikey; filename "ChefsBook - [title].pdf"; attribution in hero + footer; Pro plan gated
 - Web image proxy: `/api/image?url=` route proxies Supabase storage URLs with apikey header (Kong returns 401 without it); 86400s cache; only proxies Supabase/100.110.47.62 URLs
 - Web share dropdown: replaces individual share/post buttons; contains Copy link, Download PDF (Pro), Social post (Pro)
 - Recipe moderation: `moderateRecipe()` runs on every import + edit save; 3 verdicts: clean (normal), mild (private + flagged), serious (private + user frozen); admin approve/reject in `/admin/recipes`
