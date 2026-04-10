@@ -261,9 +261,11 @@ export async function addItemsWithPipeline(
   userId: string,
   items: { ingredient: string; quantity?: number | null; unit?: string | null; quantity_needed?: string | null; recipe_id?: string; recipe_name?: string }[],
   aiSuggestions?: Record<string, { purchase_unit: string; store_category: string }>,
+  dbClient?: typeof supabase,
 ): Promise<{ inserted: number; merged: number; total: number }> {
+  const db = dbClient ?? supabase;
   // 1. Get existing items in list for dedup
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('shopping_list_items')
     .select('id, ingredient, quantity_needed, unit')
     .eq('list_id', listId);
@@ -311,17 +313,17 @@ export async function addItemsWithPipeline(
 
   // 3. Execute updates
   for (const u of toUpdate) {
-    await supabase.from('shopping_list_items').update({ quantity_needed: u.quantity_needed }).eq('id', u.id);
+    await db.from('shopping_list_items').update({ quantity_needed: u.quantity_needed }).eq('id', u.id);
   }
 
   // 4. Execute inserts
   if (toInsert.length > 0) {
-    const { error } = await supabase.from('shopping_list_items').insert(toInsert);
+    const { error } = await db.from('shopping_list_items').insert(toInsert);
     if (error) throw new Error(error.message);
   }
 
   // 5. Touch list updated_at
-  await supabase.from('shopping_lists').update({ updated_at: new Date().toISOString() }).eq('id', listId);
+  await db.from('shopping_lists').update({ updated_at: new Date().toISOString() }).eq('id', listId);
 
   return { inserted: toInsert.length, merged: toUpdate.length, total: toInsert.length + toUpdate.length };
 }

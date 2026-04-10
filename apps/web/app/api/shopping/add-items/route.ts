@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     } catch {}
 
     // Use shared pipeline for dedup + merge + insert
-    const result = await addItemsWithPipeline(listId, user.id, items, suggestions);
+    const result = await addItemsWithPipeline(listId, user.id, items, suggestions, db);
 
     return Response.json(result);
   } catch (e: any) {
