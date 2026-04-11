@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 85)
+- Fix: "Database error querying schema" on sign-in for seblux100@gmail.com
+- Root cause: GoTrue can't scan NULL token columns (confirmation_token, recovery_token, email_change_token_new, etc.) — user was created with auto-confirm which left tokens as NULL
+- Fix: SET all NULL token columns to empty string for seblux100 user in auth.users
+- PostgREST restarted (not the root cause — schema cache loaded fine with 59 relations)
+- Verified: both pilzner and seblux100 accounts sign in successfully via API (JWT returned)
+- Verified: /auth page loads (200)
+
 ## 2026-04-11 (session 84)
 - Web: "All [Store]" combined entry added as FIRST item in store groups with 2+ lists (green COMBINED badge)
 - Web: Combined view — fetches items from all lists for a store, merges by ingredient+unit, groups by department

@@ -391,6 +391,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Web AI calls (moderateComment, moderateRecipe) fail due to CORS — wrap in try/catch, allow action to proceed without moderation
 - Web API routes using `addItemsWithPipeline` must pass the service role client (db singleton has no JWT context → RLS fails)
 - Instagram URLs must never enter standard URL import path — `handleImport()` checks `isInstagramUrl()` first and redirects
+- GoTrue NULL token crash: users created with GOTRUE_MAILER_AUTOCONFIRM=true get NULL token columns → Go scanner crashes. Fix: `UPDATE auth.users SET confirmation_token=COALESCE(confirmation_token,''), recovery_token=COALESCE(recovery_token,''), ...` for affected users
 
 ### Conventions
 - Development agenda tracked in `AGENDA.md` at project root
