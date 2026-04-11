@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 83)
+- Enabled GOTRUE_MAILER_AUTOCONFIRM=true on RPi5 (no SMTP configured)
+- Created seblux100@gmail.com account (auth.users + user_profiles: username seblux, Pro plan)
+- admin_users: pilzner + seblux both super_admin
+- CLAUDE.md: email config + admin accounts documented
+
 ## 2026-04-11 (session 82)
 - DB: Normalized all store names to Title Case (stores table + shopping_lists.store_name)
 - DB: Added case-insensitive unique index on stores (user_id, lower(name)) — prevents duplicate store creation

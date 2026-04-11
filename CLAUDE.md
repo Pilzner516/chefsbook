@@ -93,6 +93,8 @@ cd apps/mobile && eas build --platform ios --profile development --local
 - **Postgres**: port 5432 on 100.110.47.62 (internal only)
 - **Network**: Tailscale mesh — accessible from any device on the tailnet
 - **Storage**: 54GB USB drive mounted at /mnt/chefsbook on rpi5-eth
+- **Email**: GOTRUE_MAILER_AUTOCONFIRM=true — no SMTP configured, all accounts auto-confirmed. For production: configure SMTP and set to false.
+- **Admin accounts**: pilzner (a@aol.com) + seblux (seblux100@gmail.com) — both super_admin in admin_users table
 - **NOT using**: supabase.com cloud — everything is self-hosted
 - **Migrations**: SQL files in `supabase/migrations/` — apply manually via `psql` on rpi5-eth (no Supabase CLI migration runner; self-hosted)
 
