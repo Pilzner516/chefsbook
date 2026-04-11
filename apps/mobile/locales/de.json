@@ -20,7 +20,10 @@
     "clear": "Leeren",
     "apply": "Anwenden",
     "dismiss": "Schließen",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "success": "Erfolg",
+    "sending": "Wird gesendet...",
+    "saving": "Speichern..."
   },
   "nav": {
     "recipes": "Rezepte",
@@ -53,7 +56,13 @@
     "enterName": "Bitte gib deinen Namen ein.",
     "passwordLength": "Das Passwort muss mindestens 6 Zeichen lang sein.",
     "signInFailed": "Anmeldung fehlgeschlagen.",
-    "signUpFailed": "Registrierung fehlgeschlagen."
+    "signUpFailed": "Registrierung fehlgeschlagen.",
+    "forgotPassword": "Passwort vergessen?",
+    "resetPassword": "Passwort zurücksetzen",
+    "resetInstructions": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Link zum Zurücksetzen.",
+    "sendResetLink": "Link senden",
+    "resetSent": "E-Mail gesendet",
+    "resetSentMessage": "Prüfen Sie Ihre E-Mail für den Zurücksetz-Link."
   },
   "recipes": {
     "searchPlaceholder": "Rezepte suchen...",
@@ -325,7 +334,13 @@
     "metric": "Metrisch",
     "imperial": "Imperial",
     "selectLanguage": "Sprache wählen",
-    "searchLanguages": "Sprachen suchen..."
+    "searchLanguages": "Sprachen suchen...",
+    "changePassword": "Passwort ändern",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "pwMin8": "Passwort muss mindestens 8 Zeichen haben",
+    "pwMismatch": "Passwörter stimmen nicht überein",
+    "pwUpdated": "Passwort aktualisiert"
   },
   "notepad": {
     "title": "QA-Notizblock",

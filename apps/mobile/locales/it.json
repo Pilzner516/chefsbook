@@ -20,7 +20,10 @@
     "clear": "Cancella",
     "apply": "Applica",
     "dismiss": "Chiudi",
-    "remove": "Rimuovi"
+    "remove": "Rimuovi",
+    "success": "Successo",
+    "sending": "Invio...",
+    "saving": "Salvataggio..."
   },
   "nav": {
     "recipes": "Ricette",
@@ -53,7 +56,13 @@
     "enterName": "Inserisci il tuo nome.",
     "passwordLength": "La password deve avere almeno 6 caratteri.",
     "signInFailed": "Accesso non riuscito.",
-    "signUpFailed": "Registrazione non riuscita."
+    "signUpFailed": "Registrazione non riuscita.",
+    "forgotPassword": "Password dimenticata?",
+    "resetPassword": "Reimposta Password",
+    "resetInstructions": "Inserisci la tua email e ti invieremo un link per reimpostare la password.",
+    "sendResetLink": "Invia link",
+    "resetSent": "Email inviata",
+    "resetSentMessage": "Controlla la tua email per il link di reimpostazione."
   },
   "recipes": {
     "searchPlaceholder": "Cerca ricette...",
@@ -325,7 +334,13 @@
     "metric": "Metrico",
     "imperial": "Imperiale",
     "selectLanguage": "Seleziona Lingua",
-    "searchLanguages": "Cerca lingue..."
+    "searchLanguages": "Cerca lingue...",
+    "changePassword": "Cambia Password",
+    "newPassword": "Nuova password",
+    "confirmPassword": "Conferma password",
+    "pwMin8": "La password deve avere almeno 8 caratteri",
+    "pwMismatch": "Le password non corrispondono",
+    "pwUpdated": "Password aggiornata"
   },
   "notepad": {
     "title": "Blocco Note QA",

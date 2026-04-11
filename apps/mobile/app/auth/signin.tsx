@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
+import { supabase } from '@chefsbook/db';
 import { Button, Input } from '../../components/UIKit';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +18,9 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleSignIn = async () => {
     setError('');
@@ -33,6 +37,22 @@ export default function SignInScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) { Alert.alert(t('common.error'), t('auth.enterEmail')); return; }
+    setForgotLoading(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: 'https://chefsbk.app/auth/reset',
+      });
+      if (resetError) throw resetError;
+      Alert.alert(t('auth.resetSent'), t('auth.resetSentMessage'));
+      setShowForgot(false);
+    } catch (e: any) {
+      Alert.alert(t('common.error'), e.message ?? 'Failed to send reset email');
+    }
+    setForgotLoading(false);
   };
 
   // TODO: Wire up Google OAuth with Supabase signInWithOAuth
@@ -65,6 +85,10 @@ export default function SignInScreen() {
             secureTextEntry
             autoCapitalize="none"
           />
+
+          <TouchableOpacity onPress={() => { setForgotEmail(email); setShowForgot(true); }}>
+            <Text style={{ color: colors.accent, fontSize: 13, marginTop: 8 }}>{t('auth.forgotPassword')}</Text>
+          </TouchableOpacity>
 
           {error !== '' && (
             <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
@@ -99,6 +123,20 @@ export default function SignInScreen() {
           </Text>
         </View>
       </KeyboardAvoidingView>
+
+      {showForgot && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <View style={{ backgroundColor: colors.bgCard, borderRadius: 16, padding: 24 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>{t('auth.resetPassword')}</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 16 }}>{t('auth.resetInstructions')}</Text>
+            <Input value={forgotEmail} onChangeText={setForgotEmail} placeholder={t('auth.email')} keyboardType="email-address" autoCapitalize="none" />
+            <View style={{ height: 16 }} />
+            <Button title={forgotLoading ? t('common.sending') : t('auth.sendResetLink')} onPress={handleForgotPassword} loading={forgotLoading} />
+            <View style={{ height: 8 }} />
+            <Button title={t('common.cancel')} onPress={() => setShowForgot(false)} variant="ghost" />
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

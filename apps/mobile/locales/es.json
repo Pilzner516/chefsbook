@@ -20,7 +20,10 @@
     "clear": "Limpiar",
     "apply": "Aplicar",
     "dismiss": "Descartar",
-    "remove": "Quitar"
+    "remove": "Quitar",
+    "success": "Éxito",
+    "sending": "Enviando...",
+    "saving": "Guardando..."
   },
   "nav": {
     "recipes": "Recetas",
@@ -53,7 +56,13 @@
     "enterName": "Ingresa tu nombre.",
     "passwordLength": "La contraseña debe tener al menos 6 caracteres.",
     "signInFailed": "Error al iniciar sesión.",
-    "signUpFailed": "Error al registrarse."
+    "signUpFailed": "Error al registrarse.",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer contraseña",
+    "resetInstructions": "Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "sendResetLink": "Enviar enlace",
+    "resetSent": "Email enviado",
+    "resetSentMessage": "Revisa tu email para el enlace de restablecimiento."
   },
   "recipes": {
     "searchPlaceholder": "Buscar recetas...",
@@ -325,7 +334,13 @@
     "metric": "Métrico",
     "imperial": "Imperial",
     "selectLanguage": "Seleccionar Idioma",
-    "searchLanguages": "Buscar idiomas..."
+    "searchLanguages": "Buscar idiomas...",
+    "changePassword": "Cambiar contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "pwMin8": "La contraseña debe tener al menos 8 caracteres",
+    "pwMismatch": "Las contraseñas no coinciden",
+    "pwUpdated": "Contraseña actualizada"
   },
   "notepad": {
     "title": "Bloc de Notas QA",

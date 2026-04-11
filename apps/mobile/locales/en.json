@@ -21,7 +21,10 @@
     "apply": "Apply",
     "dismiss": "Dismiss",
     "remove": "Remove",
-    "errorTitle": "Error"
+    "errorTitle": "Error",
+    "success": "Success",
+    "sending": "Sending...",
+    "saving": "Saving..."
   },
   "nav": {
     "recipes": "Recipes",
@@ -54,7 +57,13 @@
     "enterName": "Please enter your name.",
     "passwordLength": "Password must be at least 6 characters.",
     "signInFailed": "Sign in failed.",
-    "signUpFailed": "Sign up failed."
+    "signUpFailed": "Sign up failed.",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset Password",
+    "resetInstructions": "Enter your email and we'll send you a link to reset your password.",
+    "sendResetLink": "Send reset link",
+    "resetSent": "Email sent",
+    "resetSentMessage": "Check your email for a password reset link."
   },
   "recipes": {
     "searchPlaceholder": "Search recipes...",
@@ -408,7 +417,13 @@
     "privateWarning2": "You won't be able to post comments",
     "privateWarning3": "Your existing comments stay visible",
     "switchPrivate": "Switch to Private",
-    "switchPublic": "Switch to Public"
+    "switchPublic": "Switch to Public",
+    "changePassword": "Change Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "pwMin8": "Password must be at least 8 characters",
+    "pwMismatch": "Passwords do not match",
+    "pwUpdated": "Password updated successfully"
   },
   "profile": {
     "publicRecipes": "Public Recipes",

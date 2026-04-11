@@ -6,7 +6,7 @@ import { supabase, checkUsernameAvailable, setUsername, applyPromoCode } from '@
 import { isUsernameFamilyFriendly } from '@chefsbook/ai';
 import Link from 'next/link';
 
-type Mode = 'login' | 'signup';
+type Mode = 'login' | 'signup' | 'forgot';
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'short';
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
@@ -90,6 +90,23 @@ export default function AuthPage() {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setMessage('');
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://chefsbk.app/auth/reset',
+      });
+      if (resetError) throw resetError;
+      setMessage('Check your email for a password reset link.');
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to send reset email');
+    }
+    setLoading(false);
+  };
+
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -98,7 +115,7 @@ export default function AuthPage() {
             <span className="text-cb-primary">Chefs</span>book
           </Link>
           <p className="text-cb-secondary text-sm mt-2">
-            {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
+            {mode === 'forgot' ? 'Reset your password' : mode === 'login' ? 'Sign in to your account' : 'Create your account'}
           </p>
         </div>
 
@@ -114,6 +131,31 @@ export default function AuthPage() {
             </div>
           )}
 
+          {mode === 'forgot' ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label htmlFor="reset-email" className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  id="reset-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
+                />
+              </div>
+              <button type="submit" disabled={loading} className="w-full bg-cb-primary text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
+                {loading ? 'Sending...' : 'Send reset link'}
+              </button>
+              <div className="text-center">
+                <button type="button" onClick={() => { setMode('login'); setError(''); setMessage(''); }} className="text-cb-primary text-sm font-medium hover:underline">
+                  Back to sign in
+                </button>
+              </div>
+            </form>
+          ) : (
+          <>
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
               <div>
@@ -166,6 +208,11 @@ export default function AuthPage() {
                 placeholder="At least 6 characters"
                 className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
               />
+              {mode === 'login' && (
+                <button type="button" onClick={() => { setMode('forgot'); setError(''); setMessage(''); }} className="text-xs text-cb-primary hover:underline mt-1">
+                  Forgot password?
+                </button>
+              )}
             </div>
             {mode === 'signup' && (
               <div>
@@ -220,6 +267,8 @@ export default function AuthPage() {
               </>
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
     </main>

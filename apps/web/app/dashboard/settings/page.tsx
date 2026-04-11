@@ -14,6 +14,10 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMessage, setPwMessage] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -204,6 +208,47 @@ export default function SettingsPage() {
       <div className="flex items-center gap-3">
         <button onClick={saveProfile} disabled={saving} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
       </div>
+
+      {/* Change Password */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Change Password</h2>
+        {pwMessage && (
+          <div className={`rounded-input p-3 mb-4 text-sm ${pwMessage === 'Password updated' ? 'bg-cb-green/10 text-cb-green' : 'bg-red-50 text-cb-primary'}`}>{pwMessage}</div>
+        )}
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">New Password</label>
+            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Confirm New Password</label>
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat your new password" className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          </div>
+          <button
+            onClick={async () => {
+              setPwMessage('');
+              if (newPassword.length < 8) { setPwMessage('Password must be at least 8 characters'); return; }
+              if (newPassword !== confirmPassword) { setPwMessage('Passwords do not match'); return; }
+              setPwSaving(true);
+              try {
+                const { error } = await supabase.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                setPwMessage('Password updated');
+                setNewPassword('');
+                setConfirmPassword('');
+                setTimeout(() => setPwMessage(''), 3000);
+              } catch (e: any) {
+                setPwMessage(e.message ?? 'Failed to update password');
+              }
+              setPwSaving(false);
+            }}
+            disabled={pwSaving || !newPassword}
+            className="bg-cb-primary text-white px-6 py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+          >
+            {pwSaving ? 'Updating...' : 'Change Password'}
+          </button>
+        </div>
+      </section>
 
       {/* Danger zone */}
       <section className="mt-12 pt-6 border-t border-red-200">

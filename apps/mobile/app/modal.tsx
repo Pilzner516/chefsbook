@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
-import { updateProfile } from '@chefsbook/db';
+import { updateProfile, supabase } from '@chefsbook/db';
 import { PLAN_LIMITS } from '@chefsbook/db/subscriptions';
 import { Avatar, Button, Card, Divider, Input, Badge } from '../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
@@ -24,6 +24,9 @@ export default function SettingsModal() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
   const loadProfile = useAuthStore((s) => s.loadProfile);
 
   const isAnonymous = !session?.user?.email;
@@ -138,6 +141,38 @@ export default function SettingsModal() {
                 }}
                 trackColor={{ true: colors.accentGreen, false: colors.borderDefault }}
                 thumbColor="#ffffff"
+              />
+            </View>
+          </Card>
+        )}
+
+        {!isAnonymous && (
+          <Card>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginBottom: 12 }}>{t('settings.changePassword')}</Text>
+            <View style={{ marginBottom: 10 }}>
+              <Input value={newPw} onChangeText={setNewPw} placeholder={t('settings.newPassword')} secureTextEntry />
+            </View>
+            <Input value={confirmPw} onChangeText={setConfirmPw} placeholder={t('settings.confirmPassword')} secureTextEntry />
+            <View style={{ marginTop: 12 }}>
+              <Button
+                title={pwSaving ? t('common.saving') : t('settings.changePassword')}
+                loading={pwSaving}
+                disabled={!newPw || pwSaving}
+                onPress={async () => {
+                  if (newPw.length < 8) { Alert.alert(t('common.error'), t('settings.pwMin8')); return; }
+                  if (newPw !== confirmPw) { Alert.alert(t('common.error'), t('settings.pwMismatch')); return; }
+                  setPwSaving(true);
+                  try {
+                    const { error } = await supabase.auth.updateUser({ password: newPw });
+                    if (error) throw error;
+                    Alert.alert(t('common.success'), t('settings.pwUpdated'));
+                    setNewPw('');
+                    setConfirmPw('');
+                  } catch (e: any) {
+                    Alert.alert(t('common.error'), e.message ?? 'Failed');
+                  }
+                  setPwSaving(false);
+                }}
               />
             </View>
           </Card>

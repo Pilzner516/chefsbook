@@ -20,7 +20,10 @@
     "clear": "Effacer",
     "apply": "Appliquer",
     "dismiss": "Ignorer",
-    "remove": "Retirer"
+    "remove": "Retirer",
+    "success": "Succès",
+    "sending": "Envoi...",
+    "saving": "Enregistrement..."
   },
   "nav": {
     "recipes": "Recettes",
@@ -53,7 +56,13 @@
     "enterName": "Veuillez entrer votre nom.",
     "passwordLength": "Le mot de passe doit contenir au moins 6 caractères.",
     "signInFailed": "Échec de la connexion.",
-    "signUpFailed": "Échec de l'inscription."
+    "signUpFailed": "Échec de l'inscription.",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "resetInstructions": "Entrez votre email et nous vous enverrons un lien de réinitialisation.",
+    "sendResetLink": "Envoyer le lien",
+    "resetSent": "Email envoyé",
+    "resetSentMessage": "Vérifiez votre email pour le lien de réinitialisation."
   },
   "recipes": {
     "searchPlaceholder": "Rechercher des recettes...",
@@ -325,7 +334,13 @@
     "metric": "Métrique",
     "imperial": "Impérial",
     "selectLanguage": "Choisir la langue",
-    "searchLanguages": "Rechercher une langue..."
+    "searchLanguages": "Rechercher une langue...",
+    "changePassword": "Changer le mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "pwMin8": "Le mot de passe doit avoir au moins 8 caractères",
+    "pwMismatch": "Les mots de passe ne correspondent pas",
+    "pwUpdated": "Mot de passe mis à jour"
   },
   "notepad": {
     "title": "Bloc-notes QA",
