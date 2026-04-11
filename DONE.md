@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 73)
+- DB: help_requests table updated with user_email, username, message columns + INSERT RLS policy
+- Web: FeedbackCard — pinned at position 1 in recipe grid, modal form, ChefsDialog thank-you/error
+- Mobile: FeedbackCard — FlashList header, bottom sheet form with safe area insets
+- i18n: `feedback` namespace; deployed to RPi5
+
 ## 2026-04-11 (session 72)
 - Web: Attribution pill on recipe detail — shows user (@username), cookbook (📖 title), or URL (🔗 domain ↗) below title
 - Mobile: Attribution pill on recipe detail — same logic with TouchableOpacity, theme colors, Linking for external URLs
