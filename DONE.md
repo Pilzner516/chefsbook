@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 82)
+- DB: Normalized all store names to Title Case (stores table + shopping_lists.store_name)
+- DB: Added case-insensitive unique index on stores (user_id, lower(name)) — prevents duplicate store creation
+- DB: Verified zero duplicate stores after normalization
+- Web: Store grouping now case-insensitive — groups by lower(store_name), displays Title Case
+- Mobile: Store grouping now case-insensitive — same pattern
+- Code: createStore() now normalizes name to Title Case via toTitleCase() before insert
+- Verified: 3 Whole Foods shopping lists all show same store_name + same store_id with logo
+- Deployed to RPi5 — build succeeded, /dashboard/shop returns 200
+
 ## 2026-04-11 (session 81)
 - Fix: comments not loading — root cause: ambiguous FK `user_profiles!inner` on `recipe_comments` (two FKs: user_id + reviewed_by)
 - Changed to explicit `user_profiles!recipe_comments_user_id_fkey` in `getComments()`
