@@ -368,6 +368,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Shopping list button colour: all Create/Add buttons in shopping flow use pomodoro red (`cb-primary`), never green; green reserved for positive/save actions and annual badge
 - Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
 - Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
+- Offline shopping: mobile caches list detail + overview to FileSystem; checked items are local-only (never synced); pending edits sync on reconnect; web shows sync status indicator
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build`; use `NODE_OPTIONS=--max-old-space-size=1024` (768MB causes OOM SIGKILL); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay

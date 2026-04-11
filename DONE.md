@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 74)
+- Mobile: `shoppingCache.ts` — FileSystem cache for lists (detail, overview, checked items, pending edits)
+- Mobile: shopping store offline fallback — fetch fails → load from cache, `isOffline`/`checkedItemIds` state
+- Mobile: `toggleItemLocal()` local-only check-off + `syncPendingEdits()` on reconnect
+- Mobile: offline amber banner in list detail
+- Web: sync status indicator (↻ Syncing / ✓ Synced / ⚠️ Connection issue); deployed
+- Note: airplane mode test pending (no emulator connected)
+
 ## 2026-04-11 (session 73)
 - DB: help_requests table updated with user_email, username, message columns + INSERT RLS policy
 - Web: FeedbackCard — pinned at position 1 in recipe grid, modal form, ChefsDialog thank-you/error
