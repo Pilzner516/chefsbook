@@ -39,3 +39,26 @@ export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
     return Reflect.get(getSupabaseClient(), prop, receiver);
   },
 });
+
+// Service role client — bypasses RLS. Server-side only.
+let _adminClient: SupabaseClient | null = null;
+
+function getSupabaseAdminClient(): SupabaseClient {
+  if (!_adminClient) {
+    const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+    if (!url || !serviceKey) {
+      console.warn('Supabase service role env vars missing — admin client unavailable');
+    }
+    _adminClient = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  }
+  return _adminClient;
+}
+
+export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getSupabaseAdminClient(), prop, receiver);
+  },
+});

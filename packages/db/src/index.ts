@@ -1,4 +1,4 @@
-export { supabase, configureStorage } from './client';
+export { supabase, supabaseAdmin, configureStorage } from './client';
 export * from './types';
 export * from './queries/recipes';
 export * from './queries/cookbooks';

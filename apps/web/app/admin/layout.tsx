@@ -1,4 +1,4 @@
-import { supabase } from '@chefsbook/db';
+import { supabase, supabaseAdmin } from '@chefsbook/db';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
@@ -17,7 +17,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user?.id) redirect('/dashboard');
 
-  const { data: admin } = await supabase
+  // Use service role client to bypass RLS on admin_users
+  const { data: admin } = await supabaseAdmin
     .from('admin_users')
     .select('role')
     .eq('user_id', session.user.id)
