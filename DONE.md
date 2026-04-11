@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 62)
+- Installed ai-cost.md agent in `.claude/agents/`
+- CLAUDE.md: added ai-cost.md to agent lookup table (MANDATORY for AI features)
+- CLAUDE.md: SESSION START updated to 9 steps (added ai-cost.md as step 5)
+
 ## 2026-04-10 (session 61)
 - Full AI cost audit: identified 28 callClaude() invocations across 19 files in @chefsbook/ai
 - Added `model` parameter to `callClaude()` — defaults to Sonnet, accepts `HAIKU` constant for cheap tasks

@@ -30,6 +30,7 @@ agents before writing any code.
 | Any Zustand store, data fetch, or cache | data-flow.md |
 | ANY feature on ANY session | testing.md (ALWAYS) |
 | Any change to apps/web | deployment.md (ALWAYS for web sessions) |
+| Any feature that calls Claude API or @chefsbook/ai | ai-cost.md (MANDATORY) |
 
 `testing.md` and `deployment.md` are now MANDATORY on every session — not optional.
 Multiple agents may apply to a single session. Read all that apply.
@@ -53,10 +54,11 @@ Every Claude Code session MUST begin with these steps in order:
 2. Read DONE.md to understand what was last built
 3. Read .claude/agents/testing.md — MANDATORY EVERY SESSION
 4. If session touches web: read .claude/agents/deployment.md — MANDATORY
-5. Read all other applicable agents based on the lookup table above
-6. Run ALL pre-flight checklists from every agent loaded
-7. For any table you will query: run `\d tablename` on RPi5 to verify columns
-8. Only then begin writing code
+5. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
+6. Read all other applicable agents based on the lookup table above
+7. Run ALL pre-flight checklists from every agent loaded
+8. For any table you will query: run `\d tablename` on RPi5 to verify columns
+9. Only then begin writing code
 
 Do not skip any step. Agents exist because the same bugs have been introduced
 and fixed 3-5 times each. Reading the agents prevents repeating known mistakes.
