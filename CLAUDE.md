@@ -302,11 +302,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (87 — 2026-04-08)
-- Created `supabaseAdmin` service role client in `@chefsbook/db` (bypasses RLS for server-side admin checks)
-- Fixed /admin route protection — layout.tsx now uses supabaseAdmin instead of anon client
-- Added subtle Admin link (shield icon) in Sidebar, visible only to admin users
-- Deployed to RPi5 — both seblux and pilzner can access /admin
+## Last session (88 — 2026-04-11)
+- Root-caused /admin redirect: server component calling supabase.auth.getSession() returns null (no cookie context on server)
+- Converted admin layout to 'use client' — auth check now runs in browser where session exists
+- Admin sub-pages (overview, limits) switched to supabaseAdmin for server-side data queries
+- Deployed and verified — /admin returns 200
 
 ## Next session
 - Mobile notifications (bell in tab bar / recipe list header)
@@ -407,6 +407,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Web API routes using `addItemsWithPipeline` must pass the service role client (db singleton has no JWT context → RLS fails)
 - Instagram URLs must never enter standard URL import path — `handleImport()` checks `isInstagramUrl()` first and redirects
 - GoTrue NULL token crash: users created with GOTRUE_MAILER_AUTOCONFIRM=true get NULL token columns → Go scanner crashes. Fix: `UPDATE auth.users SET confirmation_token=COALESCE(confirmation_token,''), recovery_token=COALESCE(recovery_token,''), ...` for affected users
+- Server component auth: `supabase.auth.getSession()` returns null in Next.js server components (no cookie context). Use `'use client'` for auth-gated layouts, or use `@supabase/ssr` with `cookies()`. The `supabaseAdmin` service role client works for data queries that don't need user context.
 
 ### Conventions
 - Development agenda tracked in `AGENDA.md` at project root

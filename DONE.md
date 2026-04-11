@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 88)
+- Root-caused /admin redirect bug: server component getSession() returns null (no auth cookie context)
+- Converted admin layout.tsx to client component — auth check runs in browser with live session
+- Admin sub-pages (overview, limits) switched to supabaseAdmin for server-side data access
+- Deployed to RPi5 — /admin returns 200, admin check works correctly
+
 ## 2026-04-08 (session 87)
 - Created `supabaseAdmin` service role client export in `@chefsbook/db` (bypasses RLS)
 - Fixed /admin route — layout.tsx uses service role client to query admin_users
