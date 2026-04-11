@@ -7,6 +7,7 @@ import type { MealPlan, Recipe, ShoppingList } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import MealPlanWizard from '@/components/MealPlanWizard';
 import StorePickerDialog from '@/components/StorePickerDialog';
+import ChefsDialog from '@/components/ChefsDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
 
@@ -48,6 +49,9 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
   onRemovePlan: (id: string) => void;
   onRefresh: () => void;
 }) {
+  const [daypartDialog, setDaypartDialog] = useState<{ planId: string; current: string; title: string } | null>(null);
+  const [servingsDialog, setServingsDialog] = useState<{ planId: string; current: number; title: string } | null>(null);
+  const [servingsVal, setServingsVal] = useState(4);
   const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const hasRecipes = plans.some((p) => p.recipe_id);
 
@@ -91,13 +95,9 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
                     )}
                     {/* Daypart pill — bottom-left */}
                     <button
-                      onClick={async (e) => {
+                      onClick={(e) => {
                         e.preventDefault(); e.stopPropagation();
-                        const newSlot = prompt(`Change meal type for "${plan.recipe?.title}":\nType: breakfast, lunch, dinner, or snack`, plan.meal_slot);
-                        if (newSlot && ['breakfast', 'brunch', 'lunch', 'dinner', 'snack'].includes(newSlot)) {
-                          await updateMealPlan(plan.id, { meal_slot: newSlot as any });
-                          onRefresh();
-                        }
+                        setDaypartDialog({ planId: plan.id, current: plan.meal_slot, title: plan.recipe?.title ?? 'Recipe' });
                       }}
                       className="absolute bottom-2 left-2 z-10 bg-black/55 text-white text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full hover:bg-black/70 transition"
                     >
@@ -105,14 +105,11 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
                     </button>
                     {/* Servings pill — bottom-right */}
                     <button
-                      onClick={async (e) => {
+                      onClick={(e) => {
                         e.preventDefault(); e.stopPropagation();
-                        const val = prompt('Servings:', String(plan.servings ?? plan.recipe?.servings ?? 4));
-                        const num = parseInt(val ?? '');
-                        if (num && num >= 1 && num <= 20) {
-                          await updateMealPlan(plan.id, { servings: num });
-                          onRefresh();
-                        }
+                        const cur = plan.servings ?? plan.recipe?.servings ?? 4;
+                        setServingsVal(cur);
+                        setServingsDialog({ planId: plan.id, current: cur, title: plan.recipe?.title ?? 'Recipe' });
                       }}
                       className="absolute bottom-2 right-2 z-10 bg-white/90 text-gray-900 text-[11px] font-semibold px-2.5 py-1 rounded-full hover:bg-white transition"
                     >
@@ -150,6 +147,65 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
         </button>
         <button onClick={() => onOpenNote(date)} className="py-2 px-3 border-2 border-dashed border-amber-300 rounded-input text-xs text-amber-500 hover:border-amber-500 hover:bg-amber-50 transition-colors" title="Add note">📝</button>
       </div>
+
+      {/* Daypart change dialog */}
+      <ChefsDialog
+        open={!!daypartDialog}
+        title="Change meal type"
+        body={<span className="text-sm text-cb-secondary">&ldquo;{daypartDialog?.title}&rdquo;</span>}
+        onClose={() => setDaypartDialog(null)}
+        buttons={[
+          ...(['breakfast', 'lunch', 'dinner', 'snack'] as const).map((slot) => ({
+            label: slot.charAt(0).toUpperCase() + slot.slice(1),
+            variant: (daypartDialog?.current === slot ? 'primary' : 'secondary') as 'primary' | 'secondary',
+            onClick: async () => {
+              if (daypartDialog) {
+                await updateMealPlan(daypartDialog.planId, { meal_slot: slot });
+                onRefresh();
+              }
+              setDaypartDialog(null);
+            },
+          })),
+          { label: 'Cancel', variant: 'cancel' as const, onClick: () => setDaypartDialog(null) },
+        ]}
+      />
+
+      {/* Servings stepper dialog */}
+      <ChefsDialog
+        open={!!servingsDialog}
+        title="Servings"
+        body={
+          <div>
+            <p className="text-sm text-cb-secondary mb-4">&ldquo;{servingsDialog?.title}&rdquo;</p>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => setServingsVal((v) => Math.max(1, v - 1))}
+                className="w-10 h-10 rounded-full border-2 border-cb-border text-lg font-bold text-cb-text hover:bg-cb-bg transition-colors"
+              >−</button>
+              <span className="text-2xl font-bold text-cb-text w-10 text-center">{servingsVal}</span>
+              <button
+                onClick={() => setServingsVal((v) => Math.min(20, v + 1))}
+                className="w-10 h-10 rounded-full border-2 border-cb-border text-lg font-bold text-cb-text hover:bg-cb-bg transition-colors"
+              >+</button>
+            </div>
+          </div>
+        }
+        onClose={() => setServingsDialog(null)}
+        buttons={[
+          { label: 'Cancel', variant: 'cancel', onClick: () => setServingsDialog(null) },
+          {
+            label: 'Save',
+            variant: 'positive',
+            onClick: async () => {
+              if (servingsDialog) {
+                await updateMealPlan(servingsDialog.planId, { servings: servingsVal });
+                onRefresh();
+              }
+              setServingsDialog(null);
+            },
+          },
+        ]}
+      />
     </div>
   );
 }
