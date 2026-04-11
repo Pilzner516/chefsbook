@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 61)
+- Full AI cost audit: identified 28 callClaude() invocations across 19 files in @chefsbook/ai
+- Added `model` parameter to `callClaude()` — defaults to Sonnet, accepts `HAIKU` constant for cheap tasks
+- Switched 12 classification functions to claude-haiku-4-5-20251001 (~4x cheaper):
+  - moderateComment, moderateRecipe, isUsernameFamilyFriendly, classifyContent, classifyPage
+  - suggestPurchaseUnits, analyseScannedImage, reanalyseDish, matchFolderToCategory
+  - readBookCover, generateSocialPost, generateHashtags
+- Kept Sonnet for 16 complex generation/extraction calls (translate, import, scan, meal plan, etc.)
+- Trimmed moderateRecipe prompt: ingredients capped at 5, steps at 3 (100 chars each), description/notes at 200 chars
+- Tightened max_tokens: moderateComment 200→100, moderateRecipe 200→150, username check 100→50, purchase units 1500→800
+- Added AI cost reference table to CLAUDE.md with per-function model, cost estimate, and cache status
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app live
+
 ## 2026-04-10 (session 60)
 - Fix: I18nProvider no longer blocks render — renders children immediately with English, loads user language async
 - Fix: Shopping list openList() wrapped in try/catch — shows user-friendly error instead of crash

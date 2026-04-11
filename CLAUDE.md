@@ -387,6 +387,26 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - i18n: `react-i18next` on both mobile and web; locale files in `apps/mobile/locales/*.json` (mobile) and `apps/web/locales/*.json` (web); `activateLanguage()` lazy-loads non-English locales; web `I18nProvider` is non-blocking (renders immediately with English, loads user preference async)
 - Translation cached in `recipe_translations` table per recipe+language; shared across all users (not per-user); RLS: public read, auth write; English always shows original; cache invalidated on replaceIngredients/replaceSteps
 
+### AI cost reference
+
+`callClaude()` accepts `model` param — defaults to Sonnet, pass `HAIKU` for classification tasks.
+
+| Function | Model | Est. cost/call | Cached? |
+|----------|-------|---------------|---------|
+| moderateComment() | haiku | ~$0.00016 | No (new content each time) |
+| moderateRecipe() | haiku | ~$0.00020 | Yes (skip if content unchanged) |
+| isUsernameFamilyFriendly() | haiku | ~$0.00008 | No (one-time at signup) |
+| classifyContent/classifyPage | haiku | ~$0.00016 | No (one-time per import) |
+| suggestPurchaseUnits() | haiku | ~$0.00040 | No (one-time per cart add) |
+| analyseScannedImage() | haiku | ~$0.00030 | No (each scan is new) |
+| socialShare/hashtags | haiku | ~$0.00020 | No (user-initiated) |
+| matchFolderToCategory() | haiku | ~$0.00016 | No (one-time per import) |
+| translateRecipe() | sonnet | ~$0.011 | Yes (shared, one-time per recipe per lang) |
+| importFromUrl() | sonnet | ~$0.015 | Yes (one-time per import) |
+| scanRecipe() | sonnet | ~$0.015 | Yes (one-time per scan) |
+| generateMealPlan() | sonnet | ~$0.020 | No (user-initiated) |
+| generateDishRecipe() | sonnet | ~$0.015 | No (user-initiated) |
+
 ## Builds
 
 ### Staging APK
