@@ -36,6 +36,7 @@ export default function RecipePage() {
   const [servings, setServings] = useState<number>(0);
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [ownerUsername, setOwnerUsername] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -99,8 +100,11 @@ export default function RecipePage() {
         setIsLoggedIn(true);
         isPro(user.id).then(setUserIsPro);
         // Fetch user language preference
-        supabase.from('user_profiles').select('preferred_language').eq('id', user.id).maybeSingle()
-          .then(({ data: profile }) => { if (profile?.preferred_language) setUserLanguage(profile.preferred_language); });
+        supabase.from('user_profiles').select('preferred_language, username').eq('id', user.id).maybeSingle()
+          .then(({ data: profile }) => {
+            if (profile?.preferred_language) setUserLanguage(profile.preferred_language);
+            if (profile?.username) setOwnerUsername(profile.username);
+          });
         if (data && user.id === data.user_id) {
           setIsOwner(true);
           listCookingNotes(id).then(setCookingNotes);
@@ -886,9 +890,35 @@ export default function RecipePage() {
         })()}
 
         {/* Likes row below title */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} recipeOwnerId={recipe.user_id} />
-          {recipe.visibility === 'public' && <span className="text-xs text-cb-green bg-cb-green/10 px-2 py-0.5 rounded-full font-medium">Public</span>}
+        </div>
+        {/* Attribution row */}
+        <div className="flex items-center gap-2 flex-wrap mb-4">
+          {(() => {
+            const uploaderUsername = recipe.original_submitter_username ?? (isOwner ? ownerUsername : null);
+            return uploaderUsername ? (
+              <a href={`/u/${uploaderUsername}`} className="inline-flex items-center gap-1.5 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
+                <span className="w-4 h-4 rounded-full bg-cb-primary text-white flex items-center justify-center text-[8px] font-bold">{uploaderUsername.charAt(0).toUpperCase()}</span>
+                @{uploaderUsername}
+              </a>
+            ) : null;
+          })()}
+          {recipe.source_url && (() => {
+            try {
+              const domain = new URL(recipe.source_url).hostname.replace('www.', '');
+              return (
+                <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
+                  🔗 {domain} <span className="text-[10px] text-cb-muted">↗</span>
+                </a>
+              );
+            } catch { return null; }
+          })()}
+          {recipe.cookbook_id && (
+            <a href={`/dashboard/cookbooks/${recipe.cookbook_id}`} className="inline-flex items-center gap-1 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
+              📖 {(recipe as any).cookbook_title ?? 'Cookbook'}
+            </a>
+          )}
         </div>
         {editingDesc ? (
           <form onSubmit={(e) => { e.preventDefault(); saveDescription((e.currentTarget.elements.namedItem('desc') as HTMLTextAreaElement).value); }} className="mb-6">
