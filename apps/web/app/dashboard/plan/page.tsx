@@ -152,20 +152,37 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
       <ChefsDialog
         open={!!daypartDialog}
         title="Change meal type"
-        body={<span className="text-sm text-cb-secondary">&ldquo;{daypartDialog?.title}&rdquo;</span>}
+        body={
+          <div>
+            <p className="text-sm text-cb-secondary mb-4">&ldquo;{daypartDialog?.title}&rdquo;</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map((slot) => {
+                const isCurrent = daypartDialog?.current === slot;
+                return (
+                  <button
+                    key={slot}
+                    onClick={async () => {
+                      if (daypartDialog) {
+                        await updateMealPlan(daypartDialog.planId, { meal_slot: slot });
+                        onRefresh();
+                      }
+                      setDaypartDialog(null);
+                    }}
+                    className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-opacity whitespace-nowrap ${
+                      isCurrent
+                        ? 'bg-[#ce2b37] text-white'
+                        : 'border-[1.5px] border-[#ce2b37] text-[#ce2b37] hover:bg-red-50'
+                    }`}
+                  >
+                    {slot.charAt(0).toUpperCase() + slot.slice(1)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        }
         onClose={() => setDaypartDialog(null)}
         buttons={[
-          ...(['breakfast', 'lunch', 'dinner', 'snack'] as const).map((slot) => ({
-            label: slot.charAt(0).toUpperCase() + slot.slice(1),
-            variant: (daypartDialog?.current === slot ? 'primary' : 'secondary') as 'primary' | 'secondary',
-            onClick: async () => {
-              if (daypartDialog) {
-                await updateMealPlan(daypartDialog.planId, { meal_slot: slot });
-                onRefresh();
-              }
-              setDaypartDialog(null);
-            },
-          })),
           { label: 'Cancel', variant: 'cancel' as const, onClick: () => setDaypartDialog(null) },
         ]}
       />
