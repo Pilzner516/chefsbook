@@ -67,7 +67,7 @@ export default function ChefProfile() {
       .order('created_at', { ascending: false });
 
     if (!isOwn) {
-      recipesQuery = recipesQuery.eq('visibility', 'public');
+      recipesQuery = recipesQuery.in('visibility', ['public', 'shared_link']);
     }
 
     const [profile, { data: publicRecipes }] = await Promise.all([

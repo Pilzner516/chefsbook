@@ -82,7 +82,7 @@ export async function getFollowedRecipes(
     .from('recipes')
     .select('*')
     .in('user_id', followingIds)
-    .eq('visibility', 'public')
+    .in('visibility', ['public', 'shared_link'])
     .is('parent_recipe_id', null)
     .order('created_at', { ascending: false })
     .limit(limit);

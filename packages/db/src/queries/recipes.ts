@@ -117,7 +117,7 @@ export async function listPublicRecipes(params?: {
   let query = supabase
     .from('recipes')
     .select('*')
-    .eq('visibility', 'public');
+    .in('visibility', ['public', 'shared_link']);
 
   if (params?.search) query = query.ilike('title', `%${params.search}%`);
   if (params?.cuisine) query = query.eq('cuisine', params.cuisine);
@@ -386,7 +386,7 @@ export async function getPublicProfile(
     .from('recipes')
     .select('*')
     .eq('user_id', profile.id)
-    .eq('visibility', 'public')
+    .in('visibility', ['public', 'shared_link'])
     .order('created_at', { ascending: false });
 
   return { profile, recipes: (recipes ?? []) as Recipe[] };

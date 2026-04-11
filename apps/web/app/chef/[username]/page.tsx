@@ -24,7 +24,7 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
     .from('recipes')
     .select('*')
     .eq('user_id', chef.id)
-    .eq('visibility', 'public')
+    .in('visibility', ['public', 'shared_link'])
     .is('parent_recipe_id', null)
     .order('created_at', { ascending: false });
 
