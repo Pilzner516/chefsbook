@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 72)
+- Web: Attribution pill on recipe detail — shows user (@username), cookbook (📖 title), or URL (🔗 domain ↗) below title
+- Mobile: Attribution pill on recipe detail — same logic with TouchableOpacity, theme colors, Linking for external URLs
+- Attribution priority: original_submitter_username → cookbook_id → source_url → null (no pill)
+- Verified: source_url stored on URL-imported recipes (5 confirmed in DB)
+- Verified: no original_submitter or cookbook data in current recipes → URL pill is primary visible attribution
+- tsc --noEmit passes both apps
+- Deployed to RPi5 — build succeeded, pm2 restarted, recipe page loads (200)
+
 ## 2026-04-11 (session 71)
 - Fix: Meal type picker dialog — moved 4 buttons from dialog footer into body as 2x2 grid, eliminates overflow
 - Deployed to RPi5
