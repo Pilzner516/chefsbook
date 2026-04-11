@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 71)
+- Fix: Meal type picker dialog — moved 4 buttons from dialog footer into body as 2x2 grid, eliminates overflow
+- Deployed to RPi5
+
 ## 2026-04-11 (session 70)
 - Web: Daypart pill opens ChefsDialog with 4 pill buttons (Breakfast/Lunch/Dinner/Snack), current slot highlighted red
 - Web: Servings pill opens ChefsDialog with −/count/+ stepper (min 1, max 20), pre-filled with current value
