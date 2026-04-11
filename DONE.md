@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 78)
+- Extension production-ready: URLs → chefsbk.app, dev creds removed, button red, manifest v1.0.0
+- Extension packaged as zip; download route at `/extension/download` (200, application/zip)
+- Install page at `/extension` — how-it-works, manual install steps, download link
+- "Extension" added to sidebar with puzzle piece icon
+- Deployed to RPi5 — page + download verified live
+- Chrome Web Store next: register dev account ($5), upload zip, fill listing, submit for review
+
 ## 2026-04-11 (session 77)
 - Privacy policy page at `/privacy` — 10 sections, plain language, Trattoria styling
 - Footer link added to landing page

@@ -370,6 +370,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
 - Offline shopping: mobile caches list detail + overview to FileSystem; checked items are local-only (never synced); pending edits sync on reconnect; web shows sync status indicator
 - Onboarding: `OnboardingBubble` + `useOnboarding` hook; bubbles tracked per-page in `onboarding_seen_pages`; `@floating-ui/react` for positioning; Settings toggle resets seen pages
+- Extension: production URLs in popup.js (chefsbk.app + api.chefsbk.app); zip at `apps/extension/dist/`; install page at `/extension`; download route at `/extension/download`; must copy zip to Pi after packaging
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build`; use `NODE_OPTIONS=--max-old-space-size=1024` (768MB causes OOM SIGKILL); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay
