@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 90)
+- Promo code placeholder changed to "disco20" on signup page
+- Admin promos: supabaseAdmin + error feedback on create/delete/toggle
+- Admin users: Role column with color-coded pills (super_admin/admin/proctor/user)
+- Admin users: sortable columns (username, plan, role, joined) with arrow indicators
+- Admin users: inline username edit with availability check via supabaseAdmin
+- Sidebar Admin link: pomodoro red, same font size as Settings
+- Admin recipes: supabaseAdmin, public recipe limit raised to 200
+- Web search: "All Recipes" / "My Recipes" pill toggle, default All (includes public)
+- Mobile search: default All Recipes, swapped pill order, i18n keys (5 locales)
+- Deployed to RPi5 — all pages return 200
+
 ## 2026-04-11 (session 89)
 - Root-caused /admin redirect: admin_users RLS policy had infinite recursion (EXISTS subquery on same table triggers same policy)
 - Fixed RLS: replaced self-referencing policy with direct `user_id = auth.uid()` column check

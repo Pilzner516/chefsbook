@@ -302,11 +302,12 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (89 — 2026-04-11)
-- Root-caused /admin redirect (3rd attempt): admin_users RLS policy had infinite recursion — `EXISTS(SELECT FROM admin_users WHERE...)` triggers same policy evaluation
-- Fixed RLS: `user_id = auth.uid()` direct check (no subquery on same table)
-- Verified end-to-end with real JWT via production API — returns `[{"role":"super_admin"}]`
-- Migration 028 applied and saved
+## Last session (90 — 2026-04-11)
+- Admin polish: promos use supabaseAdmin + error feedback; users have role pills, sortable columns, username edit
+- Sidebar admin link: pomodoro red, same size as Settings
+- Admin recipes: supabaseAdmin, limit raised to 200
+- Web + mobile search: "All Recipes" / "My Recipes" pill toggle; default All (includes public); i18n
+- Deployed to RPi5
 
 ## Next session
 - Mobile notifications (bell in tab bar / recipe list header)
