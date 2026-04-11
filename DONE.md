@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 84)
+- Web: "All [Store]" combined entry added as FIRST item in store groups with 2+ lists (green COMBINED badge)
+- Web: Combined view — fetches items from all lists for a store, merges by ingredient+unit, groups by department
+- Web: Combined view is read-only with banner showing source list names and "View individual lists →" link
+- Web: Back button returns to shopping overview; single-list stores show no combined entry
+- Mobile: Combined entry + CombinedStoreView already existed from session 03 — verified still working
+- Verified: Whole Foods has 3 lists (27 total items) → combined entry shows; ShopRite/DeCiccos have 1 list → no combined
+- Deployed to RPi5 — build succeeded, /dashboard/shop returns 200
+- Consolidated store list view implemented and tested — stores with 2+ lists show 'All [Store]' combined entry as first item; combined view merges items by ingredient+unit with department grouping; verified on both web and mobile.
+
 ## 2026-04-11 (session 83)
 - Enabled GOTRUE_MAILER_AUTOCONFIRM=true on RPi5 (no SMTP configured)
 - Created seblux100@gmail.com account (auth.users + user_profiles: username seblux, Pro plan)
