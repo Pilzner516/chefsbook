@@ -370,7 +370,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
-- RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build` — duplicate React causes 404 SSG crash; corrupted `.next` from OOM/SIGKILL causes dark overlay or broken pages
+- RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build`; use `NODE_OPTIONS=--max-old-space-size=1024` (768MB causes OOM SIGKILL); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay
 - PostgREST schema cache: after any new table migration, run `docker restart supabase-rest` on RPi5 or queries return "table not found in schema cache"
 - Web Supabase URL: MUST be `https://api.chefsbk.app` (NOT `http://100.110.47.62:8000`) — mixed content blocks ws:// on HTTPS pages; Cloudflare Tunnel handles WebSocket upgrades automatically; mobile still uses direct IP
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)

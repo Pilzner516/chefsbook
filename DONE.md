@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 69)
+- Web: `StoreAvatar` component (logo.dev + initials fallback with color hash)
+- Web shopping: lists grouped by store with StoreAvatar headers, "Other" for unassigned
+- Stores fetched in parallel via `getUserStores()`
+- Deployed to RPi5 (build requires 1024MB — 768MB causes OOM)
+
 ## 2026-04-11 (session 68)
 - Web parity sweep: all pages verified HTTP 200 (shopping, plan, settings, auth, plans, recipe detail, admin redirect)
 - Image proxy + chef's hat + Supabase REST API all confirmed working via curl
