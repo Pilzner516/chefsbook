@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 89)
+- Root-caused /admin redirect: admin_users RLS policy had infinite recursion (EXISTS subquery on same table triggers same policy)
+- Fixed RLS: replaced self-referencing policy with direct `user_id = auth.uid()` column check
+- Verified end-to-end: seblux100 sign-in → JWT → admin_users query returns super_admin via production API
+- Migration 028: `20260411_028_fix_admin_rls.sql` applied and saved
+- Confirmed chefsbk.app/admin returns 200
+
 ## 2026-04-11 (session 88)
 - Root-caused /admin redirect bug: server component getSession() returns null (no auth cookie context)
 - Converted admin layout.tsx to client component — auth check runs in browser with live session

@@ -302,11 +302,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (88 — 2026-04-11)
-- Root-caused /admin redirect: server component calling supabase.auth.getSession() returns null (no cookie context on server)
-- Converted admin layout to 'use client' — auth check now runs in browser where session exists
-- Admin sub-pages (overview, limits) switched to supabaseAdmin for server-side data queries
-- Deployed and verified — /admin returns 200
+## Last session (89 — 2026-04-11)
+- Root-caused /admin redirect (3rd attempt): admin_users RLS policy had infinite recursion — `EXISTS(SELECT FROM admin_users WHERE...)` triggers same policy evaluation
+- Fixed RLS: `user_id = auth.uid()` direct check (no subquery on same table)
+- Verified end-to-end with real JWT via production API — returns `[{"role":"super_admin"}]`
+- Migration 028 applied and saved
 
 ## Next session
 - Mobile notifications (bell in tab bar / recipe list header)
@@ -408,6 +408,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Instagram URLs must never enter standard URL import path — `handleImport()` checks `isInstagramUrl()` first and redirects
 - GoTrue NULL token crash: users created with GOTRUE_MAILER_AUTOCONFIRM=true get NULL token columns → Go scanner crashes. Fix: `UPDATE auth.users SET confirmation_token=COALESCE(confirmation_token,''), recovery_token=COALESCE(recovery_token,''), ...` for affected users
 - Server component auth: `supabase.auth.getSession()` returns null in Next.js server components (no cookie context). Use `'use client'` for auth-gated layouts, or use `@supabase/ssr` with `cookies()`. The `supabaseAdmin` service role client works for data queries that don't need user context.
+- RLS self-referencing policies: NEVER write `EXISTS(SELECT FROM same_table WHERE ...)` in an RLS policy — it triggers infinite recursion (PostgreSQL 42P17). Use direct column checks like `user_id = auth.uid()` instead.
 
 ### Conventions
 - Development agenda tracked in `AGENDA.md` at project root
