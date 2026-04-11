@@ -71,6 +71,10 @@ export default function ShopTab() {
   const updateItem = useShoppingStore((s) => s.updateItem);
   const addManual = useShoppingStore((s) => s.addManual);
   const clearChecked = useShoppingStore((s) => s.clearChecked);
+  const isOffline = useShoppingStore((s) => s.isOffline);
+  const checkedItemIds = useShoppingStore((s) => s.checkedItemIds);
+  const toggleItemLocal = useShoppingStore((s) => s.toggleItemLocal);
+  const lastSyncedAt = useShoppingStore((s) => s.lastSyncedAt);
   const removeList = useShoppingStore((s) => s.removeList);
   const subscribeLists = useShoppingStore((s) => s.subscribeLists);
   const subscribeItems = useShoppingStore((s) => s.subscribeItems);
@@ -254,6 +258,12 @@ export default function ShopTab() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
         <ChefsBookHeader />
+        {/* Offline banner */}
+        {isOffline && (
+          <View style={{ backgroundColor: '#f59e0b', paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '600' }}>📵 Offline — showing saved list</Text>
+          </View>
+        )}
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingBottom: 8 }}>
           <TouchableOpacity onPress={() => { useShoppingStore.setState({ currentList: null }); }}>

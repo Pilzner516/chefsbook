@@ -10,6 +10,9 @@ interface ShoppingState {
   lists: ShoppingList[];
   currentList: (ShoppingList & { items: ShoppingListItem[] }) | null;
   loading: boolean;
+  isOffline: boolean;
+  checkedItemIds: string[];
+  lastSyncedAt: string | null;
   fetchLists: (userId: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
   subscribeLists: (userId: string) => void;
@@ -28,23 +31,65 @@ interface ShoppingState {
   deleteItem: (id: string) => Promise<void>;
   removeList: (id: string) => Promise<void>;
   clearChecked: (listId: string) => Promise<void>;
+  toggleItemLocal: (listId: string, itemId: string) => Promise<void>;
 }
 
 export const useShoppingStore = create<ShoppingState>((set, get) => ({
   lists: [],
   currentList: null,
   loading: false,
+  isOffline: false,
+  checkedItemIds: [],
+  lastSyncedAt: null,
 
   fetchLists: async (userId) => {
     set({ loading: true });
-    const lists = await listShoppingLists(userId);
-    set({ lists, loading: false });
+    try {
+      const lists = await listShoppingLists(userId);
+      set({ lists, loading: false, isOffline: false });
+      // Cache for offline use
+      import('../shoppingCache').then(({ cacheListOverview }) => cacheListOverview(userId, lists)).catch(() => {});
+    } catch {
+      // Offline fallback
+      try {
+        const { getListOverviewCache } = await import('../shoppingCache');
+        const cached = await getListOverviewCache(userId);
+        if (cached) set({ lists: cached.lists, loading: false, isOffline: true });
+        else set({ loading: false, isOffline: true });
+      } catch { set({ loading: false, isOffline: true }); }
+    }
   },
 
   fetchList: async (id) => {
     set({ loading: true });
-    const list = await getShoppingList(id);
-    set({ currentList: list, loading: false });
+    try {
+      const list = await getShoppingList(id);
+      set({ currentList: list, loading: false, isOffline: false, checkedItemIds: [] });
+      // Cache + sync pending edits
+      if (list) {
+        import('../shoppingCache').then(async ({ cacheListDetail, syncPendingEdits, getListCache }) => {
+          await cacheListDetail(id, list, list.items);
+          const synced = await syncPendingEdits(id);
+          const cache = await getListCache(id);
+          if (cache) set({ checkedItemIds: cache.checkedItemIds, lastSyncedAt: cache.lastSyncedAt });
+        }).catch(() => {});
+      }
+    } catch {
+      // Offline fallback
+      try {
+        const { getListCache } = await import('../shoppingCache');
+        const cached = await getListCache(id);
+        if (cached) {
+          set({
+            currentList: { ...cached.list, items: cached.items },
+            loading: false,
+            isOffline: true,
+            checkedItemIds: cached.checkedItemIds,
+            lastSyncedAt: cached.lastSyncedAt,
+          });
+        } else set({ loading: false, isOffline: true });
+      } catch { set({ loading: false, isOffline: true }); }
+    }
   },
 
   subscribeLists: (userId: string) => {
@@ -158,5 +203,13 @@ export const useShoppingStore = create<ShoppingState>((set, get) => ({
         },
       };
     });
+  },
+
+  toggleItemLocal: async (listId, itemId) => {
+    try {
+      const { toggleCheckedLocal } = await import('../shoppingCache');
+      const newChecked = await toggleCheckedLocal(listId, itemId);
+      set({ checkedItemIds: newChecked });
+    } catch {}
   },
 }));
