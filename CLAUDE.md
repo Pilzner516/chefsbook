@@ -370,6 +370,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
+- RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom` before `npm run build` — duplicate React causes 404 SSG crash (`useContext null`)
+- PostgREST schema cache: after any new table migration, run `docker restart supabase-rest` on RPi5 or queries return "table not found in schema cache"
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
 - Metro blockList excludes root node_modules react/react-native to prevent duplicate bundles
 - Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`

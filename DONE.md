@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 65)
+- Fix: PostgREST schema cache refreshed — `docker restart supabase-rest`; recipe_comments now accessible
+- Fix: Web LikeButton — heart toggle separated from count click; owner count opens likers modal; non-owner count is plain text
+- Fix: Duplicate React build failure resolved (rm apps/web/node_modules/react before build)
+- Deployed to RPi5 — shopping, recipe detail, comments all return HTTP 200
+
 ## 2026-04-10 (session 64)
 - Verified: suggestPurchaseUnits already on claude-haiku-4-5-20251001 (model: HAIKU, maxTokens: 800) — no change needed
 - Confirmed: all ai-cost agent known problems resolved (moderation, username check, purchase units all on Haiku)
