@@ -394,6 +394,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Notifications: types = comment_reply, recipe_comment, recipe_like (batched), new_follower, moderation; bell in dashboard layout top-right; panel with 5 tabs; mark-all-read
 - Password recovery: SMTP via Resend; GOTRUE_SITE_URL=https://chefsbk.app; reset redirect to /auth/reset; mobile sends user to web reset page (no deep link handler yet)
 - RPi5 build: `--no-lint` flag needed when OOM SIGKILL occurs during lint phase; compilation succeeds but lint phase exceeds 1024MB
+- Visibility: `shared_link` must be treated as public in all recipe queries (search, feed, profiles, follows) — NOT just `'public'`; `shared_link` means "viewable by anyone with the link" which includes search/discover
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build`; use `NODE_OPTIONS=--max-old-space-size=1024` (768MB causes OOM SIGKILL); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay
