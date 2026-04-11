@@ -45,6 +45,18 @@ export default function ShopPage() {
   const [newListName, setNewListName] = useState('');
   const [showNewList, setShowNewList] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
+  const [combinedView, setCombinedView] = useState<{ storeName: string; listNames: string[]; items: ShoppingListItem[] } | null>(null);
+
+  const openCombinedView = async (storeName: string, storeLists: ShoppingList[]) => {
+    const allItems: ShoppingListItem[] = [];
+    for (const sl of storeLists) {
+      try {
+        const data = await getShoppingList(sl.id);
+        if (data) for (const item of data.items) allItems.push({ ...item, recipe_name: item.recipe_name ?? sl.name });
+      } catch {}
+    }
+    setCombinedView({ storeName, listNames: storeLists.map((l) => l.name), items: allItems });
+  };
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [fontSize, setFontSize] = useState(16);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -217,6 +229,68 @@ export default function ShopPage() {
     if (checked.length) all.push(...checked);
     return [{ label: '', items: all }];
   };
+
+  // ── Combined store view ──
+  if (combinedView) {
+    // Merge items by ingredient+unit
+    const mergedMap = new Map<string, ShoppingListItem & { sourceLists: string[] }>();
+    for (const item of combinedView.items) {
+      const key = `${item.ingredient.toLowerCase()}|${(item.unit ?? '').toLowerCase()}`;
+      if (mergedMap.has(key)) {
+        const ex = mergedMap.get(key)!;
+        const q1 = parseFloat(ex.quantity_needed ?? '0') || 0;
+        const q2 = parseFloat(item.quantity_needed ?? '0') || 0;
+        if (q1 && q2) ex.quantity_needed = String(q1 + q2);
+        if (!ex.sourceLists.includes(item.recipe_name ?? '')) ex.sourceLists.push(item.recipe_name ?? '');
+      } else {
+        mergedMap.set(key, { ...item, sourceLists: [item.recipe_name ?? ''] });
+      }
+    }
+    const mergedItems = Array.from(mergedMap.values());
+    // Group by department
+    const deptGroups: Record<string, typeof mergedItems> = {};
+    for (const item of mergedItems) {
+      const dept = item.category ?? 'other';
+      (deptGroups[dept] ??= []).push(item);
+    }
+    const sortedDepts = DEPT_ORDER.filter((d) => deptGroups[d]?.length).map((d) => ({ dept: d, items: deptGroups[d] }));
+    if (deptGroups['other']?.length && !sortedDepts.find((d) => d.dept === 'other')) sortedDepts.push({ dept: 'other', items: deptGroups['other'] });
+
+    return (
+      <div className="p-8 max-w-3xl mx-auto">
+        <button onClick={() => setCombinedView(null)} className="text-cb-primary text-sm font-medium mb-4 hover:underline flex items-center gap-1">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+          Back to lists
+        </button>
+        <h1 className="text-2xl font-bold mb-1">All {combinedView.storeName}</h1>
+        <p className="text-cb-secondary text-sm mb-4">Combined view — {combinedView.listNames.length} lists</p>
+
+        <div className="bg-cb-bg border border-cb-border rounded-card p-4 mb-6">
+          <p className="text-sm text-cb-secondary">
+            📋 Showing combined items from {combinedView.listNames.length} lists: {combinedView.listNames.map((n) => `"${n}"`).join(' and ')}
+          </p>
+          <button onClick={() => setCombinedView(null)} className="text-xs text-cb-primary font-medium hover:underline mt-1">View individual lists →</button>
+          <p className="text-[10px] text-cb-muted mt-2">Read-only combined view</p>
+        </div>
+
+        {sortedDepts.map(({ dept, items }) => (
+          <div key={dept} className="mb-5">
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">{DEPT_LABELS[dept] ?? dept}</h3>
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-3 py-2 border-b border-cb-border/30 last:border-0">
+                <span className="text-cb-primary font-semibold text-sm w-16 text-right shrink-0">{item.purchase_unit ?? item.quantity_needed ?? ''}</span>
+                <span className="text-sm text-cb-text flex-1">{item.ingredient}</span>
+                {item.sourceLists.length > 1 && (
+                  <span className="text-[10px] text-cb-muted shrink-0">from {item.sourceLists.length} lists</span>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+        {mergedItems.length === 0 && <p className="text-cb-muted text-center py-8">No items in these lists.</p>}
+      </div>
+    );
+  }
 
   // ── Single list view ──
   if (currentList) {
@@ -406,6 +480,20 @@ export default function ShopPage() {
 
                   {/* List rows */}
                   <div className="divide-y divide-cb-border/50">
+                    {/* Combined entry — only for stores with 2+ lists */}
+                    {groupLists.length >= 2 && key !== 'other' && (
+                      <button
+                        onClick={() => openCombinedView(storeName, groupLists)}
+                        className="flex items-center gap-3 w-full text-left px-4 py-3 hover:bg-cb-bg/50 transition-colors bg-cb-bg/30"
+                      >
+                        <span className="text-sm">📋</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm text-cb-text">All {storeName}</div>
+                        </div>
+                        <span className="text-[11px] font-semibold text-white bg-cb-green px-2 py-0.5 rounded-xl">COMBINED</span>
+                        <svg className="w-4 h-4 text-cb-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                      </button>
+                    )}
                     {groupLists.map((list) => (
                       <button
                         key={list.id}
