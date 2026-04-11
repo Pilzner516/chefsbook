@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 75)
+- Migration 026: onboarding columns on user_profiles
+- `OnboardingBubble` component with @floating-ui/react positioning, arrow, step indicator
+- `useOnboarding` hook — tracks seen pages per user, dismiss confirmation, completion celebration
+- 6 pages of bubble content (dashboard, recipe, scan, shop, plan, settings)
+- `data-onboard` attributes on sidebar nav items; `OnboardingOverlay` in dashboard layout
+- Settings: Help Tips toggle (enable/disable + reset)
+- Deployed to RPi5
+
 ## 2026-04-11 (session 74)
 - Mobile: `shoppingCache.ts` — FileSystem cache for lists (detail, overview, checked items, pending edits)
 - Mobile: shopping store offline fallback — fetch fails → load from cache, `isOffline`/`checkedItemIds` state
