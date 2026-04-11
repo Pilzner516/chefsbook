@@ -93,7 +93,7 @@ cd apps/mobile && eas build --platform ios --profile development --local
 - **Postgres**: port 5432 on 100.110.47.62 (internal only)
 - **Network**: Tailscale mesh — accessible from any device on the tailnet
 - **Storage**: 54GB USB drive mounted at /mnt/chefsbook on rpi5-eth
-- **Email**: GOTRUE_MAILER_AUTOCONFIRM=true — no SMTP configured, all accounts auto-confirmed. For production: configure SMTP and set to false.
+- **Email**: SMTP via Resend (smtp.resend.com, noreply@chefsbk.app). GOTRUE_MAILER_AUTOCONFIRM=true (signup auto-confirm stays on). Password recovery emails working.
 - **Admin accounts**: pilzner (a@aol.com) + seblux (seblux100@gmail.com) — both super_admin in admin_users table
 - **NOT using**: supabase.com cloud — everything is self-hosted
 - **Migrations**: SQL files in `supabase/migrations/` — apply manually via `psql` on rpi5-eth (no Supabase CLI migration runner; self-hosted)
@@ -302,11 +302,14 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (90 — 2026-04-11)
-- Admin polish: promos use supabaseAdmin + error feedback; users have role pills, sortable columns, username edit
-- Sidebar admin link: pomodoro red, same size as Settings
-- Admin recipes: supabaseAdmin, limit raised to 200
-- Web + mobile search: "All Recipes" / "My Recipes" pill toggle; default All (includes public); i18n
+## Last session (91 — 2026-04-11)
+- SMTP configured on RPi5 via Resend (smtp.resend.com, noreply@chefsbk.app)
+- GOTRUE_SITE_URL set to https://chefsbk.app
+- Web: forgot password flow (sign-in link → email → /auth/reset page → updateUser)
+- Web: change password section in dashboard settings
+- Mobile: forgot password modal on sign-in screen (redirects to web reset)
+- Mobile: change password card in settings modal
+- i18n keys for all password features (5 locales)
 - Deployed to RPi5
 
 ## Next session
@@ -389,6 +392,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Extension: production URLs in popup.js (chefsbk.app + api.chefsbk.app); zip at `apps/extension/dist/`; install page at `/extension`; download route at `/extension/download`; must copy zip to Pi after packaging
 - Threaded comments: `parent_id` on recipe_comments, `reply_count` maintained by trigger; display 1 level deep, "▶ N more replies" for 3+; inline reply input
 - Notifications: types = comment_reply, recipe_comment, recipe_like (batched), new_follower, moderation; bell in dashboard layout top-right; panel with 5 tabs; mark-all-read
+- Password recovery: SMTP via Resend; GOTRUE_SITE_URL=https://chefsbk.app; reset redirect to /auth/reset; mobile sends user to web reset page (no deep link handler yet)
+- RPi5 build: `--no-lint` flag needed when OOM SIGKILL occurs during lint phase; compilation succeeds but lint phase exceeds 1024MB
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
 - RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build`; use `NODE_OPTIONS=--max-old-space-size=1024` (768MB causes OOM SIGKILL); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay

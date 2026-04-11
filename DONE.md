@@ -1,6 +1,27 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 92)
+- Fix: Recipe visibility — `shared_link` recipes were invisible to other users in search, feed, profiles, and follows
+- Root cause: all public recipe queries filtered `visibility = 'public'` only, excluding `shared_link` (66 of 69 recipes)
+- Updated `search_recipes` RPC: `r.visibility IN ('public', 'shared_link')` when `p_include_public = true`
+- Updated `get_public_feed` RPC: same `IN ('public', 'shared_link')` filter (dropped + recreated)
+- Updated `listPublicRecipes()`, `getFollowedRecipes()`, `getPublicProfileWithRecipes()` in packages/db
+- Updated web profile pages (`/u/[username]`, `/chef/[username]`) and mobile chef profile
+- PostgREST restarted to pick up new function definitions
+- Verified: seblux100 now sees 69 recipes (was 3) via search_recipes RPC
+- Deployed to RPi5 — build succeeded, site loads (200)
+
+## 2026-04-11 (session 91)
+- SMTP configured on RPi5 (Resend) — password recovery emails working
+- GOTRUE_SITE_URL set to https://chefsbk.app with redirect allowlist
+- Web: "Forgot password?" link on sign-in, /auth/reset page handles token + password update
+- Web: Change Password section in dashboard settings
+- Mobile: Forgot password modal on sign-in screen
+- Mobile: Change Password card in settings modal
+- i18n keys for password features (5 locales)
+- Deployed to RPi5
+
 ## 2026-04-11 (session 90)
 - Promo code placeholder changed to "disco20" on signup page
 - Admin promos: supabaseAdmin + error feedback on create/delete/toggle
