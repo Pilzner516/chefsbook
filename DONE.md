@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 81)
+- Fix: comments not loading — root cause: ambiguous FK `user_profiles!inner` on `recipe_comments` (two FKs: user_id + reviewed_by)
+- Changed to explicit `user_profiles!recipe_comments_user_id_fkey` in `getComments()`
+- Test comment posted + verified via curl (API returns comments with username)
+- Deployed to RPi5
+
 ## 2026-04-11 (session 80)
 - Fix: Store logos not showing on web — root cause: logo_url was NULL for all 5 stores (backfilled before createStore existed)
 - DB backfill: set domain + logo_url for 4 real stores (Whole Foods, ShopRite, Stop and Shop, DeCiccos) using logo.dev URLs
