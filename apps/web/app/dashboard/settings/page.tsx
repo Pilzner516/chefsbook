@@ -174,6 +174,32 @@ export default function SettingsPage() {
         <p className="text-sm text-cb-secondary">Shopping list font size can be adjusted using A+/A- buttons on any shopping list.</p>
       </section>
 
+      {/* Help Tips */}
+      <section className="mb-10" data-onboard="help-toggle">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Help Tips</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Show guided help bubbles</p>
+            <p className="text-xs text-cb-muted">Help bubbles appear when visiting new sections</p>
+          </div>
+          <button
+            onClick={async () => {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) return;
+              const { data: p } = await supabase.from('user_profiles').select('onboarding_enabled').eq('id', user.id).single();
+              const newVal = !(p?.onboarding_enabled ?? true);
+              const updates: any = { onboarding_enabled: newVal };
+              if (newVal) updates.onboarding_seen_pages = []; // reset so bubbles show again
+              await supabase.from('user_profiles').update(updates).eq('id', user.id);
+              setMessage(newVal ? 'Help tips turned on' : 'Help tips turned off');
+            }}
+            className="text-xs bg-cb-bg border border-cb-border px-3 py-1.5 rounded-input hover:bg-cb-base transition"
+          >
+            Toggle
+          </button>
+        </div>
+      </section>
+
       {/* Actions */}
       <div className="flex items-center gap-3">
         <button onClick={saveProfile} disabled={saving} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>

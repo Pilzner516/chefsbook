@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@chefsbook/db';
 import type { User } from '@supabase/supabase-js';
 import Sidebar from '@/components/Sidebar';
+import OnboardingOverlay from '@/components/OnboardingOverlay';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [recipesFrozen, setRecipesFrozen] = useState(false);
@@ -61,6 +63,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
         {children}
+        {(() => {
+          const pageMap: Record<string, string> = {
+            '/dashboard': 'dashboard',
+            '/dashboard/scan': 'scan',
+            '/dashboard/shop': 'shop',
+            '/dashboard/plan': 'plan',
+            '/dashboard/settings': 'settings',
+          };
+          const pageId = pageMap[pathname] ?? (pathname.startsWith('/dashboard/recipe') ? 'recipe' : '');
+          return pageId ? <OnboardingOverlay pageId={pageId} /> : null;
+        })()}
       </main>
     </div>
   );
