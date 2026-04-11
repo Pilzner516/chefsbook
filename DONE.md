@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 70)
+- Web: Daypart pill opens ChefsDialog with 4 pill buttons (Breakfast/Lunch/Dinner/Snack), current slot highlighted red
+- Web: Servings pill opens ChefsDialog with −/count/+ stepper (min 1, max 20), pre-filled with current value
+- Both dialogs update meal_plans DB and refresh pill on card immediately
+- Removed all native prompt() calls from web meal plan page (zero remaining anywhere in web app)
+- Verified: mobile pills already use styled components from session 46 — no fix needed
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app/dashboard/plan loads (200)
+
 ## 2026-04-11 (session 69)
 - Web: `StoreAvatar` component (logo.dev + initials fallback with color hash)
 - Web shopping: lists grouped by store with StoreAvatar headers, "Other" for unassigned
