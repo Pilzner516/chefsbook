@@ -177,7 +177,7 @@ export default function AuthPage() {
                   type="text"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder="e.g. pro100"
+                  placeholder="e.g. disco20"
                   className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
                 />
               </div>

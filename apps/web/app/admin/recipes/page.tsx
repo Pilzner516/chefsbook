@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase, approveRecipeModeration, rejectRecipeModeration, unfreezeUserRecipes } from '@chefsbook/db';
+import { supabase, supabaseAdmin, approveRecipeModeration, rejectRecipeModeration, unfreezeUserRecipes } from '@chefsbook/db';
 import Link from 'next/link';
 
 interface FlaggedRecipe {
@@ -32,7 +32,7 @@ export default function RecipeModerationPage() {
   const [acting, setActing] = useState<string | null>(null);
 
   const loadFlagged = async () => {
-    const { data } = await supabase
+    const { data } = await supabaseAdmin
       .from('recipes')
       .select('id, title, user_id, moderation_status, moderation_flag_reason, moderation_flagged_at, visibility, created_at')
       .in('moderation_status', ['flagged_mild', 'flagged_serious'])
@@ -42,11 +42,11 @@ export default function RecipeModerationPage() {
 
   const loadRecipes = async () => {
     setLoading(true);
-    let q = supabase.from('recipes').select('id, title, user_id, visibility, source_type, created_at')
+    let q = supabaseAdmin.from('recipes').select('id, title, user_id, visibility, source_type, created_at')
       .eq('visibility', 'public')
       .is('parent_recipe_id', null)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(200);
     if (search.trim()) q = q.ilike('title', `%${search}%`);
     const { data } = await q;
     setRecipes((data ?? []) as RecipeRow[]);

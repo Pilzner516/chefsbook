@@ -32,6 +32,9 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Scope toggle
+  const [scope, setScope] = useState<'all' | 'mine'>('all');
+
   // Filters
   const [cuisineFilter, setCuisineFilter] = useState(searchParams.get('cuisine') ?? '');
   const [courseFilter, setCourseFilter] = useState(searchParams.get('course') ?? '');
@@ -49,10 +52,10 @@ export default function SearchPage() {
 
   useEffect(() => {
     if (userId) {
-      const timer = setTimeout(() => search(), 300);
+      const timer = setTimeout(() => doSearch(), 300);
       return () => clearTimeout(timer);
     }
-  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId]);
+  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope]);
 
   // Auto-tag state
   const [taggingCount, setTaggingCount] = useState<number | null>(null);
@@ -84,11 +87,11 @@ export default function SearchPage() {
       });
       const data = await res.json();
       setTagResult(data);
-      search(); // Refresh results
+      doSearch(); // Refresh results
     } catch {} finally { setTagging(false); }
   };
 
-  const search = async () => {
+  const doSearch = async () => {
     if (!userId) return;
     setLoading(true);
 
@@ -118,6 +121,7 @@ export default function SearchPage() {
         maxTime: timeFilter === 999 ? undefined : timeFilter || undefined,
         sourceType: sourceFilter || undefined,
         tags: tagFilter ? [tagFilter] : undefined,
+        includePublic: scope === 'all',
         limit: 100,
       });
     }
@@ -269,6 +273,22 @@ export default function SearchPage() {
 
       {/* Right: Results */}
       <div className="flex-1 min-w-0">
+        {/* Scope toggle */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setScope('all')}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${scope === 'all' ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+          >
+            All Recipes
+          </button>
+          <button
+            onClick={() => setScope('mine')}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${scope === 'mine' ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+          >
+            My Recipes
+          </button>
+        </div>
+
         {/* Search bar */}
         <div className="relative mb-4">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>

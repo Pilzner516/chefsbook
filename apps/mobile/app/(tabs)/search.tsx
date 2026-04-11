@@ -57,7 +57,7 @@ export default function SearchTab() {
   const session = useAuthStore((s) => s.session);
   const searchRef = useRef<TextInput>(null);
 
-  const [mode, setMode] = useState<SearchMode>(() => initialQuery ? 'discover' : 'my');
+  const [mode, setMode] = useState<SearchMode>('discover');
   const [query, setQuery] = useState(initialQuery ?? '');
   const [results, setResults] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
@@ -134,11 +134,6 @@ export default function SearchTab() {
 
   const doSearch = useCallback(async () => {
     if (!session?.user?.id) return;
-    if (!query.trim() && activeFilters.length === 0) {
-      setResults([]);
-      setHasSearched(false);
-      return;
-    }
     setLoading(true);
     setHasSearched(true);
     setPeopleResults([]);
@@ -282,33 +277,33 @@ export default function SearchTab() {
           }}
         >
           <TouchableOpacity
-            onPress={() => switchMode('my')}
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: mode === 'my' ? colors.accent : 'transparent',
-              borderRadius: 22,
-              margin: 2,
-            }}
-          >
-            <Text
-              style={{
-                color: mode === 'my' ? '#ffffff' : colors.textSecondary,
-                fontSize: 14,
-                fontWeight: '600',
-              }}
-            >
-              {t('search.myRecipes')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             onPress={() => switchMode('discover')}
             style={{
               flex: 1,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: mode === 'discover' ? colors.accent : 'transparent',
+              borderRadius: 22,
+              margin: 2,
+            }}
+          >
+            <Text
+              style={{
+                color: mode === 'discover' ? '#ffffff' : colors.textSecondary,
+                fontSize: 14,
+                fontWeight: '600',
+              }}
+            >
+              {t('search.allRecipes')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => switchMode('my')}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: mode === 'my' ? colors.accent : 'transparent',
               borderRadius: 22,
               margin: 2,
             }}

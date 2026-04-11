@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@chefsbook/db';
+import { supabaseAdmin } from '@chefsbook/db';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 interface PromoRow {
@@ -25,10 +25,12 @@ export default function PromosPage() {
   const [newDiscount, setNewDiscount] = useState('100');
   const [newMaxUses, setNewMaxUses] = useState('');
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from('promo_codes').select('*').order('created_at', { ascending: false });
+    const { data, error: err } = await supabaseAdmin.from('promo_codes').select('*').order('created_at', { ascending: false });
+    if (err) setError(`Load failed: ${err.message}`);
     setPromos((data ?? []) as PromoRow[]);
     setLoading(false);
   };
@@ -38,34 +40,50 @@ export default function PromosPage() {
   const createPromo = async () => {
     if (!newCode.trim()) return;
     setCreating(true);
-    await supabase.from('promo_codes').insert({
+    setError(null);
+    const { error: err } = await supabaseAdmin.from('promo_codes').insert({
       code: newCode.trim().toLowerCase(),
       plan: newPlan,
       discount_percent: parseInt(newDiscount) || 100,
       max_uses: newMaxUses ? parseInt(newMaxUses) : null,
       is_active: true,
     });
-    setNewCode('');
-    setNewMaxUses('');
+    if (err) {
+      setError(`Create failed: ${err.message}`);
+    } else {
+      setNewCode('');
+      setNewMaxUses('');
+    }
     setCreating(false);
     load();
   };
 
   const toggleActive = async (promo: PromoRow) => {
-    await supabase.from('promo_codes').update({ is_active: !promo.is_active }).eq('id', promo.id);
+    setError(null);
+    const { error: err } = await supabaseAdmin.from('promo_codes').update({ is_active: !promo.is_active }).eq('id', promo.id);
+    if (err) setError(`Toggle failed: ${err.message}`);
     load();
   };
 
   const deletePromo = async (id: string) => {
     const ok = await confirmDel({ icon: '🗑️', title: 'Delete promo code?', body: 'This promo code will be permanently removed.', confirmLabel: 'Delete' });
     if (!ok) return;
-    await supabase.from('promo_codes').delete().eq('id', id);
+    setError(null);
+    const { error: err } = await supabaseAdmin.from('promo_codes').delete().eq('id', id);
+    if (err) setError(`Delete failed: ${err.message}`);
     load();
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Promo Codes</h1>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3 mb-4">
+          {error}
+          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+        </div>
+      )}
 
       {/* Create form */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">

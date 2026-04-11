@@ -198,8 +198,8 @@ export default function Sidebar({ user }: { user: User | null }) {
           {!collapsed && <span>{t('web.settings')}</span>}
         </Link>
         {isAdmin && (
-          <Link href="/admin" className={`flex items-center gap-3 px-3 py-2 rounded-input text-xs font-medium transition-colors ${pathname.startsWith('/admin') ? 'bg-cb-primary/10 text-cb-primary' : 'text-cb-muted hover:text-cb-secondary hover:bg-cb-bg'}`} title={collapsed ? 'Admin' : undefined}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
+          <Link href="/admin" className={`flex items-center gap-3 px-3 py-2.5 rounded-input text-sm font-medium transition-colors ${pathname.startsWith('/admin') ? 'bg-cb-primary/10 text-cb-primary' : 'text-cb-primary hover:text-cb-primary hover:bg-cb-bg'}`} title={collapsed ? 'Admin' : undefined}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
             {!collapsed && <span>Admin</span>}
           </Link>
         )}
