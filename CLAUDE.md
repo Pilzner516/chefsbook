@@ -302,14 +302,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (91 — 2026-04-11)
-- SMTP configured on RPi5 via Resend (smtp.resend.com, noreply@chefsbk.app)
-- GOTRUE_SITE_URL set to https://chefsbk.app
-- Web: forgot password flow (sign-in link → email → /auth/reset page → updateUser)
-- Web: change password section in dashboard settings
-- Mobile: forgot password modal on sign-in screen (redirects to web reset)
-- Mobile: change password card in settings modal
-- i18n keys for all password features (5 locales)
+## Last session (93 — 2026-04-11)
+- Renamed nav items: Recipes → My Recipes, Techniques → My Techniques, Cookbooks → My Cookbooks
+- Updated web sidebar (5 locales) and mobile tab bar (5 locales)
 - Deployed to RPi5
 
 ## Next session

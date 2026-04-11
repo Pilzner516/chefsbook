@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 93)
+- Web sidebar: Recipes → My Recipes, Techniques → My Techniques, Cookbooks → My Cookbooks (5 locales)
+- Mobile tab bar: Recipes → My Recipes (5 locales)
+- Deployed to RPi5
+
 ## 2026-04-11 (session 92)
 - Fix: Recipe visibility — `shared_link` recipes were invisible to other users in search, feed, profiles, and follows
 - Root cause: all public recipe queries filtered `visibility = 'public'` only, excluding `shared_link` (66 of 69 recipes)
