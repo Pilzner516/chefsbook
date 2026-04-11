@@ -1,5 +1,5 @@
-const API_BASE = 'http://localhost:3000';
-const SUPABASE_URL = 'http://100.110.47.62:8000';
+const API_BASE = 'https://chefsbk.app';
+const SUPABASE_URL = 'https://api.chefsbk.app';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJyb2xlIjogImFub24iLCAiaXNzIjogInN1cGFiYXNlIiwgImlhdCI6IDE3NTEwMDAwMDAsICJleHAiOiAxOTA4NzY2NDAwfQ.ISQ5gkoYSYom-YNgj1PUk-h8Hd6E0MQHtvrEB7NR_zw';
 
 const content = document.getElementById('content');
@@ -115,8 +115,8 @@ function renderLogin(errorMsg) {
 
   const form = el('form', { className: 'login-form' });
 
-  const emailLabel = el('div', null, el('label', { textContent: 'Email' }), el('input', { type: 'email', id: 'email', value: 'a@aol.com', required: '' }));
-  const passLabel = el('div', null, el('label', { textContent: 'Password' }), el('input', { type: 'password', id: 'password', value: '123456', required: '' }));
+  const emailLabel = el('div', null, el('label', { textContent: 'Email' }), el('input', { type: 'email', id: 'email', value: '', placeholder: 'you@example.com', required: '' }));
+  const passLabel = el('div', null, el('label', { textContent: 'Password' }), el('input', { type: 'password', id: 'password', value: '', placeholder: 'Password', required: '' }));
   form.appendChild(emailLabel);
   form.appendChild(passLabel);
 

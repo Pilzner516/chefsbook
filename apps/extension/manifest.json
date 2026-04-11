@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Chefsbook",
-  "description": "Save any recipe to your Chefsbook with one click",
+  "name": "ChefsBook — Save Recipes",
+  "description": "Save recipes from any webpage directly to your ChefsBook collection with one click.",
   "version": "1.0.0",
   "icons": {
     "16": "icons/icon-16.png",
@@ -12,10 +12,10 @@
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
-      "48": "icons/icon-48.png",
-      "128": "icons/icon-128.png"
-    }
+      "48": "icons/icon-48.png"
+    },
+    "default_title": "Save to ChefsBook"
   },
   "permissions": ["activeTab", "storage", "scripting"],
-  "host_permissions": ["http://localhost:3000/*", "http://100.110.47.62:8000/*"]
+  "host_permissions": ["https://chefsbk.app/*", "https://api.chefsbk.app/*", "<all_urls>"]
 }
