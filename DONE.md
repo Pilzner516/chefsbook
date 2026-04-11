@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 77)
+- Privacy policy page at `/privacy` — 10 sections, plain language, Trattoria styling
+- Footer link added to landing page
+- Deployed to RPi5 — HTTP 200 confirmed
+
 ## 2026-04-11 (session 76)
 - Web+Mobile: attribution row shows both user pill + source pill side by side (was either/or)
 - User pill falls back to current user's username when original_submitter is empty
