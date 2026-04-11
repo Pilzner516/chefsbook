@@ -54,11 +54,16 @@ export async function getUserStores(userId: string): Promise<Store[]> {
   return (data ?? []) as Store[];
 }
 
+function toTitleCase(name: string): string {
+  return name.toLowerCase().split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 export async function createStore(params: {
   userId: string;
   name: string;
 }): Promise<Store> {
-  const { userId, name } = params;
+  const { userId, name: rawName } = params;
+  const name = toTitleCase(rawName.trim());
   const domain = guessDomain(name);
   const initials = computeInitials(name);
   const logoUrl = `https://img.logo.dev/${domain}?token=${LOGO_TOKEN}`;

@@ -208,23 +208,23 @@ export default function ShopTab() {
     return [['All Items', sorted]] as [string, ShoppingListItem[]][];
   }, [unchecked, viewMode]);
 
-  // Group lists by store name for Level 1 (must be before early returns)
+  // Group lists by store name for Level 1 — case-insensitive
   const storeGroups = useMemo(() => {
-    const groups: Record<string, typeof lists> = {};
+    const groups: Record<string, { displayName: string; items: typeof lists }> = {};
     for (const list of lists) {
-      const store = list.store_name || 'General';
-      if (!groups[store]) groups[store] = [];
-      groups[store].push(list);
+      const key = (list.store_name ?? '').toLowerCase().trim() || 'general';
+      if (!groups[key]) groups[key] = { displayName: list.store_name || 'General', items: [] };
+      groups[key].items.push(list);
     }
-    return Object.entries(groups).sort(([a], [b]) =>
-      a === 'General' ? 1 : b === 'General' ? -1 : a.localeCompare(b)
-    );
+    return Object.entries(groups)
+      .map(([key, { displayName, items }]) => [displayName, items] as [string, typeof lists])
+      .sort(([a], [b]) => a === 'General' ? 1 : b === 'General' ? -1 : a.localeCompare(b));
   }, [lists]);
 
   const filteredLists = useMemo(() => {
     if (!selectedStore) return lists;
     if (selectedStore === '__all__') return lists;
-    return lists.filter((l) => (l.store_name || 'General') === selectedStore);
+    return lists.filter((l) => (l.store_name ?? '').toLowerCase().trim() === selectedStore.toLowerCase().trim());
   }, [lists, selectedStore]);
 
   // Unique store names for the creation picker
