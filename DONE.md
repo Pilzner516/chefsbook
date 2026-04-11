@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 66)
+- Fix: NEXT_PUBLIC_SUPABASE_URL changed to `https://api.chefsbk.app` on RPi5 — eliminates mixed content ws:// error
+- Created `apps/web/.env.production` with public Supabase URL
+- Verified Cloudflare Tunnel passes Supabase API + WebSocket upgrade
+- Confirmed `api.chefsbk.app` baked into client JS bundle; deployed to RPi5
+
 ## 2026-04-10 (session 65)
 - Fix: PostgREST schema cache refreshed — `docker restart supabase-rest`; recipe_comments now accessible
 - Fix: Web LikeButton — heart toggle separated from count click; owner count opens likers modal; non-owner count is plain text
