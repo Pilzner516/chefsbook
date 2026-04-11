@@ -181,6 +181,7 @@ export interface ShoppingList {
   user_id: string;
   name: string;
   store_name: string | null;
+  store_id: string | null;
   color: string | null;
   pinned: boolean;
   pinned_at: string | null;
