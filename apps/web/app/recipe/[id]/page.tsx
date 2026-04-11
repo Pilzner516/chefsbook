@@ -855,7 +855,7 @@ export default function RecipePage() {
         )}
         {/* Likes row below title */}
         <div className="flex items-center gap-3 mb-4">
-          <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} />
+          <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} recipeOwnerId={recipe.user_id} />
           {recipe.visibility === 'public' && <span className="text-xs text-cb-green bg-cb-green/10 px-2 py-0.5 rounded-full font-medium">Public</span>}
         </div>
         {editingDesc ? (
