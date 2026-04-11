@@ -1185,6 +1185,29 @@ function RecipeDetailInner() {
           </TouchableOpacity>
         )}
         {!recipe.is_parent && !recipe.parent_recipe_id && <View style={{ marginBottom: 4 }} />}
+
+        {/* Attribution pill */}
+        {recipe.original_submitter_username ? (
+          <TouchableOpacity
+            onPress={() => router.push(`/chef/${recipe.original_submitter_id}`)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 24, paddingLeft: 6, paddingRight: 12, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 8, borderWidth: 1, borderColor: colors.borderDefault }}
+          >
+            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#ffffff', fontSize: 9, fontWeight: '700' }}>{recipe.original_submitter_username.charAt(0).toUpperCase()}</Text>
+            </View>
+            <Text style={{ color: colors.textPrimary, fontSize: 13 }}>@{recipe.original_submitter_username}</Text>
+          </TouchableOpacity>
+        ) : recipe.source_url ? (
+          <TouchableOpacity
+            onPress={() => { try { Linking.openURL(recipe.source_url!); } catch {} }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.bgBase, borderRadius: 24, paddingHorizontal: 12, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 8, borderWidth: 1, borderColor: colors.borderDefault }}
+          >
+            <Text style={{ fontSize: 13 }}>🔗</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 13 }}>{(() => { try { return new URL(recipe.source_url!).hostname.replace('www.', ''); } catch { return 'Source'; } })()}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11 }}>↗</Text>
+          </TouchableOpacity>
+        ) : null}
+
         {displayDescription && (
           <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 12 }}>{displayDescription}</Text>
         )}

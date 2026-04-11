@@ -853,6 +853,38 @@ export default function RecipePage() {
             )}
           </div>
         )}
+        {/* Attribution pill */}
+        {(() => {
+          if (recipe.original_submitter_username) {
+            return (
+              <Link href={`/u/${recipe.original_submitter_username}`} className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full pl-1.5 pr-3 py-1 text-[13px] text-gray-700 hover:bg-gray-200 transition-colors mb-3">
+                <div className="w-5 h-5 rounded-full bg-cb-primary text-white flex items-center justify-center text-[9px] font-bold shrink-0">
+                  {recipe.original_submitter_username.charAt(0).toUpperCase()}
+                </div>
+                @{recipe.original_submitter_username}
+              </Link>
+            );
+          }
+          if (recipe.cookbook_id) {
+            return (
+              <Link href={`/dashboard/cookbooks/${recipe.cookbook_id}`} className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-[13px] text-gray-700 hover:bg-gray-200 transition-colors mb-3">
+                <span>📖</span> {recipe.source_author ?? 'Cookbook'}
+              </Link>
+            );
+          }
+          if (recipe.source_url) {
+            try {
+              const domain = new URL(recipe.source_url).hostname.replace('www.', '');
+              return (
+                <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-[13px] text-gray-700 hover:bg-gray-200 transition-colors mb-3">
+                  <span>🔗</span> {domain} <span className="text-gray-400 text-[11px]">↗</span>
+                </a>
+              );
+            } catch { return null; }
+          }
+          return null;
+        })()}
+
         {/* Likes row below title */}
         <div className="flex items-center gap-3 mb-4">
           <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} recipeOwnerId={recipe.user_id} />
