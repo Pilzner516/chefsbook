@@ -1,10 +1,10 @@
-import { supabase } from '@chefsbook/db';
+import { supabaseAdmin } from '@chefsbook/db';
 
 async function getStats() {
   const [users, recipes, flagged] = await Promise.all([
-    supabase.from('user_profiles').select('plan_tier', { count: 'exact' }),
-    supabase.from('recipes').select('*', { count: 'exact', head: true }),
-    supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('type', 'comment_flagged').eq('is_read', false),
+    supabaseAdmin.from('user_profiles').select('plan_tier', { count: 'exact' }),
+    supabaseAdmin.from('recipes').select('*', { count: 'exact', head: true }),
+    supabaseAdmin.from('notifications').select('*', { count: 'exact', head: true }).eq('type', 'comment_flagged').eq('is_read', false),
   ]);
 
   // Count by plan
@@ -16,7 +16,7 @@ async function getStats() {
 
   // New signups today
   const today = new Date().toISOString().split('T')[0];
-  const { count: newToday } = await supabase
+  const { count: newToday } = await supabaseAdmin
     .from('user_profiles')
     .select('*', { count: 'exact', head: true })
     .gte('created_at', today);

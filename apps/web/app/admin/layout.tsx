@@ -1,5 +1,8 @@
-import { supabase, supabaseAdmin } from '@chefsbook/db';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@chefsbook/db';
 import Link from 'next/link';
 
 const NAV = [
@@ -12,19 +15,37 @@ const NAV = [
   { href: '/admin/help', label: 'Help Requests' },
 ];
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Check admin access
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.id) redirect('/dashboard');
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
 
-  // Use service role client to bypass RLS on admin_users
-  const { data: admin } = await supabaseAdmin
-    .from('admin_users')
-    .select('role')
-    .eq('user_id', session.user.id)
-    .single();
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.replace('/dashboard');
+        return;
+      }
+      // Query admin_users — RLS allows admins to read their own row
+      supabase
+        .from('admin_users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (!data) {
+            router.replace('/dashboard');
+          } else {
+            setAdminRole(data.role);
+            setChecking(false);
+          }
+        });
+    });
+  }, [router]);
 
-  if (!admin) redirect('/dashboard');
+  if (checking) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -33,7 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin" className="text-lg font-bold">
             <span className="text-cb-primary">CB</span> Admin
           </Link>
-          <p className="text-xs text-gray-500 mt-1">{admin.role.replace('_', ' ')}</p>
+          {adminRole && <p className="text-xs text-gray-500 mt-1">{adminRole.replace('_', ' ')}</p>}
         </div>
         <nav className="p-2">
           {NAV.map((item) => (

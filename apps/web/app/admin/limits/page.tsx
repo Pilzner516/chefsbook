@@ -1,7 +1,7 @@
-import { supabase } from '@chefsbook/db';
+import { supabaseAdmin } from '@chefsbook/db';
 
 export default async function PlanLimitsPage() {
-  const { data: limits } = await supabase.from('plan_limits').select('*').order('monthly_price_cents');
+  const { data: limits } = await supabaseAdmin.from('plan_limits').select('*').order('monthly_price_cents');
 
   const boolLabel = (v: boolean) => v ? '✓' : '✗';
   const numLabel = (v: number | null) => v === null ? '∞' : String(v);
