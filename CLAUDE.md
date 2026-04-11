@@ -302,6 +302,19 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
+## Last session (87 — 2026-04-08)
+- Created `supabaseAdmin` service role client in `@chefsbook/db` (bypasses RLS for server-side admin checks)
+- Fixed /admin route protection — layout.tsx now uses supabaseAdmin instead of anon client
+- Added subtle Admin link (shield icon) in Sidebar, visible only to admin users
+- Deployed to RPi5 — both seblux and pilzner can access /admin
+
+## Next session
+- Mobile notifications (bell in tab bar / recipe list header)
+- Rebuild APK with latest changes
+- Chrome Web Store submission for extension
+- Google OAuth integration
+- Stripe configuration
+
 ## Known issues
 
 - No test suite (unit or integration)

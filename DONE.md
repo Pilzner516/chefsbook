@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-08 (session 87)
+- Created `supabaseAdmin` service role client export in `@chefsbook/db` (bypasses RLS)
+- Fixed /admin route — layout.tsx uses service role client to query admin_users
+- Added Admin link with shield icon in web sidebar (visible only to admin users)
+- Verified admin_users DB state: both pilzner + seblux rows correct with super_admin role
+- Deployed to RPi5 — chefsbk.app/admin accessible for both admin accounts
+
 ## 2026-04-11 (session 86)
 - Migration 027: reply_count + trigger on recipe_comments, notifications expanded
 - Web: threaded comments — nested replies, inline reply input, "▶ N more replies" expander
