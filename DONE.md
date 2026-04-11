@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 76)
+- Web+Mobile: attribution row shows both user pill + source pill side by side (was either/or)
+- User pill falls back to current user's username when original_submitter is empty
+- Removed "Public" badge from recipe detail read-mode (web + mobile)
+- Deployed to RPi5
+
 ## 2026-04-11 (session 75)
 - Migration 026: onboarding columns on user_profiles
 - `OnboardingBubble` component with @floating-ui/react positioning, arrow, step indicator
