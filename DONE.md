@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 86)
+- Migration 027: reply_count + trigger on recipe_comments, notifications expanded
+- Web: threaded comments — nested replies, inline reply input, "▶ N more replies" expander
+- `postComment()` accepts parentId; reply creates notification for parent commenter
+- DB helpers: createNotification, getNotifications, getUnreadCount, markRead, markAllRead
+- NotificationBell: pulse badge, slide-in panel with 5 tabs, mark-all-read
+- Tested all 3 notification types via psql; deployed to RPi5
+
 ## 2026-04-11 (session 85)
 - Fix: "Database error querying schema" on sign-in for seblux100@gmail.com
 - Root cause: GoTrue can't scan NULL token columns (confirmation_token, recovery_token, email_change_token_new, etc.) — user was created with auto-confirm which left tokens as NULL
