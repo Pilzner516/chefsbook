@@ -857,38 +857,6 @@ export default function RecipePage() {
             )}
           </div>
         )}
-        {/* Attribution pill */}
-        {(() => {
-          if (recipe.original_submitter_username) {
-            return (
-              <Link href={`/u/${recipe.original_submitter_username}`} className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full pl-1.5 pr-3 py-1 text-[13px] text-gray-700 hover:bg-gray-200 transition-colors mb-3">
-                <div className="w-5 h-5 rounded-full bg-cb-primary text-white flex items-center justify-center text-[9px] font-bold shrink-0">
-                  {recipe.original_submitter_username.charAt(0).toUpperCase()}
-                </div>
-                @{recipe.original_submitter_username}
-              </Link>
-            );
-          }
-          if (recipe.cookbook_id) {
-            return (
-              <Link href={`/dashboard/cookbooks/${recipe.cookbook_id}`} className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-[13px] text-gray-700 hover:bg-gray-200 transition-colors mb-3">
-                <span>📖</span> {recipe.source_author ?? 'Cookbook'}
-              </Link>
-            );
-          }
-          if (recipe.source_url) {
-            try {
-              const domain = new URL(recipe.source_url).hostname.replace('www.', '');
-              return (
-                <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-[13px] text-gray-700 hover:bg-gray-200 transition-colors mb-3">
-                  <span>🔗</span> {domain} <span className="text-gray-400 text-[11px]">↗</span>
-                </a>
-              );
-            } catch { return null; }
-          }
-          return null;
-        })()}
-
         {/* Likes row below title */}
         <div className="flex items-center gap-3 mb-2">
           <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} recipeOwnerId={recipe.user_id} />
@@ -1092,38 +1060,9 @@ export default function RecipePage() {
           )}
         </div>
 
-        {(recipe.source_url || recipe.channel_name) && (
-          <div className="mb-8 flex items-center gap-4 flex-wrap">
-            {recipe.channel_name && (
-              <span className="text-sm text-cb-secondary">
-                by <span className="font-medium text-cb-text">{recipe.channel_name}</span>
-              </span>
-            )}
-            {recipe.source_url && (
-              <a
-                href={recipe.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-cb-primary hover:underline"
-              >
-                {recipe.youtube_video_id ? (
-                  <>
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.545 15.568V8.432L15.818 12l-6.273 3.568Z" />
-                    </svg>
-                    Watch on YouTube
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
-                    View original
-                  </>
-                )}
-              </a>
-            )}
-          </div>
+        {/* Channel name only (YouTube recipes) */}
+        {recipe.channel_name && !recipe.source_url && (
+          <p className="text-sm text-cb-secondary mb-4">by <span className="font-medium text-cb-text">{recipe.channel_name}</span></p>
         )}
 
         {/* Cookbook attribution */}
@@ -1156,17 +1095,7 @@ export default function RecipePage() {
           </div>
         )}
 
-        {/* Source attribution */}
-        {recipe.source_url && (
-          <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-cb-muted hover:text-cb-primary mb-2 block">
-            📖 Original recipe{recipe.source_author ? ` by ${recipe.source_author}` : ''} at {new URL(recipe.source_url).hostname.replace('www.', '')}
-          </a>
-        )}
-        {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
-          <a href={`/u/${recipe.original_submitter_username}`} className="text-xs text-cb-muted hover:text-cb-primary mb-2 block">
-            🔒 Original by @{recipe.original_submitter_username}
-          </a>
-        )}
+        {/* Attribution is shown in the attribution row above — no duplicate here */}
 
         {/* aiChef badge */}
         {recipe.aichef_assisted && (

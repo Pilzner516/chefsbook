@@ -1294,17 +1294,7 @@ function RecipeDetailInner() {
           </View>
         )}
 
-        {/* Source attribution */}
-        {recipe.source_url && (
-          <TouchableOpacity
-            onPress={() => { try { const { Linking } = require('react-native'); Linking.openURL(recipe.source_url!); } catch {} }}
-            style={{ marginBottom: 8 }}
-          >
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-              {'\uD83D\uDCD6'} Original recipe{recipe.source_author ? ` by ${recipe.source_author}` : ''} at {new URL(recipe.source_url).hostname.replace('www.', '')}
-            </Text>
-          </TouchableOpacity>
-        )}
+        {/* Source attribution shown in attribution row above — no duplicate here */}
 
         {/* Attribution tags */}
         {(recipe.original_submitter_username || recipe.shared_by_username) && (
@@ -1502,9 +1492,7 @@ function RecipeDetailInner() {
           onTagsChanged={() => fetchRecipe(recipe.id)}
         />
 
-        {/* Source metadata (bookmark import) */}
-        <Divider />
-        <SourceSection recipe={{ ...recipe, tags }} />
+        {/* Source shown in attribution row — SourceSection removed */}
 
         {/* Feature #4: cooking notes */}
         <Divider />
