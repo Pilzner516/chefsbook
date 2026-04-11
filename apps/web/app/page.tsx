@@ -295,6 +295,7 @@ export default function HomePage() {
               <Link href="#pricing" className="hover:text-cb-text transition-colors">Pricing</Link>
               <Link href="/auth" className="hover:text-cb-text transition-colors">Sign In</Link>
               <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="hover:text-cb-text transition-colors">Download App</a>
+              <Link href="/privacy" className="hover:text-cb-text transition-colors">Privacy Policy</Link>
             </div>
           </div>
           <div className="text-center text-cb-muted text-xs mt-6">
