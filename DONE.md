@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 79)
+- Web+Mobile: removed 3 duplicate source references (old attribution pill, View Original link, "Original recipe at" text)
+- Only attribution row pills remain as single source reference
+- Deployed to RPi5
+
 ## 2026-04-11 (session 78)
 - Extension production-ready: URLs → chefsbk.app, dev creds removed, button red, manifest v1.0.0
 - Extension packaged as zip; download route at `/extension/download` (200, application/zip)
