@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 67)
+- Fix: Dark overlay blocking chefsbk.app — root cause was corrupted `.next` build dir from a failed SIGKILL build
+- Clean rebuild (`rm -rf .next` + remove duplicate React) resolved the issue
+- User confirmed site fully interactive after redeploy
+
 ## 2026-04-11 (session 66)
 - Fix: NEXT_PUBLIC_SUPABASE_URL changed to `https://api.chefsbk.app` on RPi5 — eliminates mixed content ws:// error
 - Created `apps/web/.env.production` with public Supabase URL
