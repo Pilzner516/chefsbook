@@ -8,6 +8,7 @@ import type { Recipe, ShoppingList } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
+import FeedbackCard from '@/components/FeedbackCard';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 type ViewMode = 'grid' | 'list' | 'table';
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<{ id: string; email: string; username: string | null } | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string | null>(null);
@@ -60,6 +62,10 @@ export default function DashboardPage() {
       setRecipes(data);
       if (data.length > 0) {
         getPrimaryPhotos(data.map((r) => r.id)).then(setPrimaryPhotos);
+      }
+      if (!userInfo) {
+        const { data: profile } = await supabase.from('user_profiles').select('username').eq('id', user.id).single();
+        setUserInfo({ id: user.id, email: user.email ?? '', username: profile?.username ?? null });
       }
     }
     setLoading(false);
@@ -391,6 +397,9 @@ export default function DashboardPage() {
         {/* Grid view */}
         {viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {!selectMode && userInfo && (
+            <FeedbackCard userId={userInfo.id} username={userInfo.username} email={userInfo.email} />
+          )}
           {sorted.map((recipe) => {
             const isSelected = selected.has(recipe.id);
             const Wrapper = selectMode ? 'div' as const : Link;

@@ -659,5 +659,17 @@
     "addStore": "Add Store",
     "listName": "List name (optional)",
     "createList": "Create List"
+  },
+  "feedback": {
+    "title": "Got an Idea for Us?",
+    "subtitle": "We'd love to hear from you",
+    "intro": "We'd love to hear your thoughts, ideas, or suggestions for ChefsBook.",
+    "from": "From",
+    "placeholder": "Your message",
+    "send": "Send Feedback",
+    "sending": "Sending...",
+    "thankTitle": "Thanks for your feedback!",
+    "thankBody": "We hope you are enjoying ChefsBook. Your ideas help us make it better for everyone.",
+    "errorBody": "Something went wrong. Please try again."
   }
 }

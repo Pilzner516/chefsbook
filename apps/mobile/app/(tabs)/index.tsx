@@ -11,6 +11,7 @@ import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, EmptyState, Loading, Card } from '../../components/UIKit';
+import { FeedbackCard } from '../../components/FeedbackCard';
 import { getRecipeVersions, getPrimaryPhotos } from '@chefsbook/db';
 
 type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
@@ -178,6 +179,7 @@ export default function RecipesTab() {
       <FlashList
         data={sorted}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBarHeight }}
+        ListHeaderComponent={<FeedbackCard />}
         renderItem={({ item }) => {
           const vc = item.is_parent ? (versionCounts[item.id] ?? 1) : undefined;
           return (
