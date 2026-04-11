@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-11 (session 80)
+- Fix: Store logos not showing on web — root cause: logo_url was NULL for all 5 stores (backfilled before createStore existed)
+- DB backfill: set domain + logo_url for 4 real stores (Whole Foods, ShopRite, Stop and Shop, DeCiccos) using logo.dev URLs
+- Verified: logo.dev returns 200 image/jpeg for wholefoodsmarket.com
+- No code changes needed — web StoreAvatar already renders <img src={store.logo_url}> when present
+- Fix: Site was crash-looping (502) due to duplicate React — ran npm install react@19.1.0 + npm dedupe + rebuild
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app + /dashboard/shop both return 200
+
 ## 2026-04-11 (session 79)
 - Web+Mobile: removed 3 duplicate source references (old attribution pill, View Original link, "Original recipe at" text)
 - Only attribution row pills remain as single source reference
