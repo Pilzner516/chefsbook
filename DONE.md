@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 63)
+- DB backfill: 6 shopping lists updated with store_id FK matching stores table by store_name
+- Verified: 4 lists without store_name remain with NULL store_id (correct)
+- Added store_id to ShoppingList type in packages/db/src/types.ts
+- Verified: queries use select('*') without INNER JOIN — no crash for NULL store_id
+- Verified: all web + mobile components use store_name (string), not store.name (join) — safe for null
+- Verified: createShoppingList already passes store_id from StorePicker
+- LEFT JOIN test confirmed: stores join returns NULL gracefully for storeless lists
+- Deployed to RPi5 — build succeeded, pm2 restarted, chefsbk.app shopping page loads (200)
+
 ## 2026-04-10 (session 62)
 - Installed ai-cost.md agent in `.claude/agents/`
 - CLAUDE.md: added ai-cost.md to agent lookup table (MANDATORY for AI features)
