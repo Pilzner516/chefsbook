@@ -62,7 +62,7 @@ export interface CommentRow {
 export async function getComments(recipeId: string): Promise<CommentRow[]> {
   const { data } = await supabase
     .from('recipe_comments')
-    .select('*, user_profiles!inner(username, display_name, avatar_url)')
+    .select('*, user_profiles!recipe_comments_user_id_fkey(username, display_name, avatar_url)')
     .eq('recipe_id', recipeId)
     .in('status', ['visible', 'approved'])
     .order('created_at', { ascending: true });
