@@ -53,6 +53,7 @@ export interface CommentRow {
   content: string;
   status: string;
   flag_severity: string | null;
+  reply_count: number;
   created_at: string;
   username?: string;
   display_name?: string;
@@ -82,6 +83,7 @@ export async function postComment(
   flagSeverity?: string,
   flagSource?: string,
   flagReason?: string,
+  parentId?: string,
 ): Promise<CommentRow> {
   const { data, error } = await supabase
     .from('recipe_comments')
@@ -90,6 +92,7 @@ export async function postComment(
       user_id: userId,
       content,
       status,
+      parent_id: parentId ?? null,
       flag_severity: flagSeverity ?? null,
       flag_source: flagSource ?? null,
       flag_reason: flagReason ?? null,
@@ -142,4 +145,40 @@ export async function isBlockedCommenter(blockerId: string, blockedId: string): 
 
 export async function toggleComments(recipeId: string, enabled: boolean): Promise<void> {
   await supabase.from('recipes').update({ comments_enabled: enabled }).eq('id', recipeId);
+}
+
+// ── Notifications ──
+
+export async function createNotification(params: {
+  user_id: string;
+  type: string;
+  actor_id?: string;
+  actor_username?: string;
+  recipe_id?: string;
+  recipe_title?: string;
+  comment_id?: string;
+  message?: string;
+  batch_count?: number;
+}): Promise<void> {
+  await supabase.from('notifications').insert(params);
+}
+
+export async function getNotifications(userId: string, type?: string): Promise<any[]> {
+  let q = supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50);
+  if (type && type !== 'all') q = q.eq('type', type);
+  const { data } = await q;
+  return data ?? [];
+}
+
+export async function getUnreadCount(userId: string): Promise<number> {
+  const { count } = await supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_read', false);
+  return count ?? 0;
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false);
 }
