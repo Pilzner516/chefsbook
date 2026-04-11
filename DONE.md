@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-10 (session 64)
+- Verified: suggestPurchaseUnits already on claude-haiku-4-5-20251001 (model: HAIKU, maxTokens: 800) — no change needed
+- Confirmed: all ai-cost agent known problems resolved (moderation, username check, purchase units all on Haiku)
+
 ## 2026-04-10 (session 63)
 - DB backfill: 6 shopping lists updated with store_id FK matching stores table by store_name
 - Verified: 4 lists without store_name remain with NULL store_id (correct)
