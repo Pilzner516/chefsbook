@@ -309,11 +309,10 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (101 — 2026-04-12)
-- Dashboard header: Messages pill + Select + Add Recipe in single flex row (no floating bell)
-- Mobile message compose: bottom sheet replaces Alert.prompt (Android-safe)
-- Sidebar Messages link: unread count badge
-- Deployed to RPi5 (tunnel restart needed for 502)
+## Last session (102 — 2026-04-12)
+- Bookmark save count always visible (was hidden when 0) — matches like heart behavior
+- Fixed on both web and mobile recipe detail
+- Deployed to RPi5
 
 ## Next session
 - Mobile messages screen (full conversation UI)
