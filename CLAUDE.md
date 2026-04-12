@@ -309,16 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (95 — 2026-04-12)
-- Regression fixes: comments on all recipes, bell position, language filter (5 only), clone recipe button
-- Metric/imperial marked PARTIAL (toggle saves, conversion not wired in web recipe detail)
-- Deployment pending — RPi5 unreachable (deploy next session)
+## Last session (96 — 2026-04-12)
+- Servings mismatch warning in MealPlanPicker (both platforms)
+- Combined shopping list upgraded to match individual list formatting (checkboxes, dept grouping, view modes, font size, purchase unit, recipe source)
+- Deployed to RPi5
 
 ## Next session
-- Deploy session 95 changes to RPi5
 - Wire metric/imperial conversion in web recipe detail
 - Mobile notifications (bell in tab bar / recipe list header)
 - Rebuild APK with latest changes
+- Chrome Web Store submission
 - Chrome Web Store submission for extension
 
 ## Known issues

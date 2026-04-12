@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 96)
+- Web+Mobile: Servings mismatch warning in MealPlanPicker — triggers when adding recipe with >2x serving difference vs existing day meals
+- Web: Combined shopping list upgraded — checkboxes (local-only), dept grouping, view mode toggle, font size, purchase unit (red), usage amount (green), recipe source per item, banner with source list names
+- Mobile: Combined shopping list upgraded — checkboxes (local-only), green usage amount, recipe source per item
+- Feature registry updated: consolidated view + portions mismatch entries
+- tsc --noEmit passes both apps
+- Deployed to RPi5 — build succeeded, /dashboard/shop returns 200
+
 ## 2026-04-12 (session 95)
 - Fix: Comments show on ALL recipe pages (removed visibility === 'public' gate)
 - Fix: Notification bell LEFT of "Add Recipe" button in dashboard header
