@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 107)
+- Admin User Ideas: sender avatar (initials circle, clickable → /u/[username]) + @username link + email + relative timestamp per message
+- Graceful fallback: "Anonymous" shown when username is null
+- Subject "Feedback" hidden (redundant — all are feedback)
+- Verified: 2 test messages (pilzner + seblux) have username + email populated in DB
+- Feature registry updated
+- Deployed to RPi5 — /admin/help returns 200
+
 ## 2026-04-12 (session 106)
 - Renamed "Help Requests" → "User Ideas" in admin nav + page title (DB table unchanged)
 - Admin help page: switched from supabase to supabaseAdmin (was blocked by RLS), shows username + email

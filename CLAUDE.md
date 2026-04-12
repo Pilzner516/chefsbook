@@ -309,10 +309,8 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (106 — 2026-04-12)
-- Renamed Help Requests → User Ideas in admin UI
-- Fixed loading bugs on 4 admin pages: supabaseAdmin for all fetches + try/catch + error states
-- Root cause: help used anon client (RLS blocked), all pages lacked error handling (loading stayed true on failure)
+## Last session (107 — 2026-04-12)
+- Admin User Ideas: sender avatar + @username link + email + relative time per message
 - Deployed to RPi5
 
 ## Next session
