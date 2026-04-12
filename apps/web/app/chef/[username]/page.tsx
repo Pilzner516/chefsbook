@@ -4,6 +4,7 @@ import { formatDuration, getInitials } from '@chefsbook/ui';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import FollowButton from '@/components/FollowButton';
+import MessageButton from '@/components/MessageButton';
 import FollowTabs from '@/components/FollowTabs';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 
@@ -50,7 +51,10 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
           <h1 className="text-2xl font-bold">{chef.display_name}</h1>
           {chef.username && <p className="text-cb-secondary">@{chef.username}</p>}
           {chef.bio && <p className="text-cb-secondary mt-2 max-w-md mx-auto">{chef.bio}</p>}
-          <FollowButton targetUserId={chef.id} targetUsername={chef.username} />
+          <div className="flex items-center justify-center gap-2">
+            <FollowButton targetUserId={chef.id} targetUsername={chef.username} />
+            <MessageButton targetUserId={chef.id} targetUsername={chef.username} />
+          </div>
         </div>
 
         {/* Stats row */}

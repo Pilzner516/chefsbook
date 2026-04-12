@@ -140,6 +140,10 @@
 | Followers / Following tabs on profile | LIVE | apps/web, apps/mobile | 29 | |
 | What's New feed (followed users' recipes) | LIVE | apps/mobile/(tabs)/search.tsx | 29 | |
 | Social share (Instagram/Pinterest/Facebook) | LIVE | SocialShareModal, packages/ai | 35 | Pro plan gate |
+| Direct messages | LIVE | packages/db/messages.ts, apps/web/dashboard/messages, apps/mobile/chef | 98 | AI moderation (haiku), 1000 char limit |
+| Message button on profiles | LIVE | apps/web (MessageButton), apps/mobile (chef/[id]) | 98 | Not on own profile |
+| Message moderation (admin) | LIVE | apps/web/admin/messages/ | 98 | Approve/Remove flagged messages |
+| Message flags | LIVE | message_flags table | 98 | Inappropriate/Harassment/Spam/Other |
 
 ---
 

@@ -3,6 +3,7 @@ import { supabase } from '@chefsbook/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import FollowButton from '@/components/FollowButton';
+import MessageButton from '@/components/MessageButton';
 import FollowTabs from '@/components/FollowTabs';
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
@@ -47,7 +48,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               <div className="text-xs text-cb-muted">Following</div>
             </div>
           </div>
-          <FollowButton targetUserId={profile.id} targetUsername={profile.username} />
+          <div className="flex items-center gap-2">
+            <FollowButton targetUserId={profile.id} targetUsername={profile.username} />
+            <MessageButton targetUserId={profile.id} targetUsername={profile.username} />
+          </div>
         </div>
 
         {/* Public recipes */}

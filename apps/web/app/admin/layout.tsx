@@ -13,6 +13,7 @@ const NAV = [
   { href: '/admin/promos', label: 'Promo Codes' },
   { href: '/admin/limits', label: 'Plan Limits' },
   { href: '/admin/help', label: 'Help Requests' },
+  { href: '/admin/messages', label: 'Messages' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

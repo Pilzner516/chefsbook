@@ -15,6 +15,7 @@ export interface UserProfile {
   comments_suspended: boolean;
   recipes_frozen: boolean;
   recipes_frozen_reason: string | null;
+  unread_messages_count: number;
   follower_count: number;
   following_count: number;
   recipe_count: number;

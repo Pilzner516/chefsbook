@@ -38,4 +38,6 @@ export { moderateComment } from './moderateComment';
 export type { ModerationResult } from './moderateComment';
 export { moderateRecipe } from './moderateRecipe';
 export type { RecipeModerationResult } from './moderateRecipe';
+export { moderateMessage } from './moderateMessage';
+export type { MessageModerationResult } from './moderateMessage';
 export { isUsernameFamilyFriendly } from './usernameCheck';

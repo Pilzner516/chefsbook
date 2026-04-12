@@ -8,7 +8,7 @@ import { useAuthStore } from '../../lib/zustand/authStore';
 import {
   supabase, cloneRecipe, updateProfile, getProfileById,
   followUser, unfollowUser, isFollowing as checkIsFollowing,
-  getFollowers, getFollowing, getFollowedRecipes,
+  getFollowers, getFollowing, getFollowedRecipes, sendMessage,
   canDo, getUserPlanTier,
 } from '@chefsbook/db';
 import type { UserProfile, Recipe, PlanTier } from '@chefsbook/db';
@@ -282,6 +282,29 @@ export default function ChefProfile() {
                 size="sm"
               />
             )}
+            <View style={{ marginTop: 8 }}>
+              <Button
+                title="Message"
+                onPress={() => {
+                  Alert.prompt?.(
+                    `Message @${chef?.username ?? ''}`,
+                    'Write a message (max 1000 chars)',
+                    async (text: string) => {
+                      if (!text?.trim() || !session?.user?.id || !id) return;
+                      try {
+                        await sendMessage(session.user.id, id, text.trim());
+                        Alert.alert('Message sent!');
+                      } catch (e: any) {
+                        Alert.alert('Error', e.message);
+                      }
+                    },
+                    'plain-text',
+                  ) ?? Alert.alert('Message', 'Open chefsbk.app to send messages');
+                }}
+                variant="secondary"
+                size="sm"
+              />
+            </View>
           </View>
         ) : null}
       </View>

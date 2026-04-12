@@ -15,5 +15,6 @@ export * from './queries/profiles';
 export * from './queries/follows';
 export * from './queries/likesComments';
 export * from './queries/stores';
+export * from './queries/messages';
 export * from './subscriptions';
 export * from './shopping/deduplication';
