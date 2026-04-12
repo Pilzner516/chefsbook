@@ -12,10 +12,12 @@ export const DIETARY_FLAGS = [
 ] as const;
 
 export const CUISINE_LIST = [
-  'Italian', 'French', 'Japanese', 'Chinese', 'Thai', 'Indian',
-  'Mexican', 'Spanish', 'Greek', 'Lebanese', 'American', 'British',
-  'Korean', 'Vietnamese', 'Moroccan', 'Turkish', 'Caribbean',
-  'Peruvian', 'Ethiopian', 'Other',
+  'American', 'Brazilian', 'British', 'Caribbean', 'Chinese', 'Ethiopian',
+  'Filipino', 'French', 'German', 'Greek', 'Indian', 'Indonesian',
+  'Irish', 'Italian', 'Japanese', 'Korean', 'Lebanese', 'Malaysian',
+  'Mediterranean', 'Mexican', 'Middle Eastern', 'Moroccan', 'Peruvian',
+  'Polish', 'Portuguese', 'Russian', 'Spanish', 'Thai', 'Turkish',
+  'Vietnamese', 'Other',
 ] as const;
 
 export const COURSE_LIST = [

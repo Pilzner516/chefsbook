@@ -11,14 +11,14 @@ import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, cloneRecipe } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, cloneRecipe, getSavers } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
 import type { TranslatedRecipe } from '@chefsbook/ai';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
 import type { CookingNote } from '@chefsbook/db';
-import { formatDuration, formatQuantity, scaleQuantity, cleanIngredientName } from '@chefsbook/ui';
+import { formatDuration, formatQuantity, scaleQuantity, cleanIngredientName, CUISINE_LIST } from '@chefsbook/ui';
 
 function formatTimestamp(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -48,6 +48,8 @@ export default function RecipePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cloning, setCloning] = useState(false);
   const [cloned, setCloned] = useState(false);
+  const [showSavers, setShowSavers] = useState(false);
+  const [savers, setSavers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -859,9 +861,21 @@ export default function RecipePage() {
             )}
           </div>
         )}
-        {/* Likes row below title */}
-        <div className="flex items-center gap-3 mb-2">
+        {/* Likes + saves row below title */}
+        <div className="flex items-center gap-4 mb-2">
           <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} recipeOwnerId={recipe.user_id} />
+          {(recipe.save_count ?? 0) > 0 && (
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
+              {isOwner ? (
+                <button onClick={async () => { const data = await getSavers(recipe.id); setSavers(data); setShowSavers(true); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
+                  {recipe.save_count}
+                </button>
+              ) : (
+                <span className="text-sm text-cb-muted">{recipe.save_count}</span>
+              )}
+            </div>
+          )}
         </div>
         {/* Attribution row */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
@@ -921,19 +935,26 @@ export default function RecipePage() {
         <div className="flex flex-wrap gap-3 mb-4 items-center">
           {/* Cuisine */}
           {editingCuisine ? (
-            <form
-              onSubmit={(e) => { e.preventDefault(); saveCuisine((e.currentTarget.elements.namedItem('cuisine') as HTMLInputElement).value || null); }}
-              className="flex items-center gap-1"
-            >
+            <div className="relative">
               <input
-                name="cuisine"
-                defaultValue={recipe.cuisine ?? ''}
                 autoFocus
-                placeholder="Cuisine"
-                className="bg-cb-bg border border-cb-primary rounded-input px-2 py-1 text-sm w-28 outline-none"
-                onBlur={(e) => saveCuisine(e.target.value || null)}
+                value={recipe.cuisine ?? ''}
+                onChange={(e) => {
+                  setRecipe((r) => r ? { ...r, cuisine: e.target.value } : r);
+                }}
+                placeholder="Type or select cuisine..."
+                className="bg-cb-bg border border-cb-primary rounded-input px-2 py-1 text-sm w-44 outline-none"
+                onBlur={() => { setTimeout(() => { saveCuisine(recipe.cuisine || null); }, 150); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveCuisine(recipe.cuisine || null); } if (e.key === 'Escape') setEditingCuisine(false); }}
               />
-            </form>
+              <div className="absolute top-full left-0 mt-1 w-52 bg-cb-card border border-cb-border rounded-input shadow-lg z-50 max-h-48 overflow-y-auto">
+                {[...CUISINE_LIST].filter((c) => !recipe.cuisine || c.toLowerCase().includes((recipe.cuisine ?? '').toLowerCase())).map((c) => (
+                  <button key={c} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { saveCuisine(c); }} className={`block w-full text-left px-3 py-1.5 text-sm hover:bg-cb-bg ${recipe.cuisine === c ? 'text-cb-primary font-medium' : 'text-cb-text'}`}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : recipe.cuisine ? (
             <button
               onClick={() => isOwner && setEditingCuisine(true)}
@@ -1588,6 +1609,32 @@ export default function RecipePage() {
 
       {showSocialShare && recipe && (
         <SocialShareModal recipe={recipe} onClose={() => setShowSocialShare(false)} />
+      )}
+
+      {/* Savers modal */}
+      {showSavers && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowSavers(false)}>
+          <div className="bg-cb-card rounded-card p-5 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-cb-text">{recipe?.save_count ?? 0} people saved this</h3>
+              <button onClick={() => setShowSavers(false)} className="text-cb-muted hover:text-cb-text">✕</button>
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {savers.map((u) => (
+                <Link key={u.id} href={`/u/${u.username ?? u.id}`} className="flex items-center gap-3 py-2 hover:bg-cb-bg rounded-input px-2 transition" onClick={() => setShowSavers(false)}>
+                  <div className="w-8 h-8 rounded-full bg-cb-primary text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    {u.display_name?.charAt(0)?.toUpperCase() ?? '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-cb-text truncate">@{u.username ?? '?'}</p>
+                    {u.display_name && <p className="text-xs text-cb-muted truncate">{u.display_name}</p>}
+                  </div>
+                </Link>
+              ))}
+              {savers.length === 0 && <p className="text-sm text-cb-muted text-center py-4">Loading...</p>}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Added to list confirmation */}

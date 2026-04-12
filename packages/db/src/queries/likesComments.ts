@@ -43,6 +43,21 @@ export async function getLikers(recipeId: string, limit = 50): Promise<{ id: str
   }));
 }
 
+export async function getSavers(recipeId: string, limit = 50): Promise<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }[]> {
+  const { data } = await supabase
+    .from('recipe_saves')
+    .select('user_id, user_profiles!inner(id, username, display_name, avatar_url)')
+    .eq('recipe_id', recipeId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return (data ?? []).map((row: any) => ({
+    id: row.user_profiles.id,
+    username: row.user_profiles.username,
+    display_name: row.user_profiles.display_name,
+    avatar_url: row.user_profiles.avatar_url,
+  }));
+}
+
 // ── Comments ──
 
 export interface CommentRow {
