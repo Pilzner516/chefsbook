@@ -309,9 +309,10 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (108 — 2026-04-12)
-- Savers modal: getSavers() rewritten (supabaseAdmin two-step, was FK mismatch), loading/error states, pluralization
-- Duplicate Homemade Biscuits deleted, search_recipes DISTINCT ON added
+## Last session (109 — 2026-04-12)
+- All admin supabaseAdmin calls moved to /api/admin server-side route
+- 5 client pages rewritten to use adminFetch/adminPost (no service role key in browser)
+- Admin auth verified server-side (JWT + admin_users)
 - Deployed to RPi5
 
 ## Next session

@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 109)
+- Architecture: moved ALL supabaseAdmin calls from client components to server-side /api/admin route
+- Created /api/admin/route.ts: GET (users, recipes, messages, promos, help) + POST (15 mutation actions)
+- Created adminFetch/adminPost helpers (apps/web/lib/adminFetch.ts)
+- Rewrote 5 admin pages: users, recipes, messages, promos, help — zero supabaseAdmin in client code
+- Admin auth verified server-side (JWT + admin_users check) in every API call
+- SUPABASE_SERVICE_ROLE_KEY confirmed present on RPi5
+- Feature registry updated
+- Deployed to RPi5 — all 6 admin pages return 200
+
 ## 2026-04-12 (session 108)
 - Fix: Savers modal — getSavers() rewritten as two-step query via supabaseAdmin (was failing: recipe_saves FK→auth.users not user_profiles)
 - Fix: Savers modal loading/error states (was stuck on "Loading..." forever on failure)
