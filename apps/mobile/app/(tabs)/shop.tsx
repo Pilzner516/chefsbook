@@ -582,6 +582,8 @@ function CombinedStoreView({
   const { t } = useTranslation();
   const [allItems, setAllItems] = useState<ShoppingListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const toggleCheck = (id: string) => setCheckedIds((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   useEffect(() => {
     let cancelled = false;
@@ -676,13 +678,20 @@ function CombinedStoreView({
               const rawQty = [converted.quantity ? formatQty(converted.quantity) : null, converted.unit || item.unit].filter(Boolean).join(' ');
               const displayQty = item.purchase_unit || rawQty;
 
+              const isChecked = checkedIds.has(item.id);
               return (
-                <View key={item.id} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6 }}>
+                <View key={item.id} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6, opacity: isChecked ? 0.5 : 1 }}>
+                  <TouchableOpacity onPress={() => toggleCheck(item.id)} style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: isChecked ? colors.accentGreen : colors.borderDefault, backgroundColor: isChecked ? colors.accentGreen : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 8, marginTop: 1 }}>
+                    {isChecked && <Ionicons name="checkmark" size={14} color="#fff" />}
+                  </TouchableOpacity>
                   <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', minWidth: 60, marginRight: 8 }}>
                     {displayQty}
                   </Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontSize: 14 }}>{item.ingredient}</Text>
+                    <Text style={{ color: colors.textPrimary, fontSize: 14, textDecorationLine: isChecked ? 'line-through' : 'none' }}>{item.ingredient}</Text>
+                    {rawQty && item.purchase_unit && (
+                      <Text style={{ color: colors.accentGreen, fontSize: 11 }}>{rawQty}</Text>
+                    )}
                     {item.recipe_name && (
                       <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{item.recipe_name}</Text>
                     )}

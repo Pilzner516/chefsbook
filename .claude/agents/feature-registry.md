@@ -107,7 +107,7 @@
 | Department grouping (13 depts) | LIVE | packages/db (addItemsWithPipeline) | 03 | |
 | 3 view modes (Dept/Recipe/A-Z) | LIVE | apps/web/dashboard/shop/, apps/mobile | 03 | |
 | Font size toggle | LIVE | apps/mobile/(tabs)/shop.tsx | 05 | 3 sizes, SecureStore persisted |
-| Consolidated "All [Store]" view | LIVE | apps/web/dashboard/shop/, apps/mobile | 84 | Multi-list stores only |
+| Consolidated "All [Store]" view | LIVE | apps/web/dashboard/shop/, apps/mobile | 84,96 | Checkboxes, dept grouping, view modes, font size, purchase unit, recipe source |
 | Offline shopping cache | LIVE | apps/mobile/lib/shoppingCache.ts | 74 | FileSystem cache, sync on reconnect |
 | Add to shopping from recipe | LIVE | apps/web, apps/mobile | 03 | AI purchase unit suggestions |
 | Add week/day to shopping from meal plan | LIVE | apps/web/dashboard/plan/, apps/mobile | 04 | |
@@ -123,7 +123,7 @@
 | Add recipe to meal plan (MealPlanPicker) | LIVE | MealPlanPicker component | 44 | Chef+ plan gate |
 | Daypart pill (Breakfast/Lunch/Dinner/Snack) | LIVE | apps/web, apps/mobile | 70 | ChefsDialog picker |
 | Servings pill (stepper) | LIVE | apps/web, apps/mobile | 70 | ChefsDialog stepper |
-| Portions mismatch warning | LIVE | apps/web, apps/mobile | 46 | Triggers when >2x serving difference |
+| Portions mismatch warning | LIVE | apps/web, apps/mobile, MealPlanPicker | 46,96 | Triggers on cart-add AND recipe-add when >2x serving diff |
 | AI Meal Plan Wizard | LIVE | MealPlanWizard component | 07 | 4-step modal |
 | Menu templates | LIVE | apps/web/dashboard/plan/templates/ | 04 | |
 

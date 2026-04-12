@@ -77,6 +77,28 @@ export default function MealPlanPicker({ recipeId, recipeServings, onClose }: Pr
 
   const handleSave = async () => {
     if (!userId || !selectedDay || !selectedSlot) return;
+
+    // Check servings mismatch with existing meals on this day
+    const dayMeals = existing.filter((m) => m.plan_date === selectedDay && m.recipe_id);
+    if (dayMeals.length > 0) {
+      const existingServings = dayMeals.map((m) => m.servings ?? 4);
+      const maxExisting = Math.max(...existingServings);
+      const minExisting = Math.min(...existingServings);
+      const refServing = existingServings[0];
+      if (refServing && (servings / refServing > 2 || refServing / servings > 2)) {
+        const dayIdx = weekDays.findIndex((d) => formatDate(d) === selectedDay);
+        const dayName = DAY_NAMES[dayIdx] ?? selectedDay;
+        const ok = await confirmSlot({
+          icon: '⚠️',
+          title: 'Servings mismatch',
+          body: `This recipe serves ${servings}, but other recipes on ${dayName} serve ${refServing}. Add anyway?`,
+          confirmLabel: 'Add Anyway',
+          variant: 'positive',
+        });
+        if (!ok) return;
+      }
+    }
+
     setSaving(true);
     try {
       await addMealPlan(userId, { plan_date: selectedDay, meal_slot: selectedSlot, recipe_id: recipeId, servings, notes: null });

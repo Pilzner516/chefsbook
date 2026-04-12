@@ -93,6 +93,27 @@ export function MealPlanPicker({ visible, recipeId, recipeServings, onClose, onA
 
   const handleSave = async () => {
     if (!session?.user?.id || !selectedDay || !selectedSlot) return;
+
+    // Check servings mismatch
+    const dayMeals = existing.filter((m) => m.plan_date === selectedDay && m.recipe_id);
+    if (dayMeals.length > 0) {
+      const refServing = dayMeals[0]?.servings ?? 4;
+      if (refServing && (servings / refServing > 2 || refServing / servings > 2)) {
+        const dayName = DAY_NAMES[weekDays.findIndex((d) => formatDate(d) === selectedDay)] ?? '';
+        const proceed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Servings mismatch',
+            `This recipe serves ${servings}, but other recipes on ${dayName} serve ${refServing}. Add anyway?`,
+            [
+              { text: t('common.cancel'), style: 'cancel', onPress: () => resolve(false) },
+              { text: t('mealPicker.addAnyway'), onPress: () => resolve(true) },
+            ],
+          );
+        });
+        if (!proceed) return;
+      }
+    }
+
     setSaving(true);
     try {
       await addMealPlan(session.user.id, {

@@ -233,7 +233,7 @@ export default function ShopPage() {
   // ── Combined store view ──
   if (combinedView) {
     // Merge items by ingredient+unit
-    const mergedMap = new Map<string, ShoppingListItem & { sourceLists: string[] }>();
+    const mergedMap = new Map<string, ShoppingListItem & { sourceLists: string[]; checked: boolean }>();
     for (const item of combinedView.items) {
       const key = `${item.ingredient.toLowerCase()}|${(item.unit ?? '').toLowerCase()}`;
       if (mergedMap.has(key)) {
@@ -243,51 +243,96 @@ export default function ShopPage() {
         if (q1 && q2) ex.quantity_needed = String(q1 + q2);
         if (!ex.sourceLists.includes(item.recipe_name ?? '')) ex.sourceLists.push(item.recipe_name ?? '');
       } else {
-        mergedMap.set(key, { ...item, sourceLists: [item.recipe_name ?? ''] });
+        mergedMap.set(key, { ...item, sourceLists: [item.recipe_name ?? ''], checked: false });
       }
     }
     const mergedItems = Array.from(mergedMap.values());
-    // Group by department
-    const deptGroups: Record<string, typeof mergedItems> = {};
-    for (const item of mergedItems) {
-      const dept = item.category ?? 'other';
-      (deptGroups[dept] ??= []).push(item);
-    }
-    const sortedDepts = DEPT_ORDER.filter((d) => deptGroups[d]?.length).map((d) => ({ dept: d, items: deptGroups[d] }));
-    if (deptGroups['other']?.length && !sortedDepts.find((d) => d.dept === 'other')) sortedDepts.push({ dept: 'other', items: deptGroups['other'] });
+
+    // Group by department (same as individual list)
+    const combinedGrouped = (() => {
+      const unchecked = mergedItems.filter((i) => !i.checked);
+      const checked = mergedItems.filter((i) => i.checked);
+      const groups: Record<string, typeof mergedItems> = {};
+      for (const item of unchecked) {
+        const dept = item.category ?? 'other';
+        (groups[dept] ??= []).push(item);
+      }
+      const sorted = DEPT_ORDER.filter((d) => groups[d]?.length).map((d) => ({ label: DEPT_LABELS[d] ?? d, items: groups[d] }));
+      if (groups['other']?.length && !sorted.find((g) => g.label === 'Other')) sorted.push({ label: 'Other', items: groups['other'] });
+      if (checked.length) sorted.push({ label: 'Done', items: checked });
+      return sorted;
+    })();
 
     return (
-      <div className="p-8 max-w-3xl mx-auto">
-        <button onClick={() => setCombinedView(null)} className="text-cb-primary text-sm font-medium mb-4 hover:underline flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
-          Back to lists
-        </button>
-        <h1 className="text-2xl font-bold mb-1">All {combinedView.storeName}</h1>
-        <p className="text-cb-secondary text-sm mb-4">Combined view — {combinedView.listNames.length} lists</p>
-
-        <div className="bg-cb-bg border border-cb-border rounded-card p-4 mb-6">
-          <p className="text-sm text-cb-secondary">
-            📋 Showing combined items from {combinedView.listNames.length} lists: {combinedView.listNames.map((n) => `"${n}"`).join(' and ')}
-          </p>
-          <button onClick={() => setCombinedView(null)} className="text-xs text-cb-primary font-medium hover:underline mt-1">View individual lists →</button>
-          <p className="text-[10px] text-cb-muted mt-2">Read-only combined view</p>
+      <div className="p-8 max-w-[900px] mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-2">
+          <button onClick={() => setCombinedView(null)} className="text-cb-primary hover:opacity-80 shrink-0">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+          </button>
+          <h1 className="text-xl font-bold flex-1">All {combinedView.storeName}</h1>
         </div>
 
-        {sortedDepts.map(({ dept, items }) => (
-          <div key={dept} className="mb-5">
-            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">{DEPT_LABELS[dept] ?? dept}</h3>
-            {items.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 py-2 border-b border-cb-border/30 last:border-0">
-                <span className="text-cb-primary font-semibold text-sm w-16 text-right shrink-0">{item.purchase_unit ?? item.quantity_needed ?? ''}</span>
-                <span className="text-sm text-cb-text flex-1">{item.ingredient}</span>
-                {item.sourceLists.length > 1 && (
-                  <span className="text-[10px] text-cb-muted shrink-0">from {item.sourceLists.length} lists</span>
-                )}
-              </div>
+        {/* Banner */}
+        <div className="bg-cb-bg border border-cb-border rounded-card p-3 mb-4">
+          <p className="text-sm text-cb-secondary">📋 Combined view — items from {combinedView.listNames.map((n) => `"${n}"`).join(', ')}</p>
+          <button onClick={() => setCombinedView(null)} className="text-xs text-cb-primary font-medium hover:underline mt-1">View individual lists →</button>
+        </div>
+
+        {/* Toolbar — font size + view mode */}
+        <div className="flex items-center gap-2 mb-6 flex-wrap print:hidden">
+          <span className="text-xs text-cb-secondary">{mergedItems.filter((i) => !i.checked).length} items</span>
+          <span className="flex-1" />
+          <button onClick={() => changeFontSize(-2)} className="text-xs text-cb-secondary border border-cb-border rounded px-1.5 py-0.5 hover:bg-cb-bg">A-</button>
+          <button onClick={() => changeFontSize(2)} className="text-xs text-cb-secondary border border-cb-border rounded px-1.5 py-0.5 hover:bg-cb-bg">A+</button>
+          <div className="flex bg-cb-card border border-cb-border rounded-input overflow-hidden">
+            {([['department', 'Dept'], ['recipe', 'Recipe'], ['alpha', 'A-Z']] as const).map(([mode, label]) => (
+              <button key={mode} onClick={() => setViewMode(mode)} className={`px-2 py-1 text-[10px] font-medium ${viewMode === mode ? 'bg-cb-primary text-white' : 'text-cb-secondary hover:text-cb-text'}`}>{label}</button>
             ))}
           </div>
-        ))}
-        {mergedItems.length === 0 && <p className="text-cb-muted text-center py-8">No items in these lists.</p>}
+        </div>
+
+        {/* Items */}
+        <div style={{ fontSize }}>
+          {combinedGrouped.map((group) => (
+            <div key={group.label} className="mb-5">
+              <h3 className="text-xs font-bold text-cb-primary uppercase tracking-wide mb-2 flex items-center gap-2">
+                {group.label}
+                <span className="text-cb-secondary font-normal">({group.items.length})</span>
+              </h3>
+              {group.items.map((item, i) => (
+                <div key={i} className={`grid gap-1 py-1.5 items-center ${item.checked ? 'opacity-50' : ''}`} style={{ gridTemplateColumns: '24px 80px 1fr auto' }}>
+                  {/* Checkbox */}
+                  <button
+                    onClick={() => { item.checked = !item.checked; setCombinedView({ ...combinedView }); }}
+                    className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${item.checked ? 'bg-cb-green border-cb-green text-white' : 'border-cb-border hover:border-cb-green'}`}
+                  >
+                    {item.checked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>}
+                  </button>
+                  {/* Purchase unit */}
+                  <span className="text-cb-primary font-semibold text-sm text-right">{item.purchase_unit ?? item.quantity_needed ?? ''}</span>
+                  {/* Ingredient + usage + recipe source */}
+                  <div>
+                    <span className={`text-sm ${item.checked ? 'line-through text-cb-muted' : 'text-cb-text'}`}>{item.ingredient}</span>
+                    <div className="flex gap-2 text-[10px]">
+                      {item.quantity_needed && item.purchase_unit && (
+                        <span className="text-cb-green">{item.quantity_needed}</span>
+                      )}
+                      {item.sourceLists.length > 0 && (
+                        <span className="text-cb-muted">{item.sourceLists.join(', ')}</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Multi-list badge */}
+                  {item.sourceLists.length > 1 && (
+                    <span className="text-[9px] text-cb-muted bg-cb-bg px-1.5 py-0.5 rounded">{item.sourceLists.length} lists</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+          {mergedItems.length === 0 && <p className="text-cb-muted text-center py-8">No items in these lists.</p>}
+        </div>
       </div>
     );
   }
