@@ -95,10 +95,20 @@ export default function FeedbackCard({ userId, username, email }: Props) {
               <span className="absolute bottom-2 right-3 text-[11px] text-cb-muted">{message.length}/500</span>
             </div>
 
+            {/* Character minimum helper */}
+            {message.trim().length < 10 && (
+              <p className={`text-xs mt-1 mb-1 ${message.length === 0 ? 'text-cb-muted' : 'text-cb-primary'}`}>
+                {message.length === 0 ? 'Minimum 10 characters' : `${message.trim().length}/10 characters minimum`}
+              </p>
+            )}
+            {message.trim().length >= 10 && (
+              <p className="text-xs mt-1 mb-1 text-cb-green">✓ Ready to send</p>
+            )}
+
             <button
               onClick={handleSubmit}
               disabled={message.trim().length < 10 || sending}
-              className="w-full bg-cb-primary text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mt-3"
+              className="w-full bg-cb-primary text-white py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50 mt-2"
             >
               {sending ? 'Sending...' : 'Send Feedback'}
             </button>

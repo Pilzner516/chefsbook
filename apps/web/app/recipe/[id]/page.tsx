@@ -45,6 +45,7 @@ export default function RecipePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingCourse, setEditingCourse] = useState(false);
   const [editingCuisine, setEditingCuisine] = useState(false);
+  const [cuisineFilter, setCuisineFilter] = useState('');
   const [editingTags, setEditingTags] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -939,18 +940,17 @@ export default function RecipePage() {
             <div className="relative">
               <input
                 autoFocus
-                value={recipe.cuisine ?? ''}
-                onChange={(e) => {
-                  setRecipe((r) => r ? { ...r, cuisine: e.target.value } : r);
-                }}
+                value={cuisineFilter}
+                onChange={(e) => setCuisineFilter(e.target.value)}
+                onFocus={() => setCuisineFilter('')}
                 placeholder="Type or select cuisine..."
                 className="bg-cb-bg border border-cb-primary rounded-input px-2 py-1 text-sm w-44 outline-none"
-                onBlur={() => { setTimeout(() => { saveCuisine(recipe.cuisine || null); }, 150); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveCuisine(recipe.cuisine || null); } if (e.key === 'Escape') setEditingCuisine(false); }}
+                onBlur={() => { setTimeout(() => { if (cuisineFilter.trim()) saveCuisine(cuisineFilter.trim()); setEditingCuisine(false); setCuisineFilter(''); }, 150); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveCuisine(cuisineFilter.trim() || recipe.cuisine || null); setEditingCuisine(false); setCuisineFilter(''); } if (e.key === 'Escape') { setEditingCuisine(false); setCuisineFilter(''); } }}
               />
               <div className="absolute top-full left-0 mt-1 w-52 bg-cb-card border border-cb-border rounded-input shadow-lg z-50 max-h-48 overflow-y-auto">
-                {[...CUISINE_LIST].filter((c) => !recipe.cuisine || c.toLowerCase().includes((recipe.cuisine ?? '').toLowerCase())).map((c) => (
-                  <button key={c} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { saveCuisine(c); }} className={`block w-full text-left px-3 py-1.5 text-sm hover:bg-cb-bg ${recipe.cuisine === c ? 'text-cb-primary font-medium' : 'text-cb-text'}`}>
+                {[...CUISINE_LIST].filter((c) => !cuisineFilter || c.toLowerCase().includes(cuisineFilter.toLowerCase())).map((c) => (
+                  <button key={c} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { saveCuisine(c); setEditingCuisine(false); setCuisineFilter(''); }} className={`block w-full text-left px-3 py-1.5 text-sm hover:bg-cb-bg ${recipe.cuisine === c ? 'text-cb-primary font-medium bg-cb-primary/5' : 'text-cb-text'}`}>
                     {c}
                   </button>
                 ))}
