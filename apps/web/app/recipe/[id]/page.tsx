@@ -54,6 +54,8 @@ export default function RecipePage() {
   const [cloned, setCloned] = useState(false);
   const [showSavers, setShowSavers] = useState(false);
   const [savers, setSavers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
+  const [saversLoading, setSaversLoading] = useState(false);
+  const [saversError, setSaversError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -871,7 +873,7 @@ export default function RecipePage() {
           <div className="flex items-center gap-1.5">
             <svg className="w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
             {isOwner && (recipe.save_count ?? 0) > 0 ? (
-              <button onClick={async () => { const data = await getSavers(recipe.id); setSavers(data); setShowSavers(true); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
+              <button onClick={async () => { setSaversLoading(true); setSaversError(null); setShowSavers(true); try { const data = await getSavers(recipe.id); setSavers(data); } catch (e: any) { setSaversError(e.message ?? 'Failed to load'); } setSaversLoading(false); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
                 {recipe.save_count ?? 0}
               </button>
             ) : (
@@ -1621,11 +1623,13 @@ export default function RecipePage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowSavers(false)}>
           <div className="bg-cb-card rounded-card p-5 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-cb-text">{recipe?.save_count ?? 0} people saved this</h3>
+              <h3 className="font-bold text-cb-text">{(recipe?.save_count ?? 0) === 1 ? '1 person saved this' : `${recipe?.save_count ?? 0} people saved this`}</h3>
               <button onClick={() => setShowSavers(false)} className="text-cb-muted hover:text-cb-text">✕</button>
             </div>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {savers.map((u) => (
+              {saversError && <p className="text-sm text-cb-primary text-center py-4">{saversError}</p>}
+              {saversLoading && <p className="text-sm text-cb-muted text-center py-4">Loading...</p>}
+              {!saversLoading && !saversError && savers.map((u) => (
                 <Link key={u.id} href={`/u/${u.username ?? u.id}`} className="flex items-center gap-3 py-2 hover:bg-cb-bg rounded-input px-2 transition" onClick={() => setShowSavers(false)}>
                   <div className="w-8 h-8 rounded-full bg-cb-primary text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {u.display_name?.charAt(0)?.toUpperCase() ?? '?'}
@@ -1636,7 +1640,7 @@ export default function RecipePage() {
                   </div>
                 </Link>
               ))}
-              {savers.length === 0 && <p className="text-sm text-cb-muted text-center py-4">Loading...</p>}
+              {!saversLoading && !saversError && savers.length === 0 && <p className="text-sm text-cb-muted text-center py-4">No savers found</p>}
             </div>
           </div>
         </div>

@@ -61,7 +61,7 @@
 | PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49 | Plan gated |
 | Print recipe | LIVE | apps/web | 35 | @media print CSS |
 | Recipe saves count | LIVE | recipe_saves table, trigger | 03 | |
-| Save count display (bookmark icon) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97 | Bookmark icon + count next to likes; owner can click to see savers |
+| Save count display (bookmark icon) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97, 108 | Bookmark icon + count; savers modal uses supabaseAdmin (two-step query); proper pluralization |
 | Cuisine dropdown (searchable) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97 | 31 cuisines from CUISINE_LIST; custom entry allowed |
 
 ---

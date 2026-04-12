@@ -1,4 +1,4 @@
-import { supabase } from '../client';
+import { supabase, supabaseAdmin } from '../client';
 
 // ── Likes ──
 
@@ -44,17 +44,24 @@ export async function getLikers(recipeId: string, limit = 50): Promise<{ id: str
 }
 
 export async function getSavers(recipeId: string, limit = 50): Promise<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }[]> {
-  const { data } = await supabase
+  // Two-step: recipe_saves FK points to auth.users, not user_profiles — can't join directly
+  const { data: saves } = await supabaseAdmin
     .from('recipe_saves')
-    .select('user_id, user_profiles!inner(id, username, display_name, avatar_url)')
+    .select('user_id')
     .eq('recipe_id', recipeId)
-    .order('created_at', { ascending: false })
+    .order('saved_at', { ascending: false })
     .limit(limit);
-  return (data ?? []).map((row: any) => ({
-    id: row.user_profiles.id,
-    username: row.user_profiles.username,
-    display_name: row.user_profiles.display_name,
-    avatar_url: row.user_profiles.avatar_url,
+  if (!saves || saves.length === 0) return [];
+  const userIds = saves.map((s: any) => s.user_id);
+  const { data: profiles } = await supabaseAdmin
+    .from('user_profiles')
+    .select('id, username, display_name, avatar_url')
+    .in('id', userIds);
+  return (profiles ?? []).map((p: any) => ({
+    id: p.id,
+    username: p.username,
+    display_name: p.display_name,
+    avatar_url: p.avatar_url,
   }));
 }
 
