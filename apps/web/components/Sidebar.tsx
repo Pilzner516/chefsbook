@@ -9,6 +9,7 @@ import type { User } from '@supabase/supabase-js';
 import { LANGUAGES, PRIORITY_LANGUAGES, SUPPORTED_LANGUAGES } from '@chefsbook/ui';
 import type { UnitSystem } from '@chefsbook/ui';
 import { activateLanguage } from '@/lib/i18n';
+import { useUnits } from '@/lib/useUnits';
 
 const navItems = [
   { href: '/dashboard/search', label: 'Search', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg> },
@@ -40,7 +41,7 @@ export default function Sidebar({ user }: { user: User | null }) {
   const [counts, setCounts] = useState<{ recipes: number; techniques: number }>({ recipes: 0, techniques: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
   const [language, setLanguageState] = useState('en');
-  const [units, setUnitsState] = useState<UnitSystem>('imperial');
+  const { units, setUnits } = useUnits();
   const [langOpen, setLangOpen] = useState(false);
   const [langSearch, setLangSearch] = useState('');
   const langRef = useRef<HTMLDivElement>(null);
@@ -50,13 +51,12 @@ export default function Sidebar({ user }: { user: User | null }) {
     if (saved === 'true') setCollapsed(true);
   }, []);
 
-  // Load preferences from Supabase
+  // Load language preference from Supabase
   useEffect(() => {
     if (!user) return;
-    supabase.from('user_profiles').select('preferred_language, preferred_units').eq('id', user.id).single().then(({ data }) => {
+    supabase.from('user_profiles').select('preferred_language').eq('id', user.id).single().then(({ data }) => {
       if (data) {
         setLanguageState(data.preferred_language || 'en');
-        setUnitsState((data.preferred_units as UnitSystem) || 'imperial');
       }
     });
   }, [user]);
@@ -77,10 +77,8 @@ export default function Sidebar({ user }: { user: User | null }) {
     if (user) await supabase.from('user_profiles').update({ preferred_language: code }).eq('id', user.id);
   };
 
-  const toggleUnits = async () => {
-    const next = units === 'imperial' ? 'metric' : 'imperial';
-    setUnitsState(next);
-    if (user) await supabase.from('user_profiles').update({ preferred_units: next }).eq('id', user.id);
+  const toggleUnits = () => {
+    setUnits(units === 'imperial' ? 'metric' : 'imperial');
   };
 
   useEffect(() => {

@@ -160,7 +160,7 @@
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
 | Language selector (5 languages: en/fr/es/it/de) | LIVE | LanguagePickerModal, apps/web sidebar | 08, 95 | ONLY 5 — filtered via SUPPORTED_LANGUAGES |
-| Metric/imperial toggle | PARTIAL | preferencesStore, apps/web sidebar | 03 | Toggle saves to DB; web recipe detail does NOT apply conversion yet |
+| Metric/imperial toggle | LIVE | preferencesStore, apps/web sidebar (useUnits hook) | 03, 99 | unitConversion.ts in packages/ui — display-only, never writes to DB; reactive via localStorage events |
 | Profile edit (name, bio) | LIVE | apps/web/dashboard/settings, apps/mobile settings | 29 | |
 | Privacy toggle (is_searchable) | LIVE | apps/web, apps/mobile | 29 | |
 | Avatar upload | LIVE | apps/web/dashboard/settings | 35 | |

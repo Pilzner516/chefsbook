@@ -18,7 +18,9 @@ import type { TranslatedRecipe } from '@chefsbook/ai';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
 import type { CookingNote } from '@chefsbook/db';
-import { formatDuration, formatQuantity, scaleQuantity, cleanIngredientName, CUISINE_LIST } from '@chefsbook/ui';
+import { formatDuration, formatQuantity, scaleQuantity, cleanIngredientName, CUISINE_LIST, convertIngredient } from '@chefsbook/ui';
+import type { UnitSystem } from '@chefsbook/ui';
+import { useUnits } from '@/lib/useUnits';
 
 function formatTimestamp(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -30,6 +32,7 @@ export default function RecipePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { units: unitSystem } = useUnits();
   const refUsername = searchParams.get('ref');
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1256,13 +1259,16 @@ export default function RecipePage() {
                 )}
                 <table className="w-full">
                   <tbody>
-                    {group.items.map((ing) => (
+                    {group.items.map((ing) => {
+                      const scaled = scaleQuantity(ing.quantity, originalServings, servings);
+                      const converted = convertIngredient(scaled, ing.unit, unitSystem, ing.ingredient);
+                      return (
                       <tr key={ing.id} className="border-b border-cb-border/50 last:border-b-0">
                         <td className="py-2 pr-3 text-right align-top w-16 text-cb-primary font-semibold tabular-nums whitespace-nowrap">
-                          {formatQuantity(scaleQuantity(ing.quantity, originalServings, servings))}
+                          {formatQuantity(converted.quantity)}
                         </td>
                         <td className="py-2 pr-3 align-top w-20 text-cb-secondary text-sm whitespace-nowrap">
-                          {ing.unit ?? ''}
+                          {converted.unit}
                         </td>
                         <td className="py-2 align-top">
                           {getDisplayIngredientName(ing, recipe.ingredients.indexOf(ing))}
@@ -1274,7 +1280,8 @@ export default function RecipePage() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
