@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabaseAdmin } from '@chefsbook/db';
+import Link from 'next/link';
 
 interface HelpRow {
   id: string;
@@ -14,6 +15,13 @@ interface HelpRow {
   status: string;
   admin_reply: string | null;
   created_at: string;
+}
+
+function timeAgo(d: string) {
+  const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1440) return `${Math.floor(mins / 60)}h ago`;
+  return `${Math.floor(mins / 1440)}d ago`;
 }
 
 export default function UserIdeasPage() {
@@ -50,7 +58,7 @@ export default function UserIdeasPage() {
       {loading ? <p className="text-gray-500">Loading...</p> : requests.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <p className="text-gray-500 text-lg">No user ideas yet</p>
-          <p className="text-gray-400 text-sm mt-1">Users haven't submitted any feedback yet.</p>
+          <p className="text-gray-400 text-sm mt-1">Users haven&apos;t submitted any feedback yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -58,19 +66,42 @@ export default function UserIdeasPage() {
             <div key={r.id} className={`bg-white rounded-lg border p-4 ${r.status === 'open' ? 'border-blue-300' : 'border-gray-200'}`}>
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${r.status === 'open' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {r.status}
-                    </span>
-                    {r.username && <span className="text-xs text-gray-500">@{r.username}</span>}
-                    {r.user_email && <span className="text-xs text-gray-400">{r.user_email}</span>}
+                  {/* Sender info */}
+                  <div className="flex items-center gap-2.5 mb-2">
+                    {/* Avatar */}
+                    {r.username ? (
+                      <Link href={`/u/${r.username}`} className="w-8 h-8 rounded-full bg-cb-primary text-white flex items-center justify-center text-xs font-bold shrink-0 hover:ring-2 hover:ring-cb-primary/30 transition">
+                        {r.username.charAt(0).toUpperCase()}
+                      </Link>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center text-xs font-bold shrink-0">?</div>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {r.username ? (
+                        <Link href={`/u/${r.username}`} className="text-sm font-semibold text-gray-900 hover:text-cb-primary hover:underline transition">
+                          @{r.username}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-gray-500">Anonymous</span>
+                      )}
+                      {r.user_email && (
+                        <span className="text-xs text-gray-400">{r.user_email}</span>
+                      )}
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${r.status === 'open' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {r.status}
+                      </span>
+                    </div>
                   </div>
-                  {r.subject && <h3 className="font-medium text-gray-900">{r.subject}</h3>}
-                  <p className="text-sm text-gray-600 mt-1">{r.message || r.body}</p>
-                  <p className="text-xs text-gray-400 mt-2">{new Date(r.created_at).toLocaleString()}</p>
+
+                  {/* Message */}
+                  {r.subject && r.subject !== 'Feedback' && <h3 className="font-medium text-gray-900 mb-1">{r.subject}</h3>}
+                  <p className="text-sm text-gray-600">{r.message || r.body}</p>
+
+                  {/* Timestamp */}
+                  <p className="text-xs text-gray-400 mt-2">{timeAgo(r.created_at)}</p>
                 </div>
                 {r.status === 'open' && (
-                  <button onClick={() => markResolved(r.id)} className="text-xs px-3 py-1.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium shrink-0">
+                  <button onClick={() => markResolved(r.id)} className="text-xs px-3 py-1.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium shrink-0 ml-3">
                     Resolve
                   </button>
                 )}
