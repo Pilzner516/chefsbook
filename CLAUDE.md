@@ -309,13 +309,14 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (109 — 2026-04-12)
-- All admin supabaseAdmin calls moved to /api/admin server-side route
-- 5 client pages rewritten to use adminFetch/adminPost (no service role key in browser)
-- Admin auth verified server-side (JWT + admin_users)
+## Last session (110 — 2026-04-12)
+- 5 admin features: reserved usernames, account tags, user flags, email column, DM + bulk messaging, recipe sorting
+- Migration 032: 3 new tables (reserved_usernames, user_account_tags, user_flags)
+- Build now requires 1280MB on RPi5
 - Deployed to RPi5
 
 ## Next session
+- AI impersonation flagging for usernames at signup (Feature 1 remaining item)
 - Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes
 - Chrome Web Store submission for extension

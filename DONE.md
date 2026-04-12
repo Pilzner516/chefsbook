@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 110)
+- Migration 032: reserved_usernames (22 seed entries), user_account_tags, user_flags tables
+- /admin/reserved-usernames page: CRUD with All/Reserved/Approved filter pills
+- Signup: blocks reserved usernames (checks reserved_usernames table with public SELECT RLS)
+- /admin/users: email column (via auth.admin.listUsers), account status tags (color-coded pills + popover), flag icon (⚑), message button, bulk select + bulk messaging with progress
+- /admin/users: tag filter pills (dynamic from DB), flagged-only filter
+- /admin/recipes: sortable columns (title, submitter, visibility, status, date) + submitter attribution pill
+- /api/admin route: 10 new actions (reserved CRUD, tags, flags, sendMessage)
+- All via /api/admin server-side — zero supabaseAdmin in client code
+- Feature registry updated (6 new entries)
+- Build now requires 1280MB on RPi5 (was 1024)
+- Deployed to RPi5
+
 ## 2026-04-12 (session 109)
 - Architecture: moved ALL supabaseAdmin calls from client components to server-side /api/admin route
 - Created /api/admin/route.ts: GET (users, recipes, messages, promos, help) + POST (15 mutation actions)
