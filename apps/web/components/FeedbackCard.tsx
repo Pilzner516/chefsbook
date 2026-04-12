@@ -15,11 +15,12 @@ export default function FeedbackCard({ userId, username, email }: Props) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [showThank, setShowThank] = useState(false);
-  const [showError, setShowError] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!userId || message.trim().length < 10) return;
     setSending(true);
+    setSubmitError(null);
     try {
       const { error } = await supabase.from('help_requests').insert({
         user_id: userId,
@@ -34,9 +35,8 @@ export default function FeedbackCard({ userId, username, email }: Props) {
       setOpen(false);
       setMessage('');
       setShowThank(true);
-    } catch {
-      setOpen(false);
-      setShowError(true);
+    } catch (e: any) {
+      setSubmitError(e.message ?? 'Failed to send feedback. Please try again.');
     }
     setSending(false);
   };
@@ -77,11 +77,17 @@ export default function FeedbackCard({ userId, username, email }: Props) {
               </p>
             )}
 
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 text-cb-primary rounded-input p-2.5 mb-3 text-xs">
+                {submitError}
+              </div>
+            )}
+
             <div className="relative mb-1">
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value.slice(0, 500))}
-                placeholder="Your message"
+                placeholder="Your message (min 10 characters)"
                 maxLength={500}
                 rows={4}
                 className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2.5 text-sm outline-none focus:border-cb-primary resize-none"
@@ -108,16 +114,6 @@ export default function FeedbackCard({ userId, username, email }: Props) {
         body="We hope you are enjoying ChefsBook. Your ideas help us make it better for everyone."
         onClose={() => setShowThank(false)}
         buttons={[{ label: 'OK', variant: 'positive', onClick: () => setShowThank(false) }]}
-      />
-
-      {/* Error dialog */}
-      <ChefsDialog
-        open={showError}
-        icon="😕"
-        title="Something went wrong"
-        body="Something went wrong. Please try again."
-        onClose={() => setShowError(false)}
-        buttons={[{ label: 'OK', variant: 'cancel', onClick: () => setShowError(false) }]}
       />
     </>
   );
