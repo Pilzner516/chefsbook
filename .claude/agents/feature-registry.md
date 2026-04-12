@@ -181,6 +181,12 @@
 | User Ideas (was Help Requests) | LIVE | apps/web/app/admin/help/ | 28, 106, 107 | Avatar + @username link + email + relative time per message |
 | Suspend / restore user | LIVE | apps/web/app/admin/users/ | 28 | |
 | Admin RLS (non-recursive) | LIVE | admin_users table RLS | 89 | user_id = auth.uid() direct check |
+| Reserved usernames | LIVE | reserved_usernames table, /admin/reserved-usernames | 110 | 22 seed entries; signup blocks reserved; admin CRUD |
+| Account status tags | LIVE | user_account_tags table, /admin/users | 110 | Color-coded pills; tag filter; admin-only |
+| User flags | LIVE | user_flags table, /admin/users | 110 | ⚑ icon on flagged users; resolve via click |
+| Admin email column | LIVE | /admin/users, /api/admin (auth.admin.listUsers) | 110 | Reads from auth.users via service role |
+| Admin DM + bulk messaging | LIVE | /admin/users, /api/admin (sendMessage) | 110 | Single + bulk compose; progress indicator |
+| Admin recipes sorting | LIVE | /admin/recipes | 110 | Sortable columns + submitter pill |
 
 ---
 

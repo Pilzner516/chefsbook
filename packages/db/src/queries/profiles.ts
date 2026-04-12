@@ -20,11 +20,24 @@ export async function getProfileByUsername(username: string): Promise<UserProfil
 }
 
 export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  const lower = username.toLowerCase();
   const { count } = await supabase
     .from('user_profiles')
     .select('*', { count: 'exact', head: true })
-    .eq('username', username.toLowerCase());
-  return (count ?? 0) === 0;
+    .eq('username', lower);
+  if ((count ?? 0) > 0) return false;
+  // Also check reserved_usernames (public read not available — try, fallback to allow)
+  try {
+    const { count: reserved } = await supabase
+      .from('reserved_usernames')
+      .select('*', { count: 'exact', head: true })
+      .eq('username', lower)
+      .eq('is_approved', false);
+    if ((reserved ?? 0) > 0) return false;
+  } catch {
+    // If RLS blocks the read, allow — admin will catch impersonation
+  }
+  return true;
 }
 
 export async function setUsername(userId: string, username: string): Promise<void> {

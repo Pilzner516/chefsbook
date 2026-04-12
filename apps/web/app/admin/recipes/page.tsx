@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
 
@@ -8,6 +8,7 @@ interface FlaggedRecipe {
   id: string;
   title: string;
   user_id: string;
+  original_submitter_username: string | null;
   moderation_status: string;
   moderation_flag_reason: string | null;
   moderation_flagged_at: string | null;
@@ -19,15 +20,22 @@ interface RecipeRow {
   id: string;
   title: string;
   user_id: string;
+  original_submitter_username: string | null;
   visibility: string;
   source_type: string;
+  moderation_status: string | null;
   created_at: string;
 }
+
+type SortKey = 'title' | 'submitter' | 'visibility' | 'moderation_status' | 'created_at';
+type SortDir = 'asc' | 'desc';
 
 export default function RecipeModerationPage() {
   const [flagged, setFlagged] = useState<FlaggedRecipe[]>([]);
   const [recipes, setRecipes] = useState<RecipeRow[]>([]);
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('created_at');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +53,22 @@ export default function RecipeModerationPage() {
 
   useEffect(() => { loadAll(); }, []);
   useEffect(() => { loadAll(); }, [search]);
+
+  const sortedRecipes = useMemo(() => {
+    const list = [...recipes];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    list.sort((a, b) => {
+      switch (sortKey) {
+        case 'title': return dir * a.title.localeCompare(b.title);
+        case 'submitter': return dir * (a.original_submitter_username ?? '').localeCompare(b.original_submitter_username ?? '');
+        case 'visibility': return dir * a.visibility.localeCompare(b.visibility);
+        case 'moderation_status': return dir * (a.moderation_status ?? '').localeCompare(b.moderation_status ?? '');
+        case 'created_at': return dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        default: return 0;
+      }
+    });
+    return list;
+  }, [recipes, sortKey, sortDir]);
 
   const handleApprove = async (r: FlaggedRecipe) => {
     setActing(r.id);
@@ -120,7 +144,7 @@ export default function RecipeModerationPage() {
       )}
 
       {/* Public recipes list */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">Public Recipes</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3">All Recipes</h2>
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -133,19 +157,27 @@ export default function RecipeModerationPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Title</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Source</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Created</th>
+                {([['title','Title'],['submitter','Submitter'],['visibility','Visibility'],['moderation_status','Status'],['created_at','Date Added']] as [SortKey,string][]).map(([key, label]) => (
+                  <th key={key} onClick={() => { if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc'); else { setSortKey(key); setSortDir('asc'); } }} className="px-4 py-3 text-left font-medium text-gray-500 cursor-pointer hover:text-gray-700 select-none">
+                    {label}{sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                  </th>
+                ))}
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {recipes.map((r) => (
+              {sortedRecipes.map((r) => (
                 <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">
                     <Link href={`/recipe/${r.id}`} className="hover:underline">{r.title}</Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{r.source_type}</td>
+                  <td className="px-4 py-3">
+                    {r.original_submitter_username ? (
+                      <Link href={`/u/${r.original_submitter_username}`} className="inline-block bg-cb-primary/10 text-cb-primary text-xs px-2 py-0.5 rounded-full font-medium hover:bg-cb-primary/20">@{r.original_submitter_username}</Link>
+                    ) : <span className="text-xs text-gray-400">Unknown</span>}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 text-xs capitalize">{r.visibility}</td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{r.moderation_status ?? 'clean'}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => hideRecipe(r.id)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100">
