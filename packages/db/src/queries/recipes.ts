@@ -104,7 +104,31 @@ export async function listRecipes(params?: {
     .range(params?.offset ?? 0, (params?.offset ?? 0) + (params?.limit ?? 50) - 1);
 
   const { data } = await query;
-  return (data ?? []) as Recipe[];
+  const owned = (data ?? []) as Recipe[];
+
+  // Also fetch saved (bookmarked) recipes for this user
+  if (params?.userId && !params?.favouritesOnly) {
+    const { data: savedRows } = await supabase
+      .from('recipe_saves')
+      .select('recipe_id')
+      .eq('user_id', params.userId);
+    if (savedRows && savedRows.length > 0) {
+      const savedIds = savedRows.map((r: any) => r.recipe_id);
+      const ownedIds = new Set(owned.map((r) => r.id));
+      const missingIds = savedIds.filter((id: string) => !ownedIds.has(id));
+      if (missingIds.length > 0) {
+        const { data: savedRecipes } = await supabase
+          .from('recipes')
+          .select('*')
+          .in('id', missingIds);
+        if (savedRecipes) {
+          return [...owned, ...(savedRecipes as Recipe[])];
+        }
+      }
+    }
+  }
+
+  return owned;
 }
 
 export async function listPublicRecipes(params?: {

@@ -11,7 +11,7 @@ import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, cloneRecipe, getSavers } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, getSavers } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
 import type { TranslatedRecipe } from '@chefsbook/ai';
@@ -1493,7 +1493,7 @@ export default function RecipePage() {
                   if (!user || !recipe) return;
                   setCloning(true);
                   try {
-                    await cloneRecipe(recipe.id, user.id);
+                    await saveRecipe(recipe.id, user.id);
                     setCloned(true);
                   } catch (e: any) {
                     alert(e.message ?? 'Failed to save recipe');

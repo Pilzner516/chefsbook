@@ -42,7 +42,7 @@
 | Recipe detail (edit mode) | LIVE | same as above | 03 | |
 | Recipe versioning | LIVE | packages/db, apps/mobile, apps/web | 06 | parent_recipe_id, version_number |
 | Save a Copy | LIVE | apps/mobile/app/recipe/, apps/web | 13 | Creates fully independent clone |
-| Recipe visibility (private/shared_link/public) | LIVE | packages/db, RLS policies | 32 | shared_link treated as public in queries |
+| Recipe visibility (private/public) | LIVE | packages/db, RLS policies | 32, 104 | Default = 'public'; shared_link migrated to public |
 | Recipe privacy toggle | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 35 | |
 | Recipe moderation (AI) | LIVE | packages/ai (moderateRecipe) | 41 | Runs on every import + edit |
 | Frozen account banner | LIVE | apps/web/dashboard/layout.tsx, apps/mobile/_layout.tsx | 41 | |
@@ -55,7 +55,7 @@
 | Attribution (original_submitter locked) | LIVE | packages/db, recipe detail | 31 | Never changes |
 | Attribution (shared_by removable) | LIVE | packages/db | 31 | User-removable |
 | Attribution pill on recipe detail | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 72,99 | Shows user/cookbook/URL; backfill applied session 99 for pre-session-31 recipes |
-| Add to My Recipes (clone public recipe) | LIVE | packages/db (cloneRecipe), apps/web/app/recipe/[id]/ | 32, 95 | Button clones recipe; shows success + "View My Recipes" link |
+| Add to My Recipes (save/bookmark) | LIVE | packages/db (saveRecipe), apps/web/app/recipe/[id]/ | 32, 95, 104 | Uses recipe_saves (no clone); My Recipes shows owned + saved via JOIN |
 | Share link generation | LIVE | chefsbk.app/recipe/[id]?ref=[username] | 32 | |
 | Guest access (view-only) | LIVE | apps/web/app/recipe/[id]/, guest_sessions table | 32 | Email capture |
 | PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49 | Plan gated |

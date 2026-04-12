@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import {
-  supabase, cloneRecipe, updateProfile, getProfileById,
+  supabase, saveRecipe, updateProfile, getProfileById,
   followUser, unfollowUser, isFollowing as checkIsFollowing,
   getFollowers, getFollowing, getFollowedRecipes, sendMessage,
   canDo, getUserPlanTier,
@@ -169,8 +169,8 @@ export default function ChefProfile() {
     if (!session?.user?.id) return;
     setCloning(recipeId);
     try {
-      await cloneRecipe(recipeId, session.user.id);
-      Alert.alert('Added!', 'Recipe added to your collection.');
+      await saveRecipe(recipeId, session.user.id);
+      Alert.alert('Added!', 'Recipe saved to your collection.');
     } catch (e: any) {
       Alert.alert('Error', e.message ?? 'Failed to clone recipe');
     }

@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
-import { getRecipeByShareToken, cloneRecipe } from '@chefsbook/db';
+import { getRecipeByShareToken, saveRecipe } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity } from '@chefsbook/ui';
 import { Badge, Button, Divider, Loading, EmptyState } from '../../components/UIKit';
@@ -138,8 +138,8 @@ export default function SharedRecipe() {
                   if (token?.includes('?ref=')) {
                     ref = token.split('?ref=')[1];
                   }
-                  const newId = await cloneRecipe(recipe.id, session.user.id, ref);
-                  router.replace(`/recipe/${newId}`);
+                  await saveRecipe(recipe.id, session.user.id);
+                  router.replace(`/recipe/${recipe.id}`);
                 } catch (e: any) {
                   Alert.alert('Error', e.message ?? 'Failed to save recipe');
                 } finally {

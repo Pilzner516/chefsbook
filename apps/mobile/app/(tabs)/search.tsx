@@ -6,7 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { listRecipes, listPublicRecipes, cloneRecipe, searchByIngredient, searchUsers, getFollowedRecipes, getFollowingCount } from '@chefsbook/db';
+import { listRecipes, listPublicRecipes, saveRecipe, searchByIngredient, searchUsers, getFollowedRecipes, getFollowingCount } from '@chefsbook/db';
 import type { Recipe, UserProfile } from '@chefsbook/db';
 import { Avatar } from '../../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
@@ -220,7 +220,7 @@ export default function SearchTab() {
     if (!session?.user?.id) return;
     setCloning(recipeId);
     try {
-      await cloneRecipe(recipeId, session.user.id);
+      await saveRecipe(recipeId, session.user.id);
       Alert.alert(t('search.addedTitle'), t('search.addedMessage'));
     } catch (e: any) {
       Alert.alert(t('common.error'), e.message ?? t('search.cloneFailed'));
