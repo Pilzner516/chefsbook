@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 97)
+- Web: Cuisine field replaced with searchable dropdown combobox (31 cuisines + custom entry)
+- CUISINE_LIST expanded from 20 to 31 cuisines in packages/ui
+- Web + Mobile: Save count bookmark icon + count displayed next to likes on recipe detail
+- Web: Savers modal — owner clicks save count to see who saved (same pattern as likers)
+- getSavers() function added to @chefsbook/db
+- Attribution row verified: already shows both submitter + source URL (no fix needed)
+- Feature registry updated
+- Deployed to RPi5
+
 ## 2026-04-12 (session 96)
 - Web+Mobile: Servings mismatch warning in MealPlanPicker — triggers when adding recipe with >2x serving difference vs existing day meals
 - Web: Combined shopping list upgraded — checkboxes (local-only), dept grouping, view mode toggle, font size, purchase unit (red), usage amount (green), recipe source per item, banner with source list names

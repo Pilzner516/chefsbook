@@ -309,16 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (96 — 2026-04-12)
-- Servings mismatch warning in MealPlanPicker (both platforms)
-- Combined shopping list upgraded to match individual list formatting (checkboxes, dept grouping, view modes, font size, purchase unit, recipe source)
+## Last session (97 — 2026-04-12)
+- Cuisine field: searchable dropdown combobox on web (31 cuisines + custom entry)
+- Save count: bookmark icon + count next to likes (web + mobile), savers modal for owner (web)
+- getSavers() in @chefsbook/db; CUISINE_LIST expanded to 31
 - Deployed to RPi5
 
 ## Next session
 - Wire metric/imperial conversion in web recipe detail
 - Mobile notifications (bell in tab bar / recipe list header)
 - Rebuild APK with latest changes
-- Chrome Web Store submission
 - Chrome Web Store submission for extension
 
 ## Known issues
