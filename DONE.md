@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 98)
+- Migration 029: direct_messages + message_flags tables, unread_messages_count on user_profiles, trigger for unread increment
+- DB: sendMessage, getConversation, getConversationList, markMessagesRead, flagMessage, deleteMessage, getUnreadMessageCount in packages/db
+- AI: moderateMessage() using HAIKU model (~$0.00016/call) — clean/mild/serious verdicts
+- Web: /dashboard/messages page with conversation list (left) + thread view (right), compose area, flag flow
+- Web: MessageButton component on /u/[username] and /chef/[username] profiles (hidden on own profile)
+- Web: Messages link added to sidebar nav
+- Web: Admin /admin/messages page with approve/remove for flagged messages
+- Mobile: Message button on chef profile with Alert.prompt compose
+- Feature registry updated: 4 new direct messaging entries
+- tsc --noEmit passes both apps
+- Deployed to RPi5 — build succeeded, /dashboard/messages returns 200, direct_messages table confirmed in DB
+
 ## 2026-04-12 (session 97)
 - Web: Cuisine field replaced with searchable dropdown combobox (31 cuisines + custom entry)
 - CUISINE_LIST expanded from 20 to 31 cuisines in packages/ui

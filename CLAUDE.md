@@ -309,15 +309,15 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (97 — 2026-04-12)
-- Cuisine field: searchable dropdown combobox on web (31 cuisines + custom entry)
-- Save count: bookmark icon + count next to likes (web + mobile), savers modal for owner (web)
-- getSavers() in @chefsbook/db; CUISINE_LIST expanded to 31
+## Last session (98 — 2026-04-12)
+- Direct messaging system: DB tables, AI moderation (haiku), web messages page, message button on profiles, admin moderation
+- packages/db/queries/messages.ts: sendMessage, getConversation, getConversationList, markMessagesRead, flagMessage
+- packages/ai/moderateMessage.ts: haiku model, same pattern as moderateComment
 - Deployed to RPi5
 
 ## Next session
 - Wire metric/imperial conversion in web recipe detail
-- Mobile notifications (bell in tab bar / recipe list header)
+- Mobile messages screen (full conversation UI, not just Alert.prompt)
 - Rebuild APK with latest changes
 - Chrome Web Store submission for extension
 
