@@ -20,23 +20,31 @@ interface FlaggedMessage {
 export default function MessageModerationPage() {
   const [messages, setMessages] = useState<FlaggedMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabaseAdmin
-      .from('direct_messages')
-      .select('*')
-      .or('is_hidden.eq.true,moderation_status.eq.mild,moderation_status.eq.serious')
-      .order('created_at', { ascending: false })
-      .limit(50);
+    setError(null);
+    try {
+      const { data, error: err } = await supabaseAdmin
+        .from('direct_messages')
+        .select('*')
+        .or('is_hidden.eq.true,moderation_status.eq.mild,moderation_status.eq.serious')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (err) throw err;
 
-    if (data) {
-      // Fetch sender/recipient usernames
-      const userIds = new Set<string>();
-      data.forEach((m: any) => { userIds.add(m.sender_id); userIds.add(m.recipient_id); });
-      const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', [...userIds]);
-      const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
-      setMessages(data.map((m: any) => ({ ...m, sender_username: pMap.get(m.sender_id), recipient_username: pMap.get(m.recipient_id) })));
+      if (data && data.length > 0) {
+        const userIds = new Set<string>();
+        data.forEach((m: any) => { userIds.add(m.sender_id); userIds.add(m.recipient_id); });
+        const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', [...userIds]);
+        const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
+        setMessages(data.map((m: any) => ({ ...m, sender_username: pMap.get(m.sender_id), recipient_username: pMap.get(m.recipient_id) })));
+      } else {
+        setMessages([]);
+      }
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load messages');
     }
     setLoading(false);
   };
@@ -56,6 +64,7 @@ export default function MessageModerationPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Message Moderation</h1>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3 mb-4">{error}</div>}
       {loading ? <p className="text-gray-500">Loading...</p> : messages.length === 0 ? (
         <p className="text-gray-500">No flagged messages.</p>
       ) : (

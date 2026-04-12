@@ -178,7 +178,7 @@
 | Recipe moderation queue | LIVE | apps/web/app/admin/recipes/ | 28 | supabaseAdmin, limit 200 |
 | Promo code CRUD | LIVE | apps/web/app/admin/promos/ | 28, 90 | supabaseAdmin + error feedback |
 | Plan limits display | LIVE | apps/web/app/admin/limits/ | 28 | supabaseAdmin |
-| Help requests / feedback | LIVE | apps/web/app/admin/help/ | 28 | |
+| User Ideas (was Help Requests) | LIVE | apps/web/app/admin/help/ | 28, 106 | Renamed UI label; supabaseAdmin; error handling |
 | Suspend / restore user | LIVE | apps/web/app/admin/users/ | 28 | |
 | Admin RLS (non-recursive) | LIVE | admin_users table RLS | 89 | user_id = auth.uid() direct check |
 

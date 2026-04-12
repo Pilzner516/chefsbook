@@ -30,26 +30,34 @@ export default function RecipeModerationPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadFlagged = async () => {
-    const { data } = await supabaseAdmin
-      .from('recipes')
-      .select('id, title, user_id, moderation_status, moderation_flag_reason, moderation_flagged_at, visibility, created_at')
-      .in('moderation_status', ['flagged_mild', 'flagged_serious'])
-      .order('moderation_flagged_at', { ascending: false });
-    setFlagged((data ?? []) as FlaggedRecipe[]);
+    try {
+      const { data, error: err } = await supabaseAdmin
+        .from('recipes')
+        .select('id, title, user_id, moderation_status, moderation_flag_reason, moderation_flagged_at, visibility, created_at')
+        .in('moderation_status', ['flagged_mild', 'flagged_serious'])
+        .order('moderation_flagged_at', { ascending: false });
+      if (err) throw err;
+      setFlagged((data ?? []) as FlaggedRecipe[]);
+    } catch (e: any) { setError(e.message); }
   };
 
   const loadRecipes = async () => {
     setLoading(true);
-    let q = supabaseAdmin.from('recipes').select('id, title, user_id, visibility, source_type, created_at')
-      .eq('visibility', 'public')
-      .is('parent_recipe_id', null)
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (search.trim()) q = q.ilike('title', `%${search}%`);
-    const { data } = await q;
-    setRecipes((data ?? []) as RecipeRow[]);
+    setError(null);
+    try {
+      let q = supabaseAdmin.from('recipes').select('id, title, user_id, visibility, source_type, created_at')
+        .eq('visibility', 'public')
+        .is('parent_recipe_id', null)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (search.trim()) q = q.ilike('title', `%${search}%`);
+      const { data, error: err } = await q;
+      if (err) throw err;
+      setRecipes((data ?? []) as RecipeRow[]);
+    } catch (e: any) { setError(e.message); }
     setLoading(false);
   };
 
@@ -97,6 +105,7 @@ export default function RecipeModerationPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Recipe Moderation</h1>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3 mb-4">{error}</div>}
 
       {/* Flagged recipes queue */}
       {flagged.length > 0 && (

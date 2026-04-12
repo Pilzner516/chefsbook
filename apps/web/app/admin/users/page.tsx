@@ -48,18 +48,23 @@ export default function UsersPage() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('user_profiles').select('*').order('created_at', { ascending: false }).limit(200);
-    if (planFilter !== 'all') q = q.eq('plan_tier', planFilter);
-    if (search.trim()) q = q.or(`username.ilike.%${search}%,display_name.ilike.%${search}%`);
-    const { data } = await q;
-    setUsers((data ?? []) as UserRow[]);
+    setError(null);
+    try {
+      let q = supabaseAdmin.from('user_profiles').select('*').order('created_at', { ascending: false }).limit(200);
+      if (planFilter !== 'all') q = q.eq('plan_tier', planFilter);
+      if (search.trim()) q = q.or(`username.ilike.%${search}%,display_name.ilike.%${search}%`);
+      const { data, error: err } = await q;
+      if (err) throw err;
+      setUsers((data ?? []) as UserRow[]);
 
-    // Load admin roles
-    const { data: admins } = await supabaseAdmin.from('admin_users').select('user_id, role');
-    const roleMap = new Map<string, string>();
-    for (const a of (admins ?? []) as AdminRow[]) roleMap.set(a.user_id, a.role);
-    setAdminRoles(roleMap);
-
+      // Load admin roles
+      const { data: admins } = await supabaseAdmin.from('admin_users').select('user_id, role');
+      const roleMap = new Map<string, string>();
+      for (const a of (admins ?? []) as AdminRow[]) roleMap.set(a.user_id, a.role);
+      setAdminRoles(roleMap);
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load users');
+    }
     setLoading(false);
   };
 

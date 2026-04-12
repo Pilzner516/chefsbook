@@ -12,7 +12,7 @@ const NAV = [
   { href: '/admin/recipes', label: 'Recipes' },
   { href: '/admin/promos', label: 'Promo Codes' },
   { href: '/admin/limits', label: 'Plan Limits' },
-  { href: '/admin/help', label: 'Help Requests' },
+  { href: '/admin/help', label: 'User Ideas' },
   { href: '/admin/messages', label: 'Messages' },
 ];
 
