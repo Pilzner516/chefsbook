@@ -31,8 +31,9 @@ agents before writing any code.
 | ANY feature on ANY session | testing.md (ALWAYS) |
 | Any change to apps/web | deployment.md (ALWAYS for web sessions) |
 | Any feature that calls Claude API or @chefsbook/ai | ai-cost.md (MANDATORY) |
+| Before modifying ANY existing feature | feature-registry.md (ALWAYS) |
 
-`testing.md` and `deployment.md` are now MANDATORY on every session — not optional.
+`testing.md`, `deployment.md`, and `feature-registry.md` are MANDATORY on every session.
 Multiple agents may apply to a single session. Read all that apply.
 
 ### How to invoke an agent
@@ -53,6 +54,7 @@ Every Claude Code session MUST begin with these steps in order:
 1. Read CLAUDE.md (this file) fully
 2. Read DONE.md to understand what was last built
 3. Read .claude/agents/testing.md — MANDATORY EVERY SESSION
+3a. Read .claude/agents/feature-registry.md — check status of any feature your session will touch before writing a single line of code
 4. If session touches web: read .claude/agents/deployment.md — MANDATORY
 5. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
 6. Read all other applicable agents based on the lookup table above
@@ -146,13 +148,14 @@ This rule applies to every new screen and every screen touched during a session.
 
 ## Critical patterns
 
-1. ALWAYS import supabase from `@chefsbook/db` — never call createClient() directly
+1. ALWAYS import `supabase` (anon) or `supabaseAdmin` (service role) from `@chefsbook/db` — never call createClient() directly. Use `supabaseAdmin` for server-side admin queries that bypass RLS.
 2. ALWAYS import AI functions from `@chefsbook/ai` — never call the Claude API directly in app code
 3. ALWAYS use `useTheme().colors` in mobile — never hardcode hex values
 4. ALWAYS use `cb-*` Tailwind tokens in web (e.g. `bg-cb-primary`) — never hardcode hex
 5. ALWAYS follow the Zustand store pattern in `apps/mobile/lib/zustand/authStore.ts`
 6. NEVER commit `.env.local` — all keys stay out of git
 7. Commit style: `type(scope): message` (e.g. `fix(web):`, `feat:`)
+8. Admin pages (`/admin/*`) use `supabaseAdmin` (service role client) from `@chefsbook/db` — bypasses RLS for admin queries
 
 ### Path aliases
 
@@ -173,7 +176,7 @@ This rule applies to every new screen and every screen touched during a session.
 
 ### Database schema (supabase/migrations/)
 
-18+ tables with RLS policies. Migrations in `supabase/migrations/` (11 files: core, functions, storage, features, categories, imports, youtube, techniques, shopping_overhaul, user_photos, cookbook_intelligence). Key tables:
+30+ tables with RLS policies. Migrations in `supabase/migrations/` (30 files). Key tables:
 - `user_profiles` (auto-created via trigger on auth.users signup)
 - `recipes`, `recipe_ingredients`, `recipe_steps` — core recipe data
 - `cookbooks` — recipe collections
@@ -183,7 +186,7 @@ This rule applies to every new screen and every screen touched during a session.
 - `category_groups`, `categories`, `recipe_categories` — hierarchical taxonomy (8 groups, 371 categories)
 - `import_jobs`, `import_job_urls` — bookmark batch import tracking
 - `techniques` — cooking methods/skills with JSONB process_steps, difficulty, tips, mistakes, tools
-- `follows` — follower/followed with pending/accepted status
+- `user_follows` — follower/following (replaced old `follows` table)
 
 5 custom Postgres functions: `search_recipes()` (pg_trgm fuzzy), `get_meal_plan_week()`, `generate_shopping_list()`, `clone_recipe()`, `get_public_feed()`.
 
@@ -199,24 +202,28 @@ Storage buckets: `recipe-images` (5MB, public read) and `avatars` (2MB, public r
 
 ### Subscription tiers (packages/db/src/subscriptions.ts)
 
-| | Free | Pro ($4.99/mo) | Family ($8.99/mo) |
-|---|---|---|---|
-| Recipes | 50 | Unlimited | Unlimited |
-| Scans | 5/month | Unlimited | Unlimited |
-| Shopping lists | 1 | 10 | 10 |
-| Sharing | Link only | Publish + followers | + 6 family members |
+| | Free | Chef ($4.99/mo) | Family ($9.99/mo) | Pro ($14.99/mo) |
+|---|---|---|---|---|
+| Own recipes | 0 | 75 | 200 | Unlimited |
+| Import/Scan/AI | No | Yes | Yes | Yes |
+| Shopping lists | 1 | 5 | 5 | Unlimited |
+| Cookbooks | 0 | 10 | 25 | Unlimited |
+| Images/recipe | 0 | 1 | 1 | 5 |
+| Follow/Comment | No | Yes | Yes | Yes |
+| PDF export | No | No | No | Yes |
+| Family members | 0 | 0 | 3 | 0 |
 
 ### Mobile routing & state
 
-Expo Router v6 with 5 bottom tabs: Recipes, Scan, Plan, Shop, Discover. Dynamic routes: `recipe/[id]`, `cookbook/[id]`, `chef/[id]`, `share/[token]`, `recipe/new`, `modal` (settings).
+Expo Router v6 with 5 bottom tabs: My Recipes, Search, Scan, Plan, Cart. Dynamic routes: `recipe/[id]`, `cookbook/[id]`, `chef/[id]`, `share/[token]`, `recipe/new`, `modal` (settings).
 
 Zustand v5 stores in `apps/mobile/lib/zustand/`: authStore, recipeStore, mealPlanStore, shoppingStore, cookbookStore, cookingNotesStore, importStore, pinStore. Auth store initializes Supabase session and listens for auth state changes.
 
 ### Web architecture
 
-Next.js App Router. Dashboard routes nested under `app/dashboard/layout.tsx` (sidebar nav with: Recipes, Scan, Techniques, Plan, Shop, Cookbooks, Discover). Server-side data fetching — no client state library. Stripe integration for subscriptions (not yet configured).
+Next.js App Router. Dashboard layout is `'use client'` with sidebar nav: Search, My Recipes, My Techniques, My Cookbooks, Shopping, Meal Plan, Import & Scan, Speak a Recipe. Stripe integration for subscriptions (not yet configured).
 
-Key dashboard pages: `/dashboard` (recipes with grid/list/table views + sort), `/dashboard/scan` (image OCR + URL import + bookmark batch import), `/dashboard/techniques` (technique library + manual entry at `/new`), `/dashboard/plan` (weekly meal calendar + recipe picker), `/dashboard/shop` (shopping lists), `/dashboard/cookbooks` (physical cookbook shelf), `/dashboard/discover` (public recipe feed).
+Key dashboard pages: `/dashboard` (recipes with grid/list/table views + sort), `/dashboard/search` (All/My Recipes toggle + filters), `/dashboard/scan` (image OCR + URL import + bookmark batch import), `/dashboard/techniques` (technique library + manual entry at `/new`), `/dashboard/plan` (weekly meal calendar + recipe picker), `/dashboard/shop` (shopping lists), `/dashboard/cookbooks` (physical cookbook shelf). Admin dashboard at `/admin` (client component layout, requires admin_users row).
 
 Shared components in `apps/web/components/`: `Sidebar.tsx` (collapsible nav), `MealPlanWizard.tsx`, `RecipeReviewPanel.tsx`, `SocialShareModal.tsx`. Shared fetch/HTML utilities in `apps/web/app/api/import/_utils.ts`.
 
@@ -290,8 +297,8 @@ user_follows:
   following_id UUID (NOT followed_id)
 
 shopping_list_items:
-  list_id UUID (ownership via shopping_lists.user_id)
-  (no user_id column — RLS via parent list)
+  list_id UUID
+  user_id UUID (RLS checks user_id = uid(); web API routes must pass service role client to bypass)
 
 stores:
   user_id UUID
@@ -339,60 +346,26 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 
 <!-- Keep this section to non-obvious WHY decisions only. Implementation details belong in the code. -->
 
-### Architectural choices
-- All AI calls run server-side (Anthropic API blocks browser CORS); mobile calls `@chefsbook/ai` directly (no CORS in React Native)
-- Chrome extension sends page HTML from browser to bypass Cloudflare bot protection
-- Techniques as separate table (not a content_type on recipes) — fundamentally different fields
+### Architectural choices (non-obvious WHY decisions only)
+- All AI calls server-side (Anthropic API blocks browser CORS); mobile calls `@chefsbook/ai` directly (no CORS in React Native)
+- Techniques as separate table (not content_type on recipes) — fundamentally different fields
 - Re-import preserves user edits (title, tags, notes, custom images) — only updates AI-derived fields
 - `_unresolved` tag marks recipes where title was auto-generated from URL slug
-- Shopping pipeline shared: `addItemsWithPipeline()` in `@chefsbook/db` is the single source of truth — both web API and mobile call it directly
-- Recipe saves vs favorites: `is_favourite` = personal bookmark on own recipes; `recipe_saves` table = social save of others' public recipes
-- Recipe versioning: children link via `parent_recipe_id` FK; recipe list filters out children
-- Usernames are permanent after set (unique, lowercase, 3-20 chars, DB constraint)
-- Follow system: `user_follows` table (not the old `follows` table); `canFollow` plan gate (chef+); optimistic UI updates
-- Notifications table exists (foundation only — no UI yet)
-- 4 plan tiers: free / chef ($4.99) / family ($9.99) / pro ($14.99); PLAN_LIMITS in `packages/db/src/subscriptions.ts`
-- Dev mode: plan changes are instant DB updates (no Stripe); Plans page shows "Dev mode" banner
-- Promo codes: `promo_codes` table; `pro100` gives free Pro with no expiry; validated at signup
-- Free tier cannot import/scan/AI; Chef is the minimum for recipe creation
-- Admin dashboard at `/admin` (web only); admin_users table with roles: super_admin, admin, proctor
-- `is_suspended` flag on user_profiles: mobile shows full-screen notice, web redirects to /suspended
-- `plan_limits` DB table mirrors PLAN_LIMITS constants — source of truth for admin UI, fallback to code constants in app
-- Recipe attribution: `original_submitter` chains from source recipe (never changes); `shared_by` is immediate sharer (from `?ref=` param); `shared_by` is user-removable, `original_submitter` is locked
-- Likes: any plan can like; `recipe_likes` table with trigger updating `like_count` on recipes; optimistic UI toggle
-- Comments: Chef+ plan with `is_searchable = true` required; AI moderation via `moderateComment()` before save; 3 verdicts: clean (visible), mild (visible + flagged), serious (hidden + commenter suspended)
-- `comments_suspended` on user_profiles: set automatically on serious AI violation; restorable by admin
-- Comment flags: user reporting via `comment_flags` table; 3+ flags auto-escalate to admin; flag reasons: Inappropriate/Harassment/Spam/Other
-- Recipe owner controls: delete any comment, block commenter, toggle `comments_enabled` per recipe
-- Share links: chefsbk.app/recipe/[id]?ref=[username]; private recipes auto-upgrade to `shared_link` visibility on share
-- Guest access: `guest_sessions` table captures email for unauthenticated recipe viewers; guests can view but not save/comment
-- Android App Links: intent filter with `autoVerify` for chefsbk.app/recipe; assetlinks.json needs release APK fingerprint
-- PDF export: `/recipe/[id]/pdf` route using `@react-pdf/renderer` from raw recipe data; hero image fetched server-side with apikey; filename "ChefsBook - [title].pdf"; attribution in hero + footer; Pro plan gated
-- Web image proxy: `/api/image?url=` route proxies Supabase storage URLs with apikey header (Kong returns 401 without it); 86400s cache; only proxies Supabase/100.110.47.62 URLs
-- Web share dropdown: replaces individual share/post buttons; contains Copy link, Download PDF (Pro), Social post (Pro)
-- Recipe moderation: `moderateRecipe()` runs on every import + edit save; 3 verdicts: clean (normal), mild (private + flagged), serious (private + user frozen); admin approve/reject in `/admin/recipes`
-- Username is permanent: web settings field is read-only (lock icon); save function no longer sends username
-- `isUsernameFamilyFriendly()` in @chefsbook/ai checks usernames at signup via Claude; non-blocking (returns true on AI error)
-- Discover page removed from web sidebar nav; `/dashboard/discover` redirects to `/dashboard/search`
-- Add to Meal Plan: `MealPlanPicker` component (mobile bottom sheet + web modal); colour-coded day/meal slots; Chef+ plan gated; conflict warning for occupied slots
-- Meal plan card pills: daypart pill (bottom-left, dark bg, tappable) + servings pill (bottom-right, white bg, tappable stepper); both update DB via `updateMealPlan()`
-- Portions mismatch warning: triggers on add-to-cart when >2x serving difference across day's recipes
-- Stores table: `stores` with user_id, name, domain, logo_url, initials; `store_id` FK on shopping_lists; logo guessed from known domains map + logo.dev API
-- Store picker: `StorePickerDialog` (web) + `StorePicker` (mobile) replace free-text store input; shows saved stores with logos/initials + "New store..." option
-- Shopping list button colour: all Create/Add buttons in shopping flow use pomodoro red (`cb-primary`), never green; green reserved for positive/save actions and annual badge
-- Web recipe image priority: `getRecipeImageUrl(primaryPhoto, image_url)` → proxy if Supabase → chef's hat fallback; batch `getPrimaryPhotos()` on dashboard + discover
-- Unified dialogs: `ChefsDialog` component (web + mobile) replaces native confirm/alert; `useConfirmDialog` + `useAlertDialog` hooks for imperative usage; all web confirm() calls replaced, mobile delete recipe converted (remaining Alert.alert calls available for incremental conversion)
-- Offline shopping: mobile caches list detail + overview to FileSystem; checked items are local-only (never synced); pending edits sync on reconnect; web shows sync status indicator
-- Onboarding: `OnboardingBubble` + `useOnboarding` hook; bubbles tracked per-page in `onboarding_seen_pages`; `@floating-ui/react` for positioning; Settings toggle resets seen pages
-- Extension: production URLs in popup.js (chefsbk.app + api.chefsbk.app); zip at `apps/extension/dist/`; install page at `/extension`; download route at `/extension/download`; must copy zip to Pi after packaging
-- Threaded comments: `parent_id` on recipe_comments, `reply_count` maintained by trigger; display 1 level deep, "▶ N more replies" for 3+; inline reply input
-- Notifications: types = comment_reply, recipe_comment, recipe_like (batched), new_follower, moderation; bell in dashboard layout top-right; panel with 5 tabs; mark-all-read
-- Password recovery: SMTP via Resend; GOTRUE_SITE_URL=https://chefsbk.app; reset redirect to /auth/reset; mobile sends user to web reset page (no deep link handler yet)
-- RPi5 build: `--no-lint` flag needed when OOM SIGKILL occurs during lint phase; compilation succeeds but lint phase exceeds 1024MB
-- Visibility: `shared_link` must be treated as public in all recipe queries (search, feed, profiles, follows) — NOT just `'public'`; `shared_link` means "viewable by anyone with the link" which includes search/discover
+- Recipe saves vs favorites: `is_favourite` = personal bookmark; `recipe_saves` = social save of public recipes
+- Follow system: `user_follows` table (old `follows` table still in DB but unused); `canFollow` plan gate (chef+)
+- Free tier: 0 own recipes, no import/scan/AI; Chef is minimum for recipe creation
+- Recipe attribution: `original_submitter` chains from source (never changes); `shared_by` is immediate sharer (from `?ref=`), user-removable
+- Comments: Chef+ plan with `is_searchable = true`; AI moderation (3 verdicts); threaded via `parent_id`
+- Visibility: `shared_link` must be treated as public in ALL recipe queries — NOT just `'public'`
+- Web image proxy: `/api/image?url=` proxies Supabase storage URLs with apikey (Kong returns 401 without it)
+- PDF export: `/recipe/[id]/pdf` from raw data via `@react-pdf/renderer`; Pro plan gated; hero image fetched server-side with apikey
+- Unified dialogs: `ChefsDialog` (web + mobile) replaces native confirm/alert; `useConfirmDialog` hooks
+- Offline shopping: mobile caches to FileSystem; checked items local-only; pending edits sync on reconnect
+- Extension: production URLs (chefsbk.app); zip at `apps/extension/dist/`; must copy to Pi after packaging
+- Password recovery: SMTP via Resend; mobile sends user to web reset page (no deep link handler yet)
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
-- RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before `npm run build`; use `NODE_OPTIONS=--max-old-space-size=1024` (768MB causes OOM SIGKILL); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay
+- RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before build; use `NODE_OPTIONS=--max-old-space-size=1024 npx next build --no-lint` (lint phase OOMs at 1024MB); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay. If SWC lockfile error (`Cannot read properties of undefined (reading 'os')`), run `npm install react@19.1.0 react-dom@19.1.0 --legacy-peer-deps` from repo root then rebuild.
 - PostgREST schema cache: after any new table migration, run `docker restart supabase-rest` on RPi5 or queries return "table not found in schema cache"
 - Supabase joins with multiple FKs: when a table has 2+ FKs to the same target (e.g. `recipe_comments.user_id` + `reviewed_by` both → `user_profiles`), MUST use explicit FK name: `user_profiles!recipe_comments_user_id_fkey` — `!inner` alone causes PGRST201
 - Web Supabase URL: MUST be `https://api.chefsbk.app` (NOT `http://100.110.47.62:8000`) — mixed content blocks ws:// on HTTPS pages; Cloudflare Tunnel handles WebSocket upgrades automatically; mobile still uses direct IP

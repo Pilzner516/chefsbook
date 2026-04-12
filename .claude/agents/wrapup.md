@@ -1,6 +1,15 @@
 # ChefsBook Wrapup Agent
 # Run this at the end of every Claude Code session.
 
+## MANDATORY — Update Feature Registry
+
+Before committing anything:
+1. Open .claude/agents/feature-registry.md
+2. For every feature you touched this session: update its Status
+3. For every new feature: add a row in the correct section
+4. For every regression introduced: mark BROKEN (never hide this)
+5. Save the file — it must be committed as part of this session
+
 ## MANDATORY PRE-WRAPUP TESTING
 
 You MUST complete all of the following before updating DONE.md.
