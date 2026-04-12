@@ -1,6 +1,22 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 102)
+- Fix: Bookmark save count icon now always visible on recipe detail (was hidden when save_count = 0)
+- Root cause: conditional `(recipe.save_count ?? 0) > 0 &&` hid the entire bookmark section — all recipes have 0 saves
+- Web: removed >0 gate, bookmark icon + "0" always renders next to like heart (owner can still click to see savers when count > 0)
+- Mobile: same fix on recipe detail Likes + Saves row
+- Deployed to RPi5 — build succeeded, recipe page returns 200
+
+## 2026-04-12 (session 101)
+- Dashboard header: removed floating bell + duplicate Add Recipe from layout
+- Dashboard page: Messages pill (red border, bell icon, unread badge) in clean flex row with Select + Add Recipe
+- Mobile: message compose via bottom sheet (char counter, error handling) — replaced broken Alert.prompt
+- Sidebar: Messages nav shows live unread count badge
+- Feature registry updated (header, message button entries)
+- Cloudflare tunnel restart needed (502 → 200 after systemctl restart cloudflared)
+- Deployed to RPi5
+
 ## 2026-04-12 (session 100)
 - Fix: Attribution pills missing — root cause: original_submitter_id was NULL on all 69 recipes (backfill never ran)
 - DB backfill: SET original_submitter_id = user_id, original_submitter_username = profile.username for all 69 recipes

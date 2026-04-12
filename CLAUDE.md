@@ -309,9 +309,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (100 — 2026-04-12)
-- Attribution fix: backfilled original_submitter for all 69 recipes — data-only fix, no code changes
-- Both web and mobile attribution rows already correct — just needed non-NULL data
+## Last session (101 — 2026-04-12)
+- Dashboard header: Messages pill + Select + Add Recipe in single flex row (no floating bell)
+- Mobile message compose: bottom sheet replaces Alert.prompt (Android-safe)
+- Sidebar Messages link: unread count badge
+- Deployed to RPi5 (tunnel restart needed for 502)
 
 ## Next session
 - Mobile messages screen (full conversation UI)
