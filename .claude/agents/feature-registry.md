@@ -150,7 +150,7 @@
 ## FEEDBACK & SUPPORT
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| "Got an Idea?" feedback card | LIVE | FeedbackCard component (web + mobile) | 73 | Pinned position 1 in recipe grid |
+| "Got an Idea?" feedback card | LIVE | FeedbackCard component (web + mobile) | 73, 103 | Inline error display; min 10 chars; errors show inside modal |
 | Feedback stored in help_requests table | LIVE | packages/db, /api/feedback | 73 | |
 | Privacy policy page | LIVE | apps/web/app/privacy/ | 77 | |
 

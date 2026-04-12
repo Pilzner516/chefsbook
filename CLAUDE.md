@@ -309,9 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (102 — 2026-04-12)
-- Bookmark save count always visible (was hidden when 0) — matches like heart behavior
-- Fixed on both web and mobile recipe detail
+## Last session (103 — 2026-04-12)
+- Fix: Feedback card errors display inline inside modal (was invisible — modal closed before error shown)
+- DB + RLS verified correct; insert works with JWT; test row confirmed in help_requests
 - Deployed to RPi5
 
 ## Next session

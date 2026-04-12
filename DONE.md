@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 103)
+- Fix: Feedback card submit — errors now display inline inside modal (was closing modal then showing separate error dialog, making errors invisible)
+- Diagnosed DB: help_requests table + RLS correct; insert works via authenticated JWT (verified with curl)
+- Root cause: catch block closed modal before error could be shown; also min-length hint was missing from placeholder
+- Test row confirmed in help_requests on RPi5
+- Feature registry updated
+- Deployed to RPi5
+
 ## 2026-04-12 (session 102)
 - Fix: Bookmark save count icon now always visible on recipe detail (was hidden when save_count = 0)
 - Root cause: conditional `(recipe.save_count ?? 0) > 0 &&` hid the entire bookmark section — all recipes have 0 saves
