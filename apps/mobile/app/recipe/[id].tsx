@@ -1502,12 +1502,10 @@ function RecipeDetailInner() {
         <Divider />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} isOwner={recipe.user_id === session?.user?.id} />
-          {(recipe.save_count ?? 0) > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="bookmark-outline" size={18} color={colors.textMuted} />
-              <Text style={{ color: colors.textMuted, fontSize: 13 }}>{recipe.save_count}</Text>
-            </View>
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name="bookmark-outline" size={18} color={colors.textMuted} />
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>{recipe.save_count ?? 0}</Text>
+          </View>
         </View>
 
         {/* Comments (public recipes only) */}

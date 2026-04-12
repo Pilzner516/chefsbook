@@ -867,18 +867,16 @@ export default function RecipePage() {
         {/* Likes + saves row below title */}
         <div className="flex items-center gap-4 mb-2">
           <LikeButton recipeId={recipe.id} likeCount={recipe.like_count ?? 0} recipeOwnerId={recipe.user_id} />
-          {(recipe.save_count ?? 0) > 0 && (
-            <div className="flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
-              {isOwner ? (
-                <button onClick={async () => { const data = await getSavers(recipe.id); setSavers(data); setShowSavers(true); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
-                  {recipe.save_count}
-                </button>
-              ) : (
-                <span className="text-sm text-cb-muted">{recipe.save_count}</span>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
+            {isOwner && (recipe.save_count ?? 0) > 0 ? (
+              <button onClick={async () => { const data = await getSavers(recipe.id); setSavers(data); setShowSavers(true); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
+                {recipe.save_count ?? 0}
+              </button>
+            ) : (
+              <span className="text-sm text-cb-muted">{recipe.save_count ?? 0}</span>
+            )}
+          </div>
         </div>
         {/* Attribution row */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
