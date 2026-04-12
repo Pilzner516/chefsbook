@@ -309,16 +309,15 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (104 — 2026-04-12)
-- Default visibility: changed from shared_link to public (DB default + migration)
-- Save-not-clone: "Add to my Chefsbook" uses recipe_saves instead of cloneRecipe
-- search_recipes RPC + listRecipes() updated to include saved recipes in user's results
-- 1 existing clone cleaned up → converted to recipe_saves row
+## Last session (105 — 2026-04-12)
+- Feedback card: min-chars helper (grey/red/green states)
+- Cuisine dropdown: separate filterValue state, shows full list on open (was broken since session 97)
 - Deployed to RPi5
 
 ## Next session
 - Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes
+- Chrome Web Store submission for extension
 - Chrome Web Store submission for extension
 
 ## Known issues

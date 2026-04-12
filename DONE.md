@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 105)
+- Fix: Feedback card — added "Minimum 10 characters" helper below textarea (muted grey when empty, red with count when <10, green "Ready to send" at 10+)
+- Fix: Cuisine dropdown — now shows full list of 31 cuisines on open (was filtering by saved value, showing only 1 match)
+- Root cause: input `value={recipe.cuisine}` used saved value as filter; fixed to use separate `cuisineFilter` state that starts empty
+- Current cuisine highlighted in dropdown with primary color + light background
+- Typing filters the list; selecting saves and closes
+- Deployed to RPi5 — build succeeded, site loads (200)
+
 ## 2026-04-12 (session 104)
 - BUG 1: Default recipe visibility changed from shared_link to public (DB + migration 030)
 - Migrated all 65 shared_link recipes to public
