@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 106)
+- Renamed "Help Requests" → "User Ideas" in admin nav + page title (DB table unchanged)
+- Admin help page: switched from supabase to supabaseAdmin (was blocked by RLS), shows username + email
+- Admin messages page: added try/catch + error state (was stuck on Loading on failure)
+- Admin recipes page: added try/catch + error state
+- Admin users page: switched user_profiles query from supabase to supabaseAdmin + try/catch
+- All 4 admin pages: loading=false guaranteed in both success and error paths
+- Feature registry updated
+- Deployed to RPi5 — all admin pages return 200
+
 ## 2026-04-12 (session 105)
 - Fix: Feedback card — added "Minimum 10 characters" helper below textarea (muted grey when empty, red with count when <10, green "Ready to send" at 10+)
 - Fix: Cuisine dropdown — now shows full list of 31 cuisines on open (was filtering by saved value, showing only 1 match)
