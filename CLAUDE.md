@@ -309,17 +309,17 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (94 — 2026-04-12)
-- Created feature-registry.md agent with 90+ features from DONE.md
-- Made feature registry mandatory in agent table, session start, and wrapup
-- CLAUDE.md housekeeping: subscription tiers, nav names, supabaseAdmin, build flags
+## Last session (95 — 2026-04-12)
+- Regression fixes: comments on all recipes, bell position, language filter (5 only), clone recipe button
+- Metric/imperial marked PARTIAL (toggle saves, conversion not wired in web recipe detail)
+- Deployment pending — RPi5 unreachable (deploy next session)
 
 ## Next session
+- Deploy session 95 changes to RPi5
+- Wire metric/imperial conversion in web recipe detail
 - Mobile notifications (bell in tab bar / recipe list header)
 - Rebuild APK with latest changes
 - Chrome Web Store submission for extension
-- Google OAuth integration
-- Stripe configuration
 
 ## Known issues
 

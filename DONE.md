@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 95)
+- Fix: Comments show on ALL recipe pages (removed visibility === 'public' gate)
+- Fix: Notification bell LEFT of "Add Recipe" button in dashboard header
+- Fix: Language selector filtered to 5 supported languages (was showing 28)
+- Fix: "Add to my Chefsbook" clones recipe via cloneRecipe() (was just link to /dashboard)
+- Metric/imperial toggle marked PARTIAL (saves to DB, web recipe detail conversion not wired)
+- Feature registry updated for all touched features
+- Deployment pending — RPi5 unreachable
+
 ## 2026-04-12 (session 94)
 - Created .claude/agents/feature-registry.md — 90+ features across 13 sections populated from DONE.md
 - Updated wrapup.md — mandatory registry update step before committing
