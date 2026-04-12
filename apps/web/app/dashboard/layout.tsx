@@ -6,7 +6,6 @@ import { supabase } from '@chefsbook/db';
 import type { User } from '@supabase/supabase-js';
 import Sidebar from '@/components/Sidebar';
 import OnboardingOverlay from '@/components/OnboardingOverlay';
-import NotificationBell from '@/components/NotificationBell';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -47,11 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen flex">
       <Sidebar user={user} />
-      <main className="flex-1 bg-cb-bg overflow-auto relative">
-        <div className="absolute top-3 right-4 z-40 flex items-center gap-2">
-          <NotificationBell />
-          <a href="/dashboard/scan" className="bg-cb-primary text-white text-xs font-semibold px-3 py-1.5 rounded-input hover:opacity-90 transition-opacity">+ Add Recipe</a>
-        </div>
+      <main className="flex-1 bg-cb-bg overflow-auto">
         {recipesFrozen && !frozenDismissed && (
           <div className="bg-amber-50 border-b border-amber-300 px-6 py-4">
             <div className="flex items-start gap-3 max-w-4xl">

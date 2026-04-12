@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string | null>(null);
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [tableSortCol, setTableSortCol] = useState<string>('date');
@@ -64,8 +65,9 @@ export default function DashboardPage() {
         getPrimaryPhotos(data.map((r) => r.id)).then(setPrimaryPhotos);
       }
       if (!userInfo) {
-        const { data: profile } = await supabase.from('user_profiles').select('username').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('user_profiles').select('username, unread_messages_count').eq('id', user.id).single();
         setUserInfo({ id: user.id, email: user.email ?? '', username: profile?.username ?? null });
+        setUnreadMessages(profile?.unread_messages_count ?? 0);
       }
     }
     setLoading(false);
@@ -247,6 +249,16 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Recipes</h1>
         <div className="flex items-center gap-3">
+          {/* Messages pill — always visible */}
+          <Link href="/dashboard/messages" className="relative inline-flex items-center gap-1.5 border border-cb-primary rounded-full px-3.5 py-1.5 text-cb-primary text-xs font-semibold bg-cb-bg hover:bg-cb-primary/5 transition-colors">
+            Messages
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" /></svg>
+            {unreadMessages > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-cb-primary text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                {unreadMessages > 99 ? '99+' : unreadMessages}
+              </span>
+            )}
+          </Link>
           {selectMode ? (
             <>
               <span className="text-sm text-cb-secondary">{selected.size} selected</span>

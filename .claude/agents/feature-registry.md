@@ -134,14 +134,14 @@
 ## NOTIFICATIONS & SOCIAL
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Notification bell + panel (web) | LIVE | apps/web/components/NotificationBell.tsx, notifications table | 86, 95 | 5 tabs, mark-all-read; bell LEFT of Add Recipe button |
+| Dashboard header (Messages pill + Select + Add Recipe) | LIVE | apps/web/app/dashboard/page.tsx | 101 | Single flex row; Messages pill has bell icon + unread badge |
 | Notification types | LIVE | packages/db (likesComments.ts) | 86 | comment_reply, recipe_comment, recipe_like, new_follower, moderation |
 | Follow / unfollow | LIVE | user_follows table, packages/db (follows.ts) | 29 | Chef+ plan gate |
 | Followers / Following tabs on profile | LIVE | apps/web, apps/mobile | 29 | |
 | What's New feed (followed users' recipes) | LIVE | apps/mobile/(tabs)/search.tsx | 29 | |
 | Social share (Instagram/Pinterest/Facebook) | LIVE | SocialShareModal, packages/ai | 35 | Pro plan gate |
 | Direct messages | LIVE | packages/db/messages.ts, apps/web/dashboard/messages, apps/mobile/chef | 98 | AI moderation (haiku), 1000 char limit |
-| Message button on profiles | LIVE | apps/web (MessageButton), apps/mobile (chef/[id]) | 98 | Not on own profile |
+| Message button on profiles | LIVE | apps/web (MessageButton), apps/mobile (chef/[id]) | 98, 101 | Not on own profile; mobile uses bottom sheet (not Alert.prompt) |
 | Message moderation (admin) | LIVE | apps/web/admin/messages/ | 98 | Approve/Remove flagged messages |
 | Message flags | LIVE | message_flags table | 98 | Inappropriate/Harassment/Spam/Other |
 

@@ -40,6 +40,7 @@ export default function Sidebar({ user }: { user: User | null }) {
   const [collapsed, setCollapsed] = useState(false);
   const [counts, setCounts] = useState<{ recipes: number; techniques: number }>({ recipes: 0, techniques: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [language, setLanguageState] = useState('en');
   const { units, setUnits } = useUnits();
   const [langOpen, setLangOpen] = useState(false);
@@ -91,6 +92,9 @@ export default function Sidebar({ user }: { user: User | null }) {
     });
     supabase.from('admin_users').select('role').eq('user_id', user.id).single().then(({ data }) => {
       setIsAdmin(!!data);
+    });
+    supabase.from('user_profiles').select('unread_messages_count').eq('id', user.id).single().then(({ data }) => {
+      setUnreadMessages(data?.unread_messages_count ?? 0);
     });
   }, [user]);
 
@@ -175,6 +179,11 @@ export default function Sidebar({ user }: { user: User | null }) {
                   <span className="flex-1">{NAV_KEYS[item.label] ? t(NAV_KEYS[item.label]) : item.label}</span>
                   {(item as any).pro && <span className="text-[8px] font-bold bg-amber-100 text-amber-700 px-1 py-0.5 rounded">PRO</span>}
                   {count != null && count > 0 && <span className="text-[10px] text-cb-secondary">{count}</span>}
+                  {item.label === 'Messages' && unreadMessages > 0 && (
+                    <span className="bg-cb-primary text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                      {unreadMessages > 99 ? '99+' : unreadMessages}
+                    </span>
+                  )}
                 </>
               )}
             </Link>

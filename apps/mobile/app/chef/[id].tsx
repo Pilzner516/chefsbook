@@ -41,6 +41,10 @@ export default function ChefProfile() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [followers, setFollowers] = useState<UserProfile[]>([]);
   const [following, setFollowing] = useState<UserProfile[]>([]);
+  const [showMessageSheet, setShowMessageSheet] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageSending, setMessageSending] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [userPlanTier, setUserPlanTier] = useState<PlanTier>('free');
 
@@ -285,22 +289,7 @@ export default function ChefProfile() {
             <View style={{ marginTop: 8 }}>
               <Button
                 title="Message"
-                onPress={() => {
-                  Alert.prompt?.(
-                    `Message @${chef?.username ?? ''}`,
-                    'Write a message (max 1000 chars)',
-                    async (text: string) => {
-                      if (!text?.trim() || !session?.user?.id || !id) return;
-                      try {
-                        await sendMessage(session.user.id, id, text.trim());
-                        Alert.alert('Message sent!');
-                      } catch (e: any) {
-                        Alert.alert('Error', e.message);
-                      }
-                    },
-                    'plain-text',
-                  ) ?? Alert.alert('Message', 'Open chefsbk.app to send messages');
-                }}
+                onPress={() => { setMessageText(''); setMessageError(null); setShowMessageSheet(true); }}
                 variant="secondary"
                 size="sm"
               />
@@ -443,6 +432,55 @@ export default function ChefProfile() {
           </View>
         </View>
       </Modal>
+      {/* Message compose sheet */}
+      {showMessageSheet && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: insets.bottom + 20 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 4 }}>Message @{chef?.username ?? ''}</Text>
+            {messageError && <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>{messageError}</Text>}
+            <TextInput
+              value={messageText}
+              onChangeText={(t) => setMessageText(t.slice(0, 1000))}
+              placeholder="Write a message..."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              maxLength={1000}
+              autoFocus
+              style={{ backgroundColor: colors.bgBase, borderRadius: 12, padding: 14, fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, minHeight: 100, textAlignVertical: 'top', marginBottom: 4 }}
+            />
+            <Text style={{ color: colors.textMuted, fontSize: 11, textAlign: 'right', marginBottom: 12 }}>{messageText.length}/1000</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setShowMessageSheet(false)}
+                style={{ flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.borderDefault }}
+              >
+                <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 14 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!messageText.trim() || !session?.user?.id || !id) return;
+                  setMessageSending(true);
+                  setMessageError(null);
+                  try {
+                    await sendMessage(session.user.id, id, messageText.trim());
+                    setShowMessageSheet(false);
+                    Alert.alert('Message sent!');
+                  } catch (e: any) {
+                    setMessageError(e.message ?? 'Failed to send');
+                  }
+                  setMessageSending(false);
+                }}
+                disabled={messageSending || messageText.trim().length < 1}
+                style={{ flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 10, backgroundColor: messageText.trim().length < 1 ? colors.bgBase : colors.accent, opacity: messageSending ? 0.5 : 1 }}
+              >
+                <Text style={{ color: messageText.trim().length < 1 ? colors.textMuted : '#ffffff', fontWeight: '600', fontSize: 14 }}>
+                  {messageSending ? 'Sending...' : 'Send'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
