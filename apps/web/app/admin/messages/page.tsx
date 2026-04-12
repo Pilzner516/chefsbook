@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@chefsbook/db';
 import Link from 'next/link';
+import { adminFetch, adminPost } from '@/lib/adminFetch';
 
 interface FlaggedMessage {
   id: string;
@@ -26,23 +26,8 @@ export default function MessageModerationPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: err } = await supabaseAdmin
-        .from('direct_messages')
-        .select('*')
-        .or('is_hidden.eq.true,moderation_status.eq.mild,moderation_status.eq.serious')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (err) throw err;
-
-      if (data && data.length > 0) {
-        const userIds = new Set<string>();
-        data.forEach((m: any) => { userIds.add(m.sender_id); userIds.add(m.recipient_id); });
-        const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', [...userIds]);
-        const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
-        setMessages(data.map((m: any) => ({ ...m, sender_username: pMap.get(m.sender_id), recipient_username: pMap.get(m.recipient_id) })));
-      } else {
-        setMessages([]);
-      }
+      const data = await adminFetch({ page: 'messages' });
+      setMessages((data.messages ?? []) as FlaggedMessage[]);
     } catch (e: any) {
       setError(e.message ?? 'Failed to load messages');
     }
@@ -52,12 +37,12 @@ export default function MessageModerationPage() {
   useEffect(() => { load(); }, []);
 
   const handleApprove = async (id: string) => {
-    await supabaseAdmin.from('direct_messages').update({ is_hidden: false, moderation_status: 'clean' }).eq('id', id);
+    try { await adminPost({ action: 'approveMessage', messageId: id }); } catch {}
     load();
   };
 
   const handleRemove = async (id: string) => {
-    await supabaseAdmin.from('direct_messages').update({ is_hidden: true }).eq('id', id);
+    try { await adminPost({ action: 'removeMessage', messageId: id }); } catch {}
     load();
   };
 

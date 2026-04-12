@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@chefsbook/db';
 import Link from 'next/link';
+import { adminFetch, adminPost } from '@/lib/adminFetch';
 
 interface HelpRow {
   id: string;
@@ -32,9 +32,8 @@ export default function UserIdeasPage() {
   useEffect(() => {
     (async () => {
       try {
-        const { data, error: err } = await supabaseAdmin.from('help_requests').select('*').order('created_at', { ascending: false }).limit(50);
-        if (err) throw err;
-        setRequests((data ?? []) as HelpRow[]);
+        const data = await adminFetch({ page: 'help' });
+        setRequests((data.requests ?? []) as HelpRow[]);
       } catch (e: any) {
         setError(e.message ?? 'Failed to load ideas');
       }
@@ -43,7 +42,7 @@ export default function UserIdeasPage() {
   }, []);
 
   const markResolved = async (id: string) => {
-    await supabaseAdmin.from('help_requests').update({ status: 'resolved' }).eq('id', id);
+    try { await adminPost({ action: 'resolveHelp', requestId: id }); } catch {}
     setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: 'resolved' } : r));
   };
 

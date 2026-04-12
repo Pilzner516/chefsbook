@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { supabase, supabaseAdmin, devChangePlan } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
+import { adminFetch, adminPost } from '@/lib/adminFetch';
 
 interface UserRow {
   id: string;
@@ -50,17 +50,10 @@ export default function UsersPage() {
     setLoading(true);
     setError(null);
     try {
-      let q = supabaseAdmin.from('user_profiles').select('*').order('created_at', { ascending: false }).limit(200);
-      if (planFilter !== 'all') q = q.eq('plan_tier', planFilter);
-      if (search.trim()) q = q.or(`username.ilike.%${search}%,display_name.ilike.%${search}%`);
-      const { data, error: err } = await q;
-      if (err) throw err;
-      setUsers((data ?? []) as UserRow[]);
-
-      // Load admin roles
-      const { data: admins } = await supabaseAdmin.from('admin_users').select('user_id, role');
+      const data = await adminFetch({ page: 'users', plan: planFilter, search });
+      setUsers((data.users ?? []) as UserRow[]);
       const roleMap = new Map<string, string>();
-      for (const a of (admins ?? []) as AdminRow[]) roleMap.set(a.user_id, a.role);
+      for (const a of (data.admins ?? []) as AdminRow[]) roleMap.set(a.user_id, a.role);
       setAdminRoles(roleMap);
     } catch (e: any) {
       setError(e.message ?? 'Failed to load users');
@@ -72,28 +65,25 @@ export default function UsersPage() {
 
   const toggleSuspend = async (user: UserRow) => {
     setError(null);
-    const { error: err } = await supabaseAdmin.from('user_profiles').update({ is_suspended: !user.is_suspended }).eq('id', user.id);
-    if (err) setError(`Suspend toggle failed: ${err.message}`);
+    try {
+      await adminPost({ action: 'toggleSuspend', userId: user.id, suspended: !user.is_suspended });
+    } catch (e: any) { setError(e.message); }
     load();
   };
 
   const changePlan = async (userId: string, plan: PlanTier) => {
     setError(null);
     try {
-      await devChangePlan(userId, plan);
-    } catch (e: any) {
-      setError(`Plan change failed: ${e.message}`);
-    }
+      await adminPost({ action: 'changePlan', userId, plan });
+    } catch (e: any) { setError(e.message); }
     load();
   };
 
   const addAdminRole = async (userId: string, role: string) => {
     setError(null);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error: err } = await supabaseAdmin.from('admin_users').upsert({ user_id: userId, role, added_by: user?.id }, { onConflict: 'user_id' });
-    if (err) {
-      setError(`Role change failed: ${err.message}`);
-    }
+    try {
+      await adminPost({ action: 'addAdminRole', userId, role });
+    } catch (e: any) { setError(e.message); }
     load();
   };
 
@@ -115,18 +105,11 @@ export default function UsersPage() {
     }
     setUsernameSaving(true);
     setUsernameError(null);
-    // Check availability
-    const { data: existing } = await supabaseAdmin.from('user_profiles').select('id').eq('username', newName).neq('id', userId).limit(1);
-    if (existing && existing.length > 0) {
-      setUsernameError('Username already taken');
-      setUsernameSaving(false);
-      return;
-    }
-    const { error: err } = await supabaseAdmin.from('user_profiles').update({ username: newName }).eq('id', userId);
-    if (err) {
-      setUsernameError(`Save failed: ${err.message}`);
-    } else {
+    try {
+      await adminPost({ action: 'updateUsername', userId, username: newName });
       setEditingUsername(null);
+    } catch (e: any) {
+      setUsernameError(e.message ?? 'Save failed');
     }
     setUsernameSaving(false);
     load();

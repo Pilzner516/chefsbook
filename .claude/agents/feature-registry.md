@@ -171,7 +171,7 @@
 ## ADMIN
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Admin dashboard at /admin | LIVE | apps/web/app/admin/layout.tsx | 28, 88 | Client component layout; uses supabaseAdmin |
+| Admin dashboard at /admin | LIVE | apps/web/app/admin/layout.tsx, /api/admin/route.ts | 28, 88, 109 | All data via /api/admin (server-side supabaseAdmin); client pages use adminFetch/adminPost |
 | Admin link in sidebar (admins only, red) | LIVE | apps/web/components/Sidebar.tsx | 87, 90 | Pomodoro red, same size as Settings |
 | User management (search, sort, role pills) | LIVE | apps/web/app/admin/users/ | 28, 90 | Sortable columns |
 | Username edit by admin | LIVE | apps/web/app/admin/users/ | 90 | Inline edit with availability check |

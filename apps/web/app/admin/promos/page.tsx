@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@chefsbook/db';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { adminFetch, adminPost } from '@/lib/adminFetch';
 
 interface PromoRow {
   id: string;
@@ -29,9 +29,10 @@ export default function PromosPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error: err } = await supabaseAdmin.from('promo_codes').select('*').order('created_at', { ascending: false });
-    if (err) setError(`Load failed: ${err.message}`);
-    setPromos((data ?? []) as PromoRow[]);
+    try {
+      const data = await adminFetch({ page: 'promos' });
+      setPromos((data.promos ?? []) as PromoRow[]);
+    } catch (e: any) { setError(e.message); }
     setLoading(false);
   };
 
@@ -41,27 +42,18 @@ export default function PromosPage() {
     if (!newCode.trim()) return;
     setCreating(true);
     setError(null);
-    const { error: err } = await supabaseAdmin.from('promo_codes').insert({
-      code: newCode.trim().toLowerCase(),
-      plan: newPlan,
-      discount_percent: parseInt(newDiscount) || 100,
-      max_uses: newMaxUses ? parseInt(newMaxUses) : null,
-      is_active: true,
-    });
-    if (err) {
-      setError(`Create failed: ${err.message}`);
-    } else {
+    try {
+      await adminPost({ action: 'createPromo', promo: { code: newCode.trim().toLowerCase(), plan: newPlan, discount_percent: parseInt(newDiscount) || 100, max_uses: newMaxUses ? parseInt(newMaxUses) : null, is_active: true } });
       setNewCode('');
       setNewMaxUses('');
-    }
+    } catch (e: any) { setError(e.message); }
     setCreating(false);
     load();
   };
 
   const toggleActive = async (promo: PromoRow) => {
     setError(null);
-    const { error: err } = await supabaseAdmin.from('promo_codes').update({ is_active: !promo.is_active }).eq('id', promo.id);
-    if (err) setError(`Toggle failed: ${err.message}`);
+    try { await adminPost({ action: 'togglePromo', promoId: promo.id, active: !promo.is_active }); } catch (e: any) { setError(e.message); }
     load();
   };
 
@@ -69,8 +61,7 @@ export default function PromosPage() {
     const ok = await confirmDel({ icon: '🗑️', title: 'Delete promo code?', body: 'This promo code will be permanently removed.', confirmLabel: 'Delete' });
     if (!ok) return;
     setError(null);
-    const { error: err } = await supabaseAdmin.from('promo_codes').delete().eq('id', id);
-    if (err) setError(`Delete failed: ${err.message}`);
+    try { await adminPost({ action: 'deletePromo', promoId: id }); } catch (e: any) { setError(e.message); }
     load();
   };
 

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase, supabaseAdmin, approveRecipeModeration, rejectRecipeModeration, unfreezeUserRecipes } from '@chefsbook/db';
 import Link from 'next/link';
+import { adminFetch, adminPost } from '@/lib/adminFetch';
 
 interface FlaggedRecipe {
   id: string;
@@ -32,74 +32,37 @@ export default function RecipeModerationPage() {
   const [acting, setActing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadFlagged = async () => {
-    try {
-      const { data, error: err } = await supabaseAdmin
-        .from('recipes')
-        .select('id, title, user_id, moderation_status, moderation_flag_reason, moderation_flagged_at, visibility, created_at')
-        .in('moderation_status', ['flagged_mild', 'flagged_serious'])
-        .order('moderation_flagged_at', { ascending: false });
-      if (err) throw err;
-      setFlagged((data ?? []) as FlaggedRecipe[]);
-    } catch (e: any) { setError(e.message); }
-  };
-
-  const loadRecipes = async () => {
+  const loadAll = async () => {
     setLoading(true);
     setError(null);
     try {
-      let q = supabaseAdmin.from('recipes').select('id, title, user_id, visibility, source_type, created_at')
-        .eq('visibility', 'public')
-        .is('parent_recipe_id', null)
-        .order('created_at', { ascending: false })
-        .limit(200);
-      if (search.trim()) q = q.ilike('title', `%${search}%`);
-      const { data, error: err } = await q;
-      if (err) throw err;
-      setRecipes((data ?? []) as RecipeRow[]);
+      const data = await adminFetch({ page: 'recipes', search });
+      setFlagged((data.flagged ?? []) as FlaggedRecipe[]);
+      setRecipes((data.recipes ?? []) as RecipeRow[]);
     } catch (e: any) { setError(e.message); }
     setLoading(false);
   };
 
-  useEffect(() => { loadFlagged(); loadRecipes(); }, []);
-  useEffect(() => { loadRecipes(); }, [search]);
+  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); }, [search]);
 
   const handleApprove = async (r: FlaggedRecipe) => {
     setActing(r.id);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await approveRecipeModeration(r.id, user.id);
-    // If serious, also unfreeze user
-    if (r.moderation_status === 'flagged_serious') {
-      await unfreezeUserRecipes(r.user_id);
-    }
-    // Send notification
-    await supabase.from('notifications').insert({
-      user_id: r.user_id,
-      type: 'recipe_liked',
-      message: `Your recipe "${r.title}" has been approved and restored.`,
-    });
+    try { await adminPost({ action: 'approveRecipe', recipeId: r.id }); } catch {}
     setActing(null);
-    loadFlagged();
+    loadAll();
   };
 
   const handleReject = async (r: FlaggedRecipe) => {
     setActing(r.id);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await rejectRecipeModeration(r.id, user.id);
-    await supabase.from('notifications').insert({
-      user_id: r.user_id,
-      type: 'recipe_liked',
-      message: `Your recipe "${r.title}" was rejected for violating community guidelines.`,
-    });
+    try { await adminPost({ action: 'rejectRecipe', recipeId: r.id }); } catch {}
     setActing(null);
-    loadFlagged();
+    loadAll();
   };
 
   const hideRecipe = async (id: string) => {
-    await supabase.from('recipes').update({ visibility: 'private' }).eq('id', id);
-    loadRecipes();
+    try { await adminPost({ action: 'hideRecipe', recipeId: id }); } catch {}
+    loadAll();
   };
 
   return (
