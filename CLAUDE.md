@@ -309,11 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (99 — 2026-04-12)
-- Metric/imperial conversion wired end-to-end on web (useUnits hook, recipe detail, shopping list)
-- Mobile already had conversion — no changes needed
-- Feature registry: Metric/Imperial → LIVE
-- Deployed to RPi5
+## Last session (100 — 2026-04-12)
+- Attribution fix: backfilled original_submitter for all 69 recipes — data-only fix, no code changes
+- Both web and mobile attribution rows already correct — just needed non-NULL data
 
 ## Next session
 - Mobile messages screen (full conversation UI)

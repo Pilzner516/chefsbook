@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 100)
+- Fix: Attribution pills missing — root cause: original_submitter_id was NULL on all 69 recipes (backfill never ran)
+- DB backfill: SET original_submitter_id = user_id, original_submitter_username = profile.username for all 69 recipes
+- Verified: 0 recipes remaining with NULL original_submitter_id
+- Verified: Homemade Biscuits now has original_submitter_username = 'pilzner' + source_url = preppykitchen.com
+- Verified: Web attribution row code (line 883) already shows BOTH @username pill AND source URL pill side by side — no code changes needed
+- Verified: Mobile attribution row (line 1190) uses same pattern — also correct
+- Recipe page loads (200) — both pills now render from backfilled data
+- Feature registry updated: attribution pill note "backfill applied session 99"
+- No code changes or deploy needed — data-only fix
+
 ## 2026-04-12 (session 99)
 - Web: useUnits() shared hook — reads unit preference from DB, syncs across components via localStorage events
 - Web recipe detail: ingredients convert via convertIngredient() based on user's kg/lb preference

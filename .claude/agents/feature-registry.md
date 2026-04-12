@@ -54,7 +54,7 @@
 | Comment flagging | LIVE | comment_flags table | 30 | 3+ flags auto-escalate |
 | Attribution (original_submitter locked) | LIVE | packages/db, recipe detail | 31 | Never changes |
 | Attribution (shared_by removable) | LIVE | packages/db | 31 | User-removable |
-| Attribution pill on recipe detail | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 72 | Shows user/cookbook/URL |
+| Attribution pill on recipe detail | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 72,99 | Shows user/cookbook/URL; backfill applied session 99 for pre-session-31 recipes |
 | Add to My Recipes (clone public recipe) | LIVE | packages/db (cloneRecipe), apps/web/app/recipe/[id]/ | 32, 95 | Button clones recipe; shows success + "View My Recipes" link |
 | Share link generation | LIVE | chefsbk.app/recipe/[id]?ref=[username] | 32 | |
 | Guest access (view-only) | LIVE | apps/web/app/recipe/[id]/, guest_sessions table | 32 | Email capture |
