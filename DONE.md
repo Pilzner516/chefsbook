@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 94)
+- Created .claude/agents/feature-registry.md — 90+ features across 13 sections populated from DONE.md
+- Updated wrapup.md — mandatory registry update step before committing
+- Updated CLAUDE.md — feature-registry.md in agent table + session start step 3a
+- CLAUDE.md improvements: fixed subscription tiers, updated nav names, added supabaseAdmin, --no-lint build fix
+
 ## 2026-04-11 (session 93)
 - Web sidebar: Recipes → My Recipes, Techniques → My Techniques, Cookbooks → My Cookbooks (5 locales)
 - Mobile tab bar: Recipes → My Recipes (5 locales)

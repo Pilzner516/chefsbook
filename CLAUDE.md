@@ -309,10 +309,10 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (93 — 2026-04-11)
-- Renamed nav items: Recipes → My Recipes, Techniques → My Techniques, Cookbooks → My Cookbooks
-- Updated web sidebar (5 locales) and mobile tab bar (5 locales)
-- Deployed to RPi5
+## Last session (94 — 2026-04-12)
+- Created feature-registry.md agent with 90+ features from DONE.md
+- Made feature registry mandatory in agent table, session start, and wrapup
+- CLAUDE.md housekeeping: subscription tiers, nav names, supabaseAdmin, build flags
 
 ## Next session
 - Mobile notifications (bell in tab bar / recipe list header)
