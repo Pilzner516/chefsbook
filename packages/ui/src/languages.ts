@@ -38,4 +38,7 @@ export const LANGUAGES: Language[] = [
 
 export const PRIORITY_LANGUAGES = ['en', 'fr', 'es'];
 
+/** The only 5 languages with locale files — selectors MUST filter to these */
+export const SUPPORTED_LANGUAGES = ['en', 'fr', 'es', 'it', 'de'];
+
 export type UnitSystem = 'metric' | 'imperial';

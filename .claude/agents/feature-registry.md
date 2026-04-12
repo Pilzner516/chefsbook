@@ -49,13 +49,13 @@
 | Recipe tags (add/remove/AI suggest) | LIVE | apps/mobile/app/recipe/, apps/web | 04 | |
 | Recipe translation (5 languages) | LIVE | packages/ai (translateRecipe), recipe_translations table | 12 | Cached per recipe+language |
 | Recipe likes + like count | LIVE | packages/db, recipe_likes table, trigger | 30 | Optimistic UI |
-| Recipe comments (threaded) | LIVE | packages/db, recipe_comments table | 30, 86 | 1-level threading, inline reply, reply_count trigger |
+| Recipe comments (threaded) | LIVE | packages/db, recipe_comments table | 30, 86 | 1-level threading, inline reply; shows on ALL recipes (not just public) |
 | Comment moderation (AI) | LIVE | packages/ai (moderateComment) | 30 | 3 verdicts; CORS fails on web — try/catch |
 | Comment flagging | LIVE | comment_flags table | 30 | 3+ flags auto-escalate |
 | Attribution (original_submitter locked) | LIVE | packages/db, recipe detail | 31 | Never changes |
 | Attribution (shared_by removable) | LIVE | packages/db | 31 | User-removable |
 | Attribution pill on recipe detail | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 72 | Shows user/cookbook/URL |
-| Add to My Recipes (clone public recipe) | LIVE | packages/db (cloneRecipe) | 32 | Sticky Save bar on non-owned recipes |
+| Add to My Recipes (clone public recipe) | LIVE | packages/db (cloneRecipe), apps/web/app/recipe/[id]/ | 32, 95 | Button clones recipe; shows success + "View My Recipes" link |
 | Share link generation | LIVE | chefsbk.app/recipe/[id]?ref=[username] | 32 | |
 | Guest access (view-only) | LIVE | apps/web/app/recipe/[id]/, guest_sessions table | 32 | Email capture |
 | PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49 | Plan gated |
@@ -132,7 +132,7 @@
 ## NOTIFICATIONS & SOCIAL
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Notification bell + panel (web) | LIVE | apps/web/components/NotificationBell.tsx, notifications table | 86 | 5 tabs, mark-all-read, pulse badge |
+| Notification bell + panel (web) | LIVE | apps/web/components/NotificationBell.tsx, notifications table | 86, 95 | 5 tabs, mark-all-read; bell LEFT of Add Recipe button |
 | Notification types | LIVE | packages/db (likesComments.ts) | 86 | comment_reply, recipe_comment, recipe_like, new_follower, moderation |
 | Follow / unfollow | LIVE | user_follows table, packages/db (follows.ts) | 29 | Chef+ plan gate |
 | Followers / Following tabs on profile | LIVE | apps/web, apps/mobile | 29 | |
@@ -153,8 +153,8 @@
 ## SETTINGS & PREFERENCES
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Language selector (5 languages: en/fr/es/it/de) | LIVE | LanguagePickerModal, apps/web sidebar | 08 | ONLY 5 languages — never add more |
-| Metric/imperial toggle | LIVE | preferencesStore, apps/web sidebar | 03 | unitConversion.ts |
+| Language selector (5 languages: en/fr/es/it/de) | LIVE | LanguagePickerModal, apps/web sidebar | 08, 95 | ONLY 5 — filtered via SUPPORTED_LANGUAGES |
+| Metric/imperial toggle | PARTIAL | preferencesStore, apps/web sidebar | 03 | Toggle saves to DB; web recipe detail does NOT apply conversion yet |
 | Profile edit (name, bio) | LIVE | apps/web/dashboard/settings, apps/mobile settings | 29 | |
 | Privacy toggle (is_searchable) | LIVE | apps/web, apps/mobile | 29 | |
 | Avatar upload | LIVE | apps/web/dashboard/settings | 35 | |

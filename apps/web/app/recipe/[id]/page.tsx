@@ -11,7 +11,7 @@ import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, cloneRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
 import type { TranslatedRecipe } from '@chefsbook/ai';
@@ -46,6 +46,8 @@ export default function RecipePage() {
   const [newTag, setNewTag] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [cloning, setCloning] = useState(false);
+  const [cloned, setCloned] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -1446,18 +1448,42 @@ export default function RecipePage() {
         {/* CTA — only for non-owners */}
         {!isOwner && (
           <div className="bg-cb-card border border-cb-border rounded-card p-8 text-center">
-            <h3 className="text-lg font-semibold mb-2">Like this recipe?</h3>
+            <h3 className="text-lg font-semibold mb-2">{cloned ? 'Saved!' : 'Like this recipe?'}</h3>
             <p className="text-cb-secondary text-sm mb-4">
-              {isLoggedIn
+              {cloned
+                ? 'This recipe has been added to your collection.'
+                : isLoggedIn
                 ? 'Save it to your Chefsbook and never lose a recipe again.'
                 : 'Sign up to save recipes, plan meals, and generate shopping lists.'}
             </p>
-            <Link
-              href={isLoggedIn ? '/dashboard' : '/auth'}
-              className="inline-block bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              {isLoggedIn ? 'Add to my Chefsbook' : 'Sign up to save this recipe'}
-            </Link>
+            {cloned ? (
+              <Link href="/dashboard" className="inline-block bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity">
+                View My Recipes
+              </Link>
+            ) : isLoggedIn ? (
+              <button
+                onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user || !recipe) return;
+                  setCloning(true);
+                  try {
+                    await cloneRecipe(recipe.id, user.id);
+                    setCloned(true);
+                  } catch (e: any) {
+                    alert(e.message ?? 'Failed to save recipe');
+                  }
+                  setCloning(false);
+                }}
+                disabled={cloning}
+                className="inline-block bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {cloning ? 'Saving...' : 'Add to my Chefsbook'}
+              </button>
+            ) : (
+              <Link href="/auth" className="inline-block bg-cb-green text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity">
+                Sign up to save this recipe
+              </Link>
+            )}
           </div>
         )}
       </article>
@@ -1549,7 +1575,7 @@ export default function RecipePage() {
       )}
 
       {/* Comments */}
-      {recipe && recipe.visibility === 'public' && (
+      {recipe && (
         <div className="max-w-3xl mx-auto px-4 mb-8">
           <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} commentsEnabled={recipe.comments_enabled ?? true} />
         </div>

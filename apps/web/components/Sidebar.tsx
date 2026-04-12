@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@chefsbook/db';
 import type { User } from '@supabase/supabase-js';
-import { LANGUAGES, PRIORITY_LANGUAGES } from '@chefsbook/ui';
+import { LANGUAGES, PRIORITY_LANGUAGES, SUPPORTED_LANGUAGES } from '@chefsbook/ui';
 import type { UnitSystem } from '@chefsbook/ui';
 import { activateLanguage } from '@/lib/i18n';
 
@@ -96,10 +96,11 @@ export default function Sidebar({ user }: { user: User | null }) {
   }, [user]);
 
   const langCode = (language || 'en').toUpperCase().slice(0, 3);
-  const priorityLangs = LANGUAGES.filter((l) => PRIORITY_LANGUAGES.includes(l.code));
-  const otherLangs = LANGUAGES.filter((l) => !PRIORITY_LANGUAGES.includes(l.code));
+  const supportedLangs = LANGUAGES.filter((l) => SUPPORTED_LANGUAGES.includes(l.code));
+  const priorityLangs = supportedLangs.filter((l) => PRIORITY_LANGUAGES.includes(l.code));
+  const otherLangs = supportedLangs.filter((l) => !PRIORITY_LANGUAGES.includes(l.code));
   const filteredLangs = langSearch.trim()
-    ? LANGUAGES.filter((l) => l.name.toLowerCase().includes(langSearch.toLowerCase()) || l.nativeName.toLowerCase().includes(langSearch.toLowerCase()))
+    ? supportedLangs.filter((l) => l.name.toLowerCase().includes(langSearch.toLowerCase()) || l.nativeName.toLowerCase().includes(langSearch.toLowerCase()))
     : null;
 
   const toggleCollapse = () => {

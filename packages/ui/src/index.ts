@@ -6,7 +6,7 @@ export type { TrattoriaColor } from './theme';
 
 // Shared constants
 export { DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST } from './constants';
-export { LANGUAGES, PRIORITY_LANGUAGES } from './languages';
+export { LANGUAGES, PRIORITY_LANGUAGES, SUPPORTED_LANGUAGES } from './languages';
 export type { Language, UnitSystem } from './languages';
 export { convertIngredient, convertTemperatureInText } from './unitConversion';
 
