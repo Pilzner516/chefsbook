@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 108)
+- Fix: Savers modal — getSavers() rewritten as two-step query via supabaseAdmin (was failing: recipe_saves FK→auth.users not user_profiles)
+- Fix: Savers modal loading/error states (was stuck on "Loading..." forever on failure)
+- Fix: Pluralization "1 person saved this" / "N people saved this"
+- Fix: Deleted duplicate Homemade Biscuits recipe (3e3131f1) + child rows (notifications, ingredients, steps, etc.)
+- search_recipes RPC: added DISTINCT ON (r.id) to prevent duplicate rows
+- Verified on RPi5: 1 Homemade Biscuits, 1 recipe_saves row (seblux), 68 total recipes
+- Feature registry updated
+- Deployed to RPi5
+
 ## 2026-04-12 (session 107)
 - Admin User Ideas: sender avatar (initials circle, clickable → /u/[username]) + @username link + email + relative timestamp per message
 - Graceful fallback: "Anonymous" shown when username is null

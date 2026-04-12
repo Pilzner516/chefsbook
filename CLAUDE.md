@@ -309,8 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (107 — 2026-04-12)
-- Admin User Ideas: sender avatar + @username link + email + relative time per message
+## Last session (108 — 2026-04-12)
+- Savers modal: getSavers() rewritten (supabaseAdmin two-step, was FK mismatch), loading/error states, pluralization
+- Duplicate Homemade Biscuits deleted, search_recipes DISTINCT ON added
 - Deployed to RPi5
 
 ## Next session
