@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 99)
+- Web: useUnits() shared hook — reads unit preference from DB, syncs across components via localStorage events
+- Web recipe detail: ingredients convert via convertIngredient() based on user's kg/lb preference
+- Web shopping list: raw quantity/unit converted on display
+- Web sidebar toggle refactored to use shared useUnits() (reactive across all pages)
+- Mobile: conversion already wired (preferencesStore + convertIngredient) — no changes needed
+- Feature registry: Metric/Imperial toggle PARTIAL → LIVE
+- Deployed to RPi5
+
 ## 2026-04-12 (session 98)
 - Migration 029: direct_messages + message_flags tables, unread_messages_count on user_profiles, trigger for unread increment
 - DB: sendMessage, getConversation, getConversationList, markMessagesRead, flagMessage, deleteMessage, getUnreadMessageCount in packages/db

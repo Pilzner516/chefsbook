@@ -309,15 +309,14 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (98 — 2026-04-12)
-- Direct messaging system: DB tables, AI moderation (haiku), web messages page, message button on profiles, admin moderation
-- packages/db/queries/messages.ts: sendMessage, getConversation, getConversationList, markMessagesRead, flagMessage
-- packages/ai/moderateMessage.ts: haiku model, same pattern as moderateComment
+## Last session (99 — 2026-04-12)
+- Metric/imperial conversion wired end-to-end on web (useUnits hook, recipe detail, shopping list)
+- Mobile already had conversion — no changes needed
+- Feature registry: Metric/Imperial → LIVE
 - Deployed to RPi5
 
 ## Next session
-- Wire metric/imperial conversion in web recipe detail
-- Mobile messages screen (full conversation UI, not just Alert.prompt)
+- Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes
 - Chrome Web Store submission for extension
 
