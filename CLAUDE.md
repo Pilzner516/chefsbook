@@ -309,9 +309,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (103 — 2026-04-12)
-- Fix: Feedback card errors display inline inside modal (was invisible — modal closed before error shown)
-- DB + RLS verified correct; insert works with JWT; test row confirmed in help_requests
+## Last session (104 — 2026-04-12)
+- Default visibility: changed from shared_link to public (DB default + migration)
+- Save-not-clone: "Add to my Chefsbook" uses recipe_saves instead of cloneRecipe
+- search_recipes RPC + listRecipes() updated to include saved recipes in user's results
+- 1 existing clone cleaned up → converted to recipe_saves row
 - Deployed to RPi5
 
 ## Next session

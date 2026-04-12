@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-12 (session 104)
+- BUG 1: Default recipe visibility changed from shared_link to public (DB + migration 030)
+- Migrated all 65 shared_link recipes to public
+- BUG 2: "Add to my Chefsbook" now uses saveRecipe() (recipe_saves) instead of cloneRecipe() (no more duplicates)
+- Updated: web recipe detail, mobile search, mobile chef profile, mobile share page
+- listRecipes() fallback now includes saved recipes via recipe_saves JOIN
+- search_recipes RPC updated to include saved recipes in user's results (migration 031)
+- Cleaned up 1 existing clone → converted to recipe_saves row
+- PostgREST restarted for new function
+- Feature registry updated (visibility, save-not-clone)
+- Deployed to RPi5
+
 ## 2026-04-12 (session 103)
 - Fix: Feedback card submit — errors now display inline inside modal (was closing modal then showing separate error dialog, making errors invisible)
 - Diagnosed DB: help_requests table + RLS correct; insert works via authenticated JWT (verified with curl)
