@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, View, StyleSheet } from 'react-native';
 import type { ImageStyle, ViewStyle } from 'react-native';
 
-const chefsHat = require('../assets/icon.png');
+const chefsHat = require('../assets/images/chefs-hat.png');
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
