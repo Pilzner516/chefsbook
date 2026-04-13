@@ -13,16 +13,20 @@ interface MealPlanState {
   removePlan: (id: string) => Promise<void>;
 }
 
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function getWeekEnd(start: string): string {
-  const d = new Date(start);
+  const d = new Date(start + 'T12:00:00');
   d.setDate(d.getDate() + 6);
-  return d.toISOString().split('T')[0]!;
+  return localDateStr(d);
 }
 
 export const useMealPlanStore = create<MealPlanState>((set, get) => ({
   plans: [],
   loading: false,
-  weekStart: new Date().toISOString().split('T')[0]!,
+  weekStart: localDateStr(new Date()),
 
   setWeekStart: (date) => set({ weekStart: date }),
 

@@ -250,19 +250,38 @@ export default function ShopPage() {
     }
     const mergedItems = Array.from(mergedMap.values());
 
-    // Group by department (same as individual list)
+    // Group based on view mode (same logic as individual list)
     const combinedGrouped = (() => {
       const unchecked = mergedItems.filter((i) => !i.checked);
       const checked = mergedItems.filter((i) => i.checked);
-      const groups: Record<string, typeof mergedItems> = {};
-      for (const item of unchecked) {
-        const dept = item.category ?? 'other';
-        (groups[dept] ??= []).push(item);
+
+      if (viewMode === 'department') {
+        const groups: Record<string, typeof mergedItems> = {};
+        for (const item of unchecked) {
+          const dept = item.category ?? 'other';
+          (groups[dept] ??= []).push(item);
+        }
+        const sorted = DEPT_ORDER.filter((d) => groups[d]?.length).map((d) => ({ label: DEPT_LABELS[d] ?? d, items: groups[d] }));
+        if (groups['other']?.length && !sorted.find((g) => g.label === 'Other')) sorted.push({ label: 'Other', items: groups['other'] });
+        if (checked.length) sorted.push({ label: 'Done', items: checked });
+        return sorted;
       }
-      const sorted = DEPT_ORDER.filter((d) => groups[d]?.length).map((d) => ({ label: DEPT_LABELS[d] ?? d, items: groups[d] }));
-      if (groups['other']?.length && !sorted.find((g) => g.label === 'Other')) sorted.push({ label: 'Other', items: groups['other'] });
-      if (checked.length) sorted.push({ label: 'Done', items: checked });
-      return sorted;
+
+      if (viewMode === 'recipe') {
+        const groups: Record<string, typeof mergedItems> = {};
+        for (const item of unchecked) {
+          const key = item.sourceLists[0] || 'Other items';
+          (groups[key] ??= []).push(item);
+        }
+        const sorted = Object.entries(groups).map(([label, items]) => ({ label, items }));
+        if (checked.length) sorted.push({ label: 'Done', items: checked });
+        return sorted;
+      }
+
+      // alpha
+      const all = [...unchecked.sort((a, b) => a.ingredient.localeCompare(b.ingredient))];
+      if (checked.length) all.push(...checked);
+      return [{ label: '', items: all }];
     })();
 
     return (
@@ -303,32 +322,38 @@ export default function ShopPage() {
                 <span className="text-cb-secondary font-normal">({group.items.length})</span>
               </h3>
               {group.items.map((item, i) => (
-                <div key={i} className={`grid gap-1 py-1.5 items-center ${item.checked ? 'opacity-50' : ''}`} style={{ gridTemplateColumns: '24px 80px 1fr auto' }}>
-                  {/* Checkbox */}
+                <div key={i} className={`grid gap-1 py-1.5 items-center shop-item-grid ${item.checked ? 'opacity-50' : ''}`}>
+                  {/* Col 1: Checkbox */}
                   <button
                     onClick={() => { item.checked = !item.checked; setCombinedView({ ...combinedView }); }}
                     className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${item.checked ? 'bg-cb-green border-cb-green text-white' : 'border-cb-border hover:border-cb-green'}`}
                   >
                     {item.checked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>}
                   </button>
-                  {/* Purchase unit */}
-                  <span className="text-cb-primary font-semibold text-sm text-right">{item.purchase_unit ?? item.quantity_needed ?? ''}</span>
-                  {/* Ingredient + usage + recipe source */}
-                  <div>
-                    <span className={`text-sm ${item.checked ? 'line-through text-cb-muted' : 'text-cb-text'}`}>{item.ingredient}</span>
-                    <div className="flex gap-2 text-[10px]">
-                      {item.quantity_needed && item.purchase_unit && (
-                        <span className="text-cb-green">{item.quantity_needed}</span>
-                      )}
-                      {item.sourceLists.length > 0 && (
-                        <span className="text-cb-muted">{item.sourceLists.join(', ')}</span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Multi-list badge */}
-                  {item.sourceLists.length > 1 && (
-                    <span className="text-[9px] text-cb-muted bg-cb-bg px-1.5 py-0.5 rounded">{item.sourceLists.length} lists</span>
-                  )}
+                  {/* Col 2: Purchase unit */}
+                  <span className={`font-bold truncate ${item.checked ? 'line-through' : ''}`}>
+                    {item.purchase_unit || '\u2014'}
+                  </span>
+                  {/* Col 3: Quantity needed */}
+                  <span className="text-cb-secondary text-center truncate" style={{ fontSize: '0.8em' }}>
+                    {item.quantity_needed ? (
+                      <span className="inline-flex items-center gap-0.5">(<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>{abbreviateUnit(item.quantity_needed)})</span>
+                    ) : item.quantity != null ? (
+                      (() => { const c = convertIngredient(item.quantity, item.unit, unitSystem, item.ingredient); return <span>{c.quantity}{c.unit ? ` ${c.unit}` : ''}</span>; })()
+                    ) : null}
+                  </span>
+                  {/* Col 4: Ingredient name */}
+                  <span className={`truncate ${item.checked ? 'line-through text-cb-secondary' : ''}`}>
+                    {item.ingredient}
+                  </span>
+                  {/* Col 5: Recipe source (hidden on mobile via CSS) */}
+                  <span className="text-[10px] text-cb-secondary truncate shop-source">
+                    {item.sourceLists.length > 1
+                      ? `${item.sourceLists.length} lists`
+                      : item.sourceLists[0] ?? ''}
+                  </span>
+                  {/* Col 6: Multi-list badge (in place of delete) */}
+                  <span className="w-5" />
                 </div>
               ))}
             </div>

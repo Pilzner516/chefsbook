@@ -583,7 +583,14 @@ function CombinedStoreView({
   const [allItems, setAllItems] = useState<ShoppingListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('department');
+  const [fontSize, setFontSize] = useState<FontSize>('medium');
+  const fs = FONT_SCALES[fontSize];
   const toggleCheck = (id: string) => setCheckedIds((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  const cycleFontSize = () => {
+    const next = FONT_LABELS[(FONT_LABELS.indexOf(fontSize) + 1) % FONT_LABELS.length];
+    setFontSize(next);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -619,20 +626,35 @@ function CombinedStoreView({
     return () => { cancelled = true; };
   }, [storeLists.map((l) => l.id).join(',')]);
 
-  // Group by department
+  const unchecked = allItems.filter((i) => !checkedIds.has(i.id));
+
+  // Group items based on view mode (same logic as individual list)
   const grouped = useMemo(() => {
-    const groups: Record<string, ShoppingListItem[]> = {};
-    for (const item of allItems) {
-      const dept = item.category || 'other';
-      if (!groups[dept]) groups[dept] = [];
-      groups[dept].push(item);
+    if (viewMode === 'department') {
+      const groups: Record<string, ShoppingListItem[]> = {};
+      for (const item of unchecked) {
+        const dept = item.category || 'other';
+        if (!groups[dept]) groups[dept] = [];
+        groups[dept].push(item);
+      }
+      return Object.entries(groups).sort(([a], [b]) => {
+        const ai = DEPT_ORDER.indexOf(a as any);
+        const bi = DEPT_ORDER.indexOf(b as any);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      }).map(([key, items]) => ({ label: DEPT_LABELS[key] || key, items }));
     }
-    return Object.entries(groups).sort(([a], [b]) => {
-      const ai = DEPT_ORDER.indexOf(a as any);
-      const bi = DEPT_ORDER.indexOf(b as any);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
-  }, [allItems]);
+    if (viewMode === 'recipe') {
+      const groups: Record<string, ShoppingListItem[]> = {};
+      for (const item of unchecked) {
+        const key = item.recipe_name || 'Other items';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+      }
+      return Object.entries(groups).map(([label, items]) => ({ label, items }));
+    }
+    // alpha
+    return [{ label: '', items: [...unchecked].sort((a, b) => a.ingredient.localeCompare(b.ingredient)) }];
+  }, [allItems, checkedIds, viewMode]);
 
   if (loading) return <Loading message={t('common.loading')} />;
 
@@ -646,11 +668,16 @@ function CombinedStoreView({
         <StoreAvatar storeName={storeName} size={36} />
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700' }}>{t('shop.allStore', { store: storeName })}</Text>
-          <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>{t('shop.combinedItems', { count: allItems.length })}</Text>
+          <Text style={{ color: colors.accentGreen, fontSize: 12, fontWeight: '600' }}>{t('shop.combinedItems', { count: unchecked.length })}</Text>
         </View>
+        <TouchableOpacity onPress={cycleFontSize} style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: colors.bgBase }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700' }}>
+            {fontSize === 'small' ? 'A' : fontSize === 'medium' ? 'A+' : 'A++'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Source lists */}
+      {/* Banner — source lists */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 36, paddingHorizontal: 16, marginBottom: 8 }}>
         {storeLists.map((list) => (
           <TouchableOpacity
@@ -667,16 +694,43 @@ function CombinedStoreView({
         ))}
       </ScrollView>
 
-      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
-        {grouped.map(([dept, deptItems]) => (
-          <View key={dept} style={{ marginBottom: 16 }}>
-            <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>
-              {DEPT_LABELS[dept] || dept}
+      {/* View mode toggle */}
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 8 }}>
+        {(['department', 'recipe', 'alpha'] as ViewMode[]).map((mode) => (
+          <TouchableOpacity
+            key={mode}
+            onPress={() => setViewMode(mode)}
+            style={{
+              paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16,
+              backgroundColor: viewMode === mode ? colors.accent : colors.bgBase,
+            }}
+          >
+            <Text style={{
+              color: viewMode === mode ? '#fff' : colors.textSecondary,
+              fontSize: 13, fontWeight: '600',
+            }}>
+              {mode === 'department' ? t('shop.dept') : mode === 'recipe' ? t('shop.recipe2') : t('shop.az')}
             </Text>
-            {deptItems.map((item) => {
+          </TouchableOpacity>
+        ))}
+        <Text style={{ color: colors.textSecondary, fontSize: 13, alignSelf: 'center', marginLeft: 'auto' }}>
+          {t('shop.items', { count: unchecked.length })}
+        </Text>
+      </View>
+
+      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }}>
+        {grouped.map((group) => (
+          <View key={group.label} style={{ marginBottom: 16 }}>
+            {group.label ? (
+              <Text style={{ color: colors.accent, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>
+                {group.label} ({group.items.length})
+              </Text>
+            ) : null}
+            {group.items.map((item) => {
               const converted = convertIngredient(item.quantity, item.unit, preferredUnits, item.ingredient);
               const rawQty = [converted.quantity ? formatQty(converted.quantity) : null, converted.unit || item.unit].filter(Boolean).join(' ');
               const displayQty = item.purchase_unit || rawQty;
+              const usageQty = item.purchase_unit ? rawQty : '';
 
               const isChecked = checkedIds.has(item.id);
               return (
@@ -684,17 +738,17 @@ function CombinedStoreView({
                   <TouchableOpacity onPress={() => toggleCheck(item.id)} style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: isChecked ? colors.accentGreen : colors.borderDefault, backgroundColor: isChecked ? colors.accentGreen : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 8, marginTop: 1 }}>
                     {isChecked && <Ionicons name="checkmark" size={14} color="#fff" />}
                   </TouchableOpacity>
-                  <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', minWidth: 60, marginRight: 8 }}>
+                  <Text style={{ color: colors.accent, fontSize: fs.qty, fontWeight: '600', minWidth: 60, marginRight: 8 }}>
                     {displayQty}
                   </Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontSize: 14, textDecorationLine: isChecked ? 'line-through' : 'none' }}>{item.ingredient}</Text>
-                    {rawQty && item.purchase_unit && (
-                      <Text style={{ color: colors.accentGreen, fontSize: 11 }}>{rawQty}</Text>
+                    <Text style={{ color: colors.textPrimary, fontSize: fs.name, textDecorationLine: isChecked ? 'line-through' : 'none' }}>{item.ingredient}</Text>
+                    {item.recipe_name && viewMode !== 'recipe' && (
+                      <Text style={{ color: colors.textSecondary, fontSize: fs.sub }}>{item.recipe_name}</Text>
                     )}
-                    {item.recipe_name && (
-                      <Text style={{ color: colors.textSecondary, fontSize: 11 }}>{item.recipe_name}</Text>
-                    )}
+                    {usageQty ? (
+                      <Text style={{ color: colors.accentGreen, fontSize: fs.sub }}>{usageQty} in recipe</Text>
+                    ) : null}
                   </View>
                 </View>
               );

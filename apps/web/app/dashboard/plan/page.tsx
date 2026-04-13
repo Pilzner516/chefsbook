@@ -230,7 +230,10 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
 export default function PlanPage() {
   const [confirmMismatch, ConfirmMismatchDialog] = useConfirmDialog();
   const [plans, setPlans] = useState<MealPlan[]>([]);
-  const [weekStart, setWeekStart] = useState(new Date().toISOString().split('T')[0]!);
+  const [weekStart, setWeekStart] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -280,9 +283,9 @@ export default function PlanPage() {
   };
 
   const navigateWeek = (dir: number) => {
-    const d = new Date(weekStart);
+    const d = new Date(weekStart + 'T12:00:00');
     d.setDate(d.getDate() + dir * 7);
-    setWeekStart(d.toISOString().split('T')[0]!);
+    setWeekStart(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
   };
 
   // ── Smart Picker ──

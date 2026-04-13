@@ -28,14 +28,18 @@ const MEAL_SLOT_KEYS: { labelKey: string; value: MealSlot }[] = [
   { labelKey: 'plan.snack', value: 'snack' },
 ];
 
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function getWeekDates(startDate: string): string[] {
   const dates: string[] = [];
-  const d = new Date(startDate);
+  const d = new Date(startDate + 'T12:00:00');
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   d.setDate(diff);
   for (let i = 0; i < 7; i++) {
-    dates.push(new Date(d).toISOString().split('T')[0]!);
+    dates.push(localDateStr(new Date(d)));
     d.setDate(d.getDate() + 1);
   }
   return dates;
@@ -135,9 +139,9 @@ export default function PlanTab() {
   }, [session?.user?.id]);
 
   const navigateWeek = (dir: number) => {
-    const d = new Date(weekStart);
+    const d = new Date(weekStart + 'T12:00:00');
     d.setDate(d.getDate() + dir * 7);
-    setWeekStart(d.toISOString().split('T')[0]!);
+    setWeekStart(localDateStr(d));
   };
 
   const hasMeals = plans.length > 0;
