@@ -137,7 +137,7 @@
 ## NOTIFICATIONS & SOCIAL
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Dashboard header (Messages pill + Select + Add Recipe) | LIVE | apps/web/app/dashboard/page.tsx | 101 | Single flex row; Messages pill has bell icon + unread badge |
+| Dashboard header (NotificationBell + Select + Add Recipe) | LIVE | apps/web/app/dashboard/page.tsx, NotificationBell.tsx | 101, 122 | Bell icon opens slide-in notification panel (5 tabs); sidebar "Messages" link handles DMs separately |
 | Notification types | LIVE | packages/db (likesComments.ts) | 86 | comment_reply, recipe_comment, recipe_like, new_follower, moderation |
 | Follow / unfollow | LIVE | user_follows table, packages/db (follows.ts) | 29 | Chef+ plan gate |
 | Followers / Following tabs on profile | LIVE | apps/web, apps/mobile | 29 | |
