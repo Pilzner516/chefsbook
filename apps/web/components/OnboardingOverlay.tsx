@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import OnboardingBubble from './OnboardingBubble';
 import ChefsDialog from './ChefsDialog';
@@ -10,6 +11,18 @@ export default function OnboardingOverlay({ pageId }: { pageId: string }) {
     nextPageLabel, nextStep, dismissOne, showConfirm, keepOn, turnOff,
     showCelebration, closeCelebration,
   } = useOnboarding(pageId);
+
+  // Auto-skip bubbles whose target element doesn't exist in the DOM
+  useEffect(() => {
+    if (!showBubbles || !currentBubble) return;
+    const el = document.querySelector(currentBubble.target);
+    if (!el) {
+      // Target not mounted — skip to next step after a brief delay
+      const timer = setTimeout(nextStep, 50);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showBubbles, currentBubble?.target, currentStep]);
 
   return (
     <>

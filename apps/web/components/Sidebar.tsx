@@ -122,7 +122,7 @@ export default function Sidebar({ user }: { user: User | null }) {
         </button>
         {!collapsed && (
           <span className="flex items-center gap-1.5 flex-1">
-            <Link href="/" className="text-xl font-bold"><span className="text-cb-primary">Chefs</span>book</Link>
+            <Link href="/" data-onboard="logo" className="text-xl font-bold"><span className="text-cb-primary">Chefs</span>book</Link>
             {process.env.NEXT_PUBLIC_APP_URL?.includes(':3001') && (
               <span className="text-[9px] font-bold bg-cb-green text-white px-1.5 py-0.5 rounded -mt-2">STAGING</span>
             )}

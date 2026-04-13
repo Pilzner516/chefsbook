@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMessage, setPwMessage] = useState('');
+  const [onboardingEnabled, setOnboardingEnabled] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -31,6 +32,7 @@ export default function SettingsPage() {
         setBio(profile.bio ?? '');
         setPlanTier(profile.plan_tier ?? 'free');
         setAvatarUrl(profile.avatar_url);
+        setOnboardingEnabled(profile.onboarding_enabled ?? true);
       }
     })();
   }, []);
@@ -132,7 +134,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Plan */}
-      <section className="mb-10">
+      <section className="mb-10" data-onboard="plan-tier">
         <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Plan & Billing</h2>
         <div className="grid grid-cols-3 gap-3 mb-3">
           {([
@@ -187,19 +189,21 @@ export default function SettingsPage() {
             <p className="text-xs text-cb-muted">Help bubbles appear when visiting new sections</p>
           </div>
           <button
+            role="switch"
+            aria-checked={onboardingEnabled}
             onClick={async () => {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) return;
-              const { data: p } = await supabase.from('user_profiles').select('onboarding_enabled').eq('id', user.id).single();
-              const newVal = !(p?.onboarding_enabled ?? true);
+              const newVal = !onboardingEnabled;
               const updates: any = { onboarding_enabled: newVal };
               if (newVal) updates.onboarding_seen_pages = []; // reset so bubbles show again
               await supabase.from('user_profiles').update(updates).eq('id', user.id);
-              setMessage(newVal ? 'Help tips turned on' : 'Help tips turned off');
+              setOnboardingEnabled(newVal);
+              setMessage(newVal ? 'Help tips turned on — bubbles will appear on each page' : 'Help tips turned off');
             }}
-            className="text-xs bg-cb-bg border border-cb-border px-3 py-1.5 rounded-input hover:bg-cb-base transition"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${onboardingEnabled ? 'bg-cb-primary' : 'bg-cb-border'}`}
           >
-            Toggle
+            <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${onboardingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
       </section>
