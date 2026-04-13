@@ -54,7 +54,7 @@
 | Comment moderation (AI) | LIVE | packages/ai (moderateComment) | 30 | 3 verdicts; CORS fails on web — try/catch |
 | Comment flagging | LIVE | comment_flags table | 30 | 3+ flags auto-escalate |
 | Comment notifications | LIVE | packages/db (createNotification via supabaseAdmin), RecipeComments components | 112, 120 | recipe_comment for owner, comment_reply for parent commenter; uses supabaseAdmin to bypass RLS |
-| Comment username links | LIVE | RecipeComments (web → /u/[username], mobile → /chef/[user_id]) | 112 | Web was 404 (linked by user_id); fixed to use username |
+| Comment username links | LIVE | RecipeComments (web → /dashboard/chef/[username], mobile → /chef/[user_id]) | 112, 126 | Web links to /dashboard/chef/ (sidebar visible); public /u/ kept for external/SEO |
 | Attribution (original_submitter locked) | LIVE | packages/db, recipe detail | 31 | Never changes |
 | Attribution (shared_by removable) | LIVE | packages/db | 31 | User-removable |
 | Attribution pill on recipe detail | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 72,99 | Shows user/cookbook/URL; backfill applied session 99 for pre-session-31 recipes |
