@@ -110,6 +110,9 @@ export default function NotificationBell() {
                       {n.recipe_id && (
                         <Link href={`/recipe/${n.recipe_id}${n.comment_id ? `?comment=${n.comment_id}` : ''}`} onClick={() => setOpen(false)} className="text-xs text-cb-primary hover:underline mt-1 inline-block">View Recipe →</Link>
                       )}
+                      {n.type === 'new_follower' && n.actor_username && !n.recipe_id && (
+                        <Link href={`/u/${n.actor_username}`} onClick={() => setOpen(false)} className="text-xs text-cb-primary hover:underline mt-1 inline-block">View Profile →</Link>
+                      )}
                     </div>
                   </div>
                 </div>
