@@ -309,13 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (110 — 2026-04-12)
-- 5 admin features: reserved usernames, account tags, user flags, email column, DM + bulk messaging, recipe sorting
-- Migration 032: 3 new tables (reserved_usernames, user_account_tags, user_flags)
-- Build now requires 1280MB on RPi5
+## Last session (114 — 2026-04-13)
+- Fix: Onboarding bubbles not showing (missing data-onboard="logo", auto-skip for missing targets)
+- Fix: Settings Help Tips toggle replaced with proper ON/OFF switch
+- Fix: Recipe content translation on web (created /api/recipes/translate server-side route)
 - Deployed to RPi5
 
 ## Next session
+- Test onboarding bubbles in browser (login, navigate to dashboard, verify bubbles appear)
+- Test recipe translation end-to-end (change language to French, open a recipe, verify content translates)
+- Add remaining data-onboard attributes on scan/shop/plan pages for full bubble coverage
 - AI impersonation flagging for usernames at signup (Feature 1 remaining item)
 - Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes

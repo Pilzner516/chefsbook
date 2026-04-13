@@ -1,6 +1,29 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 114)
+- Fix: Onboarding bubbles not showing — added missing data-onboard="logo" to Sidebar ChefsBook link (first bubble target was unanchored)
+- Fix: OnboardingOverlay auto-skips bubbles whose DOM target doesn't exist (prevents sequence from blocking on missing elements)
+- Fix: Settings Help Tips toggle — replaced plain "Toggle" text button with proper ON/OFF switch (red when on, grey when off)
+- Fix: Added missing data-onboard="plan-tier" on settings plan section
+- Fix: Recipe content translation on web — created /api/recipes/translate server-side API route (recipe page already called it but route was never created; Claude API blocks browser CORS)
+- Feature registry updated (onboarding bubbles, help tips toggle, recipe translation)
+- Deployed to RPi5 — build succeeded, all pages return 200
+
+## 2026-04-13 (session 112)
+- Migration 033: comment_likes table with RLS + like_count column on recipe_comments + trigger
+- Comment sorting: top-level comments sorted by engagement (reply_count + like_count DESC), replies chronological
+- Comment likes: toggleCommentLike() + heart icon with optimistic UI on web + mobile; plan-gated (Chef+)
+- Unlimited comment depth: replies to replies supported; level 3+ collapsed behind "N more replies" expand button
+- Reply button on every comment at every depth level (was only on top-level)
+- Web username link fix: /chef/{user_id} → /u/{username} (was 404)
+- Comment notifications: recipe owner notified on new comment (recipe_comment); parent commenter notified on reply (comment_reply)
+- getComments() now accepts optional currentUserId for isLiked per comment
+- PostgREST restarted after migration
+- Feature registry updated (3 new entries + 1 updated)
+- tsc --noEmit passes both apps
+- Deployed to RPi5
+
 ## 2026-04-12 (session 110)
 - Migration 032: reserved_usernames (22 seed entries), user_account_tags, user_flags tables
 - /admin/reserved-usernames page: CRUD with All/Reserved/Approved filter pills
