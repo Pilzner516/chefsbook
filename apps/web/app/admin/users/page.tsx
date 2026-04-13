@@ -36,7 +36,7 @@ const ROLE_STYLES: Record<string, { bg: string; text: string; label: string }> =
   super_admin: { bg: 'bg-red-100', text: 'text-red-700', label: 'Super Admin' },
   admin: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Admin' },
   proctor: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Proctor' },
-  user: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'User' },
+  user: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'Member' },
 };
 
 export default function UsersPage() {

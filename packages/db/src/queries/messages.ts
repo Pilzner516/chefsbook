@@ -23,6 +23,7 @@ export interface ConversationPreview {
   other_username: string;
   other_display_name: string | null;
   other_avatar_url: string | null;
+  other_role: string; // 'super_admin' | 'admin' | 'proctor' | 'member'
   last_message: string;
   last_message_at: string;
   unread_count: number;
@@ -88,6 +89,13 @@ export async function getConversationList(userId: string): Promise<ConversationP
     .select('id, username, display_name, avatar_url')
     .in('id', otherIds);
 
+  // Fetch admin roles via supabaseAdmin (RLS blocks cross-user reads on admin_users)
+  const { data: adminRows } = await supabaseAdmin
+    .from('admin_users')
+    .select('user_id, role')
+    .in('user_id', otherIds);
+  const roleMap = new Map((adminRows ?? []).map((r: any) => [r.user_id, r.role]));
+
   const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
 
   return otherIds.map((id) => {
@@ -98,6 +106,7 @@ export async function getConversationList(userId: string): Promise<ConversationP
       other_username: p?.username ?? '?',
       other_display_name: p?.display_name ?? null,
       other_avatar_url: p?.avatar_url ?? null,
+      other_role: roleMap.get(id) ?? 'member',
       last_message: c.lastMsg.slice(0, 80),
       last_message_at: c.lastAt,
       unread_count: c.unread,

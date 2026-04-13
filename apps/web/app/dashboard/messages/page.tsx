@@ -149,7 +149,15 @@ export default function MessagesPage() {
                 {(selected.other_display_name ?? selected.other_username ?? '?').charAt(0).toUpperCase()}
               </div>
               <div>
-                <Link href={`/u/${selected.other_username}`} className="text-sm font-semibold text-cb-text hover:underline">@{selected.other_username}</Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/u/${selected.other_username}`} className="text-sm font-semibold text-cb-text hover:underline">@{selected.other_username}</Link>
+                  {(() => {
+                    const role = selected.other_role ?? 'member';
+                    const label = role === 'super_admin' ? 'Super Admin' : role === 'admin' ? 'Admin' : role === 'proctor' ? 'Proctor' : 'Member';
+                    const color = role === 'super_admin' ? 'bg-red-100 text-red-700' : role === 'admin' ? 'bg-orange-100 text-orange-700' : role === 'proctor' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600';
+                    return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${color}`}>{label}</span>;
+                  })()}
+                </div>
                 {selected.other_display_name && <p className="text-xs text-cb-secondary">{selected.other_display_name}</p>}
               </div>
             </div>
