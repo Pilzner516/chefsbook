@@ -76,25 +76,82 @@ export interface CommentRow {
   status: string;
   flag_severity: string | null;
   reply_count: number;
+  like_count: number;
   created_at: string;
   username?: string;
   display_name?: string;
   avatar_url?: string;
+  isLiked?: boolean;
 }
 
-export async function getComments(recipeId: string): Promise<CommentRow[]> {
+export async function getComments(recipeId: string, currentUserId?: string): Promise<CommentRow[]> {
   const { data } = await supabase
     .from('recipe_comments')
     .select('*, user_profiles!recipe_comments_user_id_fkey(username, display_name, avatar_url)')
     .eq('recipe_id', recipeId)
     .in('status', ['visible', 'approved'])
     .order('created_at', { ascending: true });
-  return (data ?? []).map((row: any) => ({
+
+  // Fetch current user's liked comment IDs
+  let likedIds = new Set<string>();
+  if (currentUserId) {
+    const { data: likes } = await supabase
+      .from('comment_likes')
+      .select('comment_id')
+      .eq('user_id', currentUserId);
+    likedIds = new Set((likes ?? []).map((l: any) => l.comment_id));
+  }
+
+  const rows: CommentRow[] = (data ?? []).map((row: any) => ({
     ...row,
     username: row.user_profiles?.username,
     display_name: row.user_profiles?.display_name,
     avatar_url: row.user_profiles?.avatar_url,
+    isLiked: likedIds.has(row.id),
   }));
+
+  // Sort: top-level by engagement (reply_count + like_count) DESC, then created_at DESC
+  // Replies stay chronological (oldest first)
+  const topLevel = rows.filter(r => !r.parent_id);
+  const replies = rows.filter(r => !!r.parent_id);
+
+  topLevel.sort((a, b) => {
+    const engA = (a.reply_count ?? 0) + (a.like_count ?? 0);
+    const engB = (b.reply_count ?? 0) + (b.like_count ?? 0);
+    if (engB !== engA) return engB - engA;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Replies already sorted by created_at ASC from query
+  return [...topLevel, ...replies];
+}
+
+// ── Comment Likes ──
+
+export async function toggleCommentLike(commentId: string, userId: string): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from('comment_likes')
+    .select('id')
+    .eq('comment_id', commentId)
+    .eq('user_id', userId)
+    .single();
+
+  if (existing) {
+    await supabase.from('comment_likes').delete().eq('id', existing.id);
+    return false; // unliked
+  } else {
+    await supabase.from('comment_likes').insert({ comment_id: commentId, user_id: userId });
+    return true; // liked
+  }
+}
+
+export async function isCommentLiked(commentId: string, userId: string): Promise<boolean> {
+  const { count } = await supabase
+    .from('comment_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('comment_id', commentId)
+    .eq('user_id', userId);
+  return (count ?? 0) > 0;
 }
 
 export async function postComment(

@@ -1512,6 +1512,7 @@ function RecipeDetailInner() {
         <RecipeComments
           recipeId={recipe.id}
           recipeOwnerId={recipe.user_id}
+          recipeTitle={recipe.title}
           commentsEnabled={recipe.comments_enabled ?? true}
           isPublic={recipe.visibility === 'public'}
         />

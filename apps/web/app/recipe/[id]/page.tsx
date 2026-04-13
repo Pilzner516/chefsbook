@@ -13,7 +13,6 @@ import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, getSavers } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
-import { translateRecipe } from '@chefsbook/ai';
 import type { TranslatedRecipe } from '@chefsbook/ai';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
@@ -125,7 +124,7 @@ export default function RecipePage() {
     })();
   }, [id]);
 
-  // Translation: check cache or translate in background
+  // Translation: check cache or translate via server-side API route (CORS blocks direct Claude calls from browser)
   useEffect(() => {
     if (!recipe || userLanguage === 'en') { setTranslation(null); return; }
     let cancelled = false;
@@ -135,16 +134,23 @@ export default function RecipePage() {
       if (cached) { setTranslation(cached); return; }
       setTranslating(true);
       try {
-        const result = await translateRecipe(
-          {
-            title: recipe.title,
-            description: recipe.description,
-            ingredients: (recipe.ingredients ?? []).map((i) => ({ quantity: i.quantity, unit: i.unit, ingredient: i.ingredient, preparation: i.preparation })),
-            steps: (recipe.steps ?? []).map((s) => ({ instruction: s.instruction })),
-            notes: recipe.notes,
-          },
-          userLanguage,
-        );
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error('Not authenticated');
+        const recipePayload = {
+          title: recipe.title,
+          description: recipe.description,
+          ingredients: (recipe.ingredients ?? []).map((i) => ({ quantity: i.quantity, unit: i.unit, ingredient: i.ingredient, preparation: i.preparation })),
+          steps: (recipe.steps ?? []).map((s) => ({ instruction: s.instruction })),
+          notes: recipe.notes,
+        };
+        const res = await fetch('/api/recipes/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ recipe: recipePayload, targetLanguage: userLanguage }),
+        });
+        if (!res.ok) throw new Error(`Translation API returned ${res.status}`);
+        const result = await res.json();
         if (cancelled) return;
         await saveRecipeTranslation(recipe.id, userLanguage, { title: result.title, description: result.description, ingredients: result.ingredients, steps: result.steps, notes: result.notes });
         const saved = await getRecipeTranslation(recipe.id, userLanguage);
@@ -1605,7 +1611,7 @@ export default function RecipePage() {
       {/* Comments */}
       {recipe && (
         <div className="max-w-3xl mx-auto px-4 mb-8">
-          <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} commentsEnabled={recipe.comments_enabled ?? true} />
+          <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} recipeTitle={recipe.title} commentsEnabled={recipe.comments_enabled ?? true} />
         </div>
       )}
 
