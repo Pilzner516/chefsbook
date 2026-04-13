@@ -1,4 +1,5 @@
-import { supabase } from '../client';
+import { supabase, supabaseAdmin } from '../client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface DirectMessage {
   id: string;
@@ -27,8 +28,9 @@ export interface ConversationPreview {
   unread_count: number;
 }
 
-export async function sendMessage(senderId: string, recipientId: string, content: string, moderationStatus: string = 'clean'): Promise<DirectMessage> {
-  const { data, error } = await supabase
+export async function sendMessage(senderId: string, recipientId: string, content: string, moderationStatus: string = 'clean', client?: any): Promise<DirectMessage> {
+  const db = client ?? supabase;
+  const { data, error } = await db
     .from('direct_messages')
     .insert({ sender_id: senderId, recipient_id: recipientId, content, moderation_status: moderationStatus })
     .select()

@@ -375,7 +375,7 @@ export async function POST(req: NextRequest) {
   if (action === 'sendMessage') {
     const { sendMessage } = await import('@chefsbook/db');
     try {
-      await sendMessage(adminId, body.recipientId, body.content);
+      await sendMessage(adminId, body.recipientId, body.content, 'clean', supabaseAdmin);
       return NextResponse.json({ ok: true });
     } catch (e: any) {
       return NextResponse.json({ error: e.message }, { status: 500 });
