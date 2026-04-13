@@ -309,15 +309,15 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (126 — 2026-04-13)
-- /dashboard/chef/[username] profile page with sidebar (internal navigation)
-- All internal links updated from /u/ to /dashboard/chef/ (7 files)
-- /recipe/[id] sidebar confirmed working from session 111
+## Last session (127 — 2026-04-13)
+- Two-tier recipe translation: title-only on import (HAIKU), full on detail open (Sonnet)
+- 268 title-only translations backfilled for 67 existing recipes
 - Deployed to RPi5
 
 ## Next session
 - AI impersonation flagging for usernames at signup
 - Mobile messages screen (full conversation UI)
+- Mobile recipe list: translated titles (same pattern as web)
 - Rebuild APK with latest changes
 - Chrome Web Store submission for extension
 

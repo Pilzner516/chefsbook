@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 127)
+- Two-tier recipe translation system: title-only on import (HAIKU) + full on detail open (Sonnet)
+- Migration 034: is_title_only column on recipe_translations
+- translateRecipeTitle() in packages/ai — single HAIKU call for all 4 languages (~$0.0002/recipe)
+- /api/recipes/translate-title server route for fire-and-forget title translation
+- saveWithModeration() triggers title translation after every web import
+- Recipe list (dashboard) shows translated titles when language != en via getBatchTranslatedTitles()
+- /api/recipes/translate now saves full translation to DB (is_title_only=false), checks cache first
+- Recipe detail: title-only translation triggers full Sonnet call; "Hang tight" banner with spinner
+- getBatchTranslatedTitles() + getFullTranslation() + saveTitleOnlyTranslations() helpers in packages/db
+- Backfill script created and run: 67 recipes × 4 languages = 268 title-only translations
+- Feature registry + ai-cost.md updated
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online
+
 ## 2026-04-13 (session 126)
 - Created /dashboard/chef/[username] profile page inside dashboard layout (sidebar visible)
 - Updated 7 files: all internal authenticated links changed from /u/[username] to /dashboard/chef/[username] (RecipeComments, NotificationBell, LikeButton, FollowTabs, messages header, recipe detail attribution + savers)
