@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 121)
+- Messages chat UI polish: avatar initials on received messages (left side of bubble)
+- Compose area switched from single-line input to auto-resizing multiline textarea
+- whitespace-pre-wrap on message content to preserve line breaks
+- Supabase Realtime subscription: incoming messages append to open thread and refresh conversation list
+- Diagnosed DB: only 1 message existed; added 3 test messages to create a real pilzner↔seblux conversation
+- getConversation() verified correct — returns all messages ordered by created_at ASC
+- Feature registry updated (direct messages entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online, /dashboard/messages returns 200
+
 ## 2026-04-13 (session 120)
 - Fix: Onboarding bubbles scroll to target before positioning (scrollIntoView smooth/center)
 - Added 2 new onboarding pages: cookbooks + techniques (content + layout pageMap)

@@ -309,9 +309,8 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (120 — 2026-04-13)
-- Onboarding: scroll to target, 2 new pages (cookbooks/techniques), 8 data-onboard attrs, dismiss UX fix
-- createNotification() switched to supabaseAdmin (RLS was blocking authenticated inserts)
+## Last session (121 — 2026-04-13)
+- Messages chat UI: avatars on received, multiline textarea, Supabase Realtime for incoming
 - Deployed to RPi5
 
 ## Next session
