@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 123)
+- Diagnosed: confirmed zero recipe_like notifications in DB; likes exist but no notification code ran
+- Fix: toggleLike() in packages/db now creates recipe_like notification via supabaseAdmin after like INSERT
+- No notification on unlike (delete path) or self-like (owner === liker check)
+- Notification includes actor_username + recipe_title for display in bell panel Likes tab
+- Verified: service-role notification insert succeeds, row appears in notifications table with correct fields
+- Feature registry updated (recipe likes entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online, /dashboard returns 200
+
 ## 2026-04-13 (session 122)
 - Fix: Bell pill in dashboard header now opens NotificationBell slide-in panel (was navigating to /dashboard/messages)
 - Sidebar "Messages" link remains for DM navigation — two systems visually and functionally distinct

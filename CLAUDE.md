@@ -309,9 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (122 — 2026-04-13)
-- Bell pill → notification panel (not messages page); sidebar "Messages" for DMs
-- "View Profile" link on follower notifications
+## Last session (123 — 2026-04-13)
+- toggleLike() now creates recipe_like notification via supabaseAdmin
+- No notification on unlike or self-like
 - Deployed to RPi5
 
 ## Next session
