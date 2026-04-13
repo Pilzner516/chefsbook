@@ -112,7 +112,7 @@
 | Department grouping (13 depts) | LIVE | packages/db (addItemsWithPipeline) | 03 | |
 | 3 view modes (Dept/Recipe/A-Z) | LIVE | apps/web/dashboard/shop/, apps/mobile | 03 | |
 | Font size toggle | LIVE | apps/mobile/(tabs)/shop.tsx | 05 | 3 sizes, SecureStore persisted |
-| Consolidated "All [Store]" view | LIVE | apps/web/dashboard/shop/, apps/mobile | 84,96 | Checkboxes, dept grouping, view modes, font size, purchase unit, recipe source |
+| Consolidated "All [Store]" view | LIVE | apps/web/dashboard/shop/, apps/mobile | 84,96,115 | Uses same shop-item-grid layout as individual lists; view mode toggle (Dept/Recipe/A-Z); font size toggle; purchase unit + recipe source + usage |
 | Offline shopping cache | LIVE | apps/mobile/lib/shoppingCache.ts | 74 | FileSystem cache, sync on reconnect |
 | Add to shopping from recipe | LIVE | apps/web, apps/mobile | 03 | AI purchase unit suggestions |
 | Add week/day to shopping from meal plan | LIVE | apps/web/dashboard/plan/, apps/mobile | 04 | |
@@ -125,7 +125,7 @@
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
 | Meal plan calendar (7 days) | LIVE | apps/web/dashboard/plan/, apps/mobile/(tabs)/plan.tsx | 04 | |
-| Add recipe to meal plan (MealPlanPicker) | LIVE | MealPlanPicker component | 44 | Chef+ plan gate |
+| Add recipe to meal plan (MealPlanPicker) | LIVE | MealPlanPicker component | 44, 115 | Chef+ plan gate; timezone fix (toISOString→local date) |
 | Daypart pill (Breakfast/Lunch/Dinner/Snack) | LIVE | apps/web, apps/mobile | 70 | ChefsDialog picker |
 | Servings pill (stepper) | LIVE | apps/web, apps/mobile | 70 | ChefsDialog stepper |
 | Portions mismatch warning | LIVE | apps/web, apps/mobile, MealPlanPicker | 46,96 | Triggers on cart-add AND recipe-add when >2x serving diff |
