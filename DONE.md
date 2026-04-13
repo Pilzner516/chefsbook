@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 116)
+- Migration 034: import_site_tracker table + seriouseats.com seed entry
+- /admin/import-sites: new page with filter pills (All/Working/Partial/Broken/Unknown), edit modal for status + known issue, mark as reviewed
+- URL import route: auto-tracks domain success/failure rates on every import attempt
+- /admin/recipes: moderation status info tooltip (clean/mild/serious), ChefsDialog confirmations on approve/reject, approve unfreezes user + sends notification, reject sets private + notifies, search toggle (Title vs Username)
+- /admin/flags: rewritten to query comment_flags (was broken — queried notifications table), shows comment content + commenter + recipe + flagged-by, approve/remove actions
+- /admin/messages: now includes user-flagged messages (via message_flags table), shows flag count + reasons per message
+- /admin/reserved-usernames: approve modal with user search dropdown (sets approved_for_user_id), AI-flagged usernames section at top (username_impersonation flags), Approved For column with profile link
+- Import Sites added to admin sidebar nav
+- PostgREST restarted after migration
+- All admin queries through /api/admin route (no client-side supabaseAdmin)
+- Feature registry updated (5 new/updated entries)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — all admin pages return 200
+
 ## 2026-04-13 (session 115)
 - Fix: Meal plan date timezone bug — formatDate() used toISOString() (UTC), causing date to roll forward in evening hours; replaced with local date formatting in MealPlanPicker (web + mobile), plan page (web + mobile), and mealPlanStore
 - Root cause diagnosed via psql: inserts were happening but dates shifted by UTC conversion

@@ -178,18 +178,21 @@
 | Admin link in sidebar (admins only, red) | LIVE | apps/web/components/Sidebar.tsx | 87, 90 | Pomodoro red, same size as Settings |
 | User management (search, sort, role pills) | LIVE | apps/web/app/admin/users/ | 28, 90 | Sortable columns |
 | Username edit by admin | LIVE | apps/web/app/admin/users/ | 90 | Inline edit with availability check |
-| Recipe moderation queue | LIVE | apps/web/app/admin/recipes/ | 28 | supabaseAdmin, limit 200 |
+| Recipe moderation queue | LIVE | apps/web/app/admin/recipes/ | 28, 116 | ChefsDialog confirmations; info tooltip; approve unfreezes + notifies; reject sets private + notifies; search by title/username |
 | Promo code CRUD | LIVE | apps/web/app/admin/promos/ | 28, 90 | supabaseAdmin + error feedback |
 | Plan limits display | LIVE | apps/web/app/admin/limits/ | 28 | supabaseAdmin |
 | User Ideas (was Help Requests) | LIVE | apps/web/app/admin/help/ | 28, 106, 107 | Avatar + @username link + email + relative time per message |
 | Suspend / restore user | LIVE | apps/web/app/admin/users/ | 28 | |
 | Admin RLS (non-recursive) | LIVE | admin_users table RLS | 89 | user_id = auth.uid() direct check |
-| Reserved usernames | LIVE | reserved_usernames table, /admin/reserved-usernames | 110 | 22 seed entries; signup blocks reserved; admin CRUD |
+| Reserved usernames | LIVE | reserved_usernames table, /admin/reserved-usernames | 110, 116 | 22 seed entries; signup blocks reserved; admin CRUD; approve with user search dropdown; AI-flagged usernames section |
 | Account status tags | LIVE | user_account_tags table, /admin/users | 110 | Color-coded pills; tag filter; admin-only |
 | User flags | LIVE | user_flags table, /admin/users | 110 | ⚑ icon on flagged users; resolve via click |
 | Admin email column | LIVE | /admin/users, /api/admin (auth.admin.listUsers) | 110 | Reads from auth.users via service role |
 | Admin DM + bulk messaging | LIVE | /admin/users, /api/admin (sendMessage) | 110 | Single + bulk compose; progress indicator |
 | Admin recipes sorting | LIVE | /admin/recipes | 110 | Sortable columns + submitter pill |
+| Import site tracker | LIVE | import_site_tracker table, /admin/import-sites, /api/import/url | 116 | Auto-tracks domain success rates; filter pills; admin edit + review |
+| Flagged comments (admin) | LIVE | /admin/flags, /api/admin (flagged-comments) | 116 | Queries comment_flags; shows comment + commenter + recipe; approve/remove |
+| Flagged messages (admin) | LIVE | /admin/messages, /api/admin (messages) | 116 | Includes user-flagged messages via message_flags; shows flag count + reasons |
 
 ---
 

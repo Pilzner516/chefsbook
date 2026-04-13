@@ -309,10 +309,13 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (115 — 2026-04-13)
-- Fix: Meal plan date timezone bug — formatDate() used toISOString() (UTC) causing evening date shift
-- Fix: Consolidated store list formatting — matches individual list layout (shop-item-grid CSS)
-- Added view mode toggle + font size toggle to consolidated list (web + mobile)
+## Last session (116 — 2026-04-13)
+- Migration 034: import_site_tracker table + auto-tracking on URL import
+- /admin/import-sites: new page (filter pills, edit modal, status auto-calc)
+- /admin/recipes: info tooltip, ChefsDialog confirmations, approve unfreezes + notifies, search by username
+- /admin/flags: rewritten to query comment_flags (was broken), approve/remove actions
+- /admin/messages: now includes user-flagged messages via message_flags
+- /admin/reserved-usernames: user search dropdown, AI-flagged usernames section
 - Deployed to RPi5
 
 ## Next session
