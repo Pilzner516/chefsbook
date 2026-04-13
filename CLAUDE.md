@@ -309,11 +309,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (117 — 2026-04-13)
-- Verification sweep: 10 features tested on live RPi5
-- 5 PASS, 1 partial PASS, 3 cannot test (browser-only), 1 FAIL
-- FAIL: Admin DM — sendMessage() uses wrong client (supabase not supabaseAdmin)
-- BUG: reply_count trigger not SECURITY DEFINER — RLS blocks cross-user updates
+## Last session (118 — 2026-04-13)
+- Replaced chef hat image with new CBHat.png asset across web + mobile
+- Mobile RecipeImage updated to use assets/images/chefs-hat.png (was icon.png)
+- Verified object-fit: contain at all hat usage points
+- Deployed to RPi5
 
 ## Next session
 - Fix admin DM: use supabaseAdmin in sendMessage or pass client param

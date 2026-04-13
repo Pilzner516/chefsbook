@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 118)
+- Replaced chef hat image with new CBHat.png (1088x1088 RGBA) across web + mobile
+- Web: chefs-hat.png + chefs-hat-hd.png replaced in apps/web/public/images/
+- Mobile: chefs-hat.png added to apps/mobile/assets/images/, RecipeImage updated to use it (was icon.png)
+- Verified object-fit: contain at all hat usage points (landing hero, footer, dashboard cards, plan cards, search cards, extension page, feedback card)
+- Web: /images/chefs-hat.png and /images/chefs-hat-hd.png return HTTP 200 on RPi5
+- tsc --noEmit passes (web)
+- Deployed to RPi5
+
 ## 2026-04-13 (session 117 — verification sweep)
 - Verification sweep: 10 features tested on live RPi5 via authenticated API calls + psql
 - PASS: Comments level-3 depth — reply to reply saves with correct parent_id chain
