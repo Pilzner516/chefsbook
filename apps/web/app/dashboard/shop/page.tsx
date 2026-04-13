@@ -533,10 +533,10 @@ export default function ShopPage() {
               return a.localeCompare(b);
             });
 
-            return sortedGroups.map(([key, { displayName: storeName, lists: groupLists }]) => {
+            return sortedGroups.map(([key, { displayName: storeName, lists: groupLists }], groupIdx) => {
               const store = stores.find((s) => s.name.toLowerCase() === key) ?? null;
               return (
-                <div key={key} className="bg-cb-card border border-cb-border rounded-card overflow-hidden">
+                <div key={key} {...(groupIdx === 0 ? { 'data-onboard': 'store-group' } : {})} className="bg-cb-card border border-cb-border rounded-card overflow-hidden">
                   {/* Store group header */}
                   <div className="flex items-center gap-3 px-4 py-3 bg-cb-bg/50 border-b border-cb-border">
                     {key === 'other' ? (

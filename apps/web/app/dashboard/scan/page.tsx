@@ -502,7 +502,7 @@ export default function ScanPage() {
       {/* Top row: Image + URL (side by side) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Image upload */}
-        <div className="bg-cb-card border border-cb-border rounded-card p-6">
+        <div data-onboard="scan" className="bg-cb-card border border-cb-border rounded-card p-6">
           <h2 className="font-semibold mb-1">Scan from image</h2>
           <p className="text-cb-secondary text-sm mb-4">
             Upload a photo of a handwritten card, cookbook page, or printed recipe.
@@ -540,7 +540,7 @@ export default function ScanPage() {
         </div>
 
         {/* URL import */}
-        <div className="bg-cb-card border border-cb-border rounded-card p-6">
+        <div data-onboard="url" className="bg-cb-card border border-cb-border rounded-card p-6">
           <h2 className="font-semibold mb-1">Import from URL</h2>
           <p className="text-cb-secondary text-sm mb-4">
             Paste a link to any recipe page. We strip the life story and extract just the recipe.
@@ -580,7 +580,7 @@ export default function ScanPage() {
       </div>
 
       {/* Voice recipe link */}
-      <Link href="/dashboard/speak" className="block bg-cb-card border border-cb-border rounded-card p-6 mb-8 hover:border-cb-primary/50 transition-colors">
+      <Link href="/dashboard/speak" data-onboard="speak" className="block bg-cb-card border border-cb-border rounded-card p-6 mb-8 hover:border-cb-primary/50 transition-colors">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-cb-primary/10 flex items-center justify-center shrink-0">
             <svg className="w-6 h-6 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>

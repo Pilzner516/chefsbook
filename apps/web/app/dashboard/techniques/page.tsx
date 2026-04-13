@@ -81,7 +81,7 @@ export default function TechniquesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div data-onboard="techniques-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {techniques.map((t) => (
             <Link key={t.id} href={`/technique/${t.id}`} className="group">
               <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-purple-400 transition-colors">

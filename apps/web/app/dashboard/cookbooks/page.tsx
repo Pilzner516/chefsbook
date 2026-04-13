@@ -250,7 +250,7 @@ export default function CookbooksPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div data-onboard="cookbooks-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cookbooks.map((book) => (
             <Link
               key={book.id}

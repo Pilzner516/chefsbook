@@ -61,15 +61,15 @@ export default function OnboardingBubble({
           <div>
             <div className="flex items-start justify-between gap-2 mb-2">
               <h4 className="text-base font-semibold text-gray-900">{title}</h4>
-              <button onClick={onDismiss} className="text-gray-400 hover:text-gray-600 text-lg leading-none shrink-0">✕</button>
+              <button onClick={onTurnOff} className="text-gray-400 hover:text-gray-600 text-lg leading-none shrink-0">✕</button>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed mb-3">{body}</p>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-gray-400">Step {step + 1} of {totalSteps}</span>
-              <button onClick={onDismiss} className="text-xs text-gray-400 hover:text-gray-600">Skip All</button>
+              <button onClick={onTurnOff} className="text-xs text-gray-400 hover:text-gray-600">Turn off tips</button>
             </div>
             <button onClick={onNext} className="w-full py-2 rounded-full text-sm font-semibold bg-[#ce2b37] text-white hover:opacity-90">
-              {isLastOnPage ? (nextPageLabel ?? 'Done') : 'Next →'}
+              {isLastOnPage ? (nextPageLabel ?? 'Got it!') : 'Got it'}
             </button>
           </div>
         )}

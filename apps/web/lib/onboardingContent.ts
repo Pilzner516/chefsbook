@@ -57,6 +57,18 @@ export const ONBOARDING_PAGES: PageBubbles[] = [
     ],
   },
   {
+    pageId: 'cookbooks',
+    bubbles: [
+      { id: 'cookbooks-list', target: '[data-onboard="cookbooks-list"]', title: 'Your Cookbooks', body: 'Save your favourite cookbooks here. ChefsBook can read the table of contents and help you import recipes directly from your books.', position: 'bottom' },
+    ],
+  },
+  {
+    pageId: 'techniques',
+    bubbles: [
+      { id: 'techniques-list', target: '[data-onboard="techniques-list"]', title: 'Techniques', body: 'Techniques are tips, tricks and methods you\'ve saved — separate from recipes. Use them as a reference while you cook.', position: 'bottom' },
+    ],
+  },
+  {
     pageId: 'settings',
     bubbles: [
       { id: 'plan-section', target: '[data-onboard="plan-tier"]', title: 'Your Plan', body: 'View and upgrade your plan here. Use a promo code at signup for special access.', position: 'bottom' },

@@ -239,7 +239,9 @@ export async function createNotification(params: {
   message?: string;
   batch_count?: number;
 }): Promise<void> {
-  await supabase.from('notifications').insert(params);
+  // Use supabaseAdmin to bypass RLS — notifications are system-level
+  // (user A creates a notification for user B)
+  await supabaseAdmin.from('notifications').insert(params);
 }
 
 export async function getNotifications(userId: string, type?: string): Promise<any[]> {

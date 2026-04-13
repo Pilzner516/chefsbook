@@ -69,6 +69,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             '/dashboard/scan': 'scan',
             '/dashboard/shop': 'shop',
             '/dashboard/plan': 'plan',
+            '/dashboard/cookbooks': 'cookbooks',
+            '/dashboard/techniques': 'techniques',
             '/dashboard/settings': 'settings',
           };
           const pageId = pageMap[pathname] ?? (pathname.startsWith('/dashboard/recipe') ? 'recipe' : '');

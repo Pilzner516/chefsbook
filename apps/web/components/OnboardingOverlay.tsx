@@ -12,7 +12,7 @@ export default function OnboardingOverlay({ pageId }: { pageId: string }) {
     showCelebration, closeCelebration,
   } = useOnboarding(pageId);
 
-  // Auto-skip bubbles whose target element doesn't exist in the DOM
+  // Auto-skip bubbles whose target doesn't exist; scroll target into view
   useEffect(() => {
     if (!showBubbles || !currentBubble) return;
     const el = document.querySelector(currentBubble.target);
@@ -21,6 +21,8 @@ export default function OnboardingOverlay({ pageId }: { pageId: string }) {
       const timer = setTimeout(nextStep, 50);
       return () => clearTimeout(timer);
     }
+    // Scroll target into view before positioning the bubble
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showBubbles, currentBubble?.target, currentStep]);
 
