@@ -61,17 +61,41 @@ export async function GET(req: NextRequest) {
   }
 
   if (page === 'messages') {
+    // Get messages flagged by moderation or hidden
     const { data, error } = await supabaseAdmin.from('direct_messages')
       .select('*')
       .or('is_hidden.eq.true,moderation_status.eq.mild,moderation_status.eq.serious')
       .order('created_at', { ascending: false }).limit(50);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    if (data && data.length > 0) {
+    // Also get messages flagged by users via message_flags
+    const { data: flagRows } = await supabaseAdmin.from('message_flags').select('message_id, reason');
+    const flagMap = new Map<string, string[]>();
+    (flagRows ?? []).forEach((f: any) => {
+      const arr = flagMap.get(f.message_id) ?? [];
+      arr.push(f.reason);
+      flagMap.set(f.message_id, arr);
+    });
+    // Fetch user-flagged messages not already in the moderation list
+    const existingIds = new Set((data ?? []).map((m: any) => m.id));
+    const userFlaggedIds = [...flagMap.keys()].filter((id) => !existingIds.has(id));
+    let extraMessages: any[] = [];
+    if (userFlaggedIds.length > 0) {
+      const { data: extra } = await supabaseAdmin.from('direct_messages').select('*').in('id', userFlaggedIds);
+      extraMessages = extra ?? [];
+    }
+    const allMessages = [...(data ?? []), ...extraMessages];
+    if (allMessages.length > 0) {
       const userIds = new Set<string>();
-      data.forEach((m: any) => { userIds.add(m.sender_id); userIds.add(m.recipient_id); });
+      allMessages.forEach((m: any) => { userIds.add(m.sender_id); userIds.add(m.recipient_id); });
       const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', [...userIds]);
       const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
-      const enriched = data.map((m: any) => ({ ...m, sender_username: pMap.get(m.sender_id), recipient_username: pMap.get(m.recipient_id) }));
+      const enriched = allMessages.map((m: any) => ({
+        ...m,
+        sender_username: pMap.get(m.sender_id),
+        recipient_username: pMap.get(m.recipient_id),
+        flag_reasons: flagMap.get(m.id) ?? [],
+        flag_count: (flagMap.get(m.id) ?? []).length,
+      }));
       return NextResponse.json({ messages: enriched });
     }
     return NextResponse.json({ messages: [] });
@@ -87,6 +111,66 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabaseAdmin.from('help_requests').select('*').order('created_at', { ascending: false }).limit(50);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ requests: data ?? [] });
+  }
+
+  if (page === 'import-sites') {
+    const { data, error } = await supabaseAdmin.from('import_site_tracker').select('*').order('total_attempts', { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ sites: data ?? [] });
+  }
+
+  if (page === 'flagged-comments') {
+    const { data, error } = await supabaseAdmin.from('comment_flags')
+      .select('id, comment_id, flagged_by, reason, created_at')
+      .order('created_at', { ascending: false }).limit(100);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Enrich with comment content, commenter, and recipe info
+    if (data && data.length > 0) {
+      const commentIds = [...new Set(data.map((f: any) => f.comment_id))];
+      const flaggedByIds = [...new Set(data.map((f: any) => f.flagged_by))];
+      const { data: comments } = await supabaseAdmin.from('recipe_comments').select('id, content, user_id, recipe_id').in('id', commentIds);
+      const allUserIds = new Set([...flaggedByIds, ...(comments ?? []).map((c: any) => c.user_id)]);
+      const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', [...allUserIds]);
+      const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
+      const commentMap = new Map((comments ?? []).map((c: any) => [c.id, c]));
+      const enriched = data.map((f: any) => {
+        const comment = commentMap.get(f.comment_id);
+        return {
+          ...f,
+          comment_content: comment?.content ?? null,
+          comment_user_id: comment?.user_id ?? null,
+          commenter_username: comment?.user_id ? profileMap.get(comment.user_id) : null,
+          recipe_id: comment?.recipe_id ?? null,
+          flagged_by_username: profileMap.get(f.flagged_by) ?? null,
+        };
+      });
+      return NextResponse.json({ flags: enriched });
+    }
+    return NextResponse.json({ flags: [] });
+  }
+
+  if (page === 'flagged-usernames') {
+    const { data, error } = await supabaseAdmin.from('user_flags')
+      .select('id, user_id, flag_type, note, created_at, is_resolved')
+      .eq('flag_type', 'username_impersonation')
+      .eq('is_resolved', false)
+      .order('created_at', { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map((f: any) => f.user_id))];
+      const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', userIds);
+      const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
+      const enriched = data.map((f: any) => ({ ...f, username: pMap.get(f.user_id) ?? null }));
+      return NextResponse.json({ flags: enriched });
+    }
+    return NextResponse.json({ flags: [] });
+  }
+
+  if (page === 'user-search') {
+    const q = searchParams.get('q') || '';
+    if (!q.trim()) return NextResponse.json({ users: [] });
+    const { data } = await supabaseAdmin.from('user_profiles').select('id, username, display_name, avatar_url').ilike('username', `%${q}%`).limit(10);
+    return NextResponse.json({ users: data ?? [] });
   }
 
   return NextResponse.json({ error: 'Unknown page' }, { status: 400 });
@@ -136,12 +220,35 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'approveRecipe') {
+    // Set moderation clean, restore visibility
     await supabaseAdmin.from('recipes').update({ moderation_status: 'approved', visibility: 'public' }).eq('id', body.recipeId);
+    // For serious cases: unfreeze user
+    if (body.unfreezeUserId) {
+      await supabaseAdmin.from('user_profiles').update({ recipes_frozen: false }).eq('id', body.unfreezeUserId);
+    }
+    // Notify recipe owner
+    if (body.ownerId) {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: body.ownerId,
+        type: 'moderation',
+        message: 'Your recipe has been reviewed and approved by an admin.',
+        recipe_id: body.recipeId,
+      });
+    }
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'rejectRecipe') {
-    await supabaseAdmin.from('recipes').update({ moderation_status: 'rejected' }).eq('id', body.recipeId);
+    await supabaseAdmin.from('recipes').update({ moderation_status: 'rejected', visibility: 'private' }).eq('id', body.recipeId);
+    // Notify recipe owner
+    if (body.ownerId) {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: body.ownerId,
+        type: 'moderation',
+        message: 'Your recipe has been reviewed and set to private by an admin.',
+        recipe_id: body.recipeId,
+      });
+    }
     return NextResponse.json({ ok: true });
   }
 
@@ -225,6 +332,42 @@ export async function POST(req: NextRequest) {
   if (action === 'resolveFlag') {
     const { error } = await supabaseAdmin.from('user_flags').update({ is_resolved: true, resolved_by: adminId, resolved_at: new Date().toISOString(), resolution_note: body.note }).eq('id', body.flagId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Import site tracker
+  if (action === 'updateImportSite') {
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (body.status !== undefined) updates.status = body.status;
+    if (body.knownIssue !== undefined) updates.known_issue = body.knownIssue;
+    if (body.markReviewed) updates.last_checked_by = adminId;
+    const { error } = await supabaseAdmin.from('import_site_tracker').update(updates).eq('id', body.siteId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'upsertImportSite') {
+    const { error } = await supabaseAdmin.from('import_site_tracker').upsert({
+      domain: body.domain,
+      total_attempts: body.totalAttempts ?? 1,
+      successful_attempts: body.successfulAttempts ?? 0,
+      last_import_at: body.lastImportAt ?? new Date().toISOString(),
+      status: body.status ?? 'unknown',
+    }, { onConflict: 'domain' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Flagged comments
+  if (action === 'approveComment') {
+    // Remove flags, keep comment visible
+    await supabaseAdmin.from('comment_flags').delete().eq('comment_id', body.commentId);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'removeComment') {
+    // Delete the comment (cascades flags)
+    await supabaseAdmin.from('recipe_comments').delete().eq('id', body.commentId);
     return NextResponse.json({ ok: true });
   }
 

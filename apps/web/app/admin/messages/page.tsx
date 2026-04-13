@@ -15,6 +15,7 @@ interface FlaggedMessage {
   sender_username?: string;
   recipient_username?: string;
   flag_count?: number;
+  flag_reasons?: string[];
 }
 
 export default function MessageModerationPage() {
@@ -60,8 +61,13 @@ export default function MessageModerationPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${m.moderation_status === 'serious' ? 'bg-red-200 text-red-800' : m.is_hidden ? 'bg-red-200 text-red-800' : 'bg-amber-200 text-amber-800'}`}>
-                      {m.is_hidden ? 'HIDDEN' : m.moderation_status.toUpperCase()}
+                      {m.is_hidden ? 'HIDDEN' : m.moderation_status?.toUpperCase() ?? 'FLAGGED'}
                     </span>
+                    {(m.flag_count ?? 0) > 0 && (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-red-100 text-red-700">
+                        {m.flag_count} user flag{m.flag_count === 1 ? '' : 's'}: {(m.flag_reasons ?? []).join(', ')}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-gray-900 mb-1">{m.content}</p>
                   <p className="text-xs text-gray-500">

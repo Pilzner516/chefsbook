@@ -2,6 +2,7 @@
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
+import { supabaseAdmin } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
@@ -105,6 +106,30 @@ export async function POST(req: Request) {
     if (!completeness.complete || generated) {
       recipe.tags = [...(recipe.tags ?? []), '_incomplete'];
     }
+
+    // Track import site stats (fire and forget)
+    try {
+      const domain = new URL(url).hostname.replace(/^www\./, '');
+      const success = completeness.complete;
+      const autoStatus = success ? 'working' : 'partial';
+      // Upsert: increment attempts, conditionally increment successes
+      const { data: existing } = await supabaseAdmin.from('import_site_tracker').select('id, total_attempts, successful_attempts').eq('domain', domain).maybeSingle();
+      if (existing) {
+        const newTotal = (existing.total_attempts ?? 0) + 1;
+        const newSuccess = (existing.successful_attempts ?? 0) + (success ? 1 : 0);
+        const rate = newSuccess / newTotal;
+        const calcStatus = rate > 0.8 ? 'working' : rate >= 0.2 ? 'partial' : 'broken';
+        await supabaseAdmin.from('import_site_tracker').update({
+          total_attempts: newTotal, successful_attempts: newSuccess,
+          last_import_at: new Date().toISOString(), status: calcStatus, updated_at: new Date().toISOString(),
+        }).eq('id', existing.id);
+      } else {
+        await supabaseAdmin.from('import_site_tracker').insert({
+          domain, total_attempts: 1, successful_attempts: success ? 1 : 0,
+          last_import_at: new Date().toISOString(), status: autoStatus,
+        });
+      }
+    } catch { /* non-critical — don't block import */ }
 
     return Response.json({
       contentType: 'recipe',

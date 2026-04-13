@@ -15,6 +15,7 @@ const NAV = [
   { href: '/admin/help', label: 'User Ideas' },
   { href: '/admin/messages', label: 'Messages' },
   { href: '/admin/reserved-usernames', label: 'Reserved Usernames' },
+  { href: '/admin/import-sites', label: 'Import Sites' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
