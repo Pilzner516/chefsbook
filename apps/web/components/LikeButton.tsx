@@ -92,7 +92,7 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
               {likers.map((u) => (
                 <Link
                   key={u.id}
-                  href={`/u/${u.username ?? u.id}`}
+                  href={`/dashboard/chef/${u.username ?? u.id}`}
                   className="flex items-center gap-3 py-2 hover:bg-cb-bg rounded-input px-2 transition"
                   onClick={() => setShowLikers(false)}
                 >

@@ -58,7 +58,7 @@ export default function FollowTabs({ userId }: { userId: string }) {
           {users.map((user) => (
             <Link
               key={user.id}
-              href={user.username ? `/u/${user.username}` : '#'}
+              href={user.username ? `/dashboard/chef/${user.username}` : '#'}
               className="flex items-center gap-3 p-3 bg-cb-card rounded-card border border-cb-border hover:border-cb-border-strong transition"
             >
               <div className="w-10 h-10 rounded-full bg-cb-primary text-white flex items-center justify-center text-sm font-bold shrink-0">

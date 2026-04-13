@@ -195,7 +195,7 @@ export default function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, c
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 text-sm">
-              <Link href={`/u/${c.username ?? c.user_id}`} className="font-semibold text-cb-text hover:underline text-xs">@{c.username ?? '?'}</Link>
+              <Link href={`/dashboard/chef/${c.username ?? c.user_id}`} className="font-semibold text-cb-text hover:underline text-xs">@{c.username ?? '?'}</Link>
               <span className="text-cb-muted text-[11px]">{timeAgo(c.created_at)}</span>
             </div>
             <p className="text-sm text-cb-text mt-0.5">{c.content}</p>

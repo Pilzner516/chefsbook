@@ -150,7 +150,7 @@ export default function MessagesPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <Link href={`/u/${selected.other_username}`} className="text-sm font-semibold text-cb-text hover:underline">@{selected.other_username}</Link>
+                  <Link href={`/dashboard/chef/${selected.other_username}`} className="text-sm font-semibold text-cb-text hover:underline">@{selected.other_username}</Link>
                   {(() => {
                     const role = selected.other_role ?? 'member';
                     const label = role === 'super_admin' ? 'Super Admin' : role === 'admin' ? 'Admin' : role === 'proctor' ? 'Proctor' : 'Member';

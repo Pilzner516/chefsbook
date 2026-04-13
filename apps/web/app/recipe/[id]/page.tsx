@@ -892,7 +892,7 @@ export default function RecipePage() {
           {(() => {
             const uploaderUsername = recipe.original_submitter_username ?? (isOwner ? ownerUsername : null);
             return uploaderUsername ? (
-              <a href={`/u/${uploaderUsername}`} className="inline-flex items-center gap-1.5 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
+              <a href={`/dashboard/chef/${uploaderUsername}`} className="inline-flex items-center gap-1.5 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
                 <span className="w-4 h-4 rounded-full bg-cb-primary text-white flex items-center justify-center text-[8px] font-bold">{uploaderUsername.charAt(0).toUpperCase()}</span>
                 @{uploaderUsername}
               </a>
@@ -1077,7 +1077,7 @@ export default function RecipePage() {
           {/* Attribution tags */}
           {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
             <Link
-              href={`/u/${recipe.original_submitter_username}`}
+              href={`/dashboard/chef/${recipe.original_submitter_username}`}
               className="bg-cb-primary-soft text-cb-primary text-sm px-3 py-1 rounded-input font-medium inline-flex items-center gap-1 hover:ring-2 hover:ring-cb-primary/30"
             >
               🔒 Original by @{recipe.original_submitter_username}
@@ -1085,7 +1085,7 @@ export default function RecipePage() {
           )}
           {recipe.shared_by_username && (
             <span className="bg-cb-base text-cb-text text-sm px-3 py-1 rounded-input font-medium inline-flex items-center gap-1">
-              <Link href={`/u/${recipe.shared_by_username}`} className="hover:underline">
+              <Link href={`/dashboard/chef/${recipe.shared_by_username}`} className="hover:underline">
                 Shared by @{recipe.shared_by_username}
               </Link>
             </span>
@@ -1636,7 +1636,7 @@ export default function RecipePage() {
               {saversError && <p className="text-sm text-cb-primary text-center py-4">{saversError}</p>}
               {saversLoading && <p className="text-sm text-cb-muted text-center py-4">Loading...</p>}
               {!saversLoading && !saversError && savers.map((u) => (
-                <Link key={u.id} href={`/u/${u.username ?? u.id}`} className="flex items-center gap-3 py-2 hover:bg-cb-bg rounded-input px-2 transition" onClick={() => setShowSavers(false)}>
+                <Link key={u.id} href={`/dashboard/chef/${u.username ?? u.id}`} className="flex items-center gap-3 py-2 hover:bg-cb-bg rounded-input px-2 transition" onClick={() => setShowSavers(false)}>
                   <div className="w-8 h-8 rounded-full bg-cb-primary text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {u.display_name?.charAt(0)?.toUpperCase() ?? '?'}
                   </div>
