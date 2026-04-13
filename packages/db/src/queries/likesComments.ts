@@ -15,22 +15,6 @@ export async function toggleLike(recipeId: string, userId: string): Promise<bool
     return false; // unliked
   } else {
     await supabase.from('recipe_likes').insert({ recipe_id: recipeId, user_id: userId });
-    // Notify recipe owner (not self-likes)
-    try {
-      const { data: recipe } = await supabase.from('recipes').select('user_id, title').eq('id', recipeId).single();
-      if (recipe && recipe.user_id !== userId) {
-        const { data: actor } = await supabase.from('user_profiles').select('username').eq('id', userId).single();
-        await supabaseAdmin.from('notifications').insert({
-          user_id: recipe.user_id,
-          type: 'recipe_like',
-          actor_id: userId,
-          actor_username: actor?.username ?? undefined,
-          recipe_id: recipeId,
-          recipe_title: recipe.title ?? undefined,
-          message: 'liked your recipe',
-        });
-      }
-    } catch {} // notification failure should not block the like
     return true; // liked
   }
 }

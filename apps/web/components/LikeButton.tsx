@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase, toggleLike, isLiked, getLikers } from '@chefsbook/db';
+import { supabase, isLiked, getLikers } from '@chefsbook/db';
 import Link from 'next/link';
 
 interface Props {
@@ -14,6 +14,7 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState(initial);
   const [userId, setUserId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [showLikers, setShowLikers] = useState(false);
   const [likers, setLikers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
 
@@ -23,6 +24,7 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
     supabase.auth.getSession().then(({ data }) => {
       const uid = data.session?.user?.id ?? null;
       setUserId(uid);
+      setToken(data.session?.access_token ?? null);
       if (uid) isLiked(recipeId, uid).then(setLiked);
     });
   }, [recipeId]);
@@ -30,11 +32,26 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
   useEffect(() => { setCount(initial); }, [initial]);
 
   const handleToggle = async () => {
-    if (!userId) return;
-    const newLiked = !liked;
-    setLiked(newLiked);
-    setCount((c) => c + (newLiked ? 1 : -1));
-    await toggleLike(recipeId, userId);
+    if (!userId || !token) return;
+    // Optimistic update
+    const prevLiked = liked;
+    const prevCount = count;
+    setLiked(!liked);
+    setCount(c => c + (liked ? -1 : 1));
+    try {
+      const res = await fetch(`/api/recipe/${recipeId}/like`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Like failed');
+      const data = await res.json();
+      setLiked(data.liked);
+      setCount(data.like_count);
+    } catch {
+      // Revert on error
+      setLiked(prevLiked);
+      setCount(prevCount);
+    }
   };
 
   const handleShowLikers = async () => {
