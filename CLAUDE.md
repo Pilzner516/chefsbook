@@ -309,11 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (124 — 2026-04-13)
-- Like notifications moved to server-side /api/recipe/[id]/like route (supabaseAdmin undefined client-side)
-- LikeButton calls API route with JWT; optimistic UI with revert
-- toggleLike() in packages/db cleaned up (no supabaseAdmin)
-- Verified end-to-end: like → notification row, unlike → no notification
+## Last session (125 — 2026-04-13)
+- Messages thread header: role pill from admin_users (Super Admin/Admin/Proctor/Member)
+- "User" → "Member" in admin users page ROLE_STYLES
 - Deployed to RPi5
 
 ## Next session

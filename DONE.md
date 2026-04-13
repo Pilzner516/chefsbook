@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 125)
+- Messages thread header: role pill (Super Admin red, Admin orange, Proctor blue, Member grey) sourced from admin_users via supabaseAdmin
+- ConversationPreview type extended with other_role field; getConversationList() fetches admin_users roles
+- Admin users page: ROLE_STYLES.user label renamed from "User" to "Member" (DB values unchanged)
+- Searched entire web app for role display labels — only ROLE_STYLES.user was affected
+- Feature registry updated (direct messages entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online, /dashboard/messages returns 200
+
 ## 2026-04-13 (session 124)
 - Root cause confirmed: supabaseAdmin undefined client-side (SUPABASE_SERVICE_ROLE_KEY not exposed to browser; catch {} swallowed error)
 - Created /api/recipe/[id]/like server-side route — toggles like + creates notification via supabaseAdmin
