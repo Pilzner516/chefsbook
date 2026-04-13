@@ -28,8 +28,8 @@
 ## ONBOARDING
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Onboarding bubbles (6 pages) | LIVE | apps/web/components/OnboardingBubble.tsx, useOnboarding hook | 75 | @floating-ui/react; tracks seen pages per user |
-| Help Tips toggle in settings | LIVE | apps/web/dashboard/settings | 75 | Enable/disable + reset seen pages |
+| Onboarding bubbles (6 pages) | LIVE | apps/web/components/OnboardingBubble.tsx, useOnboarding hook | 75, 114 | @floating-ui/react; tracks seen pages per user; auto-skips missing targets |
+| Help Tips toggle in settings | LIVE | apps/web/dashboard/settings | 75, 114 | Proper ON/OFF switch (red/grey); enable/disable + reset seen pages |
 | Onboarding overlay in layout | LIVE | apps/web/app/dashboard/layout.tsx | 75 | OnboardingOverlay component |
 
 ---
@@ -47,7 +47,7 @@
 | Recipe moderation (AI) | LIVE | packages/ai (moderateRecipe) | 41 | Runs on every import + edit |
 | Frozen account banner | LIVE | apps/web/dashboard/layout.tsx, apps/mobile/_layout.tsx | 41 | |
 | Recipe tags (add/remove/AI suggest) | LIVE | apps/mobile/app/recipe/, apps/web | 04 | |
-| Recipe translation (5 languages) | LIVE | packages/ai (translateRecipe), recipe_translations table | 12 | Cached per recipe+language |
+| Recipe translation (5 languages) | LIVE | packages/ai (translateRecipe), /api/recipes/translate, recipe_translations table | 12, 114 | Cached per recipe+language; web uses server-side API route (CORS); mobile calls AI directly |
 | Recipe likes + like count | LIVE | packages/db, recipe_likes table, trigger | 30 | Optimistic UI |
 | Recipe comments (threaded) | LIVE | packages/db, recipe_comments table | 30, 86, 112 | Unlimited depth; level 3+ collapsed behind expand button; engagement sort (reply+like count DESC) |
 | Comment likes | LIVE | comment_likes table, packages/db (toggleCommentLike) | 112 | Heart icon per comment, optimistic toggle, plan gate (Chef+); like_count on recipe_comments via trigger |
