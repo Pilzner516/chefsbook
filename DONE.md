@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 115)
+- Fix: Meal plan date timezone bug — formatDate() used toISOString() (UTC), causing date to roll forward in evening hours; replaced with local date formatting in MealPlanPicker (web + mobile), plan page (web + mobile), and mealPlanStore
+- Root cause diagnosed via psql: inserts were happening but dates shifted by UTC conversion
+- Fix: Consolidated store list formatting — web now uses same shop-item-grid CSS class as individual lists (responsive 5/6-column layout)
+- Fix: Consolidated list view mode toggle (Dept/Recipe/A-Z) added to both web and mobile
+- Fix: Mobile consolidated list now has font size toggle and "in recipe" usage text matching individual list format
+- Feature registry updated (MealPlanPicker timezone fix, consolidated list formatting)
+- tsc --noEmit passes both apps (mobile has pre-existing auth/expo-file-system errors only)
+- Deployed to RPi5 — build succeeded, plan + shop pages return 200
+
 ## 2026-04-13 (session 114)
 - Fix: Onboarding bubbles not showing — added missing data-onboard="logo" to Sidebar ChefsBook link (first bubble target was unanchored)
 - Fix: OnboardingOverlay auto-skips bubbles whose DOM target doesn't exist (prevents sequence from blocking on missing elements)

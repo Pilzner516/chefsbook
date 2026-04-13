@@ -309,16 +309,13 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (114 — 2026-04-13)
-- Fix: Onboarding bubbles not showing (missing data-onboard="logo", auto-skip for missing targets)
-- Fix: Settings Help Tips toggle replaced with proper ON/OFF switch
-- Fix: Recipe content translation on web (created /api/recipes/translate server-side route)
+## Last session (115 — 2026-04-13)
+- Fix: Meal plan date timezone bug — formatDate() used toISOString() (UTC) causing evening date shift
+- Fix: Consolidated store list formatting — matches individual list layout (shop-item-grid CSS)
+- Added view mode toggle + font size toggle to consolidated list (web + mobile)
 - Deployed to RPi5
 
 ## Next session
-- Test onboarding bubbles in browser (login, navigate to dashboard, verify bubbles appear)
-- Test recipe translation end-to-end (change language to French, open a recipe, verify content translates)
-- Add remaining data-onboard attributes on scan/shop/plan pages for full bubble coverage
 - AI impersonation flagging for usernames at signup (Feature 1 remaining item)
 - Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes
