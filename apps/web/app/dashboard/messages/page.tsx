@@ -32,6 +32,30 @@ export default function MessagesPage() {
     });
   }, []);
 
+  // Realtime subscription for incoming messages
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel('dm-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${userId}`,
+      }, (payload: any) => {
+        const newMsg = payload.new as DirectMessage;
+        // If the open conversation matches, append the message
+        if (selected && newMsg.sender_id === selected.other_user_id) {
+          setMessages((prev) => [...prev, newMsg]);
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
+        // Update conversation list
+        getConversationList(userId).then(setConvos);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, selected?.other_user_id]);
+
   const openConvo = async (convo: ConversationPreview) => {
     if (!userId) return;
     setSelected(convo);
@@ -135,9 +159,15 @@ export default function MessagesPage() {
               {messages.map((msg) => {
                 const isMine = msg.sender_id === userId;
                 return (
-                  <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} group`}>
+                  <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} group gap-2`}>
+                    {/* Avatar for received messages */}
+                    {!isMine && (
+                      <div className="w-7 h-7 rounded-full bg-cb-primary text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-1">
+                        {(selected.other_display_name ?? selected.other_username ?? '?').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMine ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-text border border-cb-border'}`}>
-                      <p className="text-sm">{msg.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`text-[10px] ${isMine ? 'text-white/60' : 'text-cb-muted'}`}>{timeAgo(msg.created_at)}</span>
                         {!isMine && (
@@ -163,14 +193,17 @@ export default function MessagesPage() {
 
             {/* Compose */}
             <div className="p-3 border-t border-cb-border bg-cb-card">
-              <div className="flex gap-2">
-                <input
+              <div className="flex gap-2 items-end">
+                <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, 1000))}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                   placeholder="Type a message..."
                   maxLength={1000}
-                  className="flex-1 bg-cb-bg border border-cb-border rounded-full px-4 py-2 text-sm outline-none focus:border-cb-primary"
+                  rows={1}
+                  className="flex-1 bg-cb-bg border border-cb-border rounded-2xl px-4 py-2 text-sm outline-none focus:border-cb-primary resize-none max-h-32"
+                  style={{ height: 'auto', minHeight: '36px' }}
+                  onInput={(e) => { const t = e.currentTarget; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 128) + 'px'; }}
                 />
                 <button
                   onClick={handleSend}
