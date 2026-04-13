@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   fr: 'French',
@@ -70,4 +70,20 @@ ${JSON.stringify({
 
   const raw = await callClaude({ prompt, maxTokens: 4000 });
   return extractJSON<TranslatedRecipe>(raw);
+}
+
+/**
+ * Translates only the recipe title into all 4 non-English languages in a single HAIKU call.
+ * Cost: ~$0.0002 per recipe total.
+ */
+export async function translateRecipeTitle(
+  title: string,
+): Promise<Record<string, string>> {
+  const prompt = `Translate this recipe title into French, Spanish, Italian, and German.
+Return ONLY a JSON object with keys fr, es, it, de and the translated titles as values. No other text.
+
+Title: "${title}"`;
+
+  const raw = await callClaude({ prompt, maxTokens: 200, model: HAIKU });
+  return extractJSON<Record<string, string>>(raw);
 }

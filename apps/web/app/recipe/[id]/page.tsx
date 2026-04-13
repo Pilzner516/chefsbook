@@ -131,7 +131,8 @@ export default function RecipePage() {
     (async () => {
       const cached = await getRecipeTranslation(recipe.id, userLanguage);
       if (cancelled) return;
-      if (cached) { setTranslation(cached); return; }
+      if (cached && !cached.is_title_only) { setTranslation(cached); return; }
+      // Title-only translation — show the title but still trigger full translation
       setTranslating(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -147,14 +148,19 @@ export default function RecipePage() {
         const res = await fetch('/api/recipes/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ recipe: recipePayload, targetLanguage: userLanguage }),
+          body: JSON.stringify({ recipe: recipePayload, recipeId: recipe.id, targetLanguage: userLanguage }),
         });
         if (!res.ok) throw new Error(`Translation API returned ${res.status}`);
         const result = await res.json();
         if (cancelled) return;
-        await saveRecipeTranslation(recipe.id, userLanguage, { title: result.title, description: result.description, ingredients: result.ingredients, steps: result.steps, notes: result.notes });
-        const saved = await getRecipeTranslation(recipe.id, userLanguage);
-        if (!cancelled) setTranslation(saved);
+        // Server-side route already saves the full translation to DB
+        setTranslation({
+          id: '', recipe_id: recipe.id, language: userLanguage,
+          translated_title: result.title, translated_description: result.description,
+          translated_ingredients: result.ingredients, translated_steps: result.steps,
+          translated_notes: result.notes, is_title_only: false,
+          created_at: '', updated_at: '',
+        } as any);
       } catch (err) { console.warn('[RecipePage] Translation failed:', err); }
       finally { if (!cancelled) setTranslating(false); }
     })();
@@ -841,9 +847,10 @@ export default function RecipePage() {
                   {displayTitle}
                 </h1>
                 {translating && (
-                  <span className="inline-flex items-center gap-1.5 bg-cb-primary/10 text-cb-primary text-xs font-semibold px-2.5 py-1 rounded-full animate-pulse">
-                    Translating…
-                  </span>
+                  <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium px-4 py-2 rounded-card">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    Hang tight — we're translating this recipe for you...
+                  </div>
                 )}
                 {recipe.visibility === 'private' && (
                   <span className="bg-red-500 text-white text-[11px] font-mono font-bold px-2 py-0.5 rounded-full tracking-wider">PRIVATE</span>

@@ -3,9 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase, listRecipes, deleteRecipe, toggleFavourite, getRecipe, listShoppingLists, getPrimaryPhotos } from '@chefsbook/db';
+import { supabase, listRecipes, deleteRecipe, toggleFavourite, getRecipe, listShoppingLists, getPrimaryPhotos, getBatchTranslatedTitles } from '@chefsbook/db';
 import type { Recipe, ShoppingList } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
+import { useTranslation } from 'react-i18next';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import FeedbackCard from '@/components/FeedbackCard';
@@ -25,8 +26,10 @@ function getStoredSort(): SortKey {
 }
 
 export default function DashboardPage() {
+  const { i18n } = useTranslation();
   const [confirm, ConfirmDialog] = useConfirmDialog();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -63,6 +66,11 @@ export default function DashboardPage() {
       setRecipes(data);
       if (data.length > 0) {
         getPrimaryPhotos(data.map((r) => r.id)).then(setPrimaryPhotos);
+        // Fetch translated titles if language is not English
+        const lang = i18n.language;
+        if (lang && lang !== 'en') {
+          getBatchTranslatedTitles(data.map((r) => r.id), lang).then(setTranslatedTitles);
+        }
       }
       if (!userInfo) {
         const { data: profile } = await supabase.from('user_profiles').select('username').eq('id', user.id).single();
@@ -419,7 +427,7 @@ export default function DashboardPage() {
                     {recipe.visibility === 'private' && <div className="absolute top-2 right-2 bg-white/80 rounded-full p-0.5"><svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg></div>}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold mb-1.5 group-hover:text-cb-primary transition-colors">{recipe.title}</h3>
+                    <h3 className="font-semibold mb-1.5 group-hover:text-cb-primary transition-colors">{translatedTitles[recipe.id] ?? recipe.title}</h3>
                     {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
                       <p className="text-[11px] text-cb-muted mb-1">by @{recipe.original_submitter_username}</p>
                     )}
@@ -457,7 +465,7 @@ export default function DashboardPage() {
                 {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-6 h-6 rounded-full bg-red-600/90 flex items-center justify-center"><svg className="w-3 h-3 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm group-hover:text-cb-primary transition-colors truncate">{recipe.title}</p>
+                <p className="font-semibold text-sm group-hover:text-cb-primary transition-colors truncate">{translatedTitles[recipe.id] ?? recipe.title}</p>
                 {recipe.original_submitter_username && recipe.original_submitter_id !== recipe.user_id && (
                   <p className="text-[10px] text-cb-muted">by @{recipe.original_submitter_username}</p>
                 )}
@@ -512,7 +520,7 @@ export default function DashboardPage() {
                       {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt="" className="w-8 h-8 rounded object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 rounded object-contain opacity-30" />; })()}
                     </Link>
                   </td>
-                  <td className="px-3 py-1.5"><Link href={`/recipe/${recipe.id}`} className="font-medium hover:text-cb-primary">{recipe.title}</Link></td>
+                  <td className="px-3 py-1.5"><Link href={`/recipe/${recipe.id}`} className="font-medium hover:text-cb-primary">{translatedTitles[recipe.id] ?? recipe.title}</Link></td>
                   <td className="px-3 py-1.5 text-cb-secondary text-xs">{recipe.cuisine ?? '-'}</td>
                   <td className="px-3 py-1.5 text-cb-secondary text-xs">{recipe.course ?? '-'}</td>
                   <td className="px-3 py-1.5 text-cb-secondary text-xs">{recipe.total_minutes ? formatDuration(recipe.total_minutes) : '-'}</td>

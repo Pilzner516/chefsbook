@@ -1,4 +1,4 @@
-import { createRecipe, updateRecipe, freezeUserRecipes } from '@chefsbook/db';
+import { createRecipe, updateRecipe, freezeUserRecipes, supabase } from '@chefsbook/db';
 import type { RecipeWithDetails, ScannedRecipe, Recipe } from '@chefsbook/db';
 import { moderateRecipe } from '@chefsbook/ai';
 import type { RecipeModerationResult } from '@chefsbook/ai';
@@ -20,6 +20,19 @@ export async function createRecipeWithModeration(
   },
 ): Promise<SaveResult> {
   const created = await createRecipe(userId, recipe);
+
+  // Fire-and-forget: translate recipe title into 4 languages via server-side route
+  if (recipe.title) {
+    supabase.auth.getSession().then(({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
+      fetch('/api/recipes/translate-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ recipeId: created.id, title: recipe.title }),
+      }).catch(() => {});
+    }).catch(() => {});
+  }
 
   let moderation: RecipeModerationResult = { verdict: 'clean' };
   try {
