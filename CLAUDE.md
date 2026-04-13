@@ -309,15 +309,14 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (118 — 2026-04-13)
-- Replaced chef hat image with new CBHat.png asset across web + mobile
-- Mobile RecipeImage updated to use assets/images/chefs-hat.png (was icon.png)
-- Verified object-fit: contain at all hat usage points
+## Last session (119 — 2026-04-13)
+- Fix: Admin DM RLS bug — sendMessage() accepts optional client param; admin uses supabaseAdmin
+- Fix: reply_count trigger SECURITY DEFINER — cross-user reply counts now work
+- Pilzner account: diagnosed healthy, login verified (a@aol.com kept)
+- Both fixes verified on live RPi5 with authenticated API calls
 - Deployed to RPi5
 
 ## Next session
-- Fix admin DM: use supabaseAdmin in sendMessage or pass client param
-- Fix reply_count trigger: ALTER FUNCTION update_reply_count() SECURITY DEFINER
 - AI impersonation flagging for usernames at signup
 - Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes
@@ -326,8 +325,6 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 ## Known issues
 
 - No test suite (unit or integration)
-- **Admin DM broken**: `sendMessage()` in `packages/db/src/queries/messages.ts` uses `supabase` (anon client) — RLS blocks insert in server context where `auth.uid()` is null. Fix: use `supabaseAdmin` for admin-initiated messages.
-- **reply_count trigger not SECURITY DEFINER**: `update_reply_count()` runs as inserting user — RLS blocks UPDATE on parent comment owned by different user. Fix: `ALTER FUNCTION update_reply_count() SECURITY DEFINER;`
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
 - Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)

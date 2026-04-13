@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 119)
+- Fix: Admin DM RLS bug — sendMessage() now accepts optional client param; admin route passes supabaseAdmin to bypass RLS
+- Fix: reply_count trigger — ALTER FUNCTION update_reply_count() SECURITY DEFINER; cross-user reply counts now work
+- Fixed 2 stale reply_count values via bulk recalculation
+- Pilzner account diagnosed: auth state healthy, login verified working (a@aol.com kept per user request)
+- Admin DM verified: POST /api/admin sendMessage → {"ok":true}, message confirmed in direct_messages table
+- reply_count trigger verified: seblux reply to pilzner comment incremented reply_count 0→1
+- Known issues updated: removed both fixed bugs from CLAUDE.md
+- Feature registry updated (direct messages entry)
+- Deployed to RPi5 — build succeeded, PM2 online, all pages 200
+
 ## 2026-04-13 (session 118)
 - Replaced chef hat image with new CBHat.png (1088x1088 RGBA) across web + mobile
 - Web: chefs-hat.png + chefs-hat-hd.png replaced in apps/web/public/images/
