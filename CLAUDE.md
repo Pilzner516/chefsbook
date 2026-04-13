@@ -309,11 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (119 — 2026-04-13)
-- Fix: Admin DM RLS bug — sendMessage() accepts optional client param; admin uses supabaseAdmin
-- Fix: reply_count trigger SECURITY DEFINER — cross-user reply counts now work
-- Pilzner account: diagnosed healthy, login verified (a@aol.com kept)
-- Both fixes verified on live RPi5 with authenticated API calls
+## Last session (120 — 2026-04-13)
+- Onboarding: scroll to target, 2 new pages (cookbooks/techniques), 8 data-onboard attrs, dismiss UX fix
+- createNotification() switched to supabaseAdmin (RLS was blocking authenticated inserts)
 - Deployed to RPi5
 
 ## Next session

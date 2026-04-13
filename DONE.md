@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 120)
+- Fix: Onboarding bubbles scroll to target before positioning (scrollIntoView smooth/center)
+- Added 2 new onboarding pages: cookbooks + techniques (content + layout pageMap)
+- Added 8 data-onboard attributes: scan (scan, url, speak), plan (week-nav, add-meal), shop (store-group), cookbooks (cookbooks-list), techniques (techniques-list)
+- Fix: Dismiss UX clarified — "Got it" advances per-page, "Turn off tips" disables globally, removed intermediate confirm dialog
+- Fix: createNotification() now uses supabaseAdmin (bypasses RLS — notifications are system-level inserts for another user)
+- Diagnosed notification RLS issue: authenticated role INSERT blocked by supautils despite WITH CHECK (true) policy; supabaseAdmin required
+- Messages inbox verified working — DM visible to seblux via RLS (was tested before session 119 fix deployed)
+- Feature registry updated (onboarding bubbles 8 pages, comment notifications supabaseAdmin)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online, all pages 200
+
 ## 2026-04-13 (session 119)
 - Fix: Admin DM RLS bug — sendMessage() now accepts optional client param; admin route passes supabaseAdmin to bypass RLS
 - Fix: reply_count trigger — ALTER FUNCTION update_reply_count() SECURITY DEFINER; cross-user reply counts now work
