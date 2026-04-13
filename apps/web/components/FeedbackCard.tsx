@@ -48,7 +48,7 @@ export default function FeedbackCard({ userId, username, email }: Props) {
         onClick={() => setOpen(true)}
         className="bg-[#faf7f0] border border-cb-primary rounded-card p-5 text-center hover:shadow-md transition-shadow flex flex-col items-center justify-center h-full min-h-[200px]"
       >
-        <img src="/images/chefs-hat.png" alt="" className="w-16 h-16 object-contain mb-3" />
+        <img src="/images/chefs-hat-2.png" alt="" className="w-16 h-16 object-contain mb-3" />
         <h3 className="text-base font-bold text-cb-text">Got an Idea for Us?</h3>
         <p className="text-[13px] text-cb-secondary mt-1">We&apos;d love to hear from you</p>
         <span className="mt-3 inline-block bg-cb-primary text-white text-xs font-semibold px-4 py-1.5 rounded-full">Message us</span>
@@ -64,7 +64,7 @@ export default function FeedbackCard({ userId, username, email }: Props) {
             </div>
 
             <div className="flex justify-center mb-4">
-              <img src="/images/chefs-hat.png" alt="" className="w-16 h-16 object-contain opacity-70" />
+              <img src="/images/chefs-hat-2.png" alt="" className="w-16 h-16 object-contain" />
             </div>
 
             <p className="text-sm text-cb-secondary text-center mb-4">
