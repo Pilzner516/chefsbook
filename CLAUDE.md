@@ -309,8 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (121 — 2026-04-13)
-- Messages chat UI: avatars on received, multiline textarea, Supabase Realtime for incoming
+## Last session (122 — 2026-04-13)
+- Bell pill → notification panel (not messages page); sidebar "Messages" for DMs
+- "View Profile" link on follower notifications
 - Deployed to RPi5
 
 ## Next session

@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 122)
+- Fix: Bell pill in dashboard header now opens NotificationBell slide-in panel (was navigating to /dashboard/messages)
+- Sidebar "Messages" link remains for DM navigation — two systems visually and functionally distinct
+- NotificationBell panel: 5 tabs (All/Comments/Likes/Followers/Moderation), unread badge from notifications table
+- Added "View Profile →" link on new_follower notifications (was missing — only recipe links existed)
+- Removed unused unreadMessages state from dashboard page
+- Feature registry updated (dashboard header entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online, /dashboard returns 200
+
 ## 2026-04-13 (session 121)
 - Messages chat UI polish: avatar initials on received messages (left side of bubble)
 - Compose area switched from single-line input to auto-resizing multiline textarea
