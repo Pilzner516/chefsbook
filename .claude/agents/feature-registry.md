@@ -1,5 +1,5 @@
 # ChefsBook Feature Registry
-# Updated: 2026-04-12
+# Updated: 2026-04-13
 # Purpose: Read this before modifying ANY existing feature.
 #           Update this before running /wrapup on ANY session.
 #
@@ -49,9 +49,12 @@
 | Recipe tags (add/remove/AI suggest) | LIVE | apps/mobile/app/recipe/, apps/web | 04 | |
 | Recipe translation (5 languages) | LIVE | packages/ai (translateRecipe), recipe_translations table | 12 | Cached per recipe+language |
 | Recipe likes + like count | LIVE | packages/db, recipe_likes table, trigger | 30 | Optimistic UI |
-| Recipe comments (threaded) | LIVE | packages/db, recipe_comments table | 30, 86 | 1-level threading, inline reply; shows on ALL recipes (not just public) |
+| Recipe comments (threaded) | LIVE | packages/db, recipe_comments table | 30, 86, 112 | Unlimited depth; level 3+ collapsed behind expand button; engagement sort (reply+like count DESC) |
+| Comment likes | LIVE | comment_likes table, packages/db (toggleCommentLike) | 112 | Heart icon per comment, optimistic toggle, plan gate (Chef+); like_count on recipe_comments via trigger |
 | Comment moderation (AI) | LIVE | packages/ai (moderateComment) | 30 | 3 verdicts; CORS fails on web — try/catch |
 | Comment flagging | LIVE | comment_flags table | 30 | 3+ flags auto-escalate |
+| Comment notifications | LIVE | packages/db (createNotification), RecipeComments components | 112 | recipe_comment for owner, comment_reply for parent commenter |
+| Comment username links | LIVE | RecipeComments (web → /u/[username], mobile → /chef/[user_id]) | 112 | Web was 404 (linked by user_id); fixed to use username |
 | Attribution (original_submitter locked) | LIVE | packages/db, recipe detail | 31 | Never changes |
 | Attribution (shared_by removable) | LIVE | packages/db | 31 | User-removable |
 | Attribution pill on recipe detail | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 72,99 | Shows user/cookbook/URL; backfill applied session 99 for pre-session-31 recipes |
