@@ -309,17 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (116 — 2026-04-13)
-- Migration 034: import_site_tracker table + auto-tracking on URL import
-- /admin/import-sites: new page (filter pills, edit modal, status auto-calc)
-- /admin/recipes: info tooltip, ChefsDialog confirmations, approve unfreezes + notifies, search by username
-- /admin/flags: rewritten to query comment_flags (was broken), approve/remove actions
-- /admin/messages: now includes user-flagged messages via message_flags
-- /admin/reserved-usernames: user search dropdown, AI-flagged usernames section
-- Deployed to RPi5
+## Last session (117 — 2026-04-13)
+- Verification sweep: 10 features tested on live RPi5
+- 5 PASS, 1 partial PASS, 3 cannot test (browser-only), 1 FAIL
+- FAIL: Admin DM — sendMessage() uses wrong client (supabase not supabaseAdmin)
+- BUG: reply_count trigger not SECURITY DEFINER — RLS blocks cross-user updates
 
 ## Next session
-- AI impersonation flagging for usernames at signup (Feature 1 remaining item)
+- Fix admin DM: use supabaseAdmin in sendMessage or pass client param
+- Fix reply_count trigger: ALTER FUNCTION update_reply_count() SECURITY DEFINER
+- AI impersonation flagging for usernames at signup
 - Mobile messages screen (full conversation UI)
 - Rebuild APK with latest changes
 - Chrome Web Store submission for extension
@@ -327,6 +326,8 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 ## Known issues
 
 - No test suite (unit or integration)
+- **Admin DM broken**: `sendMessage()` in `packages/db/src/queries/messages.ts` uses `supabase` (anon client) — RLS blocks insert in server context where `auth.uid()` is null. Fix: use `supabaseAdmin` for admin-initiated messages.
+- **reply_count trigger not SECURITY DEFINER**: `update_reply_count()` runs as inserting user — RLS blocks UPDATE on parent comment owned by different user. Fix: `ALTER FUNCTION update_reply_count() SECURITY DEFINER;`
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
 - Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)

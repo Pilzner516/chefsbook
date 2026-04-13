@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 117 — verification sweep)
+- Verification sweep: 10 features tested on live RPi5 via authenticated API calls + psql
+- PASS: Comments level-3 depth — reply to reply saves with correct parent_id chain
+- PASS: Username links in comments — /u/pilzner and /u/seblux both return HTTP 200
+- PASS: Comment likes — insert into comment_likes triggers like_count increment via SECURITY DEFINER trigger
+- PASS: Meal plan correct day — insert with local date 2026-04-13 stores and queries correctly
+- PASS: Savers modal — two-step supabaseAdmin query returns saver profile without error
+- PASS (partial): Recipe translation — /api/recipes/translate route live, authenticates, validates; skipped live Claude call
+- CANNOT TEST (3): Comment notifications, onboarding bubbles, help tips toggle — require browser interaction
+- FAIL: Admin DM — sendMessage() uses supabase (anon) instead of supabaseAdmin; RLS blocks insert (auth.uid() is null in server context)
+- BUG FOUND: reply_count trigger not SECURITY DEFINER — RLS blocks parent comment UPDATE when different user replies
+- All test data cleaned up after sweep
+
 ## 2026-04-13 (session 116)
 - Migration 034: import_site_tracker table + seriouseats.com seed entry
 - /admin/import-sites: new page with filter pills (All/Working/Partial/Broken/Unknown), edit modal for status + known issue, mark as reviewed
