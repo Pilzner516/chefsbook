@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 126)
+- Created /dashboard/chef/[username] profile page inside dashboard layout (sidebar visible)
+- Updated 7 files: all internal authenticated links changed from /u/[username] to /dashboard/chef/[username] (RecipeComments, NotificationBell, LikeButton, FollowTabs, messages header, recipe detail attribution + savers)
+- Public /u/[username] and /chef/[username] pages remain for external/SEO links
+- Verified /recipe/[id] already has sidebar via layout.tsx from session 111 — confirmed working in code
+- Admin page links kept at /u/ (correct — admin context, not dashboard)
+- Feature registry updated (comment username links entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, /dashboard/chef/pilzner and /dashboard/chef/seblux both return 200
+
 ## 2026-04-13 (session 125)
 - Messages thread header: role pill (Super Admin red, Admin orange, Proctor blue, Member grey) sourced from admin_users via supabaseAdmin
 - ConversationPreview type extended with other_role field; getConversationList() fetches admin_users roles

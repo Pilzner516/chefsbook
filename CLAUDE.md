@@ -309,9 +309,10 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (125 — 2026-04-13)
-- Messages thread header: role pill from admin_users (Super Admin/Admin/Proctor/Member)
-- "User" → "Member" in admin users page ROLE_STYLES
+## Last session (126 — 2026-04-13)
+- /dashboard/chef/[username] profile page with sidebar (internal navigation)
+- All internal links updated from /u/ to /dashboard/chef/ (7 files)
+- /recipe/[id] sidebar confirmed working from session 111
 - Deployed to RPi5
 
 ## Next session
