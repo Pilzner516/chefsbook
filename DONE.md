@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-13 (session 124)
+- Root cause confirmed: supabaseAdmin undefined client-side (SUPABASE_SERVICE_ROLE_KEY not exposed to browser; catch {} swallowed error)
+- Created /api/recipe/[id]/like server-side route — toggles like + creates notification via supabaseAdmin
+- LikeButton now calls API route with JWT auth instead of toggleLike() directly; optimistic UI preserved with revert on error
+- toggleLike() in packages/db cleaned up — back to simple insert/delete, no supabaseAdmin dependency
+- Verified end-to-end: POST /api/recipe/{id}/like → {"liked":true,"like_count":1} + notification row in DB
+- Verified unlike: no notification created on unlike, like_count correctly decremented to 0
+- Feature registry updated (recipe likes entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online
+
 ## 2026-04-13 (session 123)
 - Diagnosed: confirmed zero recipe_like notifications in DB; likes exist but no notification code ran
 - Fix: toggleLike() in packages/db now creates recipe_like notification via supabaseAdmin after like INSERT

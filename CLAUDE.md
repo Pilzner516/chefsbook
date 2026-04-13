@@ -309,9 +309,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (123 — 2026-04-13)
-- toggleLike() now creates recipe_like notification via supabaseAdmin
-- No notification on unlike or self-like
+## Last session (124 — 2026-04-13)
+- Like notifications moved to server-side /api/recipe/[id]/like route (supabaseAdmin undefined client-side)
+- LikeButton calls API route with JWT; optimistic UI with revert
+- toggleLike() in packages/db cleaned up (no supabaseAdmin)
+- Verified end-to-end: like → notification row, unlike → no notification
 - Deployed to RPi5
 
 ## Next session
