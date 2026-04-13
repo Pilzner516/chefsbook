@@ -33,7 +33,7 @@ export default function OnboardingBubble({
     setTargetEl(el);
   }, [target]);
 
-  const { refs, floatingStyles } = useFloating({
+  const { refs, floatingStyles, context } = useFloating({
     placement: position as Placement,
     elements: { reference: targetEl },
     middleware: [offset(12), flip(), shift({ padding: 16 }), arrow({ element: arrowRef })],
@@ -44,7 +44,7 @@ export default function OnboardingBubble({
   return (
     <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 9999 }} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="bg-white rounded-xl p-5 max-w-[320px] relative" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
-        <FloatingArrow ref={arrowRef} context={{ ...refs, elements: { reference: targetEl, floating: refs.floating.current } } as any} fill="white" />
+        <FloatingArrow ref={arrowRef} context={context} fill="white" />
 
         {showConfirm ? (
           /* Dismiss confirmation */
