@@ -48,7 +48,7 @@
 | Frozen account banner | LIVE | apps/web/dashboard/layout.tsx, apps/mobile/_layout.tsx | 41 | |
 | Recipe tags (add/remove/AI suggest) | LIVE | apps/mobile/app/recipe/, apps/web | 04 | |
 | Recipe translation (5 languages) | LIVE | packages/ai (translateRecipe), /api/recipes/translate, recipe_translations table | 12, 114 | Cached per recipe+language; web uses server-side API route (CORS); mobile calls AI directly |
-| Recipe likes + like count | LIVE | packages/db (toggleLike), recipe_likes table, trigger | 30, 123 | Optimistic UI; toggleLike creates recipe_like notification via supabaseAdmin (no self-like, no unlike notification) |
+| Recipe likes + like count | LIVE | /api/recipe/[id]/like (server), LikeButton.tsx (client), packages/db (toggleLike) | 30, 124 | Web uses server-side API route for like toggle + notification; optimistic UI with revert; notification via supabaseAdmin (no self-like, no unlike) |
 | Recipe comments (threaded) | LIVE | packages/db, recipe_comments table | 30, 86, 112 | Unlimited depth; level 3+ collapsed behind expand button; engagement sort (reply+like count DESC) |
 | Comment likes | LIVE | comment_likes table, packages/db (toggleCommentLike) | 112 | Heart icon per comment, optimistic toggle, plan gate (Chef+); like_count on recipe_comments via trigger |
 | Comment moderation (AI) | LIVE | packages/ai (moderateComment) | 30 | 3 verdicts; CORS fails on web — try/catch |
