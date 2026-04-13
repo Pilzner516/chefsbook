@@ -28,7 +28,7 @@
 ## ONBOARDING
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Onboarding bubbles (6 pages) | LIVE | apps/web/components/OnboardingBubble.tsx, useOnboarding hook | 75, 114 | @floating-ui/react; tracks seen pages per user; auto-skips missing targets |
+| Onboarding bubbles (8 pages) | LIVE | apps/web/components/OnboardingBubble.tsx, useOnboarding hook | 75, 114, 120 | @floating-ui/react; tracks seen pages per user; auto-skips missing targets; scrolls to target; "Got it" per-page / "Turn off tips" global |
 | Help Tips toggle in settings | LIVE | apps/web/dashboard/settings | 75, 114 | Proper ON/OFF switch (red/grey); enable/disable + reset seen pages |
 | Onboarding overlay in layout | LIVE | apps/web/app/dashboard/layout.tsx | 75 | OnboardingOverlay component |
 
@@ -53,7 +53,7 @@
 | Comment likes | LIVE | comment_likes table, packages/db (toggleCommentLike) | 112 | Heart icon per comment, optimistic toggle, plan gate (Chef+); like_count on recipe_comments via trigger |
 | Comment moderation (AI) | LIVE | packages/ai (moderateComment) | 30 | 3 verdicts; CORS fails on web — try/catch |
 | Comment flagging | LIVE | comment_flags table | 30 | 3+ flags auto-escalate |
-| Comment notifications | LIVE | packages/db (createNotification), RecipeComments components | 112 | recipe_comment for owner, comment_reply for parent commenter |
+| Comment notifications | LIVE | packages/db (createNotification via supabaseAdmin), RecipeComments components | 112, 120 | recipe_comment for owner, comment_reply for parent commenter; uses supabaseAdmin to bypass RLS |
 | Comment username links | LIVE | RecipeComments (web → /u/[username], mobile → /chef/[user_id]) | 112 | Web was 404 (linked by user_id); fixed to use username |
 | Attribution (original_submitter locked) | LIVE | packages/db, recipe detail | 31 | Never changes |
 | Attribution (shared_by removable) | LIVE | packages/db | 31 | User-removable |
