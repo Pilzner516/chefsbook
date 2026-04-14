@@ -138,8 +138,15 @@ export default function ScanPage() {
   const isYouTubeUrl = (u: string) =>
     /(?:youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/.test(u);
 
+  const isInstagramUrl = (u: string) =>
+    /instagram\.com\/(p|reel|tv)\//.test(u);
+
   const handleUrlImport = async () => {
     if (!url.trim()) return;
+    if (isInstagramUrl(url.trim())) {
+      setError('Instagram import is available on the mobile app. Open this link in the ChefsBook app instead.');
+      return;
+    }
     setLoading('url');
     setError('');
     try {
