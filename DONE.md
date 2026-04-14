@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 128)
+- Diagnosed 4 fixes: FIX 1 (savers modal) already fixed session 108, FIX 4 (admin DM) already fixed session 119
+- FIX 2: canLike added to PLAN_LIMITS (free=false, chef/family/pro=true)
+- FIX 2: /api/recipe/[id]/like returns 403 for free plan users; LikeButton shows upgrade dialog on 403
+- FIX 2: Upgrade dialog: "Upgrade to Like Recipes" with Upgrade + Maybe Later buttons
+- FIX 3: "Dashboard" link in recipe detail nav hidden for authenticated users (sidebar provides navigation)
+- Verified: pro user like returns {"liked":true,"like_count":1} (plan gate works)
+- Feature registry updated (recipe likes entry)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online
+
 ## 2026-04-13 (session 127)
 - Two-tier recipe translation system: title-only on import (HAIKU) + full on detail open (Sonnet)
 - Migration 034: is_title_only column on recipe_translations

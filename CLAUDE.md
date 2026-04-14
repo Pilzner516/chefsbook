@@ -309,13 +309,15 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (127 — 2026-04-13)
-- Two-tier recipe translation: title-only on import (HAIKU), full on detail open (Sonnet)
-- 268 title-only translations backfilled for 67 existing recipes
+## Last session (128 — 2026-04-14)
+- Free plan like gate: canLike in PLAN_LIMITS, API returns 403, upgrade dialog
+- Dashboard link hidden for auth users on recipe detail (sidebar suffices)
+- FIX 1 + FIX 4 already fixed in prior sessions
 - Deployed to RPi5
 
 ## Next session
 - AI impersonation flagging for usernames at signup
+- Mobile like plan gate (ChefsDialog upgrade prompt)
 - Mobile messages screen (full conversation UI)
 - Mobile recipe list: translated titles (same pattern as web)
 - Rebuild APK with latest changes
