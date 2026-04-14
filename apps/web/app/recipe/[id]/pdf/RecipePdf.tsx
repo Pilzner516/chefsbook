@@ -58,9 +58,10 @@ interface Props {
   imageBase64: string | null;
   originalSubmitter: string | null;
   sharedBy: string | null;
+  includeComments?: boolean;
 }
 
-export function RecipePdfDocument({ recipe, imageBase64, originalSubmitter, sharedBy }: Props) {
+export function RecipePdfDocument({ recipe, imageBase64, originalSubmitter, sharedBy, includeComments = true }: Props) {
   const metaParts: string[] = [];
   if (recipe.cuisine) metaParts.push(recipe.cuisine);
   if (recipe.course) metaParts.push(recipe.course);

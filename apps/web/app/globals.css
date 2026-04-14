@@ -26,6 +26,9 @@ body {
 
 /* ── Print styles ── */
 @media print {
+  /* User-toggled print exclusions */
+  .print-hide { display: none !important; }
+
   /* Hide navigation, controls, interactive elements */
   aside,
   nav,

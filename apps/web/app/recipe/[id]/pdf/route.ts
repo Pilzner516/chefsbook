@@ -63,16 +63,22 @@ export async function GET(
     return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
   }
 
+  // Read options from query params
+  const includeImage = request.nextUrl.searchParams.get('includeImage') !== 'false';
+  const includeComments = request.nextUrl.searchParams.get('includeComments') !== 'false';
+
   // Fetch primary photo (recipe_user_photos first, then image_url fallback)
   let imageBase64: string | null = null;
-  try {
-    const photos = await listRecipePhotos(id);
-    const photoUrl = photos.length > 0 ? photos[0].url : recipe.image_url;
-    if (photoUrl) {
-      imageBase64 = await fetchImageAsBase64(photoUrl);
+  if (includeImage) {
+    try {
+      const photos = await listRecipePhotos(id);
+      const photoUrl = photos.length > 0 ? photos[0].url : recipe.image_url;
+      if (photoUrl) {
+        imageBase64 = await fetchImageAsBase64(photoUrl);
+      }
+    } catch {
+      // Image fetch failure should not block PDF generation
     }
-  } catch {
-    // Image fetch failure should not block PDF generation
   }
 
   // Generate PDF
@@ -82,6 +88,7 @@ export async function GET(
       imageBase64,
       originalSubmitter: recipe.original_submitter_username ?? null,
       sharedBy: recipe.shared_by_username ?? null,
+      includeComments,
     }),
   );
 

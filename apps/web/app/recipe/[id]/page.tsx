@@ -72,6 +72,12 @@ export default function RecipePage() {
   const [showSocialShare, setShowSocialShare] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showMealPicker, setShowMealPicker] = useState(false);
+  const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [showPdfOptions, setShowPdfOptions] = useState(false);
+  const [printIncludeImage, setPrintIncludeImage] = useState(true);
+  const [printIncludeComments, setPrintIncludeComments] = useState(true);
+  const [pdfIncludeImage, setPdfIncludeImage] = useState(true);
+  const [pdfIncludeComments, setPdfIncludeComments] = useState(true);
   useEffect(() => { if (addConfirm) { const t = setTimeout(() => setAddConfirm(null), 4000); return () => clearTimeout(t); } }, [addConfirm]);
   const [saving, setSaving] = useState(false);
   const [cookingNotes, setCookingNotes] = useState<CookingNote[]>([]);
@@ -575,7 +581,7 @@ export default function RecipePage() {
             </Link>
           )}
           <button
-            onClick={() => window.print()}
+            onClick={() => { setPrintIncludeImage(true); setPrintIncludeComments(true); setShowPrintOptions(true); }}
             className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors print:hidden"
             title="Print recipe"
           >
@@ -618,39 +624,15 @@ export default function RecipePage() {
                   🔗 Copy link
                 </button>
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     setShowShareMenu(false);
                     if (!userIsPro) {
                       alert('PDF export requires the Pro plan. Upgrade in Settings.');
                       return;
                     }
-                    setDownloadingPdf(true);
-                    try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      if (!session?.access_token) { alert('Please sign in to download PDFs.'); return; }
-                      const res = await fetch(`/recipe/${recipe.id}/pdf`, {
-                        headers: { Authorization: `Bearer ${session.access_token}` },
-                      });
-                      if (!res.ok) {
-                        if (res.status === 403) alert('PDF export requires the Pro plan.');
-                        else alert('PDF generation failed. Please try again.');
-                        return;
-                      }
-                      const blob = await res.blob();
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      const safeTitle = recipe.title.replace(/[/\\?%*:|"<>]/g, '-');
-                      a.download = `ChefsBook - ${safeTitle}.pdf`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                    } catch {
-                      alert('PDF generation failed. Please try again.');
-                    } finally {
-                      setDownloadingPdf(false);
-                    }
+                    setPdfIncludeImage(true);
+                    setPdfIncludeComments(true);
+                    setShowPdfOptions(true);
                   }}
                   disabled={downloadingPdf}
                   className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''} ${downloadingPdf ? 'opacity-50' : ''}`}
@@ -718,7 +700,7 @@ export default function RecipePage() {
       </nav>
 
       {/* Hero: YouTube embed or image */}
-      <div className="max-w-4xl mx-auto px-6">
+      <div data-print-hero className="max-w-4xl mx-auto px-6">
         {recipe.youtube_video_id ? (
           <div className="aspect-video rounded-card overflow-hidden bg-black">
             <iframe
@@ -1619,7 +1601,7 @@ export default function RecipePage() {
 
       {/* Comments */}
       {recipe && (
-        <div className="max-w-3xl mx-auto px-4 mb-8">
+        <div data-print-comments className="max-w-3xl mx-auto px-4 mb-8">
           <RecipeComments recipeId={recipe.id} recipeOwnerId={recipe.user_id} recipeTitle={recipe.title} commentsEnabled={recipe.comments_enabled ?? true} />
         </div>
       )}
@@ -1690,6 +1672,104 @@ export default function RecipePage() {
               <a href="https://play.google.com/store/apps/details?id=com.chefsbook.app" className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors">
                 Download the app
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Print options modal */}
+      {showPrintOptions && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center print:hidden" onClick={() => setShowPrintOptions(false)}>
+          <div className="bg-cb-card rounded-card p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-cb-text mb-4">Print Options</h3>
+            <label className="flex items-center gap-3 mb-3 cursor-pointer">
+              <input type="checkbox" checked={printIncludeImage} onChange={(e) => setPrintIncludeImage(e.target.checked)} className="w-4 h-4 rounded accent-cb-primary" />
+              <span className="text-sm text-cb-text">Include recipe image</span>
+            </label>
+            <label className="flex items-center gap-3 mb-5 cursor-pointer">
+              <input type="checkbox" checked={printIncludeComments} onChange={(e) => setPrintIncludeComments(e.target.checked)} className="w-4 h-4 rounded accent-cb-primary" />
+              <span className="text-sm text-cb-text">Include comments</span>
+            </label>
+            <div className="flex gap-2">
+              <button onClick={() => setShowPrintOptions(false)} className="flex-1 py-2 rounded-input text-sm font-medium border border-cb-border text-cb-secondary hover:bg-cb-bg">Cancel</button>
+              <button
+                onClick={() => {
+                  setShowPrintOptions(false);
+                  // Apply CSS classes to hide sections
+                  if (!printIncludeImage) document.querySelector('[data-print-hero]')?.classList.add('print-hide');
+                  if (!printIncludeComments) document.querySelector('[data-print-comments]')?.classList.add('print-hide');
+                  setTimeout(() => {
+                    window.print();
+                    // Restore after print
+                    setTimeout(() => {
+                      document.querySelector('[data-print-hero]')?.classList.remove('print-hide');
+                      document.querySelector('[data-print-comments]')?.classList.remove('print-hide');
+                    }, 500);
+                  }, 100);
+                }}
+                className="flex-1 py-2 rounded-input text-sm font-semibold bg-cb-primary text-white hover:opacity-90"
+              >
+                Print
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF options modal */}
+      {showPdfOptions && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowPdfOptions(false)}>
+          <div className="bg-cb-card rounded-card p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-cb-text mb-4">PDF Options</h3>
+            <label className="flex items-center gap-3 mb-3 cursor-pointer">
+              <input type="checkbox" checked={pdfIncludeImage} onChange={(e) => setPdfIncludeImage(e.target.checked)} className="w-4 h-4 rounded accent-cb-primary" />
+              <span className="text-sm text-cb-text">Include recipe image</span>
+            </label>
+            <label className="flex items-center gap-3 mb-5 cursor-pointer">
+              <input type="checkbox" checked={pdfIncludeComments} onChange={(e) => setPdfIncludeComments(e.target.checked)} className="w-4 h-4 rounded accent-cb-primary" />
+              <span className="text-sm text-cb-text">Include comments</span>
+            </label>
+            <div className="flex gap-2">
+              <button onClick={() => setShowPdfOptions(false)} className="flex-1 py-2 rounded-input text-sm font-medium border border-cb-border text-cb-secondary hover:bg-cb-bg">Cancel</button>
+              <button
+                onClick={async () => {
+                  setShowPdfOptions(false);
+                  setDownloadingPdf(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.access_token) { alert('Please sign in to download PDFs.'); return; }
+                    const params = new URLSearchParams();
+                    if (!pdfIncludeImage) params.set('includeImage', 'false');
+                    if (!pdfIncludeComments) params.set('includeComments', 'false');
+                    const qs = params.toString() ? `?${params.toString()}` : '';
+                    const res = await fetch(`/recipe/${recipe.id}/pdf${qs}`, {
+                      headers: { Authorization: `Bearer ${session.access_token}` },
+                    });
+                    if (!res.ok) {
+                      if (res.status === 403) alert('PDF export requires the Pro plan.');
+                      else alert('PDF generation failed. Please try again.');
+                      return;
+                    }
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const safeTitle = recipe.title.replace(/[/\\?%*:|"<>]/g, '-');
+                    a.download = `ChefsBook - ${safeTitle}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  } catch {
+                    alert('PDF generation failed. Please try again.');
+                  } finally {
+                    setDownloadingPdf(false);
+                  }
+                }}
+                disabled={downloadingPdf}
+                className="flex-1 py-2 rounded-input text-sm font-semibold bg-cb-primary text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {downloadingPdf ? 'Generating...' : 'Generate PDF'}
+              </button>
             </div>
           </div>
         </div>
