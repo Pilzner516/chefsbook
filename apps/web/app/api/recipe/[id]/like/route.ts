@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin, PLAN_LIMITS } from '@chefsbook/db';
+import type { PlanTier } from '@chefsbook/db';
 
 export async function POST(
   req: NextRequest,
@@ -17,6 +18,17 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
+
+  // Plan gate: free users cannot like
+  const { data: profile } = await supabaseAdmin
+    .from('user_profiles')
+    .select('plan_tier')
+    .eq('id', userId)
+    .single();
+  const tier = (profile?.plan_tier ?? 'free') as PlanTier;
+  if (!(PLAN_LIMITS[tier] as any)?.canLike) {
+    return NextResponse.json({ error: 'Upgrade required', upgrade: true }, { status: 403 });
+  }
 
   // Toggle the like via supabaseAdmin (bypasses RLS)
   const { data: existing } = await supabaseAdmin

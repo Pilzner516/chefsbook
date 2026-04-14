@@ -16,6 +16,7 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
   const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [showLikers, setShowLikers] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [likers, setLikers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
 
   const isOwner = userId != null && userId === recipeOwnerId;
@@ -43,6 +44,13 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 403) {
+        // Free plan — revert and show upgrade prompt
+        setLiked(prevLiked);
+        setCount(prevCount);
+        setShowUpgrade(true);
+        return;
+      }
       if (!res.ok) throw new Error('Like failed');
       const data = await res.json();
       setLiked(data.liked);
@@ -107,6 +115,21 @@ export default function LikeButton({ recipeId, likeCount: initial, recipeOwnerId
                 </Link>
               ))}
               {likers.length === 0 && <p className="text-sm text-cb-muted text-center py-4">Loading...</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade prompt for free plan */}
+      {showUpgrade && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowUpgrade(false)}>
+          <div className="bg-cb-card rounded-card p-6 w-full max-w-sm shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-3xl mb-3">💎</div>
+            <h3 className="font-bold text-cb-text mb-2">Upgrade to Like Recipes</h3>
+            <p className="text-sm text-cb-secondary mb-5">Liking recipes is available on Chef plan and above. Upgrade to interact with the community.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setShowUpgrade(false)} className="flex-1 py-2 rounded-input text-sm font-medium border border-cb-border text-cb-secondary hover:bg-cb-bg">Maybe Later</button>
+              <Link href="/dashboard/plans" onClick={() => setShowUpgrade(false)} className="flex-1 py-2 rounded-input text-sm font-semibold bg-cb-primary text-white hover:opacity-90 text-center">Upgrade</Link>
             </div>
           </div>
         </div>

@@ -569,9 +569,11 @@ export default function RecipePage() {
           <span className="text-cb-primary">Chefs</span>book
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
-            Dashboard
-          </Link>
+          {!isLoggedIn && (
+            <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">
+              Dashboard
+            </Link>
+          )}
           <button
             onClick={() => window.print()}
             className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors print:hidden"
