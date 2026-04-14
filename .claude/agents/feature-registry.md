@@ -64,7 +64,7 @@
 | PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49, 129 | Plan gated; options modal before generate (include image/comments toggles); query params to PDF route |
 | Print recipe | LIVE | apps/web | 35, 129 | Options modal before print (include image/comments toggles); CSS print-hide class toggled via JS; @media print CSS |
 | Recipe saves count | LIVE | recipe_saves table, trigger | 03 | |
-| Save count display (bookmark icon) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97, 108 | Bookmark icon + count; savers modal uses supabaseAdmin (two-step query); proper pluralization |
+| Save count display (bookmark icon) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/, /api/recipe/[id]/savers | 97, 108, 132 | Bookmark icon + count; savers modal fetches via /api/recipe/[id]/savers (server-side supabaseAdmin); proper pluralization |
 | Cuisine dropdown (searchable) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97 | 31 cuisines from CUISINE_LIST; custom entry allowed |
 
 ---
@@ -209,7 +209,7 @@
 |---------|--------|-------------|---------|-------|
 | Trattoria theme (cream/red/green) | LIVE | tailwind.config.ts, ThemeContext | 01 | NEVER hardcode hex |
 | ChefsDialog (unified modal) | LIVE | apps/web/components/useConfirmDialog, apps/mobile/components/ChefsDialog | 47 | Replaces all native confirm/alert |
-| Image proxy /api/image | LIVE | apps/web/app/api/image/ | 24 | Proxies Supabase storage URLs with apikey |
+| Image proxy /api/image | LIVE | apps/web/app/api/image/ | 24, 132 | Allowlisted hosts only (RPi5, api.chefsbk.app, logo.dev, Pexels, Unsplash); returns 403 for others; adds apikey for Supabase URLs |
 | Chef's hat fallback | LIVE | RecipeImage component | 11 | Shows when no recipe image |
 | StoreAvatar (logo.dev) | LIVE | StoreAvatar component | 69 | Initials fallback with hash color |
 | i18n (web + mobile, 5 locales) | LIVE | apps/web/locales/, apps/mobile/locales/ | 08, 53 | react-i18next |
