@@ -309,16 +309,15 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (135 — 2026-04-14 — PAUSED)
-- Started mobile distribution blockers (prompt 130)
-- Paused at Blocker 1 waiting for user to provide keystore passwords + identity details
-- No code changes; Blockers 2-4 not started
+## Last session (135 — 2026-04-14)
+- Blocker 1: Release keystore + signing config wired (expires 2053)
+- Blocker 2: 12 hex colors migrated to useTheme().colors
+- Blocker 3: 2/3 TS errors fixed (3rd is upstream in expo-file-system)
+- Blocker 4: Sign-up screen wrapped in ScrollView for keyboard handling
+- Committed + pushed
 
 ## Next session
-- RESUME Blocker 1: generate release keystore (user supplies passwords + details)
-- Blocker 2: Fix 39+ hardcoded hex colors → useTheme().colors
-- Blocker 3: Fix 3 mobile TS errors
-- Blocker 4: Verify sign-up screen field visibility
+- Rebuild signed release APK (test end-to-end with new keystore)
 - Phase 2: Mobile notification list + message inbox + like plan gate
 - Phase 3: Translated titles in mobile recipe list
 - Configure ESLint for web app
@@ -326,8 +325,7 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 
 ## Known issues
 
-- **Mobile: 39+ hardcoded hex colors** — Must migrate to useTheme().colors before distribution (recipe/[id].tsx, _layout.tsx, plans.tsx, search.tsx, speak.tsx + others)
-- **Mobile: release signing uses debug keystore** — build.gradle signingConfig signingConfigs.debug for release; must configure production keystore
+- **Mobile: Android signing config is gitignored** — apps/mobile/android/ is in .gitignore (Expo pattern). The build.gradle release signing config is a local-only edit. After `expo prebuild --clean`, re-apply: signingConfigs.release block reading keystore.properties + swap `signingConfig signingConfigs.debug` → `signingConfig signingConfigs.release` in release buildType. Keystore file + keystore.properties must persist locally (both gitignored).
 - **Mobile: like button bypasses plan gate** — Calls toggleLike() directly instead of server API route; free users can like on mobile
 - **Mobile: no notification UI** — Web has 5-tab NotificationBell panel; mobile has nothing
 - **Mobile: no message inbox** — Can compose from profiles but no conversation list or thread view

@@ -1,13 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
-## 2026-04-14 (session 135 — paused)
-- Started session 130 (mobile distribution blockers)
-- Stopped at Blocker 1 as instructed — keystore passwords required before generating
-- Asked user how to handle keystore; user chose "Provide passwords + details here"
-- Awaiting user to supply: keystore password, key password, name, organization, city, country
-- No code changes made this session — waiting on blocking input from user
-- Blockers 2 (hex colors), 3 (TS errors), 4 (sign-up screen) not started
+## 2026-04-14 (session 135 — resumed + completed)
+- Blocker 1: Release keystore generated — chefsbook-release.keystore (RSA 2048, 10000-day validity, expires 2053-08-30)
+- keystore.properties created with passwords (gitignored); *.keystore + keystore.properties added to .gitignore
+- build.gradle: added signingConfigs.release block reading keystore.properties; release buildType now uses release signing when properties file exists
+- Keystore backup instructions documented in CLAUDE.md (1Password vault + external drive + encrypted cloud)
+- Blocker 2: Migrated 12 hardcoded hex colors to useTheme().colors across 6 files (ChefsDialog, FeedbackCard, HeroGallery, RecipeImage, _layout SuspendedNotice, plan.tsx)
+- Only remaining hex is StoreAvatar PALETTE array (intentional deterministic hash palette)
+- ~50 white-on-colored-background instances kept per CLAUDE.md rule
+- Blocker 3: Fixed 2 of 3 TS errors — signin.tsx + signup.tsx wrap in View inside SafeAreaView
+- 3rd error is in node_modules/expo-file-system (upstream, not fixable without suppression)
+- Blocker 4: Sign-up screen wrapped in ScrollView (keyboardShouldPersistTaps=handled, flexGrow:1, paddingBottom:40) so all fields accessible when keyboard open
+- Known issue: apps/mobile/android/ is gitignored — build.gradle signing config needs re-application after expo prebuild --clean
+- Committed + pushed (keystore + properties NOT committed — gitignored)
 
 ## 2026-04-14 (session 134)
 - FIX 1: Backfilled 15 missing recipe descriptions via Haiku (1-2 sentence each, ~$0.003 total)
