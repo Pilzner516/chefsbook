@@ -309,22 +309,28 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (128 — 2026-04-14)
-- Free plan like gate: canLike in PLAN_LIMITS, API returns 403, upgrade dialog
-- Dashboard link hidden for auth users on recipe detail (sidebar suffices)
-- FIX 1 + FIX 4 already fixed in prior sessions
-- Deployed to RPi5
+## Last session (129 — 2026-04-14)
+- Full project audit report (docs/AUDIT-REPORT-2026-04-14.md) — 8 sections, no fixes
+- Critical findings: plan_tier enum missing 'chef', image proxy open redirect, ESLint not configured
+- 15/69 recipes missing description, 3 mobile TS errors, web scan missing isInstagramUrl
 
 ## Next session
+- FIX CRITICAL: ALTER TYPE plan_tier ADD VALUE 'chef' BEFORE 'family'
+- FIX CRITICAL: Image proxy open redirect → return 403 instead of redirect
+- Configure ESLint for web app
 - AI impersonation flagging for usernames at signup
 - Mobile like plan gate (ChefsDialog upgrade prompt)
 - Mobile messages screen (full conversation UI)
 - Mobile recipe list: translated titles (same pattern as web)
 - Rebuild APK with latest changes
-- Chrome Web Store submission for extension
 
 ## Known issues
 
+- **CRITICAL: plan_tier enum missing 'chef'** — DB enum has free/pro/family only; code + plan_limits reference 'chef'. Fix: `ALTER TYPE plan_tier ADD VALUE 'chef' BEFORE 'family';`
+- **CRITICAL: Image proxy open redirect** — `/api/image` redirects non-Supabase URLs to any external URL. Fix: return 403 instead.
+- ESLint not configured for web app (no `.eslintrc.json`; `npm run lint` fails with interactive wizard)
+- 15/69 recipes have empty descriptions (violates import pipeline mandate)
+- Web scan page missing `isInstagramUrl` check (Instagram URLs go through standard URL import)
 - No test suite (unit or integration)
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
 - Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code

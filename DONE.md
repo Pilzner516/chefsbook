@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 129)
+- Full project audit report covering sessions 87-128 (8 sections: DB, feature registry, code quality, AI cost, import pipeline, security, known gaps, performance)
+- CRITICAL finding: plan_tier DB enum missing 'chef' value — blocks entire Chef tier ($4.99/mo)
+- CRITICAL finding: image proxy open redirect at /api/image (non-Supabase URLs redirected to any external URL)
+- Found: ESLint not configured (no .eslintrc.json), mobile has 3 TypeScript errors, 15/69 recipes missing description
+- Found: 8 AI functions missing from CLAUDE.md cost reference table; mergeShoppingList/suggestRecipes use Sonnet (could be Haiku)
+- Found: web scan page missing isInstagramUrl check; supabaseAdmin used directly in 2 admin server components
+- No fixes applied — audit only; report at docs/AUDIT-REPORT-2026-04-14.md
+
 ## 2026-04-14 (session 128)
 - Diagnosed 4 fixes: FIX 1 (savers modal) already fixed session 108, FIX 4 (admin DM) already fixed session 119
 - FIX 2: canLike added to PLAN_LIMITS (free=false, chef/family/pro=true)
