@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { toggleLike, isLiked, getLikers } from '@chefsbook/db';
+import ChefsDialog from './ChefsDialog';
 import { Avatar } from './UIKit';
 import { getInitials } from '@chefsbook/ui';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,10 +23,12 @@ export function LikeButton({ recipeId, likeCount: initialCount, isOwner }: Props
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
+  const planTier = useAuthStore((s) => s.planTier);
 
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState(initialCount);
   const [showLikers, setShowLikers] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [likers, setLikers] = useState<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }[]>([]);
 
   useEffect(() => {
@@ -38,6 +41,11 @@ export function LikeButton({ recipeId, likeCount: initialCount, isOwner }: Props
 
   const handleToggle = async () => {
     if (!session?.user?.id) return;
+    // Free plan cannot like — show upgrade prompt
+    if (planTier === 'free') {
+      setShowUpgrade(true);
+      return;
+    }
     const newLiked = !liked;
     setLiked(newLiked);
     setCount((c) => c + (newLiked ? 1 : -1));
@@ -94,6 +102,19 @@ export function LikeButton({ recipeId, likeCount: initialCount, isOwner }: Props
           </View>
         </View>
       </Modal>
+
+      {/* Upgrade prompt for free plan */}
+      <ChefsDialog
+        visible={showUpgrade}
+        icon="💎"
+        title="Upgrade to Like Recipes"
+        body="Liking recipes is available on Chef plan and above. Upgrade to interact with the community."
+        buttons={[
+          { label: 'Maybe Later', variant: 'cancel', onPress: () => setShowUpgrade(false) },
+          { label: 'Upgrade', variant: 'primary', onPress: () => { setShowUpgrade(false); router.push('/plans' as any); } },
+        ]}
+        onClose={() => setShowUpgrade(false)}
+      />
     </View>
   );
 }

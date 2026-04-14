@@ -585,6 +585,7 @@ function RecipeDetailInner() {
   const [editIngredients, setEditIngredients] = useState<{ quantity: string; unit: string; ingredient: string; preparation: string; optional: boolean }[]>([]);
   const [editSteps, setEditSteps] = useState<{ instruction: string; timer_minutes: string }[]>([]);
   const [editDietaryFlags, setEditDietaryFlags] = useState<string[]>([]);
+  const [editVisibility, setEditVisibility] = useState<'private' | 'shared_link' | 'public'>('private');
   const [savingEdit, setSavingEdit] = useState(false);
   const [heroRefreshKey, setHeroRefreshKey] = useState(0);
   const [showMealPicker, setShowMealPicker] = useState(false);
@@ -793,6 +794,7 @@ function RecipeDetailInner() {
     setEditCourse(currentRecipe.course || '');
     setEditNotes(currentRecipe.notes || '');
     setEditDietaryFlags(currentRecipe.dietary_flags ?? []);
+    setEditVisibility((currentRecipe.visibility as 'private' | 'shared_link' | 'public') ?? 'private');
     setEditIngredients((currentRecipe.ingredients ?? []).map((ing) => ({
       quantity: ing.quantity != null ? String(ing.quantity) : '',
       unit: ing.unit || '',
@@ -822,6 +824,7 @@ function RecipeDetailInner() {
         cuisine: editCuisine.trim() || null,
         course: (editCourse.trim() || null) as any,
         notes: editNotes.trim() || null,
+        visibility: editVisibility,
       });
       // Only update dietary_flags if they actually changed
       const flagsChanged =
@@ -982,6 +985,46 @@ function RecipeDetailInner() {
                 >
                   <Text style={{ fontSize: 14 }}>{flag.emoji}</Text>
                   <Text style={{ color: active ? '#ffffff' : colors.textPrimary, fontSize: 13, fontWeight: active ? '600' : '400' }}>{flag.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Visibility picker */}
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 }}>Visibility</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            {([
+              { key: 'private', label: 'Private', emoji: '🔒' },
+              { key: 'shared_link', label: 'Shared Link', emoji: '🔗' },
+              { key: 'public', label: 'Public', emoji: '🌐' },
+            ] as const).map((opt) => {
+              const active = editVisibility === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={async () => {
+                    const isDowngrade = editVisibility === 'public' && opt.key === 'private';
+                    if (isDowngrade) {
+                      const ok = await confirmAction({
+                        icon: '⚠️',
+                        title: 'Make private?',
+                        body: 'This will hide the recipe from other users. Continue?',
+                        confirmLabel: 'Make Private',
+                        variant: 'primary',
+                      });
+                      if (!ok) return;
+                    }
+                    setEditVisibility(opt.key);
+                  }}
+                  style={{
+                    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                    gap: 4, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 10,
+                    backgroundColor: active ? colors.accent : colors.bgBase,
+                    borderWidth: 1, borderColor: active ? colors.accent : colors.borderDefault,
+                  }}
+                >
+                  <Text style={{ fontSize: 14 }}>{opt.emoji}</Text>
+                  <Text style={{ color: active ? '#ffffff' : colors.textPrimary, fontSize: 12, fontWeight: active ? '600' : '500' }}>{opt.label}</Text>
                 </TouchableOpacity>
               );
             })}

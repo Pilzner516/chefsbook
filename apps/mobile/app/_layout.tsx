@@ -174,6 +174,7 @@ function RootNav() {
         <Stack.Screen name="share/[token]" options={{ title: 'Shared Recipe' }} />
         <Stack.Screen name="speak" options={{ title: 'Speak a Recipe' }} />
         <Stack.Screen name="plans" options={{ title: 'Plans' }} />
+        <Stack.Screen name="messages" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Settings' }} />
       </Stack>
       <PinnedBar />

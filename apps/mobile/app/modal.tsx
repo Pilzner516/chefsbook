@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, Alert, Switch, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
@@ -92,6 +92,35 @@ export default function SettingsModal() {
                 size="sm"
               />
             </View>
+          </Card>
+        )}
+
+        {!isAnonymous && (
+          <Card>
+            <TouchableOpacity
+              onPress={() => router.push('/messages' as any)}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Messages</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {profile && profile.unread_messages_count > 0 && (
+                  <View style={{
+                    minWidth: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    backgroundColor: colors.accent,
+                    paddingHorizontal: 7,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>
+                      {profile.unread_messages_count}
+                    </Text>
+                  </View>
+                )}
+                <Text style={{ color: colors.textMuted, fontSize: 18 }}>›</Text>
+              </View>
+            </TouchableOpacity>
           </Card>
         )}
 

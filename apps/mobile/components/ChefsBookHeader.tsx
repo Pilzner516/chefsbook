@@ -7,6 +7,7 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { LANGUAGES } from '@chefsbook/ui';
 import { LanguagePickerModal } from './LanguagePickerModal';
 import { QANotepad } from './QANotepad';
+import NotificationBell from './NotificationBell';
 
 export function ChefsBookHeader() {
   const { colors } = useTheme();
@@ -51,6 +52,9 @@ export function ChefsBookHeader() {
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        {/* Notification bell */}
+        <NotificationBell />
+
         {/* Language flag */}
         <TouchableOpacity
           onPress={() => setLangPickerVisible(true)}

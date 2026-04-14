@@ -12,7 +12,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, EmptyState, Loading, Card } from '../../components/UIKit';
 import { FeedbackCard } from '../../components/FeedbackCard';
-import { getRecipeVersions, getPrimaryPhotos } from '@chefsbook/db';
+import { getRecipeVersions, getPrimaryPhotos, getBatchTranslatedTitles } from '@chefsbook/db';
 
 type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
 
@@ -31,6 +31,8 @@ export default function RecipesTab() {
   const [versionPickerRecipeId, setVersionPickerRecipeId] = useState<string | null>(null);
   const [versionPickerVersions, setVersionPickerVersions] = useState<any[]>([]);
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
+  const i18n = useTranslation().i18n;
 
   // Refresh recipes + primary photos every time the tab gains focus
   useFocusEffect(
@@ -44,7 +46,14 @@ export default function RecipesTab() {
     if (recipes.length === 0) return;
     const ids = recipes.map((r) => r.id);
     getPrimaryPhotos(ids).then(setPrimaryPhotos);
-  }, [recipes]);
+    // Batch-fetch translated titles when language is not English
+    const lang = i18n.language;
+    if (lang && lang !== 'en') {
+      getBatchTranslatedTitles(ids, lang).then(setTranslatedTitles);
+    } else {
+      setTranslatedTitles({});
+    }
+  }, [recipes, i18n.language]);
 
   // Filter out child versions — only show parent/standalone recipes in the list
   const topLevelRecipes = useMemo(() => recipes.filter((r) => !r.parent_recipe_id), [recipes]);
@@ -184,7 +193,7 @@ export default function RecipesTab() {
           const vc = item.is_parent ? (versionCounts[item.id] ?? 1) : undefined;
           return (
             <RecipeCard
-              title={item.title}
+              title={translatedTitles[item.id] ?? item.title}
               imageUrl={primaryPhotos[item.id] ?? item.image_url}
               cuisine={item.cuisine}
               totalMinutes={item.total_minutes}
