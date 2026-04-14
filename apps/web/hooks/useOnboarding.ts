@@ -17,7 +17,9 @@ export function useOnboarding(pageId: string) {
   const bubbles = pageDef?.bubbles ?? [];
   const showBubbles = enabled && !seenPages.includes(pageId) && bubbles.length > 0;
 
+  // Re-fetch onboarding state when pageId changes (handles settings toggle → navigate)
   useEffect(() => {
+    setCurrentStep(0);
     supabase.auth.getSession().then(({ data }) => {
       const uid = data.session?.user?.id;
       if (!uid) return;
@@ -29,7 +31,7 @@ export function useOnboarding(pageId: string) {
         }
       });
     });
-  }, []);
+  }, [pageId]);
 
   const nextStep = useCallback(() => {
     if (currentStep < bubbles.length - 1) {

@@ -42,7 +42,7 @@ export default function OnboardingBubble({
   if (!targetEl) return null;
 
   return (
-    <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 9999 }} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div ref={refs.setFloating} style={{ ...floatingStyles, zIndex: 9999 }} className="transition-opacity duration-300">
       <div className="bg-white rounded-xl p-5 max-w-[320px] relative" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
         <FloatingArrow ref={arrowRef} context={context} fill="white" />
 
@@ -53,7 +53,7 @@ export default function OnboardingBubble({
             <p className="text-sm text-gray-500 mb-4">You can always turn them back on in Settings.</p>
             <div className="flex gap-2">
               <button onClick={onKeepOn} className="flex-1 py-2 rounded-full text-sm font-semibold border border-gray-300 text-gray-600 hover:bg-gray-50">Keep On</button>
-              <button onClick={onTurnOff} className="flex-1 py-2 rounded-full text-sm font-semibold bg-[#ce2b37] text-white hover:opacity-90">Turn Off</button>
+              <button onClick={onTurnOff} className="flex-1 py-2 rounded-full text-sm font-semibold bg-cb-primary text-white hover:opacity-90">Turn Off</button>
             </div>
           </div>
         ) : (
@@ -68,7 +68,7 @@ export default function OnboardingBubble({
               <span className="text-xs text-gray-400">Step {step + 1} of {totalSteps}</span>
               <button onClick={onTurnOff} className="text-xs text-gray-400 hover:text-gray-600">Turn off tips</button>
             </div>
-            <button onClick={onNext} className="w-full py-2 rounded-full text-sm font-semibold bg-[#ce2b37] text-white hover:opacity-90">
+            <button onClick={onNext} className="w-full py-2 rounded-full text-sm font-semibold bg-cb-primary text-white hover:opacity-90">
               {isLastOnPage ? (nextPageLabel ?? 'Got it!') : 'Got it'}
             </button>
           </div>

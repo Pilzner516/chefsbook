@@ -15,14 +15,27 @@ export default function OnboardingOverlay({ pageId }: { pageId: string }) {
   // Auto-skip bubbles whose target doesn't exist; scroll target into view
   useEffect(() => {
     if (!showBubbles || !currentBubble) return;
-    const el = document.querySelector(currentBubble.target);
-    if (!el) {
-      // Target not mounted — skip to next step after a brief delay
-      const timer = setTimeout(nextStep, 50);
-      return () => clearTimeout(timer);
-    }
-    // Scroll target into view before positioning the bubble
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let cancelled = false;
+    // Retry a few times — DOM target may not be mounted yet
+    let attempts = 0;
+    const check = () => {
+      if (cancelled) return;
+      const el = document.querySelector(currentBubble.target);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      attempts++;
+      if (attempts < 5) {
+        setTimeout(check, 200);
+      } else {
+        // Target genuinely missing — skip this bubble
+        nextStep();
+      }
+    };
+    // First check after a short delay to let the page render
+    setTimeout(check, 100);
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showBubbles, currentBubble?.target, currentStep]);
 
