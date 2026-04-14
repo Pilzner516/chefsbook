@@ -309,10 +309,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (129 — 2026-04-14)
-- Full project audit report (docs/AUDIT-REPORT-2026-04-14.md) — 8 sections, no fixes
-- Critical findings: plan_tier enum missing 'chef', image proxy open redirect, ESLint not configured
-- 15/69 recipes missing description, 3 mobile TS errors, web scan missing isInstagramUrl
+## Last session (130 — 2026-04-14)
+- Print + PDF options modals: include image/comments toggles before print/generate
+- Pure CSS/JS for print, query params for PDF
+- RPi5 build now needs 1536MB
+- Deployed to RPi5
 
 ## Next session
 - FIX CRITICAL: ALTER TYPE plan_tier ADD VALUE 'chef' BEFORE 'family'

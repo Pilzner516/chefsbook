@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 130)
+- Print options modal: ChefsDialog with "Include recipe image" + "Include comments" checkboxes before window.print()
+- Print CSS: print-hide class toggled on data-print-hero and data-print-comments via JS; restored after print
+- PDF options modal: same two checkboxes before PDF generation; passes includeImage + includeComments as query params
+- PDF route updated: reads includeImage/includeComments from searchParams; skips image fetch when excluded
+- RecipePdf component accepts includeComments prop (future use — PDF currently has no comments section)
+- data-print-hero + data-print-comments attributes added to recipe detail page sections
+- globals.css: .print-hide { display: none !important } under @media print
+- Feature registry updated (print recipe + PDF export entries)
+- RPi5 build required 1536MB (was 1280MB); first attempt OOM killed
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded, PM2 online
+
 ## 2026-04-14 (session 129)
 - Full project audit report covering sessions 87-128 (8 sections: DB, feature registry, code quality, AI cost, import pipeline, security, known gaps, performance)
 - CRITICAL finding: plan_tier DB enum missing 'chef' value — blocks entire Chef tier ($4.99/mo)
