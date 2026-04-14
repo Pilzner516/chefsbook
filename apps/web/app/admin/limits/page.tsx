@@ -1,10 +1,23 @@
-import { supabaseAdmin } from '@chefsbook/db';
+'use client';
 
-export default async function PlanLimitsPage() {
-  const { data: limits } = await supabaseAdmin.from('plan_limits').select('*').order('monthly_price_cents');
+import { useEffect, useState } from 'react';
+import { adminFetch } from '@/lib/adminFetch';
+
+export default function PlanLimitsPage() {
+  const [limits, setLimits] = useState<any[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminFetch({ page: 'limits' })
+      .then((data) => setLimits(data.limits))
+      .catch((e) => setError(e.message));
+  }, []);
 
   const boolLabel = (v: boolean) => v ? '✓' : '✗';
   const numLabel = (v: number | null) => v === null ? '∞' : String(v);
+
+  if (error) return <div className="text-red-600 text-sm">{error}</div>;
+  if (!limits) return <div className="text-gray-500 text-sm">Loading...</div>;
 
   return (
     <div>
@@ -16,7 +29,7 @@ export default async function PlanLimitsPage() {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Feature</th>
-              {(limits ?? []).map((l: any) => (
+              {limits.map((l: any) => (
                 <th key={l.plan} className="px-4 py-3 text-center font-medium text-gray-500 capitalize">{l.plan}</th>
               ))}
             </tr>
@@ -41,7 +54,7 @@ export default async function PlanLimitsPage() {
             ].map((row) => (
               <tr key={row.key} className="border-b last:border-0">
                 <td className="px-4 py-2 text-gray-700">{row.label}</td>
-                {(limits ?? []).map((l: any) => {
+                {limits.map((l: any) => {
                   const val = l[row.key];
                   return (
                     <td key={l.plan} className="px-4 py-2 text-center text-gray-600">

@@ -173,6 +173,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ users: data ?? [] });
   }
 
+  if (page === 'overview') {
+    const [users, recipes, flagged] = await Promise.all([
+      supabaseAdmin.from('user_profiles').select('plan_tier', { count: 'exact' }),
+      supabaseAdmin.from('recipes').select('*', { count: 'exact', head: true }),
+      supabaseAdmin.from('notifications').select('*', { count: 'exact', head: true }).eq('type', 'comment_flagged').eq('is_read', false),
+    ]);
+    const planCounts: Record<string, number> = {};
+    for (const u of users.data ?? []) {
+      const plan = (u as any).plan_tier ?? 'free';
+      planCounts[plan] = (planCounts[plan] ?? 0) + 1;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const { count: newToday } = await supabaseAdmin.from('user_profiles').select('*', { count: 'exact', head: true }).gte('created_at', today);
+    return NextResponse.json({
+      totalUsers: users.count ?? 0,
+      planCounts,
+      newToday: newToday ?? 0,
+      totalRecipes: recipes.count ?? 0,
+      flaggedCount: flagged.count ?? 0,
+    });
+  }
+
+  if (page === 'limits') {
+    const { data: limits, error } = await supabaseAdmin.from('plan_limits').select('*').order('monthly_price_cents');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ limits: limits ?? [] });
+  }
+
   return NextResponse.json({ error: 'Unknown page' }, { status: 400 });
 }
 

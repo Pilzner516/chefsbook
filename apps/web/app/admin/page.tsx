@@ -1,37 +1,28 @@
-import { supabaseAdmin } from '@chefsbook/db';
+'use client';
 
-async function getStats() {
-  const [users, recipes, flagged] = await Promise.all([
-    supabaseAdmin.from('user_profiles').select('plan_tier', { count: 'exact' }),
-    supabaseAdmin.from('recipes').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('notifications').select('*', { count: 'exact', head: true }).eq('type', 'comment_flagged').eq('is_read', false),
-  ]);
+import { useEffect, useState } from 'react';
+import { adminFetch } from '@/lib/adminFetch';
 
-  // Count by plan
-  const planCounts: Record<string, number> = {};
-  for (const u of users.data ?? []) {
-    const plan = (u as any).plan_tier ?? 'free';
-    planCounts[plan] = (planCounts[plan] ?? 0) + 1;
-  }
-
-  // New signups today
-  const today = new Date().toISOString().split('T')[0];
-  const { count: newToday } = await supabaseAdmin
-    .from('user_profiles')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', today);
-
-  return {
-    totalUsers: users.count ?? 0,
-    planCounts,
-    newToday: newToday ?? 0,
-    totalRecipes: recipes.count ?? 0,
-    flaggedCount: flagged.count ?? 0,
-  };
+interface Stats {
+  totalUsers: number;
+  planCounts: Record<string, number>;
+  newToday: number;
+  totalRecipes: number;
+  flaggedCount: number;
 }
 
-export default async function AdminOverview() {
-  const stats = await getStats();
+export default function AdminOverview() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminFetch({ page: 'overview' })
+      .then((data) => setStats(data))
+      .catch((e) => setError(e.message));
+  }, []);
+
+  if (error) return <div className="text-red-600 text-sm">{error}</div>;
+  if (!stats) return <div className="text-gray-500 text-sm">Loading...</div>;
 
   const cards = [
     { label: 'Total Users', value: stats.totalUsers, color: 'text-blue-600' },
