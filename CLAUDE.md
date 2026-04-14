@@ -309,10 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (130 — 2026-04-14)
-- Print + PDF options modals: include image/comments toggles before print/generate
-- Pure CSS/JS for print, query params for PDF
-- RPi5 build now needs 1536MB
+## Last session (131 — 2026-04-14)
+- FIX: onboarding bubbles — re-fetch DB state on pageId change, robust auto-skip (5 retries at 200ms), reset step on navigate
+- Replaced undefined tailwindcss-animate classes + hardcoded hex in OnboardingBubble
 - Deployed to RPi5
 
 ## Next session

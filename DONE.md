@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 131)
+- FIX: onboarding bubbles not showing — useOnboarding hook now re-fetches DB state on pageId change (was `[]` deps, settings toggle → navigate didn't pick up enabled state)
+- FIX: auto-skip race condition — replaced 50ms single-shot skip with 5 retries at 200ms intervals (prevents skipping bubbles before DOM targets mount)
+- FIX: reset currentStep to 0 on page navigation (prevents stale step index into new page's bubbles)
+- FIX: replaced undefined tailwindcss-animate classes (animate-in/fade-in/slide-in-from-bottom-2) with standard Tailwind transition-opacity
+- FIX: replaced hardcoded #ce2b37 hex with bg-cb-primary token in OnboardingBubble
+- Reset Bob Lux onboarding state (onboarding_enabled=true, seen_pages={}) for testing
+- Feature registry updated (onboarding bubbles + help tips toggle → session 129)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded (1536MB), PM2 online, all pages 200
+
 ## 2026-04-14 (session 130)
 - Print options modal: ChefsDialog with "Include recipe image" + "Include comments" checkboxes before window.print()
 - Print CSS: print-hide class toggled on data-print-hero and data-print-comments via JS; restored after print

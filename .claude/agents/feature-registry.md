@@ -1,5 +1,5 @@
 # ChefsBook Feature Registry
-# Updated: 2026-04-13
+# Updated: 2026-04-14
 # Purpose: Read this before modifying ANY existing feature.
 #           Update this before running /wrapup on ANY session.
 #
@@ -28,8 +28,8 @@
 ## ONBOARDING
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Onboarding bubbles (8 pages) | LIVE | apps/web/components/OnboardingBubble.tsx, useOnboarding hook | 75, 114, 120 | @floating-ui/react; tracks seen pages per user; auto-skips missing targets; scrolls to target; "Got it" per-page / "Turn off tips" global |
-| Help Tips toggle in settings | LIVE | apps/web/dashboard/settings | 75, 114 | Proper ON/OFF switch (red/grey); enable/disable + reset seen pages |
+| Onboarding bubbles (8 pages) | LIVE | apps/web/components/OnboardingBubble.tsx, useOnboarding hook | 75, 114, 120, 129 | @floating-ui/react; tracks seen pages per user; auto-skips missing targets (5 retries at 200ms); scrolls to target; "Got it" per-page / "Turn off tips" global; re-fetches DB state on page navigation |
+| Help Tips toggle in settings | LIVE | apps/web/dashboard/settings | 75, 114, 129 | Proper ON/OFF switch (red/grey); enable/disable + reset seen pages |
 | Onboarding overlay in layout | LIVE | apps/web/app/dashboard/layout.tsx | 75 | OnboardingOverlay component |
 
 ---
