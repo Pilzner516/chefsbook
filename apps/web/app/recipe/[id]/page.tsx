@@ -11,7 +11,7 @@ import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, getSavers } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import type { TranslatedRecipe } from '@chefsbook/ai';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
@@ -870,7 +870,7 @@ export default function RecipePage() {
           <div className="flex items-center gap-1.5">
             <svg className="w-4 h-4 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
             {isOwner && (recipe.save_count ?? 0) > 0 ? (
-              <button onClick={async () => { setSaversLoading(true); setSaversError(null); setShowSavers(true); try { const data = await getSavers(recipe.id); setSavers(data); } catch (e: any) { setSaversError(e.message ?? 'Failed to load'); } setSaversLoading(false); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
+              <button onClick={async () => { setSaversLoading(true); setSaversError(null); setShowSavers(true); try { const { data: { session } } = await supabase.auth.getSession(); const res = await fetch(`/api/recipe/${recipe.id}/savers`, { headers: { Authorization: `Bearer ${session?.access_token}` } }); if (!res.ok) throw new Error('Failed to load'); const data = await res.json(); setSavers(data); } catch (e: any) { setSaversError(e.message ?? 'Failed to load'); } setSaversLoading(false); }} className="text-sm text-cb-muted hover:text-cb-primary transition">
                 {recipe.save_count ?? 0}
               </button>
             ) : (
