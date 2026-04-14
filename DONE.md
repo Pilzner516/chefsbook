@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 134)
+- FIX 1: Backfilled 15 missing recipe descriptions via Haiku (1-2 sentence each, ~$0.003 total)
+- Created scripts/backfill-descriptions.mjs (rate-limited 1/sec, reads from env)
+- Verified: 0 recipes remaining with NULL/empty description
+- FIX 2: Removed supabaseAdmin from admin/page.tsx + admin/limits/page.tsx (2 server components converted to client using adminFetch)
+- Added /api/admin GET handlers: page=overview (stats + plan counts + newToday) and page=limits (plan_limits table)
+- Verified: grep returns 0 files with supabaseAdmin in admin/*.tsx
+- Feature registry updated (admin dashboard + plan limits entries)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded first try, PM2 online, /admin returns 200
+
 ## 2026-04-14 (session 132)
 - Mobile vs web parity audit — 12 sections, 84 features compared, 54 at parity (64%)
 - Distribution blockers identified: release signing uses debug keystore, 39+ hardcoded hex colors, 3 TS errors

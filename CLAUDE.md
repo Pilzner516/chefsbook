@@ -309,11 +309,11 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (132 — 2026-04-14)
-- Mobile vs web parity audit: 84 features compared, 54 at parity (64%), 22 missing on mobile
-- Distribution blockers: release signing (debug keystore), 39+ hardcoded hex colors, 3 TS errors
-- High priority gaps: no notification UI, no message inbox, like plan gate bypass, no translated titles
-- Report at docs/MOBILE-PARITY-AUDIT-2026-04-14.md
+## Last session (134 — 2026-04-14)
+- Backfilled 15 missing recipe descriptions via Haiku (all succeeded)
+- Removed supabaseAdmin from admin/page.tsx + admin/limits/page.tsx (moved to /api/admin)
+- All admin client pages now use adminFetch (no direct supabaseAdmin imports)
+- Deployed to RPi5
 
 ## Next session
 - Phase 1: Configure release signing + fix hardcoded hex colors + fix mobile TS errors
@@ -332,7 +332,6 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 - **Mobile: no message inbox** — Can compose from profiles but no conversation list or thread view
 - **Mobile: YouTube import dead button** — Listed in SOURCE_OPTIONS but handler not wired
 - ESLint not configured for web app (no `.eslintrc.json`; `npm run lint` fails with interactive wizard)
-- 15/69 recipes have empty descriptions (violates import pipeline mandate)
 - No test suite (unit or integration)
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
 - Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code
