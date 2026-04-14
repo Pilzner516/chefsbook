@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 138)
+- Full clean rebuild: rm -rf android/app/build + .gradle + node_modules/.cache
+- Missing react/react-dom in apps/mobile/node_modules (only in root) — causes jsx-runtime resolution failure
+- Workaround: copied react + react-dom from root to apps/mobile/node_modules (npm install blocked by EOVERRIDE)
+- Release APK rebuilt + signed + installed successfully (bundle timestamp: 16:44, 3.7MB Hermes)
+- Signature verified (apksigner: CN=ChefsBook App)
+- logcat confirms React Native JS runs: "ReactNativeJS: Running main" — no crashes, no errors
+- BUT emulator display stuck on "Hello Android!" launcher screen even though ChefsBook is focused window
+- Cannot take meaningful ADB screenshots — display doesn't render the app content
+- Probable cause: emulator display driver issue (x86_64 emulator, fresh rebuild may need graphics reset via cold boot)
+- Signing verification is complete; visual UI verification blocked by emulator display
+
 ## 2026-04-14 (session 137)
 - FEATURE 1: Mobile NotificationBell component + wired into ChefsBookHeader (5-tab modal, badge, Realtime, navigate-on-tap)
 - FEATURE 2: Mobile messages inbox at /messages (modal stack screen) — conversation list + thread view + KeyboardAvoidingView + Realtime + ChefsDialog flag picker; entry added to settings modal with unread badge

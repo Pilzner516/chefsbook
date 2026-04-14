@@ -309,17 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (137 — 2026-04-14)
-- 5 mobile features: notification bell, messages inbox, like plan gate, translated titles, visibility toggle
-- Release APK built + signing verified end-to-end (apksigner: CN=ChefsBook App matches keystore)
-- Installed react-native-worklets (was missing — peer dep of reanimated 4)
-- Found runtime bug: release APK renders "Hello Android!" — bundle/router issue, NOT signing
+## Last session (138 — 2026-04-14)
+- Clean rebuild: bundle regenerated fresh, APK installed, RN JS runs ("Running main")
+- BUT emulator display frozen on "Hello Android!" launcher despite app focus
+- Worked around missing react in mobile/node_modules (EOVERRIDE blocks npm install) by copying from root
+- Emulator display issue, not app issue — signing + JS all working per logcat
 
 ## Next session
-- Debug "Hello Android!" runtime — bundle is 3.7MB Hermes but renders default text, suggests Expo Router not initializing in release mode
+- Cold-boot emulator OR test APK on physical Android device to confirm UI renders
 - Pick winning landing concept and integrate as apps/web landing
 - Configure ESLint for web app
-- AI impersonation flagging for usernames at signup
 - AI impersonation flagging for usernames at signup
 
 ## Known issues
