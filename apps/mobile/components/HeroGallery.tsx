@@ -4,6 +4,7 @@ import type { ViewToken } from 'react-native';
 import { listRecipePhotos } from '@chefsbook/db';
 import type { RecipeUserPhoto } from '@chefsbook/db';
 import { RecipeImage } from './RecipeImage';
+import { useTheme } from '../context/ThemeContext';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -27,6 +28,7 @@ function imageSource(uri: string) {
 }
 
 export function HeroGallery({ recipeId, fallbackImageUrl, refreshKey }: Props) {
+  const { colors } = useTheme();
   const [photos, setPhotos] = useState<RecipeUserPhoto[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -94,7 +96,7 @@ export function HeroGallery({ recipeId, fallbackImageUrl, refreshKey }: Props) {
         {photos.map((p, i) => (
           <View
             key={p.id}
-            style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+            style={[styles.dot, { backgroundColor: i === activeIndex ? colors.accent : '#ccc' }]}
           />
         ))}
       </View>
@@ -114,11 +116,5 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
-  },
-  dotActive: {
-    backgroundColor: '#ce2b37',
-  },
-  dotInactive: {
-    backgroundColor: '#ccc',
   },
 });

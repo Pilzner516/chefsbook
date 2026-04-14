@@ -423,6 +423,19 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 
 ## Builds
 
+### Release Signing (Android)
+- **Keystore**: `apps/mobile/android/chefsbook-release.keystore` (GITIGNORED — never commit)
+- **Properties**: `apps/mobile/android/keystore.properties` (GITIGNORED — contains passwords)
+- **Alias**: chefsbook
+- **Validity**: 10,000 days (~27 years, expires 2053-08-30)
+- **SHA-256 fingerprint**: Run `keytool -list -v -keystore apps/mobile/android/chefsbook-release.keystore -storepass <pw>` to view
+- **BACKUP CRITICAL**: Losing this keystore means you can never update the Play Store app. Back up to:
+  1. Encrypted 1Password / Bitwarden vault (keystore file + passwords)
+  2. External drive (encrypted)
+  3. Separate cloud storage (encrypted ZIP)
+- **If lost**: Play Store allows re-registration via Play App Signing (Google holds signing key), but only if you enrolled
+- **When prebuild runs** (`expo prebuild --clean`): the signing config gets wiped. Re-add via `android/app/build.gradle` signingConfigs.release block that reads `keystore.properties`
+
 ### Staging APK
 Package: com.chefsbook.app.staging (installs alongside dev client)
 Config: apps/mobile/app.staging.json + apps/mobile/.env.staging

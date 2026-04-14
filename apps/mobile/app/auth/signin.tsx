@@ -59,7 +59,8 @@ export default function SignInScreen() {
   const handleGoogleSignIn = () => {};
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgScreen }]}>
+    <SafeAreaView>
+      <View style={[styles.container, { backgroundColor: colors.bgScreen }]}>
       <KeyboardAvoidingView
         style={styles.inner}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -137,6 +138,7 @@ export default function SignInScreen() {
           </View>
         </View>
       )}
+      </View>
     </SafeAreaView>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, View, StyleSheet } from 'react-native';
 import type { ImageStyle, ViewStyle } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const chefsHat = require('../assets/images/chefs-hat.png');
 
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export function RecipeImage({ uri, style, watermark }: Props) {
+  const { colors } = useTheme();
+  const baseStyle = [styles.base, { backgroundColor: colors.bgScreen }] as const;
   if (uri && /^https?:\/\//.test(uri)) {
     // Self-hosted Supabase requires apikey header even for public buckets (Kong gateway)
     const isSupabase = SUPABASE_URL && uri.startsWith(SUPABASE_URL);
@@ -24,7 +27,7 @@ export function RecipeImage({ uri, style, watermark }: Props) {
     return (
       <Image
         source={source}
-        style={[styles.base, style]}
+        style={[...baseStyle, style]}
         resizeMode="cover"
         onError={() => {}}
       />
@@ -33,7 +36,7 @@ export function RecipeImage({ uri, style, watermark }: Props) {
 
   // Fallback: chef's hat logo
   return (
-    <View style={[styles.base, styles.fallback, style]}>
+    <View style={[...baseStyle, styles.fallback, style]}>
       <Image
         source={chefsHat}
         style={[
@@ -50,7 +53,6 @@ const styles = StyleSheet.create({
   base: {
     width: '100%',
     height: 160,
-    backgroundColor: '#faf7f0',
   } as ImageStyle,
   fallback: {
     alignItems: 'center',

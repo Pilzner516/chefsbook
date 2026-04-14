@@ -72,10 +72,11 @@ function useProtectedRoute() {
 }
 
 function SuspendedNotice() {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: '#faf7f0' }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: colors.bgScreen }}>
       <Text style={{ fontSize: 48, marginBottom: 16 }}>🚫</Text>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 8, textAlign: 'center' }}>Account Suspended</Text>
+      <Text style={{ fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' }}>Account Suspended</Text>
       <Text style={{ fontSize: 14, color: '#7a6a5a', textAlign: 'center' }}>
         Your account has been suspended. If you believe this is a mistake, please contact support@chefsbk.app.
       </Text>

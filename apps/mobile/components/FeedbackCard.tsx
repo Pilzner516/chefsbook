@@ -45,7 +45,7 @@ export function FeedbackCard() {
       <TouchableOpacity
         onPress={() => setOpen(true)}
         style={{
-          backgroundColor: '#faf7f0', borderWidth: 1, borderColor: colors.accent,
+          backgroundColor: colors.bgScreen, borderWidth: 1, borderColor: colors.accent,
           borderRadius: 14, padding: 16, alignItems: 'center', justifyContent: 'center',
           marginBottom: 8, minHeight: 120,
         }}

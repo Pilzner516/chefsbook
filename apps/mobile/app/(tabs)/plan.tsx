@@ -442,7 +442,7 @@ export default function PlanTab() {
                         </View>
                         {/* Servings pill — bottom-right */}
                         <View style={{ position: 'absolute', bottom: 6, right: 6, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 }}>
-                          <Text style={{ color: '#1a1a1a', fontSize: 11, fontWeight: '600' }}>{plan.servings ?? plan.recipe?.servings ?? 4}x</Text>
+                          <Text style={{ color: colors.textPrimary, fontSize: 11, fontWeight: '600' }}>{plan.servings ?? plan.recipe?.servings ?? 4}x</Text>
                         </View>
                       </View>
                     ) : (

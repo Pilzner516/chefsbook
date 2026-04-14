@@ -17,6 +17,10 @@ dist/
 docs/builds/*.apk
 docs/builds/*.aab
 
+# Android release signing — NEVER commit
+*.keystore
+apps/mobile/android/keystore.properties
+
 # OS
 .DS_Store
 Thumbs.db

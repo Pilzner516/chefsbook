@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
@@ -77,10 +77,16 @@ export default function SignUpScreen() {
   const handleGoogleSignUp = () => {};
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgScreen }]}>
+    <SafeAreaView>
+      <View style={[styles.container, { backgroundColor: colors.bgScreen }]}>
       <KeyboardAvoidingView
         style={styles.inner}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.createAccountTitle')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -180,7 +186,9 @@ export default function SignUpScreen() {
             {t('auth.signIn')}
           </Text>
         </View>
+      </ScrollView>
       </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
