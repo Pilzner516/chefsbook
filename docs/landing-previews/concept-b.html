@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ChefsBook — The Operating System for Modern Cooking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #12100e;          /* near-black with warmth */
+    --bg-2: #1a1714;
+    --bg-3: #0b0a09;
+    --cream: #faf7f0;
+    --cream-soft: #e8e2d2;
+    --ink: #faf7f0;
+    --ink-soft: rgba(250,247,240,0.72);
+    --ink-muted: rgba(250,247,240,0.45);
+    --line: rgba(250,247,240,0.1);
+    --garnet: #9F2D24;
+    --garnet-hi: #c24438;
+    --basil: #2D6A4F;
+    --basil-hi: #4a8e72;
+    --gold: #d6a75a;
+    --max: 1240px;
+    --ease: cubic-bezier(.2,.8,.2,1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--bg); color: var(--ink);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; border: 0; background: 0; color: inherit; }
+  .serif { font-family: 'Cormorant Garamond', Georgia, serif; letter-spacing: -0.01em; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 28px; }
+
+  /* ===== Ambient glow background ===== */
+  .ambient {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(159,45,36,0.18), transparent 50%),
+      radial-gradient(circle at 85% 20%, rgba(45,106,79,0.14), transparent 55%),
+      radial-gradient(circle at 50% 90%, rgba(214,167,90,0.08), transparent 55%);
+  }
+
+  /* ===== Nav ===== */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(18,16,14,0.7);
+    backdrop-filter: saturate(160%) blur(20px);
+    -webkit-backdrop-filter: saturate(160%) blur(20px);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s;
+  }
+  .nav.scrolled { border-bottom-color: var(--line); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 18px; letter-spacing: 0.01em; }
+  .brand-mark {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--garnet) 0%, var(--garnet-hi) 100%);
+    display: grid; place-items: center; color: var(--cream);
+    font-family: 'Cormorant Garamond'; font-weight: 600; font-size: 18px;
+    box-shadow: 0 0 20px rgba(194,68,56,0.4);
+  }
+  .nav-links { display: flex; gap: 40px; }
+  .nav-links a { font-size: 14px; color: var(--ink-soft); letter-spacing: 0.01em; transition: color .2s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta { display: flex; gap: 10px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 8px; font-weight: 500; font-size: 14px;
+    transition: transform .2s var(--ease), box-shadow .2s, background .2s;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary {
+    background: var(--cream); color: var(--bg);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(250,247,240,0.15); }
+  .btn-garnet {
+    background: linear-gradient(180deg, var(--garnet-hi), var(--garnet));
+    color: var(--cream);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 10px 30px rgba(159,45,36,0.35);
+  }
+  .btn-garnet:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 14px 40px rgba(159,45,36,0.5); }
+  .btn-ghost { color: var(--ink-soft); padding: 12px 16px; }
+  .btn-ghost:hover { color: var(--ink); }
+  .hamburger { display: none; width: 40px; height: 40px; align-items: center; justify-content: center; }
+  .hamburger span, .hamburger span::before, .hamburger span::after {
+    display: block; width: 20px; height: 2px; background: var(--cream); position: relative;
+  }
+  .hamburger span::before, .hamburger span::after { content: ''; position: absolute; left: 0; }
+  .hamburger span::before { top: -6px; }
+  .hamburger span::after { top: 6px; }
+  .mobile-menu {
+    position: fixed; inset: 72px 0 0 0; background: var(--bg);
+    transform: translateX(100%); transition: transform .3s var(--ease);
+    padding: 40px 28px; z-index: 40;
+  }
+  .mobile-menu.open { transform: translateX(0); }
+  .mobile-menu a { display: block; padding: 20px 0; font-size: 22px; border-bottom: 1px solid var(--line); font-family: 'Cormorant Garamond'; }
+
+  /* ===== Hero ===== */
+  .hero {
+    padding: 120px 0 140px; position: relative;
+    text-align: center;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 7px 16px; border-radius: 999px;
+    background: rgba(214,167,90,0.08); border: 1px solid rgba(214,167,90,0.25);
+    color: var(--gold); font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .hero-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+  h1.hero-h {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(52px, 9vw, 128px);
+    line-height: 0.96; letter-spacing: -0.025em;
+    font-weight: 500; max-width: 1100px; margin: 0 auto 32px;
+  }
+  h1.hero-h em { font-style: italic; color: var(--garnet-hi); }
+  .hero-sub {
+    font-size: clamp(17px, 2vw, 20px); color: var(--ink-soft);
+    max-width: 620px; margin: 0 auto 48px; font-weight: 300;
+  }
+  .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 64px; }
+
+  /* Hero product glow */
+  .hero-glow {
+    max-width: 900px; margin: 0 auto;
+    position: relative; aspect-ratio: 16/9;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(250,247,240,0.05), rgba(250,247,240,0.01)),
+      radial-gradient(ellipse at center, rgba(159,45,36,0.15), transparent 70%);
+    border: 1px solid var(--line);
+    padding: 2px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 80px rgba(159,45,36,0.15);
+  }
+  .hero-screen {
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, #1e1a16, #14110e);
+    border-radius: 16px;
+    padding: 20px;
+    display: grid; grid-template-columns: 200px 1fr; gap: 16px;
+    overflow: hidden;
+  }
+  .hg-side { display: flex; flex-direction: column; gap: 8px; }
+  .hg-chip { padding: 10px 12px; background: rgba(250,247,240,0.04); border-radius: 8px; font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; }
+  .hg-chip.active { background: rgba(159,45,36,0.18); color: var(--ink); border: 1px solid rgba(159,45,36,0.35); }
+  .hg-main { background: rgba(250,247,240,0.02); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .hg-title { font-family: 'Cormorant Garamond'; font-size: 28px; font-weight: 500; }
+  .hg-sub { font-size: 12px; color: var(--ink-muted); }
+  .hg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; flex: 1; }
+  .hg-card { background: rgba(250,247,240,0.04); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .hg-thumb { aspect-ratio: 4/3; border-radius: 8px; background: linear-gradient(135deg, var(--garnet), #6a241d); flex: 1; }
+  .hg-card:nth-child(2) .hg-thumb { background: linear-gradient(135deg, var(--basil), #1d4733); }
+  .hg-card:nth-child(3) .hg-thumb { background: linear-gradient(135deg, var(--gold), #8b6a31); }
+  .hg-line { height: 6px; background: rgba(250,247,240,0.1); border-radius: 3px; }
+  .hg-line.w { width: 60%; }
+
+  /* ===== Stats row ===== */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;
+    padding: 40px 0;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .stat-n { font-family: 'Cormorant Garamond'; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; }
+  .stat-n em { color: var(--gold); font-style: normal; }
+  .stat-l { font-size: 13px; color: var(--ink-muted); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 4px; }
+
+  /* ===== Section base ===== */
+  section { padding: 140px 0; position: relative; }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; color: var(--gold);
+    letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 24px;
+  }
+  h2.section-h {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(40px, 6vw, 84px);
+    line-height: 1; letter-spacing: -0.025em; font-weight: 500;
+    margin-bottom: 28px;
+  }
+  h2.section-h em { font-style: italic; color: var(--garnet-hi); }
+
+  /* ===== Problem statement (pure typography) ===== */
+  .problem { text-align: center; padding: 180px 0; }
+  .problem-lines .serif {
+    display: block;
+    font-size: clamp(36px, 5vw, 72px);
+    line-height: 1.15; font-weight: 400; font-style: italic;
+    color: var(--ink-muted);
+    transition: color 1s;
+  }
+  .problem-lines .serif.lit { color: var(--ink); }
+  .problem-lines .serif + .serif { margin-top: 12px; }
+  .problem-answer {
+    margin-top: 80px; font-family: 'Cormorant Garamond';
+    font-size: clamp(24px, 3vw, 38px); color: var(--garnet-hi);
+    font-style: italic;
+  }
+
+  /* ===== The System (ecosystem diagram) ===== */
+  .system-wrap { text-align: center; }
+  .system-wrap .eyebrow, .system-wrap h2, .system-wrap .section-sub { text-align: left; max-width: 720px; margin-inline: auto; }
+  .section-sub { font-size: 18px; color: var(--ink-soft); max-width: 620px; font-weight: 300; }
+  .system-diagram {
+    position: relative; max-width: 860px; margin: 80px auto 0;
+    aspect-ratio: 1.25; display: grid; place-items: center;
+  }
+  .system-core {
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--garnet-hi), var(--garnet) 60%, #5a1912);
+    display: grid; place-items: center; color: var(--cream);
+    font-family: 'Cormorant Garamond'; font-size: 22px; font-weight: 500;
+    box-shadow: 0 0 60px rgba(159,45,36,0.5), 0 0 140px rgba(159,45,36,0.25);
+    position: relative; z-index: 3;
+  }
+  .system-core::before {
+    content: ''; position: absolute; inset: -20px; border-radius: 50%;
+    border: 1px solid rgba(159,45,36,0.3); animation: pulse 3s var(--ease) infinite;
+  }
+  .system-core::after {
+    content: ''; position: absolute; inset: -40px; border-radius: 50%;
+    border: 1px solid rgba(159,45,36,0.15); animation: pulse 3s var(--ease) infinite .5s;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+  .system-node {
+    position: absolute;
+    background: rgba(250,247,240,0.03);
+    border: 1px solid var(--line);
+    padding: 14px 18px 14px 50px; border-radius: 12px;
+    font-size: 14px; color: var(--ink); font-weight: 500;
+    backdrop-filter: blur(10px);
+    transition: transform .3s var(--ease), border-color .3s, background .3s;
+  }
+  .system-node:hover { transform: translateY(-3px); border-color: rgba(214,167,90,0.4); background: rgba(250,247,240,0.06); }
+  .system-node .n-ico {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(159,45,36,0.2); display: grid; place-items: center;
+    color: var(--garnet-hi); font-size: 14px;
+  }
+  .system-node small { display: block; font-size: 11px; color: var(--ink-muted); font-weight: 400; margin-top: 2px; }
+  .s1 { top: 4%;   left: 10%; }
+  .s2 { top: 4%;   right: 10%; }
+  .s3 { top: 45%;  left: 0; }
+  .s4 { top: 45%;  right: 0; }
+  .s5 { bottom: 4%; left: 18%; }
+  .s6 { bottom: 4%; right: 18%; }
+  /* Connector lines (SVG) */
+  .sys-svg { position: absolute; inset: 0; pointer-events: none; width: 100%; height: 100%; z-index: 1; }
+  .sys-svg line { stroke: rgba(214,167,90,0.2); stroke-width: 1; stroke-dasharray: 4 4; }
+
+  /* ===== Intelligence Layer ===== */
+  .intel { background: var(--bg-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .intel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 64px; }
+  .intel-card {
+    background: var(--bg-3); border: 1px solid var(--line); border-radius: 16px;
+    padding: 40px; position: relative; overflow: hidden;
+    transition: border-color .3s, transform .3s var(--ease);
+  }
+  .intel-card:hover { border-color: rgba(214,167,90,0.3); transform: translateY(-2px); }
+  .intel-card::before {
+    content: ''; position: absolute; top: -80px; right: -80px; width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(159,45,36,0.2), transparent 70%);
+    opacity: 0; transition: opacity .3s;
+  }
+  .intel-card:hover::before { opacity: 1; }
+  .intel-card .ico { font-size: 24px; margin-bottom: 20px; display: inline-grid; width: 48px; height: 48px; place-items: center; background: rgba(214,167,90,0.1); border-radius: 10px; }
+  .intel-card h3 { font-family: 'Cormorant Garamond'; font-size: 32px; font-weight: 500; margin-bottom: 12px; letter-spacing: -0.01em; }
+  .intel-card p { color: var(--ink-soft); font-size: 15px; position: relative; z-index: 2; }
+  .intel-card .tag { display: inline-block; margin-top: 20px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(214,167,90,0.3); padding: 4px 10px; border-radius: 999px; }
+
+  /* ===== For Every Kitchen ===== */
+  .kitchens-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 64px; }
+  .kitchen {
+    padding: 40px 32px; border-radius: 16px;
+    background: linear-gradient(180deg, rgba(250,247,240,0.04), rgba(250,247,240,0.01));
+    border: 1px solid var(--line);
+    transition: border-color .3s, transform .3s;
+  }
+  .kitchen:hover { border-color: rgba(214,167,90,0.3); transform: translateY(-4px); }
+  .kitchen .k-hero {
+    width: 100%; aspect-ratio: 4/3; border-radius: 10px; margin-bottom: 24px;
+    background: linear-gradient(135deg, var(--garnet), #4a1610);
+    position: relative; overflow: hidden;
+  }
+  .kitchen:nth-child(2) .k-hero { background: linear-gradient(135deg, var(--basil), #143023); }
+  .kitchen:nth-child(3) .k-hero { background: linear-gradient(135deg, var(--gold), #6b5122); }
+  .k-hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.15), transparent 60%);
+  }
+  .k-role { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .kitchen h3 { font-family: 'Cormorant Garamond'; font-size: 30px; font-weight: 500; margin-bottom: 10px; }
+  .kitchen p { color: var(--ink-soft); font-size: 14px; margin-bottom: 20px; }
+  .k-flow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .k-flow span { font-size: 11px; padding: 4px 10px; background: rgba(250,247,240,0.05); border-radius: 999px; color: var(--ink-soft); }
+
+  /* ===== Global ===== */
+  .global { text-align: center; padding: 180px 0; }
+  .global h2 em { display: block; }
+  .lang-ticker {
+    display: flex; gap: 40px; justify-content: center; margin-top: 60px; flex-wrap: wrap;
+  }
+  .lang {
+    font-family: 'Cormorant Garamond'; font-size: 32px; font-style: italic; font-weight: 400;
+    color: var(--ink-soft);
+    transition: color .3s;
+  }
+  .lang:hover { color: var(--gold); }
+
+  /* ===== Pricing ===== */
+  .pricing-wrap h2 { text-align: center; margin-bottom: 16px; }
+  .pricing-wrap .section-sub { text-align: center; margin: 0 auto 64px; }
+  .price-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .price-card {
+    background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px;
+    padding: 32px 28px; transition: transform .3s var(--ease), border-color .3s, background .3s;
+  }
+  .price-card:hover { transform: translateY(-4px); border-color: rgba(214,167,90,0.3); }
+  .price-card.featured {
+    background: linear-gradient(180deg, rgba(159,45,36,0.15), rgba(159,45,36,0.02));
+    border-color: rgba(159,45,36,0.4);
+    position: relative;
+  }
+  .price-card.featured::before {
+    content: 'MOST CHOSEN'; position: absolute; top: -11px; left: 28px;
+    background: var(--garnet); color: var(--cream); font-size: 10px;
+    padding: 5px 12px; border-radius: 999px; letter-spacing: 0.14em; font-weight: 600;
+  }
+  .tier { font-family: 'Cormorant Garamond'; font-size: 24px; font-weight: 500; margin-bottom: 16px; }
+  .price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 20px; }
+  .price strong { font-family: 'Cormorant Garamond'; font-size: 52px; font-weight: 500; letter-spacing: -0.02em; }
+  .price span { color: var(--ink-muted); font-size: 14px; }
+  .price-desc { font-size: 14px; color: var(--ink-soft); margin-bottom: 24px; min-height: 48px; }
+  .price-card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; font-size: 13px; color: var(--ink-soft); }
+  .price-card ul li::before { content: '—'; color: var(--gold); margin-right: 10px; }
+  .price-cta {
+    display: block; width: 100%; text-align: center;
+    padding: 13px; border-radius: 10px; font-weight: 500; font-size: 14px;
+    background: transparent; border: 1px solid rgba(250,247,240,0.2); color: var(--ink);
+    transition: all .2s;
+  }
+  .price-cta:hover { background: var(--cream); color: var(--bg); border-color: var(--cream); }
+  .price-card.featured .price-cta {
+    background: var(--garnet); border-color: var(--garnet); color: var(--cream);
+    box-shadow: 0 0 30px rgba(159,45,36,0.3);
+  }
+  .price-card.featured .price-cta:hover { background: var(--garnet-hi); border-color: var(--garnet-hi); }
+
+  /* ===== Final ===== */
+  .final { text-align: center; padding: 200px 0; position: relative; overflow: hidden; }
+  .final::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(159,45,36,0.25), transparent 60%);
+  }
+  .final > * { position: relative; }
+  .final h2 {
+    font-family: 'Cormorant Garamond'; font-size: clamp(56px, 9vw, 132px);
+    font-weight: 400; font-style: italic; line-height: 0.95; letter-spacing: -0.03em;
+    margin-bottom: 36px;
+  }
+
+  /* ===== Footer ===== */
+  footer { background: var(--bg-3); border-top: 1px solid var(--line); padding: 64px 0 40px; }
+  .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+  .foot-brand p { margin-top: 14px; color: var(--ink-muted); font-size: 14px; max-width: 300px; }
+  .foot-col h4 { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; }
+  .foot-col a { display: block; padding: 5px 0; color: var(--ink-soft); font-size: 14px; }
+  .foot-col a:hover { color: var(--ink); }
+  .foot-bottom { border-top: 1px solid var(--line); padding-top: 24px; display: flex; justify-content: space-between; color: var(--ink-muted); font-size: 13px; }
+
+  /* Scroll reveal */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 1s var(--ease), transform 1s var(--ease); }
+  .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 1000px) {
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 30px; }
+    .intel-grid, .kitchens-grid { grid-template-columns: 1fr 1fr; }
+    .price-grid { grid-template-columns: 1fr 1fr; }
+    .system-diagram { aspect-ratio: auto; height: 600px; }
+  }
+  @media (max-width: 640px) {
+    section { padding: 90px 0; }
+    .hero { padding: 70px 0 80px; }
+    .nav-links, .nav-cta .btn-ghost { display: none; }
+    .hamburger { display: flex; }
+    .stats, .intel-grid, .kitchens-grid, .price-grid, .foot-grid { grid-template-columns: 1fr; }
+    .hero-screen { grid-template-columns: 1fr; }
+    .hg-side { flex-direction: row; overflow-x: auto; }
+    .hg-grid { grid-template-columns: 1fr 1fr; }
+    .system-diagram { height: 700px; }
+    .system-node { font-size: 12px; padding: 10px 14px 10px 44px; }
+    .lang { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+
+<!-- Nav -->
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a href="#" class="brand"><span class="brand-mark">C</span><span>ChefsBook</span></a>
+    <nav class="nav-links">
+      <a href="#system">The System</a>
+      <a href="#intel">Intelligence</a>
+      <a href="#pricing">Pricing</a>
+      <a href="/extension">Extension</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="/auth" class="btn btn-ghost">Sign in</a>
+      <a href="/auth" class="btn btn-garnet">Start free</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span></button>
+    </div>
+  </div>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#system">The System</a>
+  <a href="#intel">Intelligence</a>
+  <a href="#pricing">Pricing</a>
+  <a href="/extension">Extension</a>
+  <a href="/auth">Sign in</a>
+  <a href="/auth" style="color:var(--garnet-hi);">Start free →</a>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">Now in public beta · 5 languages</div>
+    <h1 class="hero-h">The <em>Operating System</em> for<br />Modern Cooking.</h1>
+    <p class="hero-sub">Import, organize, plan, shop, and share — all in one intelligent system built for how real kitchens actually run.</p>
+    <div class="hero-ctas">
+      <a href="/auth" class="btn btn-garnet">Start free — no card required</a>
+      <a href="#system" class="btn btn-ghost">↓ See the system</a>
+    </div>
+    <div class="hero-glow reveal">
+      <div class="hero-screen">
+        <div class="hg-side">
+          <div class="hg-chip">🏠 Home</div>
+          <div class="hg-chip active">📚 Recipes</div>
+          <div class="hg-chip">🗓️ Plan</div>
+          <div class="hg-chip">🛒 Shop</div>
+          <div class="hg-chip">👥 Family</div>
+        </div>
+        <div class="hg-main">
+          <div>
+            <div class="hg-title">Tonight's dinner</div>
+            <div class="hg-sub">3 recipes · 42 min total · serves 4</div>
+          </div>
+          <div class="hg-grid">
+            <div class="hg-card"><div class="hg-thumb"></div><div class="hg-line"></div><div class="hg-line w"></div></div>
+            <div class="hg-card"><div class="hg-thumb"></div><div class="hg-line"></div><div class="hg-line w"></div></div>
+            <div class="hg-card"><div class="hg-thumb"></div><div class="hg-line"></div><div class="hg-line w"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section style="padding: 0;">
+  <div class="wrap">
+    <div class="stats">
+      <div><div class="stat-n">6<em>+</em></div><div class="stat-l">Import sources</div></div>
+      <div><div class="stat-n">5</div><div class="stat-l">Languages</div></div>
+      <div><div class="stat-n">371</div><div class="stat-l">Recipe categories</div></div>
+      <div><div class="stat-n">10<em>s</em></div><div class="stat-l">AI meal plan</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Problem -->
+<section class="problem reveal" id="problem">
+  <div class="wrap">
+    <div class="eyebrow" style="text-align:center;">Where we are</div>
+    <div class="problem-lines">
+      <span class="serif">You save recipes in seven places.</span>
+      <span class="serif">You remember none of them.</span>
+      <span class="serif">Dinner is still stressful.</span>
+    </div>
+    <div class="problem-answer serif">It's time for a system.</div>
+  </div>
+</section>
+
+<!-- The System -->
+<section id="system" class="reveal">
+  <div class="wrap system-wrap">
+    <div class="eyebrow">The architecture</div>
+    <h2 class="section-h">Six connected <em>nodes</em>.<br />One intelligent core.</h2>
+    <p class="section-sub">Every ChefsBook feature talks to every other. A recipe imported on Tuesday feeds Friday's plan feeds Saturday's cart feeds Sunday's cook.</p>
+    <div class="system-diagram">
+      <svg class="sys-svg" viewBox="0 0 800 640" preserveAspectRatio="none">
+        <line x1="180" y1="100" x2="400" y2="320" />
+        <line x1="620" y1="100" x2="400" y2="320" />
+        <line x1="80"  y1="320" x2="400" y2="320" />
+        <line x1="720" y1="320" x2="400" y2="320" />
+        <line x1="220" y1="560" x2="400" y2="320" />
+        <line x1="580" y1="560" x2="400" y2="320" />
+      </svg>
+      <div class="system-core">ChefsBook</div>
+      <div class="system-node s1"><span class="n-ico">📥</span>Import<small>6 sources</small></div>
+      <div class="system-node s2"><span class="n-ico">🗂️</span>Organize<small>Smart taxonomy</small></div>
+      <div class="system-node s3"><span class="n-ico">🗓️</span>Plan<small>AI wizard</small></div>
+      <div class="system-node s4"><span class="n-ico">🛒</span>Shop<small>By aisle</small></div>
+      <div class="system-node s5"><span class="n-ico">🍳</span>Cook<small>Step mode</small></div>
+      <div class="system-node s6"><span class="n-ico">👥</span>Share<small>Family & community</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- Intelligence Layer -->
+<section id="intel" class="intel reveal">
+  <div class="wrap">
+    <div class="eyebrow">The intelligence layer</div>
+    <h2 class="section-h">Quietly <em>brilliant</em>,<br />never in the way.</h2>
+    <p class="section-sub">AI that does the boring cognitive work — so you keep the interesting parts: taste, memory, company.</p>
+    <div class="intel-grid">
+      <div class="intel-card">
+        <div class="ico">🧠</div>
+        <h3>Meal plan wizard</h3>
+        <p>Tell it your week — time, appetite, fridge contents. Get a seasonal, balanced plan in ten seconds, then drag anything you want to swap.</p>
+        <div class="tag">Claude Sonnet</div>
+      </div>
+      <div class="intel-card">
+        <div class="ico">⚖️</div>
+        <h3>Smart purchase units</h3>
+        <p>"2 tbsp olive oil" becomes "1 bottle" on your list. Ingredients across recipes get intelligently deduped and rounded to how things actually come.</p>
+        <div class="tag">Haiku · instant</div>
+      </div>
+      <div class="intel-card">
+        <div class="ico">📷</div>
+        <h3>Dish identification</h3>
+        <p>Snap any plate — at a restaurant, a friend's house, a market stall — and get back what it's likely called, what's in it, and how to make it.</p>
+        <div class="tag">Vision</div>
+      </div>
+      <div class="intel-card">
+        <div class="ico">🛡️</div>
+        <h3>Recipe & comment moderation</h3>
+        <p>Community features with guardrails. Spam, hate, low-effort noise get flagged before they reach anyone's feed.</p>
+        <div class="tag">Always on</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- For Every Kitchen -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="eyebrow">For every kitchen</div>
+    <h2 class="section-h">Built for <em>how you actually cook</em>.</h2>
+    <div class="kitchens-grid">
+      <div class="kitchen">
+        <div class="k-hero"></div>
+        <div class="k-role">The Solo Cook</div>
+        <h3>Cooking for one, well.</h3>
+        <p>Small-batch scaling, leftover-friendly plans, and a list that doesn't leave you with 500g of feta you'll never finish.</p>
+        <div class="k-flow"><span>Scale → 1</span><span>Leftovers</span><span>Minimal waste</span></div>
+      </div>
+      <div class="kitchen">
+        <div class="k-hero"></div>
+        <div class="k-role">The Busy Family</div>
+        <h3>Dinner, for everyone.</h3>
+        <p>Shared plan, shared list, kid-friendly swaps. Up to six members see the same Tuesday menu and the same grocery cart.</p>
+        <div class="k-flow"><span>6 members</span><span>Allergy filters</span><span>Shared cart</span></div>
+      </div>
+      <div class="kitchen">
+        <div class="k-hero"></div>
+        <div class="k-role">The Food Enthusiast</div>
+        <h3>Your culinary library.</h3>
+        <p>Unlimited recipes, 5 images per dish, PDF export, technique library, cookbook shelf. For the obsessive — in the best way.</p>
+        <div class="k-flow"><span>Unlimited</span><span>PDF export</span><span>Techniques</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Global -->
+<section class="global reveal">
+  <div class="wrap">
+    <div class="eyebrow" style="text-align:center;">Worldwide</div>
+    <h2 class="section-h">Your recipes.<br /><em>Your language.</em></h2>
+    <p class="section-sub" style="margin: 0 auto;">Every recipe, every menu, every shopping list — translated instantly and cached for everyone. Five languages, one beautiful app.</p>
+    <div class="lang-ticker">
+      <span class="lang">English</span>
+      <span class="lang" style="font-style:italic;">Français</span>
+      <span class="lang">Español</span>
+      <span class="lang" style="font-style:italic;">Italiano</span>
+      <span class="lang">Deutsch</span>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="pricing-wrap reveal">
+  <div class="wrap">
+    <div class="eyebrow" style="text-align:center;">Pricing</div>
+    <h2 class="section-h">Simple. <em>Transparent.</em></h2>
+    <p class="section-sub">Start free forever. Upgrade the moment it saves you an hour.</p>
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="tier">Free</div>
+        <div class="price"><strong>$0</strong><span>/forever</span></div>
+        <p class="price-desc">View and save recipes to get a feel for the system.</p>
+        <ul><li>Save public recipes</li><li>Browse community</li><li>1 shopping list</li></ul>
+        <a class="price-cta" href="/auth">Start free</a>
+      </div>
+      <div class="price-card featured">
+        <div class="tier">Chef</div>
+        <div class="price"><strong>$4.99</strong><span>/month</span></div>
+        <p class="price-desc">Full recipe management with import and AI.</p>
+        <ul><li>75 recipes</li><li>All import methods</li><li>AI meal planning</li><li>5 lists · 10 cookbooks</li></ul>
+        <a class="price-cta" href="/dashboard/plans">Choose Chef</a>
+      </div>
+      <div class="price-card">
+        <div class="tier">Family</div>
+        <div class="price"><strong>$9.99</strong><span>/month</span></div>
+        <p class="price-desc">Share the system with your people.</p>
+        <ul><li>Up to 6 members</li><li>200 recipes</li><li>Shared plan & list</li><li>25 cookbooks</li></ul>
+        <a class="price-cta" href="/dashboard/plans">Choose Family</a>
+      </div>
+      <div class="price-card">
+        <div class="tier">Pro</div>
+        <div class="price"><strong>$14.99</strong><span>/month</span></div>
+        <p class="price-desc">Unlimited. Priority support. PDF export.</p>
+        <ul><li>Unlimited recipes</li><li>5 images per recipe</li><li>PDF export</li><li>Priority support</li></ul>
+        <a class="price-cta" href="/dashboard/plans">Choose Pro</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Final -->
+<section class="final">
+  <div class="wrap">
+    <h2 class="serif">One system.<br />Every meal.</h2>
+    <a href="/auth" class="btn btn-garnet" style="padding:18px 36px; font-size:16px;">Start free →</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="brand"><span class="brand-mark">C</span><span>ChefsBook</span></div>
+        <p>The operating system for modern cooking. Infrastructure for how real kitchens run.</p>
+      </div>
+      <div class="foot-col">
+        <h4>System</h4>
+        <a href="#system">Architecture</a>
+        <a href="#intel">Intelligence</a>
+        <a href="/extension">Extension</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Journal</a>
+        <a href="#">Careers</a>
+      </div>
+      <div class="foot-col">
+        <h4>Legal</h4>
+        <a href="/privacy">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Security</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 ChefsBook</span>
+      <span>Self-hosted · Open infrastructure</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 10), { passive: true });
+
+  const ham = document.getElementById('hamburger');
+  const menu = document.getElementById('mobileMenu');
+  ham.addEventListener('click', () => menu.classList.toggle('open'));
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.remove('open')));
+
+  // Scroll reveal + problem statement lighting
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in-view');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Sequential light-up for problem statement
+  const problem = document.getElementById('problem');
+  const lines = problem.querySelectorAll('.serif');
+  const pIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        lines.forEach((ln, i) => setTimeout(() => ln.classList.add('lit'), i * 500));
+        pIO.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  pIO.observe(problem);
+</script>
+</body>
+</html>

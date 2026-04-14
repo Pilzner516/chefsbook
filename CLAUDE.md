@@ -309,15 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (135 — 2026-04-14)
-- Blocker 1: Release keystore + signing config wired (expires 2053)
-- Blocker 2: 12 hex colors migrated to useTheme().colors
-- Blocker 3: 2/3 TS errors fixed (3rd is upstream in expo-file-system)
-- Blocker 4: Sign-up screen wrapped in ScrollView for keyboard handling
-- Committed + pushed
+## Last session (136 — 2026-04-14)
+- Landing page redesign: 3 standalone HTML concepts in docs/landing-previews/
+- concept-a "The Unified Kitchen" (Palette A, editorial Fraunces+DM Sans)
+- concept-b "The Operating System" (Palette B, premium dark Cormorant+Jakarta)
+- concept-c "Beautiful Food. Organized Life." (Palette A, warm lifestyle, Unsplash hero)
+- All responsive, scroll-revealed, CTAs wired to real routes, correct pricing + features
 
 ## Next session
-- Rebuild signed release APK (test end-to-end with new keystore)
+- Pick winning concept and integrate as apps/web landing (replace or add /landing route)
+- Rebuild signed release APK (test end-to-end with session 135 keystore)
 - Phase 2: Mobile notification list + message inbox + like plan gate
 - Phase 3: Translated titles in mobile recipe list
 - Configure ESLint for web app

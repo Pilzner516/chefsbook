@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 136 — landing page concepts)
+- Landing page redesign: 3 standalone HTML concepts built in docs/landing-previews/
+- concept-a.html "The Unified Kitchen" — Palette A (Trattoria red/green on cream), Fraunces + DM Sans, editorial/spacious, CSS phone mockup + floating cards + chaos-to-order diagram + 6-step workflow + 3 signature product moments + 4-tier pricing
+- concept-b.html "The Operating System" — Palette B (garnet/basil on near-black warm dark), Cormorant Garamond + Plus Jakarta, premium dark aesthetic, pure-typography problem section with sequential light-up, SVG ecosystem diagram with pulsing core, intelligence layer grid, 3 kitchen personas
+- concept-c.html "Beautiful Food. Organized Life." — Palette A, Fraunces + Inter, warmest/most consumer, Unsplash food hero, 6 import method cards, meal plan calendar mockup, shopping list mockup, social activity stack, 5 language cards, 3 Unsplash testimonial avatars, app store badges
+- All 3: self-contained (inline CSS/JS, Google Fonts CDN only), sticky nav + hamburger menu, IntersectionObserver scroll reveals, responsive (1200/768/375), CTAs wired to /auth /dashboard/plans /extension /privacy, accurate pricing ($0 / $4.99 / $9.99 / $14.99), real feature list (6 import methods, AI meal plan, smart units, 5 languages, family 6 members)
+
 ## 2026-04-14 (session 135 — resumed + completed)
 - Blocker 1: Release keystore generated — chefsbook-release.keystore (RSA 2048, 10000-day validity, expires 2053-08-30)
 - keystore.properties created with passwords (gitignored); *.keystore + keystore.properties added to .gitignore
