@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 132)
+- Diagnosed prompt 111 quick fixes: FIX 2 (like gate) already fixed session 128, FIX 3 (recipe sidebar) already fixed session 128, FIX 4 (admin DM) skipped per instruction
+- FIX 1: Created /api/recipe/[id]/savers GET route — moves getSavers() from client-side supabaseAdmin call to server-side API route
+- FIX 1: Recipe detail page now fetches savers via fetch() with auth token instead of importing getSavers from @chefsbook/db
+- Savers API returns 401 for unauthenticated requests (verified via curl)
+- Feature registry updated (save count display → session 132, savers API route added)
+- tsc --noEmit passes (web)
+- Deployed to RPi5 — build succeeded (1536MB, needed 3 attempts due to OOM/manifest transients), PM2 online, all pages 200
+
 ## 2026-04-14 (session 131)
 - FIX: onboarding bubbles not showing — useOnboarding hook now re-fetches DB state on pageId change (was `[]` deps, settings toggle → navigate didn't pick up enabled state)
 - FIX: auto-skip race condition — replaced 50ms single-shot skip with 5 retries at 200ms intervals (prevents skipping bubbles before DOM targets mount)

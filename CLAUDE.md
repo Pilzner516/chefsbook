@@ -309,9 +309,9 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (131 — 2026-04-14)
-- FIX: onboarding bubbles — re-fetch DB state on pageId change, robust auto-skip (5 retries at 200ms), reset step on navigate
-- Replaced undefined tailwindcss-animate classes + hardcoded hex in OnboardingBubble
+## Last session (132 — 2026-04-14)
+- FIX 1 from prompt 111: savers modal supabaseKey error — created /api/recipe/[id]/savers API route, client now uses fetch()
+- FIX 2 (like gate) + FIX 3 (recipe sidebar) already fixed in session 128, FIX 4 (admin DM) skipped
 - Deployed to RPi5
 
 ## Next session
