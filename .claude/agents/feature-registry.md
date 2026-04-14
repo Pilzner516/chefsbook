@@ -174,13 +174,13 @@
 ## ADMIN
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| Admin dashboard at /admin | LIVE | apps/web/app/admin/layout.tsx, /api/admin/route.ts | 28, 88, 109 | All data via /api/admin (server-side supabaseAdmin); client pages use adminFetch/adminPost |
+| Admin dashboard at /admin | LIVE | apps/web/app/admin/layout.tsx, /api/admin/route.ts | 28, 88, 109, 134 | All data via /api/admin (server-side supabaseAdmin); ALL client pages use adminFetch/adminPost (no direct supabaseAdmin imports) |
 | Admin link in sidebar (admins only, red) | LIVE | apps/web/components/Sidebar.tsx | 87, 90 | Pomodoro red, same size as Settings |
 | User management (search, sort, role pills) | LIVE | apps/web/app/admin/users/ | 28, 90 | Sortable columns |
 | Username edit by admin | LIVE | apps/web/app/admin/users/ | 90 | Inline edit with availability check |
 | Recipe moderation queue | LIVE | apps/web/app/admin/recipes/ | 28, 116 | ChefsDialog confirmations; info tooltip; approve unfreezes + notifies; reject sets private + notifies; search by title/username |
 | Promo code CRUD | LIVE | apps/web/app/admin/promos/ | 28, 90 | supabaseAdmin + error feedback |
-| Plan limits display | LIVE | apps/web/app/admin/limits/ | 28 | supabaseAdmin |
+| Plan limits display | LIVE | apps/web/app/admin/limits/ | 28, 134 | Client component via /api/admin?page=limits |
 | User Ideas (was Help Requests) | LIVE | apps/web/app/admin/help/ | 28, 106, 107 | Avatar + @username link + email + relative time per message |
 | Suspend / restore user | LIVE | apps/web/app/admin/users/ | 28 | |
 | Admin RLS (non-recursive) | LIVE | admin_users table RLS | 89 | user_id = auth.uid() direct check |
