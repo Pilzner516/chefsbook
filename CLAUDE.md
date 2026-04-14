@@ -309,28 +309,30 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (133 — 2026-04-14)
-- CRITICAL: plan_tier enum now includes 'chef' (migration 035)
-- CRITICAL: Image proxy returns 403 for non-allowlisted URLs (open redirect fixed)
-- Web scan page: isInstagramUrl() check added
-- Deployed to RPi5
+## Last session (132 — 2026-04-14)
+- Mobile vs web parity audit: 84 features compared, 54 at parity (64%), 22 missing on mobile
+- Distribution blockers: release signing (debug keystore), 39+ hardcoded hex colors, 3 TS errors
+- High priority gaps: no notification UI, no message inbox, like plan gate bypass, no translated titles
+- Report at docs/MOBILE-PARITY-AUDIT-2026-04-14.md
 
 ## Next session
+- Phase 1: Configure release signing + fix hardcoded hex colors + fix mobile TS errors
+- Phase 2: Mobile notification list screen + message inbox + like plan gate
+- Phase 3: Translated titles in mobile recipe list + translation banner
 - Configure ESLint for web app
 - AI impersonation flagging for usernames at signup
-- Mobile like plan gate (ChefsDialog upgrade prompt)
-- Mobile messages screen (full conversation UI)
-- Mobile recipe list: translated titles (same pattern as web)
-- Rebuild APK with latest changes
 - Rebuild APK with latest changes
 
 ## Known issues
 
-- **CRITICAL: plan_tier enum missing 'chef'** — DB enum has free/pro/family only; code + plan_limits reference 'chef'. Fix: `ALTER TYPE plan_tier ADD VALUE 'chef' BEFORE 'family';`
-- **CRITICAL: Image proxy open redirect** — `/api/image` redirects non-Supabase URLs to any external URL. Fix: return 403 instead.
+- **Mobile: 39+ hardcoded hex colors** — Must migrate to useTheme().colors before distribution (recipe/[id].tsx, _layout.tsx, plans.tsx, search.tsx, speak.tsx + others)
+- **Mobile: release signing uses debug keystore** — build.gradle signingConfig signingConfigs.debug for release; must configure production keystore
+- **Mobile: like button bypasses plan gate** — Calls toggleLike() directly instead of server API route; free users can like on mobile
+- **Mobile: no notification UI** — Web has 5-tab NotificationBell panel; mobile has nothing
+- **Mobile: no message inbox** — Can compose from profiles but no conversation list or thread view
+- **Mobile: YouTube import dead button** — Listed in SOURCE_OPTIONS but handler not wired
 - ESLint not configured for web app (no `.eslintrc.json`; `npm run lint` fails with interactive wizard)
 - 15/69 recipes have empty descriptions (violates import pipeline mandate)
-- Web scan page missing `isInstagramUrl` check (Instagram URLs go through standard URL import)
 - No test suite (unit or integration)
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
 - Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code

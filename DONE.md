@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 132)
+- Mobile vs web parity audit — 12 sections, 84 features compared, 54 at parity (64%)
+- Distribution blockers identified: release signing uses debug keystore, 39+ hardcoded hex colors, 3 TS errors
+- High priority gaps: no notification UI, no message inbox, like plan gate bypass, no translated titles, no visibility toggle
+- Mobile-only features documented: multi-page scan, dish identification, Instagram import, PostImportImageSheet, What's New feed
+- ADB screenshots: landing, sign-in, sign-up screens captured and described
+- Build readiness: 12/16 checks pass, 4 fail (signing, hex colors, TS errors, sign-up field visibility)
+- Report at docs/MOBILE-PARITY-AUDIT-2026-04-14.md — no fixes applied, audit only
+
 ## 2026-04-14 (session 133)
 - CRITICAL FIX 1: plan_tier enum — added 'chef' value via ALTER TYPE; verified with test UPDATE (chef → pro roundtrip)
 - CRITICAL FIX 2: Image proxy open redirect — /api/image now returns 403 for non-allowlisted URLs (was 302 redirect to any URL)
