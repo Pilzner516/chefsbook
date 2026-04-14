@@ -309,19 +309,17 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (136 — 2026-04-14)
-- Landing page redesign: 3 standalone HTML concepts in docs/landing-previews/
-- concept-a "The Unified Kitchen" (Palette A, editorial Fraunces+DM Sans)
-- concept-b "The Operating System" (Palette B, premium dark Cormorant+Jakarta)
-- concept-c "Beautiful Food. Organized Life." (Palette A, warm lifestyle, Unsplash hero)
-- All responsive, scroll-revealed, CTAs wired to real routes, correct pricing + features
+## Last session (137 — 2026-04-14)
+- 5 mobile features: notification bell, messages inbox, like plan gate, translated titles, visibility toggle
+- Release APK built + signing verified end-to-end (apksigner: CN=ChefsBook App matches keystore)
+- Installed react-native-worklets (was missing — peer dep of reanimated 4)
+- Found runtime bug: release APK renders "Hello Android!" — bundle/router issue, NOT signing
 
 ## Next session
-- Pick winning concept and integrate as apps/web landing (replace or add /landing route)
-- Rebuild signed release APK (test end-to-end with session 135 keystore)
-- Phase 2: Mobile notification list + message inbox + like plan gate
-- Phase 3: Translated titles in mobile recipe list
+- Debug "Hello Android!" runtime — bundle is 3.7MB Hermes but renders default text, suggests Expo Router not initializing in release mode
+- Pick winning landing concept and integrate as apps/web landing
 - Configure ESLint for web app
+- AI impersonation flagging for usernames at signup
 - AI impersonation flagging for usernames at signup
 
 ## Known issues

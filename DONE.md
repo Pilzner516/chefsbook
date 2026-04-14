@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 137)
+- FEATURE 1: Mobile NotificationBell component + wired into ChefsBookHeader (5-tab modal, badge, Realtime, navigate-on-tap)
+- FEATURE 2: Mobile messages inbox at /messages (modal stack screen) — conversation list + thread view + KeyboardAvoidingView + Realtime + ChefsDialog flag picker; entry added to settings modal with unread badge
+- FEATURE 3: LikeButton free-plan gate — checks planTier from authStore; ChefsDialog upgrade prompt → /plans for free users
+- FEATURE 4: Translated recipe titles in mobile recipe list — getBatchTranslatedTitles when i18n.language != 'en'
+- FEATURE 5: Recipe visibility toggle in edit mode — Private/Shared Link/Public pill selector with useConfirmDialog warning on public→private
+- All colors via useTheme().colors; all dialogs via ChefsDialog (no native Alert); safe area insets on all new modals/compose
+- Installed react-native-worklets@^0.8.1 (peer dep of reanimated 4 — was missing, blocked release builds)
+- Release APK built and installed on emulator successfully
+- SIGNING VERIFIED end-to-end: apksigner shows "CN=ChefsBook App, O=ChefsBook, L=Greenwich, ST=CT, C=US" (matches keystore identity from session 135)
+- INSTALL_FAILED_UPDATE_INCOMPATIBLE on first install confirmed signature swap from debug → release; uninstall + reinstall succeeded
+- Discovered runtime issue: release APK renders "Hello Android!" instead of ChefsBook UI — separate from signing (bundle/Expo Router issue, needs investigation next session)
+
 ## 2026-04-14 (session 136 — landing page concepts)
 - Landing page redesign: 3 standalone HTML concepts built in docs/landing-previews/
 - concept-a.html "The Unified Kitchen" — Palette A (Trattoria red/green on cream), Fraunces + DM Sans, editorial/spacious, CSS phone mockup + floating cards + chaos-to-order diagram + 6-step workflow + 3 signature product moments + 4-tier pricing
