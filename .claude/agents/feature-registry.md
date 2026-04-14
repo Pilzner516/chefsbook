@@ -61,8 +61,8 @@
 | Add to My Recipes (save/bookmark) | LIVE | packages/db (saveRecipe), apps/web/app/recipe/[id]/ | 32, 95, 104 | Uses recipe_saves (no clone); My Recipes shows owned + saved via JOIN |
 | Share link generation | LIVE | chefsbk.app/recipe/[id]?ref=[username] | 32 | |
 | Guest access (view-only) | LIVE | apps/web/app/recipe/[id]/, guest_sessions table | 32 | Email capture |
-| PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49 | Plan gated |
-| Print recipe | LIVE | apps/web | 35 | @media print CSS |
+| PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49, 129 | Plan gated; options modal before generate (include image/comments toggles); query params to PDF route |
+| Print recipe | LIVE | apps/web | 35, 129 | Options modal before print (include image/comments toggles); CSS print-hide class toggled via JS; @media print CSS |
 | Recipe saves count | LIVE | recipe_saves table, trigger | 03 | |
 | Save count display (bookmark icon) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97, 108 | Bookmark icon + count; savers modal uses supabaseAdmin (two-step query); proper pluralization |
 | Cuisine dropdown (searchable) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 97 | 31 cuisines from CUISINE_LIST; custom entry allowed |
