@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 133)
+- CRITICAL FIX 1: plan_tier enum — added 'chef' value via ALTER TYPE; verified with test UPDATE (chef → pro roundtrip)
+- CRITICAL FIX 2: Image proxy open redirect — /api/image now returns 403 for non-allowlisted URLs (was 302 redirect to any URL)
+- Allowlist: RPi5 Supabase (100.110.47.62), api.chefsbk.app, img.logo.dev, images.pexels.com, photos.pexels.com, images.unsplash.com
+- Verified: curl https://chefsbk.app/api/image?url=https://google.com/image.jpg → HTTP 403 Forbidden
+- FIX 5: Web scan page — added isInstagramUrl() check before URL import; shows error directing user to mobile app
+- Migration 035: plan_tier enum ADD VALUE 'chef'
+- Feature registry updated (image proxy entry)
+- tsc --noEmit passes (web)
+- RPi5 build: required 2 attempts (first OOM/500.html race condition, second succeeded at 1536MB)
+- Deployed to RPi5 — build succeeded, PM2 online
+
 ## 2026-04-14 (session 132)
 - Diagnosed prompt 111 quick fixes: FIX 2 (like gate) already fixed session 128, FIX 3 (recipe sidebar) already fixed session 128, FIX 4 (admin DM) skipped per instruction
 - FIX 1: Created /api/recipe/[id]/savers GET route — moves getSavers() from client-side supabaseAdmin call to server-side API route

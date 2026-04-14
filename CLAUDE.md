@@ -309,19 +309,19 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (132 — 2026-04-14)
-- FIX 1 from prompt 111: savers modal supabaseKey error — created /api/recipe/[id]/savers API route, client now uses fetch()
-- FIX 2 (like gate) + FIX 3 (recipe sidebar) already fixed in session 128, FIX 4 (admin DM) skipped
+## Last session (133 — 2026-04-14)
+- CRITICAL: plan_tier enum now includes 'chef' (migration 035)
+- CRITICAL: Image proxy returns 403 for non-allowlisted URLs (open redirect fixed)
+- Web scan page: isInstagramUrl() check added
 - Deployed to RPi5
 
 ## Next session
-- FIX CRITICAL: ALTER TYPE plan_tier ADD VALUE 'chef' BEFORE 'family'
-- FIX CRITICAL: Image proxy open redirect → return 403 instead of redirect
 - Configure ESLint for web app
 - AI impersonation flagging for usernames at signup
 - Mobile like plan gate (ChefsDialog upgrade prompt)
 - Mobile messages screen (full conversation UI)
 - Mobile recipe list: translated titles (same pattern as web)
+- Rebuild APK with latest changes
 - Rebuild APK with latest changes
 
 ## Known issues
