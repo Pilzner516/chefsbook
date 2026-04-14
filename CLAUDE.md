@@ -309,19 +309,20 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (134 — 2026-04-14)
-- Backfilled 15 missing recipe descriptions via Haiku (all succeeded)
-- Removed supabaseAdmin from admin/page.tsx + admin/limits/page.tsx (moved to /api/admin)
-- All admin client pages now use adminFetch (no direct supabaseAdmin imports)
-- Deployed to RPi5
+## Last session (135 — 2026-04-14 — PAUSED)
+- Started mobile distribution blockers (prompt 130)
+- Paused at Blocker 1 waiting for user to provide keystore passwords + identity details
+- No code changes; Blockers 2-4 not started
 
 ## Next session
-- Phase 1: Configure release signing + fix hardcoded hex colors + fix mobile TS errors
-- Phase 2: Mobile notification list screen + message inbox + like plan gate
-- Phase 3: Translated titles in mobile recipe list + translation banner
+- RESUME Blocker 1: generate release keystore (user supplies passwords + details)
+- Blocker 2: Fix 39+ hardcoded hex colors → useTheme().colors
+- Blocker 3: Fix 3 mobile TS errors
+- Blocker 4: Verify sign-up screen field visibility
+- Phase 2: Mobile notification list + message inbox + like plan gate
+- Phase 3: Translated titles in mobile recipe list
 - Configure ESLint for web app
 - AI impersonation flagging for usernames at signup
-- Rebuild APK with latest changes
 
 ## Known issues
 

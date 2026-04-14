@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-14 (session 135 — paused)
+- Started session 130 (mobile distribution blockers)
+- Stopped at Blocker 1 as instructed — keystore passwords required before generating
+- Asked user how to handle keystore; user chose "Provide passwords + details here"
+- Awaiting user to supply: keystore password, key password, name, organization, city, country
+- No code changes made this session — waiting on blocking input from user
+- Blockers 2 (hex colors), 3 (TS errors), 4 (sign-up screen) not started
+
 ## 2026-04-14 (session 134)
 - FIX 1: Backfilled 15 missing recipe descriptions via Haiku (1-2 sentence each, ~$0.003 total)
 - Created scripts/backfill-descriptions.mjs (rate-limited 1/sec, reads from env)
