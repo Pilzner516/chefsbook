@@ -25,6 +25,7 @@ Return ONLY a JSON object, no markdown, no explanation:
 
 Rules:
 - Extract ONLY recipe content, ignore ads, navigation, comments, and other page clutter
+- CRITICAL — INGREDIENTS: You MUST return the complete ingredient list. Look for bulleted/numbered lists near the top of the recipe, often inside elements whose class or id contains "ingredient" (e.g. wprm-recipe-ingredient, tasty-recipes-ingredients, mv-create-ingredients, recipe-card-ingredients, [itemprop="recipeIngredient"], [data-recipe-ingredient]). If the recipe is in a non-English language, ingredients may be labelled "Zutaten", "Ingrédients", "Ingredienti", "Ingredientes", "Ingrediënten", "Składniki" — still extract them. If you truly cannot find an ingredient list, return an empty array — do NOT omit the field, and do NOT invent ingredients.
 - QUANTITIES ARE REQUIRED: Extract every ingredient with its EXACT quantity, unit, and name as written on the page. Never omit the quantity. If a quantity is visible on the page, it must appear in your output. If no quantity exists, use "to taste" or "as needed" — never leave quantity as null when the page shows one.
 - Normalize ingredient names consistently
 - Preserve group labels like "For the sauce:" or "Dough:" — do not flatten grouped ingredients into one list
@@ -152,17 +153,54 @@ export function extractJsonLdRecipe(html: string): Partial<ScannedRecipe> | null
       );
       if (!recipe) continue;
 
-      const ingredients = (recipe.recipeIngredient ?? []).map((text: string) => {
-        const qtyMatch = text.match(/^([\d.\/½⅓⅔¼¾⅛]+)\s*/);
-        const quantity = qtyMatch
-          ? parseFloat(qtyMatch[1].replace('½', '.5').replace('¼', '.25').replace('¾', '.75').replace('⅓', '.33').replace('⅔', '.67').replace('⅛', '.125')) || null
-          : null;
-        const rest = qtyMatch ? text.slice(qtyMatch[0].length).trim() : text.trim();
-        const unitMatch = rest.match(/^(tsp|tbsp|tablespoons?|teaspoons?|cups?|oz|ounces?|lb|lbs?|pounds?|g|grams?|kg|ml|L|liters?|litres?|pinch|dash|cloves?|bunch|cans?|slices?|pieces?)\s+/i);
-        const unit = unitMatch ? unitMatch[1] : null;
-        const ingredient = unitMatch ? rest.slice(unitMatch[0].length).trim() : rest;
-        return { quantity, unit, ingredient, preparation: null, optional: false, group_label: null };
-      });
+      const rawIngredients = Array.isArray(recipe.recipeIngredient)
+        ? recipe.recipeIngredient
+        : recipe.recipeIngredient
+          ? [recipe.recipeIngredient]
+          : Array.isArray(recipe.ingredients)
+            ? recipe.ingredients
+            : [];
+      const ingredients = rawIngredients
+        .map((raw: unknown) => {
+          // JSON-LD may encode ingredients as strings or HowToIngredient objects
+          let text = '';
+          let qtyFromObj: number | null = null;
+          let unitFromObj: string | null = null;
+          if (typeof raw === 'string') {
+            text = raw;
+          } else if (raw && typeof raw === 'object') {
+            const obj = raw as Record<string, unknown>;
+            text = String(obj.name ?? obj.text ?? obj.ingredient ?? '');
+            const amt = obj.amount ?? obj.quantity;
+            if (typeof amt === 'number') qtyFromObj = amt;
+            else if (typeof amt === 'string') {
+              const n = parseFloat(amt);
+              if (!Number.isNaN(n)) qtyFromObj = n;
+            }
+            if (typeof obj.unitText === 'string') unitFromObj = obj.unitText;
+          }
+          text = text.replace(/\s+/g, ' ').trim();
+          if (!text) return null;
+          const qtyMatch = text.match(/^([\d.\/½⅓⅔¼¾⅛⅖⅜⅝⅞\s-]+?)\s+/);
+          const quantity = qtyFromObj != null
+            ? qtyFromObj
+            : qtyMatch
+              ? parseFloat(
+                  qtyMatch[1]
+                    .replace('½', '.5').replace('¼', '.25').replace('¾', '.75')
+                    .replace('⅓', '.33').replace('⅔', '.67').replace('⅛', '.125')
+                    .replace('⅖', '.4').replace('⅜', '.375').replace('⅝', '.625').replace('⅞', '.875')
+                    .trim().split(/\s+/)[0] || '',
+                ) || null
+              : null;
+          const rest = qtyMatch ? text.slice(qtyMatch[0].length).trim() : text;
+          // Expanded unit list: EN, DE, FR, IT, ES common units
+          const unitMatch = rest.match(/^(tsp|tbsp|tablespoons?|teaspoons?|cups?|oz|ounces?|lb|lbs?|pounds?|g|grams?|kg|kilograms?|ml|L|liters?|litres?|pinch|dash|cloves?|bunch|cans?|slices?|pieces?|stück|el|tl|prise|cuillères?|cuillere|càs|càc|cucchiai[oa]|cucchiain[oi]|tazze?|grammi|cucharad(?:as?|itas?)|gramos?|cucharaditas?|sobres?|latas?)\s+/i);
+          const unit = unitFromObj ?? (unitMatch ? unitMatch[1] : null);
+          const ingredient = unitMatch ? rest.slice(unitMatch[0].length).trim() : rest;
+          return { quantity, unit, ingredient, preparation: null, optional: false, group_label: null };
+        })
+        .filter((i: any): i is NonNullable<typeof i> => !!i && !!i.ingredient);
 
       const steps = (recipe.recipeInstructions ?? []).map((step: any, i: number) => ({
         step_number: i + 1,
@@ -471,7 +509,12 @@ export function checkJsonLdCompleteness(jsonLd: Partial<ScannedRecipe> | null): 
   const missing: string[] = [];
 
   if (jsonLd.title?.trim()) available.push('title'); else missing.push('title');
-  if (jsonLd.ingredients?.length && jsonLd.ingredients.some((i) => i.quantity != null)) available.push('ingredients'); else missing.push('ingredients');
+  // An ingredient list with text is "available" even if we couldn't parse
+  // quantities — the text itself is already more trustworthy than anything
+  // Claude could re-extract. The quantity parser fails on many non-English
+  // units, so gating on it would force an unnecessary Claude round-trip
+  // that often returns fewer ingredients than the page actually has.
+  if (jsonLd.ingredients?.length && jsonLd.ingredients.some((i) => i.ingredient?.trim())) available.push('ingredients'); else missing.push('ingredients');
   if (jsonLd.steps?.length && jsonLd.steps.some((s) => s.instruction?.trim())) available.push('steps'); else missing.push('steps');
   if (jsonLd.description) available.push('description'); else missing.push('description');
   if (jsonLd.servings) available.push('servings'); else missing.push('servings');
