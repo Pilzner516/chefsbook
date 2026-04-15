@@ -319,9 +319,10 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 - feature-registry: Instagram import → REMOVED (sessions 07, 138)
 
 ## Next session
-- **Install Android cmdline-tools + create API 33/34 AVD** (required for Item 4 of session 139 — APK verification of notification bell / messages / like gate / translated titles / visibility toggle), then run APK verification
-- **Rebuild release APK** to pick up app.json SEND-intent-filter removal (so ChefsBook stops appearing in Instagram/TikTok share sheets as a dead option)
-- Test photo import with a real Instagram screenshot on device/emulator to validate social-media prompt quality
+- **Free 5+ GB on C:\** (current: 3.4 GB free / 476 GB total) — Android 14 emulator userdata creation requires 7.2 GB fixed. Then run session 140 from STEP 3 (emulator launch) — cmdline-tools, API 34 system image, and CB_API_34 AVD are already prepared.
+- Alternative: verify all 6 session-131 features on a physical Android device via USB debugging.
+- **Rebuild release APK** once disk is freed — picks up app.json SEND-intent-filter removal (session 139) so ChefsBook stops appearing in Instagram/TikTok share sheets as a dead option.
+- Test photo import with a real Instagram screenshot on device/emulator to validate social-media prompt quality (session 138 prompt extension).
 - Generate the 3 concept-f images via Replicate and swap final CTA bg
 - Decide A/B/C/D/E/F winner and integrate as apps/web landing route
 - ESLint for web app; AI impersonation flagging for usernames at signup

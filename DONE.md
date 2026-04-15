@@ -1,6 +1,37 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 140 — APK verification attempted)
+### Environment setup
+- **PASS**: Confirmed Android cmdline-tools installed at `$ANDROID_HOME/cmdline-tools/latest/bin/` (Windows .bat variants). Invoked via `avdmanager.bat`.
+- **PASS**: Downloaded missing API 34 system image via `sdkmanager.bat --install "system-images;android-34;google_apis_playstore;x86_64"` — previous session-139 assessment ("image present") was wrong; the directory existed but was empty except for an abandoned `.installer` stub. Full ~1 GB download completed successfully.
+- **PASS**: Created `CB_API_34` AVD via `avdmanager.bat create avd -n CB_API_34 -k "system-images;android-34;google_apis_playstore;x86_64" -d pixel_5 --force`. `avdmanager list avd` confirms: Target = Google Play (Android 14.0 "UpsideDownCake"), Tag/ABI = google_apis_playstore/x86_64, Device = pixel_5, 512MB sdcard.
+
+### Blocker hit
+- **FAIL (environmental)**: Emulator boot aborts with `FATAL | Not enough space to create userdata partition. Available: 3448.07 MB, need 7372.80 MB` on every launch attempt. Host C:\ drive is at **100% usage (3.4 GB free out of 476 GB)**. Attempted mitigations:
+  - Edited `~/.android/avd/CB_API_34.avd/config.ini` → `disk.dataPartition.size=6G` → `2G`: no effect on the FATAL (which checks initial userdata creation, not runtime size)
+  - Launched with `-partition-size 2047` CLI flag (max allowed): no effect, FATAL unchanged
+  - The 7372.80 MB requirement is fixed for Android 14 userdata creation and not tunable via config
+- **NOT ATTEMPTED**: Fresh release APK build — Gradle + Metro + `.next`-equivalent caches need multi-GB of temp space that isn't available on a disk already at 100%. Starting the build would cascade into Gradle failures and possibly corrupt state.
+
+### Feature verification results (all 6 = BLOCKED, not FAIL)
+1. **Notification bell** — BLOCKED: emulator could not boot.
+2. **Messages inbox** — BLOCKED: emulator could not boot.
+3. **Free plan like gate** — BLOCKED: emulator could not boot. (Code-level check: PLAN_LIMITS.free.canLike = false was confirmed in session 137 when the mobile like button was gated — no regression expected.)
+4. **Translated recipe titles** — BLOCKED: emulator could not boot.
+5. **Recipe visibility toggle** — BLOCKED: emulator could not boot.
+6. **Instagram screenshot import** (session 138 validation) — BLOCKED: emulator could not boot.
+
+### Unblocking options (for user)
+- (a) **Free 5+ GB on C:\** — fastest. Windows Storage Sense, clear `%TEMP%`, clear npm/Gradle/node_modules caches in unused projects (`npm cache clean --force`), empty Recycle Bin, remove old Docker images or WSL distros if any. After freeing, re-run session 140 from STEP 3.
+- (b) **Use a physical Android device via USB** — skip the emulator entirely. `adb devices` after plugging in + enabling USB debugging. All 6 features can be verified there.
+- (c) **Relocate Android SDK/AVD to another drive** — `$env:ANDROID_AVD_HOME` and `$env:ANDROID_SDK_ROOT` can point to D:\ or external storage. Requires re-downloading system image + recreating AVD.
+
+### Work that WAS completed this session (for next session's benefit)
+- cmdline-tools invocation pattern established: use `.bat` variants on Windows (`avdmanager.bat`, `sdkmanager.bat`) — the non-`.bat` shell wrappers don't exist
+- API 34 system image fully installed (so the next session, once disk space is freed, can skip the ~1 GB download step and go straight to AVD launch)
+- CB_API_34 AVD is registered and ready — next session just needs to run `emulator -avd CB_API_34 ...` once disk is freed
+
 ## 2026-04-15 (session 139 — overnight cleanup)
 ### Item 1 — locale cleanup (PASSED)
 - Inventoried all `instagram`/`Instagram` references in apps/mobile/locales and apps/web/locales: only en.json in each had matches (other 4 languages never had those keys translated)
