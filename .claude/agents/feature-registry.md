@@ -197,7 +197,9 @@
 | Site compatibility testing | LIVE | /api/admin/test-sites, KNOWN_RECIPE_SITES (60 sites), /api/cron | 141 | Manual trigger + weekly cron; rates each site 1-5; rate-limited 1/3s |
 | Blocked site handling | LIVE | getSiteBlockStatus, /api/import/url | 141 | Domain pre-check returns friendly error with alternative; rating ≤2 shows warning |
 | Incomplete recipes admin | LIVE | /admin/incomplete-recipes, /api/admin?page=incomplete-recipes | 141 | Lists all is_complete=false + flagged recipes; force approve / remove |
-| User import stats card | LIVE | /dashboard/settings, ImportActivityCard.tsx, /api/user/import-stats | 141 | Shows imported/with issues/flagged + "View" modal |
+| User import stats card | LIVE | /dashboard/settings, ImportActivityCard.tsx, /api/user/import-stats | 141, 144 | Shows imported/with issues/flagged + "N sites you helped discover" (session 144) + "View" modal |
+| Unknown site discovery | LIVE | recordSiteDiscovery (packages/db), /api/import/url, /api/sites/discovery, /api/recipes/finalize, DiscoveryToast (web + mobile) | 144 | First-time domains auto-inserted with is_user_discovered=true; warm green-bordered toast thanks the user; successful imports auto-promoted to added_to_list rating 4; per-user sites_discovered_count attribution |
+| Admin New Discoveries tab | LIVE | /admin/import-sites, /api/admin (updateImportSite reviewStatus) | 144 | 🌍 filter pill green-tinted when pending; Add/Ignore per-row actions; pendingDiscoveries in KPI payload |
 | Incomplete recipes banner | LIVE | /dashboard, IncompleteRecipesBanner.tsx | 141 | Amber banner, dismissible via localStorage |
 | Flagged comments (admin) | LIVE | /admin/flags, /api/admin (flagged-comments) | 116 | Queries comment_flags; shows comment + commenter + recipe; approve/remove |
 | Flagged messages (admin) | LIVE | /admin/messages, /api/admin (messages) | 116 | Includes user-flagged messages via message_flags; shows flag count + reasons |
