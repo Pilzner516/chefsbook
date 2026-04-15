@@ -319,7 +319,7 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 - feature-registry: Instagram import → REMOVED (sessions 07, 138)
 
 ## Next session
-- Test photo import with a real Instagram screenshot on device/emulator to validate social-media prompt quality (deployment to RPi5 complete — session 138 live at chefsbk.app)
+- Test photo import with a real Instagram screenshot on device/emulator to validate social-media prompt quality (live chefsbk.app has zero Instagram references as of bc8d23d)
 - Generate the 3 concept-f images via Replicate and swap final CTA bg
 - Decide A/B/C/D/E/F winner and integrate as apps/web landing route
 - ESLint for web app; AI impersonation flagging for usernames at signup

@@ -1,6 +1,21 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (landing cleanup) — Instagram removed from landing copy
+- apps/web/app/page.tsx (live chefsbk.app landing):
+  - featureGroups "Import & Capture" bullet: removed "Instagram import"; added "Import from PDFs, Word docs, and bookmark exports"; upgraded "Scan recipe photos" bullet to include "screenshots"
+  - steps[1].desc: "Scan a photo, paste a URL, speak it, or import from Instagram." → "Scan a photo, paste a URL, speak it, or upload a PDF."
+- docs/landing-previews/concept-f.html (winning preview candidate — swept to match live):
+  - hero flow step 1: label "Instagram" with camera icon → "Any website" with globe icon
+  - compat-row: "Instagram" → "Bon Appétit"; "AllRecipes" → "Food52" (for category variety)
+  - hero-float overlay: "Imported from Instagram" → "Imported from Bon Appétit"
+  - feature-row "Any URL" copy: "Food sites, blogs, Instagram reels, YouTube" → "Food sites, blogs, YouTube videos, recipe databases"
+  - mv-import sample URL: instagram.com/reel/C2k7Lm → bonappetit.com/recipe/brown-butter-pasta
+  - caption below import-grid: "Also works with Instagram, YouTube, PDFs, Word docs, and cookbook ISBNs." → "Also works with YouTube videos, PDFs, Word docs, bookmark exports, and cookbook ISBNs."
+- Typecheck: apps/web tsc --noEmit clean
+- Deployed to RPi5: bc8d23d pulled, fast-forward from 9c3d748, build exit 0, pm2 restarted (pid 2700809), localhost HTTP 200, chefsbk.app served HTML now contains zero Instagram mentions (curl | grep -c Instagram = 0)
+- Not touched: apps/web/components/SocialShareModal.tsx (legitimate outbound social-share feature — sharing recipes OUT to IG/Pinterest/Facebook), apps/web/app/dashboard/scan/page.tsx isInstagramUrl guard (keeps redirect message from session 138), historical concepts (a/c/d/e) and stale locale keys (no runtime path)
+
 ## 2026-04-15 (session 138 deploy)
 - Deployed session 138 to RPi5 (chefsbk.app production)
 - Resolved pre-existing local package.json drift on RPi5 (root-level i18next/react-i18next entries + missing react-native-worklets vs. upstream) — stashed local, pulled fe0cec5..9c3d748, discarded the stash after build succeeded with upstream (workspace deps don't need to be hoisted to root)
