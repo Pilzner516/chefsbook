@@ -1,4 +1,38 @@
 const API_BASE = 'https://chefsbk.app';
+
+// Cloudflare-protected domains confirmed in session 145 crawl.
+// On these sites we skip the server-side import entirely and go straight
+// to browser-side HTML scraping — identical flow, just no wasted round-trip.
+const PDF_FALLBACK_SITES = [
+  'allrecipes.com', 'seriouseats.com', 'foodnetwork.com', 'food52.com',
+  'epicurious.com', 'nytcooking.com', 'cooking.nytimes.com',
+  'cooksillustrated.com', 'americastestkitchen.com', 'eatingwell.com',
+  'marthastewart.com', 'tasteofhome.com', 'ohsheglows.com',
+  'ambitiouskitchen.com', 'bakerbynature.com', 'skinnytaste.com',
+  'damndelicious.net', 'gimmesomeoven.com', 'twopeasandtheirpod.com',
+  'browneyedbaker.com', 'dinneratthezoo.com', 'crazyforcrust.com',
+  'jocooks.com', 'thewoksoflife.com', 'thespruceeats.com',
+  'cafedelites.com', 'therecipecritic.com', 'wellplated.com',
+  'cookingclassy.com', 'natashaskitchen.com', 'spendwithpennies.com',
+  'foodandwine.com', 'thepioneerwoman.com',
+  'bbcgoodfood.com', 'jamieoliver.com', 'deliciousmagazine.co.uk',
+  'olivemagazine.com', 'greatbritishchefs.com', 'lovefood.com',
+  'waitrose.com', 'goodhousekeeping.com', 'nigella.com',
+  'marmiton.org', 'cuisineaz.com', '750g.com', 'cuisineactuelle.fr',
+  'chefkoch.de', 'lecker.de', 'essen-und-trinken.de', 'kochbar.de',
+  'giallozafferano.it', 'cucchiaio.it', 'sale-pepe.it',
+  'taste.com.au', 'womensweeklyfood.com.au', 'australiangoodtaste.com.au',
+  'foodnetwork.ca', 'canadianliving.com', 'chatelaine.com',
+];
+
+function isPdfFallbackSite(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    return PDF_FALLBACK_SITES.some((d) => host === d || host.endsWith(`.${d}`));
+  } catch {
+    return false;
+  }
+}
 const SUPABASE_URL = 'https://api.chefsbk.app';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJyb2xlIjogImFub24iLCAiaXNzIjogInN1cGFiYXNlIiwgImlhdCI6IDE3NTEwMDAwMDAsICJleHAiOiAxOTA4NzY2NDAwfQ.ISQ5gkoYSYom-YNgj1PUk-h8Hd6E0MQHtvrEB7NR_zw';
 
@@ -167,13 +201,14 @@ async function renderSaveView(token, email) {
   saveSection.appendChild(el('p', { className: 'page-title', textContent: pageTitle }));
 
   const saveBtn = el('button', { className: 'btn btn-green', textContent: 'Save to Chefsbook' });
+  const isBlocked = isPdfFallbackSite(pageUrl);
   saveBtn.addEventListener('click', async () => {
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Grabbing page...';
+    saveBtn.textContent = isBlocked ? 'Getting full recipe...' : 'Importing recipe...';
 
     const html = await getPageHtml(tab?.id);
 
-    saveBtn.textContent = 'Importing...';
+    saveBtn.textContent = isBlocked ? 'Getting full recipe...' : 'Importing recipe...';
 
     try {
       const data = await importRecipe(pageUrl, html, token);

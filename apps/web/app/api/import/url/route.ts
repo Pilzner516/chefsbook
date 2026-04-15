@@ -56,8 +56,13 @@ export async function POST(req: Request) {
 
     if (text.length < 500) {
       return Response.json(
-        { error: 'This site requires a browser to load. Try the Chrome extension instead.' },
-        { status: 422 },
+        {
+          error: 'This site requires a browser to load. Try the Chrome extension instead.',
+          needsBrowserExtraction: true,
+          domain,
+          reason: 'too_little_text',
+        },
+        { status: 206 },
       );
     }
 
@@ -165,6 +170,19 @@ export async function POST(req: Request) {
         : null,
     });
   } catch (e: any) {
-    return Response.json({ error: e.message }, { status: 500 });
+    // Fetch-layer failures (403 from Cloudflare, timeouts, DNS, etc.) are the
+    // classic signal that the extension's browser-side extraction is needed.
+    const msg = String(e?.message ?? e);
+    const isBotBlock = /403|460|429|blocked/i.test(msg) || /fetch/i.test(msg);
+    if (isBotBlock) {
+      return Response.json({
+        error: msg,
+        needsBrowserExtraction: true,
+        domain,
+        reason: 'fetch_blocked',
+        message: `This site blocks server imports. The ChefsBook browser extension handles it silently.`,
+      }, { status: 206 });
+    }
+    return Response.json({ error: msg }, { status: 500 });
   }
 }

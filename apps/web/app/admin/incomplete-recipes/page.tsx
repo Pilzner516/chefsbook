@@ -45,6 +45,29 @@ export default function IncompleteRecipesPage() {
     }
   };
 
+  const [bulk, setBulk] = useState<{ total: number; refreshed: number; needsExtension: number; failed: number } | null>(null);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const bulkRefresh = async () => {
+    if (!confirm('Refresh every incomplete recipe with a source URL? This runs 1/5s and may take several minutes.')) return;
+    setBulkRunning(true);
+    setBulk(null);
+    try {
+      // Use direct fetch so we can PUT a custom body shape
+      const { supabase } = await import('@chefsbook/db');
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token ?? '';
+      const res = await fetch('/api/admin/refresh-incomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
+      });
+      const body = await res.json();
+      setBulk(body);
+      await load();
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'bulk refresh failed'); }
+    setBulkRunning(false);
+  };
+
   const remove = async (id: string) => {
     if (!confirm('Remove this recipe? This cannot be undone.')) return;
     try {
@@ -64,7 +87,24 @@ export default function IncompleteRecipesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Incomplete Recipes</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Incomplete Recipes</h1>
+        <button
+          onClick={bulkRefresh}
+          disabled={bulkRunning}
+          className="text-sm bg-cb-primary text-white rounded-full px-4 py-1.5 disabled:opacity-60"
+          title="Re-fetch every incomplete recipe from its source URL"
+        >
+          {bulkRunning ? 'Refreshing…' : '🔄 Refresh all from source'}
+        </button>
+      </div>
+      {bulk && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-900">
+          Refreshed {bulk.refreshed} of {bulk.total}.
+          {bulk.needsExtension > 0 && ` ${bulk.needsExtension} need the browser extension (blocked sites).`}
+          {bulk.failed > 0 && ` ${bulk.failed} failed.`}
+        </div>
+      )}
       <p className="text-sm text-gray-600 mb-4">
         Recipes that failed the completeness gate or AI verdict. They are kept private until resolved.
       </p>

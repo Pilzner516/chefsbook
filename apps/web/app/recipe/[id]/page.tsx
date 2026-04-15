@@ -10,6 +10,7 @@ import LikeButton from '@/components/LikeButton';
 import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
+import { RefreshFromSourceBanner } from '@/components/RefreshFromSourceBanner';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
@@ -808,6 +809,15 @@ export default function RecipePage() {
       )}
 
       <article className="max-w-4xl mx-auto py-10 px-6">
+        {/* Refresh-from-source banner on incomplete imports */}
+        {isLoggedIn && recipe && (recipe as any).is_complete === false && (
+          <RefreshFromSourceBanner
+            recipeId={recipe.id}
+            sourceUrl={recipe.source_url}
+            missingFields={((recipe as any).missing_fields ?? []) as string[]}
+            onRefreshed={() => window.location.reload()}
+          />
+        )}
         {/* Title & meta */}
         {editingTitle ? (
           <form onSubmit={(e) => { e.preventDefault(); saveTitle((e.currentTarget.elements.namedItem('title') as HTMLInputElement).value); }} className="mb-4">
