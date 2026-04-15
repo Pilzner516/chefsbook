@@ -111,18 +111,34 @@ export default function ImportSitesPage() {
   };
 
   const exportCsv = () => {
-    const header = ['domain', 'status', 'rating', 'blocked', 'block_reason', 'success_rate', 'total_attempts', 'last_tested', 'notes'];
-    const rows = sites.map((s) => [
-      s.domain,
-      s.status,
-      s.rating ?? '',
-      s.is_blocked ? 'yes' : 'no',
-      (s.block_reason ?? '').replace(/,/g, ';'),
-      s.total_attempts ? Math.round((s.successful_attempts / s.total_attempts) * 100) + '%' : '',
-      s.total_attempts,
-      s.last_auto_tested_at ?? '',
-      (s.notes ?? '').replace(/,/g, ';'),
-    ]);
+    const header = [
+      'domain', 'status', 'rating', 'blocked', 'block_reason', 'success_rate',
+      'total_attempts', 'last_tested', 'title_found', 'description_found',
+      'ingredients_count', 'ingredients_with_qty', 'steps_count',
+      'http_status', 'fetch_method', 'sample_url', 'notes',
+    ];
+    const rows = sites.map((s) => {
+      const t: any = s.failure_taxonomy ?? {};
+      return [
+        s.domain,
+        s.status,
+        s.rating ?? '',
+        s.is_blocked ? 'yes' : 'no',
+        (s.block_reason ?? '').replace(/,/g, ';'),
+        s.total_attempts ? Math.round((s.successful_attempts / s.total_attempts) * 100) + '%' : '',
+        s.total_attempts,
+        s.last_auto_tested_at ?? '',
+        t.title ? 'yes' : 'no',
+        t.description ? 'yes' : 'no',
+        t.ingredients_count ?? '',
+        t.ingredients_with_qty ?? '',
+        t.steps_count ?? '',
+        t.http_status ?? '',
+        t.fetch_method ?? '',
+        (s.sample_failing_urls?.[0] ?? '').replace(/,/g, ';'),
+        (s.notes ?? '').replace(/,/g, ';'),
+      ];
+    });
     const csv = [header, ...rows].map((r) => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
@@ -244,7 +260,11 @@ export default function ImportSitesPage() {
                 return (
                   <>
                     <tr key={s.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="px-3 py-3 font-medium text-gray-900">{s.domain}</td>
+                      <td className="px-3 py-3 font-medium text-gray-900">
+                        <a href={`https://${s.domain}`} target="_blank" rel="noopener noreferrer" className="hover:text-cb-primary hover:underline">
+                          {s.domain}
+                        </a>
+                      </td>
                       <td className="px-3 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLE[s.status] ?? STATUS_STYLE.unknown}`}>{s.status}</span>
                       </td>
@@ -284,16 +304,39 @@ export default function ImportSitesPage() {
                               <label className="block text-xs text-gray-500 mb-1">Notes</label>
                               <input defaultValue={s.notes ?? ''} onBlur={(e) => update(s.id, { notes: e.target.value })} className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm" />
                             </div>
-                            {s.failure_taxonomy && Object.keys(s.failure_taxonomy).length > 0 && (
-                              <div className="w-full">
-                                <div className="text-xs text-gray-500 mb-1">Failure taxonomy</div>
-                                <div className="flex flex-wrap gap-2">
-                                  {Object.entries(s.failure_taxonomy).map(([k, v]) => (
-                                    <span key={k} className="bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded-full">{k}: {v}</span>
-                                  ))}
+                            {s.failure_taxonomy && Object.keys(s.failure_taxonomy).length > 0 && (() => {
+                              const t: any = s.failure_taxonomy;
+                              const hasSessionData = 'ingredients_count' in t || 'fetch_method' in t;
+                              if (!hasSessionData) {
+                                return (
+                                  <div className="w-full">
+                                    <div className="text-xs text-gray-500 mb-1">Failure taxonomy</div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {Object.entries(s.failure_taxonomy).map(([k, v]) => (
+                                        <span key={k} className="bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded-full">{k}: {String(v)}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div className="w-full">
+                                  <div className="text-xs text-gray-500 mb-1">What was found</div>
+                                  <div className="flex flex-wrap gap-2 text-xs">
+                                    <span className={`px-2 py-0.5 rounded-full ${t.title ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>title {t.title ? '✓' : '✗'}</span>
+                                    <span className={`px-2 py-0.5 rounded-full ${t.description ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>description {t.description ? '✓' : '✗'}</span>
+                                    <span className={`px-2 py-0.5 rounded-full ${(t.ingredients_count ?? 0) > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{t.ingredients_count ?? 0} ingredients ({t.ingredients_with_qty ?? 0} w/ qty)</span>
+                                    <span className={`px-2 py-0.5 rounded-full ${(t.steps_count ?? 0) > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{t.steps_count ?? 0} steps</span>
+                                    {t.http_status != null && (
+                                      <span className={`px-2 py-0.5 rounded-full ${t.http_status === 200 ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>HTTP {t.http_status}</span>
+                                    )}
+                                    {t.fetch_method && (
+                                      <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">via {t.fetch_method}</span>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
                             {s.sample_failing_urls && s.sample_failing_urls.length > 0 && (
                               <div className="w-full">
                                 <div className="text-xs text-gray-500 mb-1">Sample failing URLs</div>
