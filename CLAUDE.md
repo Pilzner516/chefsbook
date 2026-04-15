@@ -309,15 +309,17 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (134 — 2026-04-15)
-- Wired all 26 generated images into 3 landing concepts
-- concept-a: 6 images (editorial band + rotated hero accent + final bg)
-- concept-b: 5 images (hero bg + 3 dark persona cards + final texture)
-- concept-c: 13 images (avatars, mock photo accents, 3-up editorial band)
-- All image paths verified against docs/landing-previews/images/
+## Last session (135 — 2026-04-15)
+- Created concept-d.html — evolved concept-c into elite pitch-ready landing
+- Hero with animated 4-step workflow + trust signals; staged phone over food hero bg
+- 3 magic-moment blocks (Import / AI Plan / Shop) with scroll-triggered micro-animations
+- Alternating cream/white rhythm + 3 full-width parallax image breaks
+- Pricing: Monthly/Yearly toggle with live price swap + "Save 20%" pill; Chef featured
+- Final CTA: full-bleed darkened food bg, single red "Start Cooking Free →"
+- Motion via CSS + IntersectionObserver only, prefers-reduced-motion respected
 
 ## Next session
-- Pick winning landing concept (A/B/C) and integrate as apps/web landing route
+- Decide A/B/C/D winner and integrate as apps/web landing route
 - Cold-boot emulator or test APK on physical Android device to confirm UI renders
 - Configure ESLint for web app
 - AI impersonation flagging for usernames at signup

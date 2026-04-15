@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 135)
+- Created docs/landing-previews/concept-d.html (1100 lines, self-contained) — evolution of concept-c, same soul (Fraunces+Inter, cream #faf7f0, muted red, food-led warmth), far stronger execution
+- Hero: split 2-col layout (copy+CTA left / staged phone over golden-hour pasta bg right), new headline "Everything you cook, finally connected", 4-step workflow pill animation (📸 Instagram → 📋 Recipe saved → 📅 Added to plan → 🛒 List ready) with 220ms sequence and delayed trust-signal fade ("★★★★★ Loved by home cooks · 5 languages · iOS & Android · Free to start")
+- 3 magic-moment blocks: Import (animated URL → pulse-down arrow → populated recipe card with food thumbnail), AI Plan (7-day calendar with staggered dish-pill fill-in on scroll, 50-450ms delays + pulsing green "AI GENERATED" dot), Shop (grouped-by-aisle shopping list with Produce/Dairy/Meat)
+- Visual rhythm: alternating cream/white section backgrounds + 3 full-width parallax image breaks (herbs-hands / meal-plan-paper / farmers-market) with ±20px scroll-based translate
+- Pricing redesigned: Monthly/Yearly toggle with animated sliding pill + basil-green "Save 20%" badge + live $4.99→$3.99, $9.99→$7.99, $14.99→$11.99 swap and struck-through original prices; Chef card elevated (2px red border, translateY(-8px) on load, red glow, scale-in on scroll); reduced to 3 bullets per tier
+- Final CTA: full-bleed darkened hero-c-warm-pasta bg, cream typography with pink-tinted em accent, single "Start Cooking Free →" primary, glass-morphism app badges
+- Nav: Fraunces "ChefsBook" wordmark, 4-link menu (Home/Features/Pricing/Download), transparent → white shadow on scroll, Sign in text link + Start Free red pill
+- Motion: CSS + IntersectionObserver only (no libraries), prefers-reduced-motion respected, requestAnimationFrame-throttled parallax
+- Fully responsive breakpoints 1000px (stack to 1-col, disable featured card lift) and 640px (hide parallax floats, full-width CTAs, hide flow arrows); verified all 10 image refs resolve against images/
+
 ## 2026-04-15 (session 134)
 - Wired all 26 generated images into 3 landing concept HTML files
 - concept-a.html (Unified Kitchen): 6 images — hero editorial accent (rotated overlay beside phone mockup) + 4-image editorial band after Chaos section (herbs/veg/bread/plate) + final CTA background (breakfast morning with dark overlay)
