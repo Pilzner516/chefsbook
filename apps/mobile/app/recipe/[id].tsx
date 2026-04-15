@@ -1392,7 +1392,23 @@ function RecipeDetailInner() {
 
         {/* Action icons */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 28, marginBottom: 14, alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => toggleFav(recipe.id, recipe.is_favourite)} style={{ padding: 6 }}>
+          <TouchableOpacity
+            onPress={async () => {
+              if (!canDo(planTier, 'canLike')) {
+                const ok = await confirmAction({
+                  icon: '💎',
+                  title: 'Upgrade to Like Recipes',
+                  body: 'Liking recipes is available on Chef plan and above. Upgrade to interact with the community.',
+                  confirmLabel: t('plans.upgrade'),
+                  cancelLabel: t('plans.maybeLater'),
+                });
+                if (ok) router.push('/plans' as any);
+                return;
+              }
+              toggleFav(recipe.id, recipe.is_favourite);
+            }}
+            style={{ padding: 6 }}
+          >
             <Ionicons
               name={recipe.is_favourite ? 'heart' : 'heart-outline'}
               size={26}

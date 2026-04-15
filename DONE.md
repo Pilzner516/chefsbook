@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 142 — Mobile fix gaps from session 140)
+- [2026-04-15] Fix 1 (free-plan like gate on recipe detail): PASS. Root cause: the visible heart icon at the top action row on recipe/[id].tsx called `toggleFav` directly with no plan gate. Session 137 gating lived inside LikeButton (smaller heart next to Likes/Saves count), but most users tap the big action-row heart. Added canDo(planTier,'canLike') gate + ChefsDialog upgrade prompt (via existing useConfirmDialog) around the toggleFav call at apps/mobile/app/recipe/[id].tsx:1395. Verified on CB_API_34 emulator as free user qa140: tapping heart on "Carottes Glacées au Miel" renders "Upgrade to Like Recipes" dialog with Maybe Later / Upgrade buttons.
+- [2026-04-15] Fix 2 (translated recipe titles in lists): PASS. Source already wired — getBatchTranslatedTitles called in apps/mobile/app/(tabs)/index.tsx:52 and apps/mobile/app/(tabs)/search.tsx:87 and :98 since session 131. Session 140 tester was running a pre-session-131 APK. Fresh release APK built this session and verified on Chercher tab in FR: "Carottes Glacées au Miel" (translated from "Honey Glazed Carrots") displays correctly. DB has 71 FR + 67 each ES/IT/DE title translations.
+- [2026-04-15] Fix 3 (Instagram screenshot scan end-to-end): PASS. The session 140 MediaStore blocker was emulator-specific. Pushed docs/pics/hero-c-warm-pasta.jpg to /sdcard/Pictures/ then broadcast MEDIA_SCANNER_SCAN_FILE intent → MediaStore indexed it (verified via `content query --uri content://media/external/images/media`). Photo picker then shows it in Recent. Selected → Claude Vision classified it as "Pasta al Pomodoro (Tomato Pasta), Italian cuisine" and launched the dish identification flow as designed. The underlying app flow was always correct; this session documents the adb workaround for emulator testing.
+- [2026-04-15] Release APK built from current source (BUILD SUCCESSFUL in 1m 2s) and installed on CB_API_34. Typecheck clean except pre-existing expo-file-system upstream error.
+
 ## 2026-04-15 (session 140 — Mobile AVD verification)
 - [2026-04-15] CB_API_34 AVD booted, release APK built + installed, 6 features tested on emulator
 - [2026-04-15] Feature 1 (Notification bell): PASS — 5-tab panel opens (All/Comments/Likes/Followers/Moderation) with "Mark all read"
