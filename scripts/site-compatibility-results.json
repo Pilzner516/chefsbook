@@ -5,13 +5,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.allrecipes.com/recipe/213742/meatball-nirvana/",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "foodnetwork.com",
@@ -19,12 +19,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 11,
-    "ingredientsWithQty": 8,
-    "stepCount": 3,
-    "notes": null
+    "chosenUrl": "https://www.foodnetwork.com/recipes/ina-garten/perfect-roast-chicken-recipe-1940592",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "epicurious.com",
@@ -32,13 +33,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.epicurious.com/recipes/food/views/rosemary-and-garlic-roasted-potatoes-357469",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "087bf74a-91b2-4872-a4df-39eee52d3586",
+    "recipe": {
+      "ingredientCount": 4,
+      "stepCount": 2,
+      "hasDescription": true
+    }
   },
   {
     "domain": "bonappetit.com",
@@ -46,12 +52,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.bonappetit.com/recipe/bas-best-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 4,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "2c442bee-9170-48e5-9441-5fe5a24ea3f4",
+    "recipe": {
+      "ingredientCount": 10,
+      "stepCount": 4,
+      "hasDescription": true
+    }
   },
   {
     "domain": "food52.com",
@@ -59,13 +71,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://food52.com/recipes/82275-the-best-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 429,
     "rating": 1,
-    "missing": [
-      "fetch failed (429)"
-    ],
-    "notes": "HTTP 429",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 429",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "seriouseats.com",
@@ -73,13 +85,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.seriouseats.com/the-best-chocolate-chip-cookies-recipe",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "cooking.nytimes.com",
@@ -87,12 +99,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 9,
-    "stepCount": 6,
-    "notes": null
+    "chosenUrl": "https://cooking.nytimes.com/recipes/1018684-chocolate-chip-cookies",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "tasty.co",
@@ -100,12 +113,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 6,
-    "stepCount": 9,
-    "notes": null
+    "chosenUrl": "https://tasty.co/recipe/the-best-chewy-chocolate-chip-cookies",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "delish.com",
@@ -113,13 +127,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.delish.com/cooking/recipe-ideas/recipes/a55259/enchilada-stuffed-shells-recipe/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "5bfdf60f-c03f-48e0-8979-0836a6b039bc",
+    "recipe": {
+      "ingredientCount": 14,
+      "stepCount": 7,
+      "hasDescription": true
+    }
   },
   {
     "domain": "simplyrecipes.com",
@@ -127,13 +146,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.simplyrecipes.com/recipes/chocolate_chip_cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "thekitchn.com",
@@ -141,13 +160,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.thekitchn.com/how-to-make-the-best-chocolate-chip-cookies-cooking-lessons-from-the-kitchn-58056",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "smittenkitchen.com",
@@ -155,13 +174,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://smittenkitchen.com/./recipes/fruit/avocado/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "halfbakedharvest.com",
@@ -169,13 +193,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.halfbakedharvest.com/category/recipes/type-of-meal/top-recipes/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "minimalistbaker.com",
@@ -183,13 +212,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://minimalistbaker.com/recipes/hearty-meals/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "cookingclassy.com",
@@ -197,13 +231,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.cookingclassy.com/recipes/appetizer/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "sallysbakingaddiction.com",
@@ -211,12 +250,18 @@
     "region": "US",
     "language": "en",
     "cuisine": "Baking",
+    "chosenUrl": "https://sallysbakingaddiction.com/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 7,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "ee871985-ff25-4179-bf74-ff9761610542",
+    "recipe": {
+      "ingredientCount": 10,
+      "stepCount": 7,
+      "hasDescription": true
+    }
   },
   {
     "domain": "budgetbytes.com",
@@ -224,13 +269,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.budgetbytes.com/category/recipes/one-pot/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "ohsheglows.com",
@@ -238,13 +288,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://ohsheglows.com/2016/10/17/my-favourite-vegan-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "pinchofyum.com",
@@ -252,12 +302,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://pinchofyum.com/the-best-soft-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 9,
-    "stepCount": 5,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "32e89206-c809-481b-abf9-6c30494ea650",
+    "recipe": {
+      "ingredientCount": 9,
+      "stepCount": 5,
+      "hasDescription": true
+    }
   },
   {
     "domain": "skinnytaste.com",
@@ -265,13 +321,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.skinnytaste.com/recipes/dairy-free/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "marthastewart.com",
@@ -279,13 +340,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.marthastewart.com/338185/soft-and-chewy-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "eatingwell.com",
@@ -293,13 +354,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.eatingwell.com/recipe/251015/healthier-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "cookinglight.com",
@@ -307,13 +368,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.cookinglight.com/recipes/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "wholefoodsmarket.com",
@@ -321,13 +382,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.wholefoodsmarket.com/recipes/classic-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "bettycrocker.com",
@@ -335,12 +396,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.bettycrocker.com/recipes/ultimate-chocolate-chip-cookies/77c14e03-d8b0-4844-846d-f19304f61c57",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 8,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "463dfc95-b4c6-49d0-94b7-1c573bc9facf",
+    "recipe": {
+      "ingredientCount": 10,
+      "stepCount": 8,
+      "hasDescription": true
+    }
   },
   {
     "domain": "kingarthurbaking.com",
@@ -348,12 +415,18 @@
     "region": "US",
     "language": "en",
     "cuisine": "Baking",
+    "chosenUrl": "https://www.kingarthurbaking.com/recipes/chocolate-chip-cookies-recipe",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 12,
-    "ingredientsWithQty": 12,
-    "stepCount": 9,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "71bc1ecc-0544-49b0-a476-ee801c3d1aaf",
+    "recipe": {
+      "ingredientCount": 12,
+      "stepCount": 9,
+      "hasDescription": true
+    }
   },
   {
     "domain": "tasteofhome.com",
@@ -361,12 +434,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 4,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 2,
-    "notes": null
+    "chosenUrl": "https://www.tasteofhome.com/recipes/chewy-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "2795d29a-702d-4633-8fab-67db6c73a299",
+    "recipe": {
+      "ingredientCount": 10,
+      "stepCount": 8,
+      "hasDescription": true
+    }
   },
   {
     "domain": "cooksillustrated.com",
@@ -374,12 +453,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 9,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.cooksillustrated.com/recipes/1313-perfect-chocolate-chip-cookies",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "ambitiouskitchen.com",
@@ -387,13 +467,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.ambitiouskitchen.com/the-best-chewy-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "loveandlemons.com",
@@ -401,11 +481,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "chosenUrl": "https://www.loveandlemons.com/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "c7d69a87-08d5-4d9d-b106-c639c3001113",
+    "recipe": {
+      "ingredientCount": 10,
+      "stepCount": 9,
+      "hasDescription": true
+    }
   },
   {
     "domain": "cookieandkate.com",
@@ -413,13 +500,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://cookieandkate.com/classic-chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "damndelicious.net",
@@ -427,13 +514,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://damndelicious.net/2018/12/17/brown-butter-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "spendwithpennies.com",
@@ -441,13 +528,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.spendwithpennies.com/category/recipes/weeknight-quick-fix/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed No JSON found in Claude response",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "thepioneerwoman.com",
@@ -455,12 +542,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.thepioneerwoman.com/food-cooking/recipes/a32202986/chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 11,
-    "ingredientsWithQty": 10,
-    "stepCount": 5,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "7da09fe8-3767-4443-8f1b-b71b3b3b9cf5",
+    "recipe": {
+      "ingredientCount": 11,
+      "stepCount": 5,
+      "hasDescription": true
+    }
   },
   {
     "domain": "yummly.com",
@@ -468,11 +561,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.yummly.com/recipe/Chocolate-chip-cookies-9080583",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "myrecipes.com",
@@ -480,13 +580,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.allrecipes.com/recipe/46887/spinach-cheese-manicotti/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "bakerbynature.com",
@@ -494,13 +594,13 @@
     "region": "US",
     "language": "en",
     "cuisine": "Baking",
+    "chosenUrl": "https://bakerbynature.com/best-ever-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "onceuponachef.com",
@@ -508,13 +608,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.onceuponachef.com/recipes/dinner",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed No JSON found in Claude response",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "barefootcontessa.com",
@@ -522,13 +622,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://barefootcontessa.com/recipes/chicken-soup-with-matzo-balls",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "3984c384-e832-4d9f-a4ca-cf787f9b4118",
+    "recipe": {
+      "ingredientCount": 21,
+      "stepCount": 9,
+      "hasDescription": false
+    }
   },
   {
     "domain": "thespruceeats.com",
@@ -536,13 +641,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.thespruceeats.com/classic-chocolate-chip-cookies-recipe-520375",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "gimmesomeoven.com",
@@ -550,13 +655,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.gimmesomeoven.com/best-chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "twopeasandtheirpod.com",
@@ -564,13 +669,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.twopeasandtheirpod.com/category/recipes/breakfast-brunch/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "browneyedbaker.com",
@@ -578,13 +688,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.browneyedbaker.com/recipes/appetizer-recipes/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "bakingmischief.com",
@@ -592,13 +707,13 @@
     "region": "US",
     "language": "en",
     "cuisine": "Baking",
+    "chosenUrl": "https://bakingmischief.com/category/recipes/nerdy-recipes/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed No JSON found in Claude response",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "averiecooks.com",
@@ -606,13 +721,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.averiecooks.com/best-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "dinneratthezoo.com",
@@ -620,13 +735,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.dinneratthezoo.com/chocolate-chip-cookie-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "iambaker.net",
@@ -634,12 +749,18 @@
     "region": "US",
     "language": "en",
     "cuisine": "Baking",
+    "chosenUrl": "https://iambaker.net/best-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 11,
-    "ingredientsWithQty": 11,
-    "stepCount": 9,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "a71988cf-bf8d-4f61-906b-57d956132949",
+    "recipe": {
+      "ingredientCount": 11,
+      "stepCount": 11,
+      "hasDescription": true
+    }
   },
   {
     "domain": "crazyforcrust.com",
@@ -647,13 +768,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.crazyforcrust.com/recipes/members-only/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Could not extract a technique from this page.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "jocooks.com",
@@ -661,13 +782,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.jocooks.com/recipes/hit-run-baked-chicken-and-veggies/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "569a1cf1-73c1-4fb0-b870-98bdc843224c",
+    "recipe": {
+      "ingredientCount": 12,
+      "stepCount": 6,
+      "hasDescription": true
+    }
   },
   {
     "domain": "natashaskitchen.com",
@@ -675,13 +801,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://natashaskitchen.com/chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "wellplated.com",
@@ -689,13 +815,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.wellplated.com/easy-chicken-soup/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "cafedelites.com",
@@ -703,13 +829,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://cafedelites.com/perfect-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "therecipecritic.com",
@@ -717,13 +843,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://therecipecritic.com/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recipetineats.com",
@@ -731,13 +857,13 @@
     "region": "Australia/NZ",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.recipetineats.com/chicken-noodle-soup/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "foodandwine.com",
@@ -745,13 +871,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.foodandwine.com/recipes/perfect-roast-chicken",
+    "fetchMethod": "curated",
+    "httpStatus": 460,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 460",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "saveur.com",
@@ -759,13 +885,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.saveur.com/recipes/muhalabia-basque-cheesecake/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "ff408702-0985-4913-bae8-b945c8ec9f93",
+    "recipe": {
+      "ingredientCount": 13,
+      "stepCount": 4,
+      "hasDescription": true
+    }
   },
   {
     "domain": "americastestkitchen.com",
@@ -773,12 +904,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 18,
-    "ingredientsWithQty": 15,
-    "stepCount": 6,
-    "notes": null
+    "chosenUrl": "https://www.americastestkitchen.com/recipes/8335-perfect-chocolate-chip-cookies",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "healthyrecipes101.com",
@@ -786,13 +918,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.healthyrecipes101.com/chicken/recipe/ground-chicken-spaghetti/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "a497cb18-830b-4900-bf6e-b92f17197996",
+    "recipe": {
+      "ingredientCount": 17,
+      "stepCount": 12,
+      "hasDescription": true
+    }
   },
   {
     "domain": "ifoodreal.com",
@@ -800,12 +937,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://ifoodreal.com/healthy-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 8,
-    "ingredientsWithQty": 8,
-    "stepCount": 6,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "0e419f3b-8048-4208-a4d5-8a6ac226f206",
+    "recipe": {
+      "ingredientCount": 8,
+      "stepCount": 7,
+      "hasDescription": true
+    }
   },
   {
     "domain": "downshiftology.com",
@@ -813,13 +956,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://downshiftology.com/recipes/health-benefits-matcha-green-tea/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "3c240c99-a52a-462b-9461-2e49216ed233",
+    "recipe": {
+      "ingredientCount": 4,
+      "stepCount": 3,
+      "hasDescription": true
+    }
   },
   {
     "domain": "wholesomeyum.com",
@@ -827,12 +975,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.wholesomeyum.com/almond-flour-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 9,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "7104f2db-d2a5-4cd2-b2e6-e9bd2c35c84c",
+    "recipe": {
+      "ingredientCount": 10,
+      "stepCount": 9,
+      "hasDescription": true
+    }
   },
   {
     "domain": "thepioneerwoman.com",
@@ -840,13 +994,18 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.thepioneerwoman.com/food-cooking/recipes/a64476303/strawberries-and-cream-sheet-cake-recipe/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "e5614381-3bc4-4518-94b5-b585ce91b165",
+    "recipe": {
+      "ingredientCount": 14,
+      "stepCount": 5,
+      "hasDescription": true
+    }
   },
   {
     "domain": "theurbanpoacher.com",
@@ -854,13 +1013,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://theurbanpoacher.com/recipes/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "bbcgoodfood.com",
@@ -868,13 +1027,18 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.bbcgoodfood.com/recipes/collection/focaccia-recipes",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 2,
+    "reason": "title+desc only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": true
+    }
   },
   {
     "domain": "jamieoliver.com",
@@ -882,13 +1046,13 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.jamieoliver.com/recipes/ingredients/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Could not extract a technique from this page.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "nigella.com",
@@ -896,11 +1060,18 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "chosenUrl": "https://www.nigella.com/recipes/totally-chocolate-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "057c8e40-c137-4481-a1eb-c5317250d3d5",
+    "recipe": {
+      "ingredientCount": 11,
+      "stepCount": 10,
+      "hasDescription": true
+    }
   },
   {
     "domain": "deliciousmagazine.co.uk",
@@ -908,13 +1079,13 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.deliciousmagazine.co.uk/recipes/sloe-gin-bramble-pie/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "olivemagazine.com",
@@ -922,13 +1093,18 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.olivemagazine.com/recipes/baking-and-desserts/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "greatbritishchefs.com",
@@ -936,13 +1112,13 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.greatbritishchefs.com/recipes/chocolate-chip-cookies-recipe",
+    "fetchMethod": "error",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "lovefood.com",
@@ -950,11 +1126,18 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "chosenUrl": "https://www.lovefood.com/recipes/63041/chocolatechip-cookies-recipe",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "62d7328f-fd6c-4da1-ad72-6caeecda3b2b",
+    "recipe": {
+      "ingredientCount": 16,
+      "stepCount": 9,
+      "hasDescription": true
+    }
   },
   {
     "domain": "waitrose.com",
@@ -962,13 +1145,18 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.waitrose.com/ecom/recipes/dish-podcast",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "goodhousekeeping.com",
@@ -976,13 +1164,13 @@
     "region": "UK",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.goodhousekeeping.com/food-recipes/a5045/cookies-r168961/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "goodfood.com.au",
@@ -990,11 +1178,18 @@
     "region": "Australia/NZ",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.goodfood.com.au/recipes/choc-chip-cookies-20131031-2wj8u",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "taste.com.au",
@@ -1002,13 +1197,13 @@
     "region": "Australia/NZ",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.taste.com.au/recipes/collections/breakfast-recipes",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed No JSON found in Claude response",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "womensweeklyfood.com.au",
@@ -1016,13 +1211,18 @@
     "region": "Australia/NZ",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.womensweeklyfood.com.au/recipe/dinner/beef-mince-stir-fry/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "31669537-2c0c-4be7-bc1d-e954ebe5997b",
+    "recipe": {
+      "ingredientCount": 5,
+      "stepCount": 5,
+      "hasDescription": true
+    }
   },
   {
     "domain": "australiangoodtaste.com.au",
@@ -1030,13 +1230,13 @@
     "region": "Australia/NZ",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.australiangoodtaste.com.au/recipes/choc-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "foodnetwork.ca",
@@ -1044,13 +1244,13 @@
     "region": "Canada",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.foodnetwork.ca/recipe/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "canadianliving.com",
@@ -1058,13 +1258,13 @@
     "region": "Canada",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.canadianliving.com/recipes/search",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed This looks like a category or index page, not a specific recipe.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "chatelaine.com",
@@ -1072,13 +1272,13 @@
     "region": "Canada",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.chatelaine.com/recipe/baking-desserts/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "ricardocuisine.com",
@@ -1086,11 +1286,18 @@
     "region": "Canada",
     "language": "en",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "chosenUrl": "https://www.ricardocuisine.com/en/recipes/1028-chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "6a22c408-c89d-4ee6-a2bb-94a60a831dd5",
+    "recipe": {
+      "ingredientCount": 4,
+      "stepCount": 3,
+      "hasDescription": false
+    }
   },
   {
     "domain": "marmiton.org",
@@ -1098,11 +1305,18 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "chosenUrl": "https://www.marmiton.org/recettes/recette_cookies-aux-pepites-de-chocolat_13892.aspx",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "927aa097-a66a-4846-a19a-1d410bb1793c",
+    "recipe": {
+      "ingredientCount": 4,
+      "stepCount": 2,
+      "hasDescription": false
+    }
   },
   {
     "domain": "cuisineaz.com",
@@ -1110,13 +1324,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.cuisineaz.com/recettes/cookies-aux-pepites-de-chocolat-18875.aspx",
+    "fetchMethod": "error",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "750g.com",
@@ -1124,12 +1338,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
-    "rating": 4,
-    "missing": [],
-    "ingredientCount": 7,
-    "ingredientsWithQty": 6,
-    "stepCount": 1,
-    "notes": null
+    "chosenUrl": "https://www.750g.com/cookies-aux-pepites-de-chocolat-r13892.htm",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "ptitchef.com",
@@ -1137,12 +1352,18 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 8,
-    "stepCount": 8,
-    "notes": null
+    "chosenUrl": "https://www.ptitchef.com/recettes/dessert/cookies-aux-pepites-de-chocolat-fid-5757",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "fb764515-68a5-4521-905a-ae56e3d7df1e",
+    "recipe": {
+      "ingredientCount": 8,
+      "stepCount": 8,
+      "hasDescription": false
+    }
   },
   {
     "domain": "cuisineactuelle.fr",
@@ -1150,13 +1371,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.cuisineactuelle.fr/recettes/cookies-aux-pepites-de-chocolat-329706",
+    "fetchMethod": "error",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "femmeactuelle.fr",
@@ -1164,13 +1385,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.femmeactuelle.fr/cuisine/recettes/cookies-chocolat-23596",
+    "fetchMethod": "error",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "linternaute.com",
@@ -1178,13 +1399,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.linternaute.com/recette/25038-cookies-aux-pepites-de-chocolat/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "journaldesfemmes.fr",
@@ -1192,12 +1413,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 6,
-    "ingredientsWithQty": 5,
-    "stepCount": 5,
-    "notes": null
+    "chosenUrl": "https://cuisine.journaldesfemmes.fr/recette/305987-cookies-aux-pepites-de-chocolat",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "papillesetpupilles.fr",
@@ -1205,13 +1427,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.papillesetpupilles.fr/2019/09/cookies-aux-pepites-de-chocolat.html/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "chefsimon.com",
@@ -1219,14 +1441,18 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
-    "rating": 3,
-    "missing": [
-      "quantities"
-    ],
-    "ingredientCount": 2,
-    "ingredientsWithQty": 0,
-    "stepCount": 2,
-    "notes": null
+    "chosenUrl": "https://chefsimon.com/recettes/cookies-aux-pepites-de-chocolat",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "b08affb3-3860-4cc6-b882-b1cf1c3e682c",
+    "recipe": {
+      "ingredientCount": 2,
+      "stepCount": 2,
+      "hasDescription": true
+    }
   },
   {
     "domain": "hervecuisine.com",
@@ -1234,13 +1460,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.hervecuisine.com/recettes/entrees/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed No JSON found in Claude response",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recettes.de",
@@ -1248,13 +1474,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.recettes.de/cookies-au-chocolat",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "elle.fr",
@@ -1262,13 +1488,13 @@
     "region": "France",
     "language": "fr",
     "cuisine": null,
+    "chosenUrl": "https://www.elle.fr/Elle-a-Table/Recettes-de-cuisine/Cookies-aux-pepites-de-chocolat-1912553",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recetasgratis.net",
@@ -1276,12 +1502,13 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 13,
-    "ingredientsWithQty": 11,
-    "stepCount": 7,
-    "notes": null
+    "chosenUrl": "https://www.recetasgratis.net/receta-de-galletas-con-chispas-de-chocolate-56788.html",
+    "fetchMethod": "error",
+    "httpStatus": 0,
+    "rating": 1,
+    "reason": "exception: Assignment to constant variable.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "hogarmania.com",
@@ -1289,13 +1516,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.hogarmania.com/cocina/recetas/postres/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "pequerecetas.com",
@@ -1303,13 +1535,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.pequerecetas.com/receta/menu-diario-para-bebes-de-6-a-9-meses/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "8c72d3b3-d182-416f-ab07-95a0f77e9635",
+    "recipe": {
+      "ingredientCount": 11,
+      "stepCount": 6,
+      "hasDescription": true
+    }
   },
   {
     "domain": "recetasderechupete.com",
@@ -1317,13 +1554,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.abc.es/recetasderechupete/todas/recetas/postres-dulces/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "title only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": false
+    }
   },
   {
     "domain": "directoalpaladar.com",
@@ -1331,13 +1573,13 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.directoalpaladar.com/postres/como-hacer-las-mejores-galletas-de-chocolate-receta-americana",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "webosfritos.es",
@@ -1345,12 +1587,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://webosfritos.es/2015/12/cookies-de-chocolate/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 5,
-    "missing": [],
-    "ingredientCount": 8,
-    "ingredientsWithQty": 8,
-    "stepCount": 5,
-    "notes": null
+    "reason": "complete",
+    "saved": true,
+    "savedId": "50dab0e6-3c24-4292-9c0c-12b87a8fffec",
+    "recipe": {
+      "ingredientCount": 8,
+      "stepCount": 8,
+      "hasDescription": true
+    }
   },
   {
     "domain": "cocinafacil.com",
@@ -1358,13 +1606,13 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.cocinafacil.com/recetas/content/20260415113935/js/es/app.min.js",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "elcomidista.elpais.com",
@@ -1372,13 +1620,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://elpais.com/gastronomia/recetas/2026-04-11/salchichas-al-vino-una-receta-perfecta-para-servir-al-plato-o-en-bocadillo.html",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 4,
+    "reason": "good",
+    "saved": true,
+    "savedId": "1dfe5bda-0bdb-4341-9cde-889f220267ca",
+    "recipe": {
+      "ingredientCount": 9,
+      "stepCount": 5,
+      "hasDescription": true
+    }
   },
   {
     "domain": "javirecetas.com",
@@ -1386,13 +1639,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.javirecetas.com/receta/recetas-de-navidad/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 2,
+    "reason": "title+desc only",
+    "saved": false,
+    "savedId": null,
+    "recipe": {
+      "ingredientCount": 0,
+      "stepCount": 0,
+      "hasDescription": true
+    }
   },
   {
     "domain": "mis-recetas.org",
@@ -1400,12 +1658,18 @@
     "region": "Spain",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://mis-recetas.org/recetas/show/33810-galletas-de-chocolate",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 4,
-    "missing": [],
-    "ingredientCount": 15,
-    "ingredientsWithQty": 12,
-    "stepCount": 2,
-    "notes": null
+    "reason": "good",
+    "saved": true,
+    "savedId": "60891fcf-d9fa-400c-a046-ef7eb3904478",
+    "recipe": {
+      "ingredientCount": 15,
+      "stepCount": 2,
+      "hasDescription": true
+    }
   },
   {
     "domain": "mexicoinmykitchen.com",
@@ -1413,13 +1677,13 @@
     "region": "Latin America",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.mexicoinmykitchen.com/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kiwilimon.com",
@@ -1427,11 +1691,13 @@
     "region": "Latin America",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.kiwilimon.com/receta/postres/galletas/galletas-con-chispas-de-chocolate",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed This site requires a browser to load. Try the Chrome extension instead.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recetas.com.mx",
@@ -1439,13 +1705,13 @@
     "region": "Latin America",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.recetas.com.mx/recetas/galletas-con-chispas-de-chocolate",
+    "fetchMethod": "curated",
+    "httpStatus": 436,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 436",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "isabeleats.com",
@@ -1453,13 +1719,13 @@
     "region": "Latin America",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.isabeleats.com/recipes/breakfast/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed No JSON found in Claude response",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "laylita.com",
@@ -1467,13 +1733,13 @@
     "region": "Latin America",
     "language": "es",
     "cuisine": null,
+    "chosenUrl": "https://www.laylita.com/recipes/all-about-empanadas/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed 200",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "giallozafferano.it",
@@ -1481,13 +1747,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://ricette.giallozafferano.it/Biscotti-cookies-al-cioccolato.html",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "cucchiaio.it",
@@ -1495,15 +1761,18 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "description",
-      "steps"
-    ],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 9,
-    "stepCount": 0,
-    "notes": null
+    "chosenUrl": "https://www.cucchiaio.it/ricetta/ricetta-cookies-cioccolato/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "b51bb062-8b5f-432a-a890-e81841185909",
+    "recipe": {
+      "ingredientCount": 9,
+      "stepCount": 5,
+      "hasDescription": true
+    }
   },
   {
     "domain": "lacucinaitaliana.it",
@@ -1511,13 +1780,18 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
-    "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "chosenUrl": "https://www.lacucinaitaliana.it/ricetta/antipasti/flan-di-spinaci/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
+    "rating": 5,
+    "reason": "complete",
+    "saved": true,
+    "savedId": "e650f3c3-ed51-4ca3-a933-8cb0c90d40e3",
+    "recipe": {
+      "ingredientCount": 12,
+      "stepCount": 7,
+      "hasDescription": true
+    }
   },
   {
     "domain": "agrodolce.it",
@@ -1525,13 +1799,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://www.agrodolce.it/ricette/cookies-al-cioccolato/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "fattoincasadabenedetta.it",
@@ -1539,13 +1813,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://www.fattoincasadabenedetta.it/ricetta/cookies-americani/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "tavolartegusto.it",
@@ -1553,13 +1827,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://www.tavolartegusto.it/ricetta/il-libro-di-tavolartegusto/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "ricette.it",
@@ -1567,13 +1841,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://www.ricette.it/ricetta/cookies-al-cioccolato",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "sale-pepe.it",
@@ -1581,13 +1855,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://www.salepepe.it/ricette/dolci/biscotti-crostate/cookies-cioccolato/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "finedininglovers.com",
@@ -1595,13 +1869,13 @@
     "region": "Italy",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.finedininglovers.com/taste-match?from=/explore/recipes/antonio-bachour-butter-croissant",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "gnamgnam.it",
@@ -1609,11 +1883,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://gnamgnam.it/ricetta/cookies-gocce-cioccolato/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "mysia.it",
@@ -1621,12 +1897,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 11,
-    "ingredientsWithQty": 10,
-    "stepCount": 5,
-    "notes": null
+    "chosenUrl": "https://www.misya.info/ricetta/cookies-americani.htm",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "blog.giallozafferano.it",
@@ -1634,13 +1911,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://blog.giallozafferano.it/ricettedinonnacri/cookies-americani/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "buttalapasta.it",
@@ -1648,13 +1925,13 @@
     "region": "Italy",
     "language": "it",
     "cuisine": null,
+    "chosenUrl": "https://www.buttalapasta.it/ricette/avevo-dei-carciofi-da-finire-ci-ho-fatto-queste-polpette-e-ora-le-rifaccio-ogni-settimana/249901/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "chefkoch.de",
@@ -1662,13 +1939,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.chefkoch.de/rezepte/was-koche-ich-heute/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "lecker.de",
@@ -1676,13 +1953,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.lecker.de/rezept/2744406/american-chocolate-chip-cookies.html",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "essen-und-trinken.de",
@@ -1690,13 +1967,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.essen-und-trinken.de/rezepte/neue-rezepte/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kochbar.de",
@@ -1704,13 +1981,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.kochbar.de/rezepte/alle-rezepte.html",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "einfachkochen.at",
@@ -1718,13 +1995,13 @@
     "region": "Austria",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.einfachkochen.at/rezept/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "gutekueche.at",
@@ -1732,12 +2009,13 @@
     "region": "Austria",
     "language": "de",
     "cuisine": null,
-    "rating": 4,
-    "missing": [],
-    "ingredientCount": 4,
-    "ingredientsWithQty": 4,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.gutekueche.at/chocolate-chip-cookies-rezept-10132",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "gutekueche.ch",
@@ -1745,13 +2023,13 @@
     "region": "Switzerland",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.gutekueche.ch/chocolate-chip-cookies-rezept-1856",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "springlane.de",
@@ -1759,13 +2037,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.springlane.de/blogs/rezepte/erfrischender-fenchel-saft-mit-orange-und-cayenne-pfeffer-ein-gesunder-energiebooster",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kuechengoetter.de",
@@ -1773,13 +2051,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.kuechengoetter.de/rezepte/unsere-empfehlungen",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "eatsmarter.de",
@@ -1787,12 +2065,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
-    "rating": 4,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 9,
-    "stepCount": 2,
-    "notes": null
+    "chosenUrl": "https://eatsmarter.de/rezepte/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kuechentraum.de",
@@ -1800,13 +2079,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.kuechentraum24.de/magazin/amerikanische-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "daskochrezept.de",
@@ -1814,12 +2093,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 6,
-    "ingredientsWithQty": 6,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.daskochrezept.de/rezepte/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "backenmachtgluecklich.de",
@@ -1827,13 +2107,13 @@
     "region": "Germany",
     "language": "de",
     "cuisine": null,
+    "chosenUrl": "https://www.backenmachtgluecklich.de/rezepte/pudding-selber-machen.html",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "matprat.no",
@@ -1841,13 +2121,13 @@
     "region": "Nordic",
     "language": "no",
     "cuisine": null,
+    "chosenUrl": "https://www.matprat.no/oppskrifter/tradisjon/sjokoladecookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "godt.no",
@@ -1855,13 +2135,13 @@
     "region": "Nordic",
     "language": "no",
     "cuisine": null,
+    "chosenUrl": "https://www.godt.no/oppskrifter/cookies-med-sjokoladebiter",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "valdemarsro.dk",
@@ -1869,11 +2149,13 @@
     "region": "Nordic",
     "language": "da",
     "cuisine": null,
+    "chosenUrl": "https://www.valdemarsro.dk/amerikanske-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "foodculture.dk",
@@ -1881,13 +2163,13 @@
     "region": "Nordic",
     "language": "da",
     "cuisine": null,
+    "chosenUrl": "https://foodculture.dk/opskrifter/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "arla.se",
@@ -1895,12 +2177,13 @@
     "region": "Nordic",
     "language": "sv",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 5,
-    "stepCount": 7,
-    "notes": null
+    "chosenUrl": "https://www.arla.se/recept/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "tasteline.com",
@@ -1908,14 +2191,13 @@
     "region": "Nordic",
     "language": "sv",
     "cuisine": null,
-    "rating": 3,
-    "missing": [
-      "quantities"
-    ],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 0,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.tasteline.com/recept/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recepten.se",
@@ -1923,14 +2205,13 @@
     "region": "Nordic",
     "language": "sv",
     "cuisine": null,
+    "chosenUrl": "https://www.recepten.se/recept/chocolate_chip_cookies.html",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "steps"
-    ],
-    "ingredientCount": 8,
-    "ingredientsWithQty": 8,
-    "stepCount": 0,
-    "notes": null
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "ica.se",
@@ -1938,12 +2219,13 @@
     "region": "Nordic",
     "language": "sv",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 8,
-    "stepCount": 5,
-    "notes": null
+    "chosenUrl": "https://www.ica.se/recept/chocolate-chip-cookies-724003/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "koket.se",
@@ -1951,12 +2233,13 @@
     "region": "Nordic",
     "language": "sv",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 13,
-    "ingredientsWithQty": 10,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.koket.se/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "maku.fi",
@@ -1964,13 +2247,13 @@
     "region": "Nordic",
     "language": "fi",
     "cuisine": null,
+    "chosenUrl": "https://www.maku.fi/reseptit/amerikan-suklaakeksit",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "valio.fi",
@@ -1978,13 +2261,13 @@
     "region": "Nordic",
     "language": "fi",
     "cuisine": null,
+    "chosenUrl": "https://www.valio.fi/reseptit/suklaakeksit/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "k-ruoka.fi",
@@ -1992,13 +2275,13 @@
     "region": "Nordic",
     "language": "fi",
     "cuisine": null,
+    "chosenUrl": "https://www.k-ruoka.fi/reseptit/amerikkalaiset-suklaakeksit",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kotikokki.net",
@@ -2006,11 +2289,13 @@
     "region": "Nordic",
     "language": "fi",
     "cuisine": null,
+    "chosenUrl": "https://www.kotikokki.net/reseptit/nayta/112420/Suklaakeksit/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "mat.se",
@@ -2018,13 +2303,13 @@
     "region": "Nordic",
     "language": "sv",
     "cuisine": null,
+    "chosenUrl": "https://mat.se/recept/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "allerhande.nl",
@@ -2032,13 +2317,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://www.allerhande.nl/allerhande/recept/R-R1202418/gehaktbal-met-spinazie-aardappelpuree-en-jus",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "ah.nl",
@@ -2046,13 +2331,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://www.ah.nl/allerhande/recept/R-R1202415/andijviestamppot-met-oude-kaas-en-kimchi",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "leukerecepten.nl",
@@ -2060,12 +2345,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 7,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.leukerecepten.nl/recepten/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "smulweb.nl",
@@ -2073,13 +2359,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://www.smulweb.nl/recepten/1729878/Chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "culy.nl",
@@ -2087,11 +2373,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://www.culy.nl/recepten/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "libelle-lekker.be",
@@ -2099,11 +2387,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://www.libelle-lekker.be/bekijk-recept/5001/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed This site requires a browser to load. Try the Chrome extension instead.",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "njam.tv",
@@ -2111,12 +2401,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://njam.tv/recepten/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "15gram.be",
@@ -2124,11 +2415,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://15gram.be/recepten/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "dagelijksekost.een.be",
@@ -2136,13 +2429,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://dagelijksekost.vrt.be/recepten/chocoladekoekjes",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "lekkervanbijons.be",
@@ -2150,11 +2443,13 @@
     "region": "Benelux",
     "language": "nl",
     "cuisine": null,
+    "chosenUrl": "https://www.lekkervanbijons.be/recepten/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kwestiasmaku.com",
@@ -2162,13 +2457,13 @@
     "region": "Eastern Europe",
     "language": "pl",
     "cuisine": null,
+    "chosenUrl": "https://www.kwestiasmaku.com/przepisy/na-skroty",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "aniagotuje.pl",
@@ -2176,13 +2471,13 @@
     "region": "Eastern Europe",
     "language": "pl",
     "cuisine": null,
+    "chosenUrl": "https://www.aniagotuje.pl/przepisy/ciasta-i-torty",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "przepisy.pl",
@@ -2190,13 +2485,13 @@
     "region": "Eastern Europe",
     "language": "pl",
     "cuisine": null,
+    "chosenUrl": "https://www.przepisy.pl/przepisy/dania-i-przekaski",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "doradcasmaku.pl",
@@ -2204,13 +2499,13 @@
     "region": "Eastern Europe",
     "language": "pl",
     "cuisine": null,
+    "chosenUrl": "https://www.doradcasmaku.pl/przepis-ciasteczka-z-czekolada-chocolate-chip-cookies-540017",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "mojewypieki.com",
@@ -2218,11 +2513,13 @@
     "region": "Eastern Europe",
     "language": "pl",
     "cuisine": null,
+    "chosenUrl": "https://www.mojewypieki.com/przepis/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "toprecepty.cz",
@@ -2230,12 +2527,13 @@
     "region": "Eastern Europe",
     "language": "cs",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 11,
-    "ingredientsWithQty": 6,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://www.toprecepty.cz/recept/13488-americke-susenky-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "vareni.cz",
@@ -2243,13 +2541,13 @@
     "region": "Eastern Europe",
     "language": "cs",
     "cuisine": null,
+    "chosenUrl": "https://www.vareni.cz/recepty/palacinky/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (500)"
-    ],
-    "notes": "HTTP 500",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recepty.cz",
@@ -2257,13 +2555,13 @@
     "region": "Eastern Europe",
     "language": "cs",
     "cuisine": null,
+    "chosenUrl": "https://www.recepty.cz/recept/vsechny-vypisy-receptu",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "nosalty.hu",
@@ -2271,12 +2569,13 @@
     "region": "Eastern Europe",
     "language": "hu",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 8,
-    "ingredientsWithQty": 8,
-    "stepCount": 6,
-    "notes": null
+    "chosenUrl": "https://www.nosalty.hu/recept/amerikai-csokolades-keksz",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "mindmegette.hu",
@@ -2284,13 +2583,13 @@
     "region": "Eastern Europe",
     "language": "hu",
     "cuisine": null,
+    "chosenUrl": "https://www.mindmegette.hu/recept/elronthatatlan-muffin-alaprecept",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "femina.hu",
@@ -2298,13 +2597,13 @@
     "region": "Eastern Europe",
     "language": "hu",
     "cuisine": null,
+    "chosenUrl": "https://femina.hu/recept/melyik-foldreszrol-szarmazik-a-paradicsom-kviz/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "jamilacuisine.ro",
@@ -2312,13 +2611,13 @@
     "region": "Eastern Europe",
     "language": "ro",
     "cuisine": null,
+    "chosenUrl": "https://jamilacuisine.ro/fursecuri-cu-bucatele-de-ciocolata/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "lauralaurentiu.ro",
@@ -2326,11 +2625,13 @@
     "region": "Eastern Europe",
     "language": "ro",
     "cuisine": null,
+    "chosenUrl": "https://www.lauralaurentiu.ro/retete-culinare/retete-dulciuri/biscuiti-cookies-cu-ciocolata.html",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "bucataras.ro",
@@ -2338,13 +2639,13 @@
     "region": "Eastern Europe",
     "language": "ro",
     "cuisine": null,
+    "chosenUrl": "https://www.bucataras.ro/retete/biscuiti-cu-ciocolata-cookies.html",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "retete-gustoase.ro",
@@ -2352,13 +2653,13 @@
     "region": "Eastern Europe",
     "language": "ro",
     "cuisine": null,
+    "chosenUrl": "https://www.retete-gustoase.ro/Reteta-biscuiti-americani-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "coolinarika.com",
@@ -2366,14 +2667,13 @@
     "region": "Eastern Europe",
     "language": "hr",
     "cuisine": null,
-    "rating": 3,
-    "missing": [
-      "description"
-    ],
-    "ingredientCount": 11,
-    "ingredientsWithQty": 9,
-    "stepCount": 6,
-    "notes": null
+    "chosenUrl": "https://www.coolinarika.com/recept/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "argiro.gr",
@@ -2381,13 +2681,13 @@
     "region": "Greek",
     "language": "el",
     "cuisine": null,
+    "chosenUrl": "https://www.argiro.gr/recipe/spanakopita-xoris-fyllo/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "sintagespareas.gr",
@@ -2395,11 +2695,13 @@
     "region": "Greek",
     "language": "el",
     "cuisine": null,
+    "chosenUrl": "https://www.sintagespareas.gr/Sintages/sokolatenia-cookies.html",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "gastronomos.gr",
@@ -2407,12 +2709,13 @@
     "region": "Greek",
     "language": "el",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 9,
-    "stepCount": 6,
-    "notes": null
+    "chosenUrl": "https://www.gastronomos.gr/mageirepste/syntages/cookies-sokolatas/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "akispetretzikis.com",
@@ -2420,13 +2723,13 @@
     "region": "Greek",
     "language": "el",
     "cuisine": null,
+    "chosenUrl": "https://akispetretzikis.com/recipe/3169/cookies-me-sokolata",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "cookpad.com",
@@ -2434,13 +2737,13 @@
     "region": "Greek",
     "language": "el",
     "cuisine": null,
+    "chosenUrl": "https://cookpad.com/gr/recipes/18146893-malaka-cookies-sokolatas",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "teleculinaria.pt",
@@ -2448,13 +2751,13 @@
     "region": "Portugal",
     "language": "pt",
     "cuisine": null,
+    "chosenUrl": "https://www.teleculinaria.pt/receitas/biscoitos-com-pepitas-de-chocolate/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "receitascomhistoria.pt",
@@ -2462,13 +2765,13 @@
     "region": "Portugal",
     "language": "pt",
     "cuisine": null,
+    "chosenUrl": "https://www.receitascomhistoria.pt/bolachas-com-pepitas-de-chocolate/",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "pingodoce.pt",
@@ -2476,13 +2779,13 @@
     "region": "Portugal",
     "language": "pt",
     "cuisine": null,
+    "chosenUrl": "https://www.pingodoce.pt/receitas/cookies-com-pepitas-de-chocolate/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "mulher.pt",
@@ -2490,13 +2793,13 @@
     "region": "Portugal",
     "language": "pt",
     "cuisine": null,
+    "chosenUrl": "https://www.mulher.pt/receitas/bolachas-cookies-com-pepitas-de-chocolate/",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "sabor-intenso.com",
@@ -2504,13 +2807,13 @@
     "region": "Portugal",
     "language": "pt",
     "cuisine": null,
+    "chosenUrl": "https://www.sabor-intenso.com/r-cookies_pepitas_chocolate",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "panelinha.com.br",
@@ -2518,13 +2821,13 @@
     "region": "Latin America",
     "language": "pt",
     "cuisine": null,
+    "chosenUrl": "https://www.panelinha.com.br/receita/Cookies-com-gotas-de-chocolate",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "tudogostoso.com.br",
@@ -2532,12 +2835,13 @@
     "region": "Latin America",
     "language": "pt",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 7,
-    "ingredientsWithQty": 7,
-    "stepCount": 7,
-    "notes": null
+    "chosenUrl": "https://www.tudogostoso.com.br/receita/114447-cookies-com-gotas-de-chocolate.html",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "nami-nami.ee",
@@ -2545,13 +2849,13 @@
     "region": "Baltic",
     "language": "et",
     "cuisine": null,
+    "chosenUrl": "https://nami-nami.ee/retsept/ameerika-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "kulinar.lv",
@@ -2559,13 +2863,13 @@
     "region": "Baltic",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://kulinar.lv/receptes/cepumi/sokolades-cepumi",
+    "fetchMethod": "curated",
+    "httpStatus": 0,
     "rating": 1,
-    "missing": [
-      "fetch failed (network)"
-    ],
-    "notes": "fetch failed",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 0",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "receptai.lt",
@@ -2573,11 +2877,13 @@
     "region": "Baltic",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.receptai.lt/receptas/cookies-su-sokolado-gabaliukais",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "woksoflife.com",
@@ -2585,13 +2891,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Chinese",
+    "chosenUrl": "https://thewoksoflife.com/category/recipes/popular/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "justonecookbook.com",
@@ -2599,13 +2905,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Japanese",
+    "chosenUrl": "https://www.justonecookbook.com/miso-soup/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "maangchi.com",
@@ -2613,13 +2919,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Korean",
+    "chosenUrl": "https://www.maangchi.com/recipe/broiled-whole-branzino",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "koreanbapsang.com",
@@ -2627,12 +2933,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Korean",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 27,
-    "ingredientsWithQty": 22,
-    "stepCount": 12,
-    "notes": null
+    "chosenUrl": "https://www.koreanbapsang.com/bibimbap/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "chinasichuanfood.com",
@@ -2640,12 +2947,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Chinese",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 21,
-    "ingredientsWithQty": 16,
-    "stepCount": 9,
-    "notes": null
+    "chosenUrl": "https://www.chinasichuanfood.com/kung-pao-chicken/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "hotthaikitchen.com",
@@ -2653,11 +2961,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Thai",
+    "chosenUrl": "https://hot-thai-kitchen.com/pad-thai-2/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "omnivorescookbook.com",
@@ -2665,12 +2975,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Chinese",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 21,
-    "ingredientsWithQty": 21,
-    "stepCount": 7,
-    "notes": null
+    "chosenUrl": "https://omnivorescookbook.com/kung-pao-chicken/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "rotinrice.com",
@@ -2678,13 +2989,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Asian",
+    "chosenUrl": "https://rotinrice.com/hainanese-chicken-rice/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "chopstickchronicles.com",
@@ -2692,13 +3003,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Japanese",
+    "chosenUrl": "https://www.chopstickchronicles.com/japanese-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "rasamalaysia.com",
@@ -2706,12 +3017,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Asian",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 4,
-    "notes": null
+    "chosenUrl": "https://rasamalaysia.com/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "mykoreankitchen.com",
@@ -2719,12 +3031,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Korean",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 16,
-    "ingredientsWithQty": 13,
-    "stepCount": 3,
-    "notes": null
+    "chosenUrl": "https://mykoreankitchen.com/korean-fried-chicken/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "indianhealthyrecipes.com",
@@ -2732,11 +3045,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
+    "chosenUrl": "https://www.indianhealthyrecipes.com/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "json-ld not found"
-    ],
-    "notes": "no JSON-LD Recipe"
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "vegrecipesofindia.com",
@@ -2744,12 +3059,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 7,
-    "stepCount": 17,
-    "notes": null
+    "chosenUrl": "https://www.vegrecipesofindia.com/eggless-chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "hebbarskitchen.com",
@@ -2757,12 +3073,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
-    "rating": 4,
-    "missing": [],
-    "ingredientCount": 9,
-    "ingredientsWithQty": 4,
-    "stepCount": 13,
-    "notes": null
+    "chosenUrl": "https://hebbarskitchen.com/eggless-chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "archanaskitchen.com",
@@ -2770,13 +3087,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
+    "chosenUrl": "https://www.archanaskitchen.com/category/recipes/indian",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "spiceupthecurry.com",
@@ -2784,13 +3101,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
+    "chosenUrl": "https://www.spiceupthecurry.com/eggless-chocolate-chip-cookies-recipe/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "cookwithmanali.com",
@@ -2798,13 +3115,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
+    "chosenUrl": "https://www.cookwithmanali.com/category/recipes/indian-street-food/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "sanjeevkapoor.com",
@@ -2812,13 +3129,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Indian",
+    "chosenUrl": "https://www.sanjeevkapoor.com/Recipe/Chocolate-Chip-Cookies.html",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "feelgoodfoodie.net",
@@ -2826,12 +3143,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Middle Eastern",
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 5,
-    "stepCount": 8,
-    "notes": null
+    "chosenUrl": "https://feelgoodfoodie.net/recipe/chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "themediterraneandish.com",
@@ -2839,13 +3157,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Mediterranean",
+    "chosenUrl": "https://www.themediterraneandish.com/mediterranean-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "thematbakh.com",
@@ -2853,13 +3171,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Middle Eastern",
+    "chosenUrl": "https://www.thematbakh.com/lebanese-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "zaatarandzaytoun.com",
@@ -2867,13 +3185,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Middle Eastern",
+    "chosenUrl": "https://zaatarandzaytoun.com/recipes/meat/",
+    "fetchMethod": "homepage-discovered",
+    "httpStatus": 200,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "anediblemosaic.com",
@@ -2881,13 +3199,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Middle Eastern",
+    "chosenUrl": "https://www.anediblemosaic.com/tahini-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "olivetomato.com",
@@ -2895,13 +3213,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "Mediterranean",
+    "chosenUrl": "https://www.olivetomato.com/greek-olive-oil-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 404,
     "rating": 1,
-    "missing": [
-      "fetch failed (404)"
-    ],
-    "notes": "HTTP 404",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 404",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "davidlebovitz.com",
@@ -2909,14 +3227,13 @@
     "region": "International",
     "language": "en",
     "cuisine": "French",
-    "rating": 3,
-    "missing": [
-      "description"
-    ],
-    "ingredientCount": 10,
-    "ingredientsWithQty": 10,
-    "stepCount": 10,
-    "notes": null
+    "chosenUrl": "https://www.davidlebovitz.com/salted-butter-chocolate-chip-cookies/",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "food.com",
@@ -2924,12 +3241,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 5,
-    "missing": [],
-    "ingredientCount": 8,
-    "ingredientsWithQty": 6,
-    "stepCount": 10,
-    "notes": null
+    "chosenUrl": "https://www.food.com/recipe/chewy-chocolate-chip-cookies-25037",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "bigoven.com",
@@ -2937,12 +3255,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
-    "rating": 4,
-    "missing": [],
-    "ingredientCount": 14,
-    "ingredientsWithQty": 14,
-    "stepCount": 1,
-    "notes": null
+    "chosenUrl": "https://www.bigoven.com/recipe/chocolate-chip-cookies/176820",
+    "fetchMethod": "curated",
+    "httpStatus": 200,
+    "rating": 1,
+    "reason": "import failed Claude API error: 400",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "supercook.com",
@@ -2950,13 +3269,13 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://www.supercook.com/#/recipes/chocolate-chip-cookies",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   },
   {
     "domain": "recipeland.com",
@@ -2964,12 +3283,12 @@
     "region": "US",
     "language": "en",
     "cuisine": null,
+    "chosenUrl": "https://recipeland.com/recipe/v/chewy-chocolate-chip-cookies-4693",
+    "fetchMethod": "curated",
+    "httpStatus": 403,
     "rating": 1,
-    "missing": [
-      "fetch failed (403)"
-    ],
-    "notes": "HTTP 403",
-    "ingredientCount": 0,
-    "stepCount": 0
+    "reason": "fetch failed 403",
+    "saved": false,
+    "recipe": null
   }
 ]

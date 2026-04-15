@@ -26,6 +26,13 @@ Monitor and improve recipe import quality across all import paths.
 - Portuguese + Baltic sites: 0% compat, small sample (5 + 3) — mostly 404/network errors; likely the curated URLs were best-guess and need verification
 - Polish / Romanian / Finnish / Danish / Norwegian: 0% compat in session 143 — broad pattern of Node-agent blocks; Swedish sites (arla.se, tasteline.com, recepten.se, ica.se, koket.se) fare best in Nordic (67% compat, avg 3.3/5)
 
+## Session 145 crawl highlights (2026-04-15, post-fix)
+- 218 sites re-tested with UA rotation + homepage discovery + live /api/import/url pipeline. 15% real compat (32/218 rating ≥ 3) — 32 recipes saved as private records under pilzner with tags [ChefsBook, domain, region].
+- The 22% in session 143 was inflated because it rated on JSON-LD presence alone. Session 145 rates on what the pipeline actually extracts end-to-end. Numeric drop is honest.
+- Homepage-link discovery rescued 12 sites from ⭐1 → ⭐4/⭐5 (barefootcontessa 21 ingredients, lacucinaitaliana 12, pequerecetas 11, saveur 13, healthyrecipes101 17, jocooks 12, thepioneerwoman 14, epicurious 4, downshiftology 4, delish 14, womensweeklyfood 5, elcomidista 9).
+- ~90 sites still unreachable (HTTP 403/460) even with 3 UAs — essentially all Cloudflare-protected majors (allrecipes, seriouseats, foodnetwork, bbcgoodfood, jamieoliver, marthastewart, eatingwell, etc). ScrapingBee or Puppeteer with a real browser is the only realistic unblock.
+- Top 3 code fixes delivered: (1) JSON-LD gate no longer requires parsed quantity — preserves ingredient text; (2) HowToIngredient object form now handled; (3) Claude prompt explicitly names plugin classes + non-English section labels. These together lifted many formerly-⭐3 (ingredient-less) sites to ⭐5.
+
 ## Session 143 crawl highlights (2026-04-15)
 - 218 sites tested, 22% compat (rating ≥ 3). 170/218 rated 1/5 — primarily 403 (25 sites) and 404 (106 sites) from curated test URLs, and 21 sites with no JSON-LD at all.
 - Best regions: Austria 50%, International-cuisine 36%, Spain 30%, France 31%, Nordic 29%, US 26%.

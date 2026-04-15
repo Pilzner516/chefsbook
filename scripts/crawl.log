@@ -1,227 +1,228 @@
-[crawl] 218 sites · 5000ms delay · ≈18 min
-[  1/218] ⭐···· allrecipes.com                 US/en (fetch failed (403))
-[  2/218] ⭐⭐⭐⭐⭐ foodnetwork.com                US/en 
-[  3/218] ⭐···· epicurious.com                 US/en (fetch failed (404))
-[  4/218] ⭐⭐⭐⭐⭐ bonappetit.com                 US/en 
-[  5/218] ⭐···· food52.com                     US/en (fetch failed (429))
-[  6/218] ⭐···· seriouseats.com                US/en (fetch failed (403))
-[  7/218] ⭐⭐⭐⭐⭐ cooking.nytimes.com            US/en 
-[  8/218] ⭐⭐⭐⭐⭐ tasty.co                       US/en 
-[  9/218] ⭐···· delish.com                     US/en (fetch failed (404))
-[ 10/218] ⭐···· simplyrecipes.com              US/en (fetch failed (403))
-[ 11/218] ⭐···· thekitchn.com                  US/en (fetch failed (404))
-[ 12/218] ⭐···· smittenkitchen.com             US/en (fetch failed (404))
-[ 13/218] ⭐···· halfbakedharvest.com           US/en (fetch failed (404))
-[ 14/218] ⭐···· minimalistbaker.com            US/en (fetch failed (404))
-[ 15/218] ⭐···· cookingclassy.com              US/en (fetch failed (404))
-[ 16/218] ⭐⭐⭐⭐⭐ sallysbakingaddiction.com      US/en 
-[ 17/218] ⭐···· budgetbytes.com                US/en (fetch failed (404))
-[ 18/218] ⭐···· ohsheglows.com                 US/en (fetch failed (403))
-[ 19/218] ⭐⭐⭐⭐⭐ pinchofyum.com                 US/en 
-[ 20/218] ⭐···· skinnytaste.com                US/en (fetch failed (404))
-[ 21/218] ⭐···· marthastewart.com              US/en (fetch failed (403))
-[ 22/218] ⭐···· eatingwell.com                 US/en (fetch failed (403))
-[ 23/218] ⭐···· cookinglight.com               US/en (fetch failed (403))
-[ 24/218] ⭐···· wholefoodsmarket.com           US/en (fetch failed (404))
-[ 25/218] ⭐⭐⭐⭐⭐ bettycrocker.com               US/en 
-[ 26/218] ⭐⭐⭐⭐⭐ kingarthurbaking.com           US/en 
-[ 27/218] ⭐⭐⭐⭐· tasteofhome.com                US/en 
-[ 28/218] ⭐⭐⭐⭐⭐ cooksillustrated.com           US/en 
-[ 29/218] ⭐···· ambitiouskitchen.com           US/en (fetch failed (403))
-[ 30/218] ⭐···· loveandlemons.com              US/en (json-ld not found)
-[ 31/218] ⭐···· cookieandkate.com              US/en (fetch failed (404))
-[ 32/218] ⭐···· damndelicious.net              US/en (fetch failed (404))
-[ 33/218] ⭐···· spendwithpennies.com           US/en (fetch failed (404))
-[ 34/218] ⭐⭐⭐⭐⭐ thepioneerwoman.com            US/en 
-[ 35/218] ⭐···· yummly.com                     US/en (json-ld not found)
-[ 36/218] ⭐···· myrecipes.com                  US/en (fetch failed (404))
-[ 37/218] ⭐···· bakerbynature.com              US/en (fetch failed (404))
-[ 38/218] ⭐···· onceuponachef.com              US/en (fetch failed (404))
-[ 39/218] ⭐···· barefootcontessa.com           US/en (fetch failed (404))
-[ 40/218] ⭐···· thespruceeats.com              US/en (fetch failed (403))
-[ 41/218] ⭐···· gimmesomeoven.com              US/en (fetch failed (404))
-[ 42/218] ⭐···· twopeasandtheirpod.com         US/en (fetch failed (404))
-[ 43/218] ⭐···· browneyedbaker.com             US/en (fetch failed (404))
-[ 44/218] ⭐···· bakingmischief.com             US/en (fetch failed (404))
-[ 45/218] ⭐···· averiecooks.com                US/en (fetch failed (404))
-[ 46/218] ⭐···· dinneratthezoo.com             US/en (fetch failed (404))
-[ 47/218] ⭐⭐⭐⭐⭐ iambaker.net                   US/en 
-[ 48/218] ⭐···· crazyforcrust.com              US/en (fetch failed (404))
-[ 49/218] ⭐···· jocooks.com                    US/en (fetch failed (404))
-[ 50/218] ⭐···· natashaskitchen.com            US/en (fetch failed (404))
-[ 51/218] ⭐···· wellplated.com                 US/en (fetch failed (404))
-[ 52/218] ⭐···· cafedelites.com                US/en (fetch failed (404))
-[ 53/218] ⭐···· therecipecritic.com            US/en (fetch failed (404))
-[ 54/218] ⭐···· recipetineats.com              Australia/NZ/en (fetch failed (404))
-[ 55/218] ⭐···· foodandwine.com                US/en (fetch failed (403))
-[ 56/218] ⭐···· saveur.com                     US/en (fetch failed (404))
-[ 57/218] ⭐⭐⭐⭐⭐ americastestkitchen.com        US/en 
-[ 58/218] ⭐···· healthyrecipes101.com          US/en (fetch failed (404))
-[ 59/218] ⭐⭐⭐⭐⭐ ifoodreal.com                  US/en 
-[ 60/218] ⭐···· downshiftology.com             US/en (fetch failed (404))
-[ 61/218] ⭐⭐⭐⭐⭐ wholesomeyum.com               US/en 
-[ 62/218] ⭐···· thepioneerwoman.com            US/en (fetch failed (404))
-[ 63/218] ⭐···· theurbanpoacher.com            US/en (fetch failed (network))
-[ 64/218] ⭐···· bbcgoodfood.com                UK/en (fetch failed (404))
-[ 65/218] ⭐···· jamieoliver.com                UK/en (fetch failed (404))
-[ 66/218] ⭐···· nigella.com                    UK/en (json-ld not found)
-[ 67/218] ⭐···· deliciousmagazine.co.uk        UK/en (fetch failed (403))
-[ 68/218] ⭐···· olivemagazine.com              UK/en (fetch failed (404))
-[ 69/218] ⭐···· greatbritishchefs.com          UK/en (fetch failed (404))
-[ 70/218] ⭐···· lovefood.com                   UK/en (json-ld not found)
-[ 71/218] ⭐···· waitrose.com                   UK/en (fetch failed (404))
-[ 72/218] ⭐···· goodhousekeeping.com           UK/en (fetch failed (404))
-[ 73/218] ⭐···· goodfood.com.au                Australia/NZ/en (json-ld not found)
-[ 74/218] ⭐···· taste.com.au                   Australia/NZ/en (fetch failed (404))
-[ 75/218] ⭐···· womensweeklyfood.com.au        Australia/NZ/en (fetch failed (404))
-[ 76/218] ⭐···· australiangoodtaste.com.au     Australia/NZ/en (fetch failed (network))
-[ 77/218] ⭐···· foodnetwork.ca                 Canada/en (fetch failed (network))
-[ 78/218] ⭐···· canadianliving.com             Canada/en (fetch failed (network))
-[ 79/218] ⭐···· chatelaine.com                 Canada/en (fetch failed (403))
-[ 80/218] ⭐···· ricardocuisine.com             Canada/en (json-ld not found)
-[ 81/218] ⭐···· marmiton.org                   France/fr (json-ld not found)
-[ 82/218] ⭐···· cuisineaz.com                  France/fr (fetch failed (404))
-[ 83/218] ⭐⭐⭐⭐· 750g.com                       France/fr 
-[ 84/218] ⭐⭐⭐⭐⭐ ptitchef.com                   France/fr 
-[ 85/218] ⭐···· cuisineactuelle.fr             France/fr (fetch failed (404))
-[ 86/218] ⭐···· femmeactuelle.fr               France/fr (fetch failed (404))
-[ 87/218] ⭐···· linternaute.com                France/fr (fetch failed (404))
-[ 88/218] ⭐⭐⭐⭐⭐ journaldesfemmes.fr            France/fr 
-[ 89/218] ⭐···· papillesetpupilles.fr          France/fr (fetch failed (403))
-[ 90/218] ⭐⭐⭐·· chefsimon.com                  France/fr (quantities)
-[ 91/218] ⭐···· hervecuisine.com               France/fr (fetch failed (404))
-[ 92/218] ⭐···· recettes.de                    France/fr (fetch failed (network))
-[ 93/218] ⭐···· elle.fr                        France/fr (fetch failed (404))
-[ 94/218] ⭐⭐⭐⭐⭐ recetasgratis.net              Spain/es 
-[ 95/218] ⭐···· hogarmania.com                 Spain/es (fetch failed (404))
-[ 96/218] ⭐···· pequerecetas.com               Spain/es (fetch failed (404))
-[ 97/218] ⭐···· recetasderechupete.com         Spain/es (fetch failed (404))
-[ 98/218] ⭐···· directoalpaladar.com           Spain/es (fetch failed (404))
-[ 99/218] ⭐⭐⭐⭐⭐ webosfritos.es                 Spain/es 
-[100/218] ⭐···· cocinafacil.com                Spain/es (fetch failed (404))
-[101/218] ⭐···· elcomidista.elpais.com         Spain/es (fetch failed (404))
-[102/218] ⭐···· javirecetas.com                Spain/es (fetch failed (404))
-[103/218] ⭐⭐⭐⭐· mis-recetas.org                Spain/es 
-[104/218] ⭐···· mexicoinmykitchen.com          Latin America/es (fetch failed (403))
-[105/218] ⭐···· kiwilimon.com                  Latin America/es (json-ld not found)
-[106/218] ⭐···· recetas.com.mx                 Latin America/es (fetch failed (403))
-[107/218] ⭐···· isabeleats.com                 Latin America/es (fetch failed (404))
-[108/218] ⭐···· laylita.com                    Latin America/es (fetch failed (404))
-[109/218] ⭐···· giallozafferano.it             Italy/it (fetch failed (404))
-[110/218] ⭐···· cucchiaio.it                   Italy/it (description,steps)
-[111/218] ⭐···· lacucinaitaliana.it            Italy/it (fetch failed (404))
-[112/218] ⭐···· agrodolce.it                   Italy/it (fetch failed (403))
-[113/218] ⭐···· fattoincasadabenedetta.it      Italy/it (fetch failed (403))
-[114/218] ⭐···· tavolartegusto.it              Italy/it (fetch failed (404))
-[115/218] ⭐···· ricette.it                     Italy/it (fetch failed (network))
-[116/218] ⭐···· sale-pepe.it                   Italy/it (fetch failed (404))
-[117/218] ⭐···· finedininglovers.com           Italy/en (fetch failed (404))
-[118/218] ⭐···· gnamgnam.it                    Italy/it (json-ld not found)
-[119/218] ⭐⭐⭐⭐⭐ mysia.it                       Italy/it 
-[120/218] ⭐···· blog.giallozafferano.it        Italy/it (fetch failed (404))
-[121/218] ⭐···· buttalapasta.it                Italy/it (fetch failed (network))
-[122/218] ⭐···· chefkoch.de                    Germany/de (fetch failed (404))
-[123/218] ⭐···· lecker.de                      Germany/de (fetch failed (404))
-[124/218] ⭐···· essen-und-trinken.de           Germany/de (fetch failed (404))
-[125/218] ⭐···· kochbar.de                     Germany/de (fetch failed (404))
-[126/218] ⭐···· einfachkochen.at               Austria/de (fetch failed (network))
-[127/218] ⭐⭐⭐⭐· gutekueche.at                  Austria/de 
-[128/218] ⭐···· gutekueche.ch                  Switzerland/de (fetch failed (404))
-[129/218] ⭐···· springlane.de                  Germany/de (fetch failed (404))
-[130/218] ⭐···· kuechengoetter.de              Germany/de (fetch failed (404))
-[131/218] ⭐⭐⭐⭐· eatsmarter.de                  Germany/de 
-[132/218] ⭐···· kuechentraum.de                Germany/de (fetch failed (network))
-[133/218] ⭐⭐⭐⭐⭐ daskochrezept.de               Germany/de 
-[134/218] ⭐···· backenmachtgluecklich.de       Germany/de (fetch failed (404))
-[135/218] ⭐···· matprat.no                     Nordic/no (fetch failed (404))
-[136/218] ⭐···· godt.no                        Nordic/no (fetch failed (404))
-[137/218] ⭐···· valdemarsro.dk                 Nordic/da (json-ld not found)
-[138/218] ⭐···· foodculture.dk                 Nordic/da (fetch failed (404))
-[139/218] ⭐⭐⭐⭐⭐ arla.se                        Nordic/sv 
-[140/218] ⭐⭐⭐·· tasteline.com                  Nordic/sv (quantities)
-[141/218] ⭐···· recepten.se                    Nordic/sv (steps)
-[142/218] ⭐⭐⭐⭐⭐ ica.se                         Nordic/sv 
-[143/218] ⭐⭐⭐⭐⭐ koket.se                       Nordic/sv 
-[144/218] ⭐···· maku.fi                        Nordic/fi (fetch failed (404))
-[145/218] ⭐···· valio.fi                       Nordic/fi (fetch failed (404))
-[146/218] ⭐···· k-ruoka.fi                     Nordic/fi (fetch failed (403))
-[147/218] ⭐···· kotikokki.net                  Nordic/fi (json-ld not found)
-[148/218] ⭐···· mat.se                         Nordic/sv (fetch failed (network))
-[149/218] ⭐···· allerhande.nl                  Benelux/nl (fetch failed (404))
-[150/218] ⭐···· ah.nl                          Benelux/nl (fetch failed (404))
-[151/218] ⭐⭐⭐⭐⭐ leukerecepten.nl               Benelux/nl 
-[152/218] ⭐···· smulweb.nl                     Benelux/nl (fetch failed (network))
-[153/218] ⭐···· culy.nl                        Benelux/nl (json-ld not found)
-[154/218] ⭐···· libelle-lekker.be              Benelux/nl (json-ld not found)
-[155/218] ⭐⭐⭐⭐⭐ njam.tv                        Benelux/nl 
-[156/218] ⭐···· 15gram.be                      Benelux/nl (json-ld not found)
-[157/218] ⭐···· dagelijksekost.een.be          Benelux/nl (fetch failed (404))
-[158/218] ⭐···· lekkervanbijons.be             Benelux/nl (json-ld not found)
-[159/218] ⭐···· kwestiasmaku.com               Eastern Europe/pl (fetch failed (404))
-[160/218] ⭐···· aniagotuje.pl                  Eastern Europe/pl (fetch failed (404))
-[161/218] ⭐···· przepisy.pl                    Eastern Europe/pl (fetch failed (404))
-[162/218] ⭐···· doradcasmaku.pl                Eastern Europe/pl (fetch failed (404))
-[163/218] ⭐···· mojewypieki.com                Eastern Europe/pl (json-ld not found)
-[164/218] ⭐⭐⭐⭐⭐ toprecepty.cz                  Eastern Europe/cs 
-[165/218] ⭐···· vareni.cz                      Eastern Europe/cs (fetch failed (500))
-[166/218] ⭐···· recepty.cz                     Eastern Europe/cs (fetch failed (404))
-[167/218] ⭐⭐⭐⭐⭐ nosalty.hu                     Eastern Europe/hu 
-[168/218] ⭐···· mindmegette.hu                 Eastern Europe/hu (fetch failed (404))
-[169/218] ⭐···· femina.hu                      Eastern Europe/hu (fetch failed (404))
-[170/218] ⭐···· jamilacuisine.ro               Eastern Europe/ro (fetch failed (404))
-[171/218] ⭐···· lauralaurentiu.ro              Eastern Europe/ro (json-ld not found)
-[172/218] ⭐···· bucataras.ro                   Eastern Europe/ro (fetch failed (403))
-[173/218] ⭐···· retete-gustoase.ro             Eastern Europe/ro (fetch failed (404))
-[174/218] ⭐⭐⭐·· coolinarika.com                Eastern Europe/hr (description)
-[175/218] ⭐···· argiro.gr                      Greek/el (fetch failed (404))
-[176/218] ⭐···· sintagespareas.gr              Greek/el (json-ld not found)
-[177/218] ⭐⭐⭐⭐⭐ gastronomos.gr                 Greek/el 
-[178/218] ⭐···· akispetretzikis.com            Greek/el (fetch failed (403))
-[179/218] ⭐···· cookpad.com                    Greek/el (fetch failed (404))
-[180/218] ⭐···· teleculinaria.pt               Portugal/pt (fetch failed (404))
-[181/218] ⭐···· receitascomhistoria.pt         Portugal/pt (fetch failed (network))
-[182/218] ⭐···· pingodoce.pt                   Portugal/pt (fetch failed (404))
-[183/218] ⭐···· mulher.pt                      Portugal/pt (fetch failed (network))
-[184/218] ⭐···· sabor-intenso.com              Portugal/pt (fetch failed (404))
-[185/218] ⭐···· panelinha.com.br               Latin America/pt (fetch failed (404))
-[186/218] ⭐⭐⭐⭐⭐ tudogostoso.com.br             Latin America/pt 
-[187/218] ⭐···· nami-nami.ee                   Baltic/et (fetch failed (404))
-[188/218] ⭐···· kulinar.lv                     Baltic/en (fetch failed (network))
-[189/218] ⭐···· receptai.lt                    Baltic/en (json-ld not found)
-[190/218] ⭐···· woksoflife.com                 International/en (fetch failed (404))
-[191/218] ⭐···· justonecookbook.com            International/en (fetch failed (403))
-[192/218] ⭐···· maangchi.com                   International/en (fetch failed (403))
-[193/218] ⭐⭐⭐⭐⭐ koreanbapsang.com              International/en 
-[194/218] ⭐⭐⭐⭐⭐ chinasichuanfood.com           International/en 
-[195/218] ⭐···· hotthaikitchen.com             International/en (json-ld not found)
-[196/218] ⭐⭐⭐⭐⭐ omnivorescookbook.com          International/en 
-[197/218] ⭐···· rotinrice.com                  International/en (fetch failed (403))
-[198/218] ⭐···· chopstickchronicles.com        International/en (fetch failed (404))
-[199/218] ⭐⭐⭐⭐⭐ rasamalaysia.com               International/en 
-[200/218] ⭐⭐⭐⭐⭐ mykoreankitchen.com            International/en 
-[201/218] ⭐···· indianhealthyrecipes.com       International/en (json-ld not found)
-[202/218] ⭐⭐⭐⭐⭐ vegrecipesofindia.com          International/en 
-[203/218] ⭐⭐⭐⭐· hebbarskitchen.com             International/en 
-[204/218] ⭐···· archanaskitchen.com            International/en (fetch failed (404))
-[205/218] ⭐···· spiceupthecurry.com            International/en (fetch failed (404))
-[206/218] ⭐···· cookwithmanali.com             International/en (fetch failed (404))
-[207/218] ⭐···· sanjeevkapoor.com              International/en (fetch failed (404))
-[208/218] ⭐⭐⭐⭐⭐ feelgoodfoodie.net             International/en 
-[209/218] ⭐···· themediterraneandish.com       International/en (fetch failed (404))
-[210/218] ⭐···· thematbakh.com                 International/en (fetch failed (404))
-[211/218] ⭐···· zaatarandzaytoun.com           International/en (fetch failed (404))
-[212/218] ⭐···· anediblemosaic.com             International/en (fetch failed (404))
-[213/218] ⭐···· olivetomato.com                International/en (fetch failed (404))
-[214/218] ⭐⭐⭐·· davidlebovitz.com              International/en (description)
-[215/218] ⭐⭐⭐⭐⭐ food.com                       US/en 
-[216/218] ⭐⭐⭐⭐· bigoven.com                    US/en 
-[217/218] ⭐···· supercook.com                  US/en (fetch failed (403))
-[218/218] ⭐···· recipeland.com                 US/en (fetch failed (403))
+[crawl v2] 218 sites · 8000ms · save=true
+[  1/218] ⭐···· allrecipes.com                   US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[  2/218] ⭐···· foodnetwork.com                  US/en ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[  3/218] ⭐⭐⭐⭐· epicurious.com                   US/en ing=4 steps=2 method=homepage-discovered http=200 ✓saved
+[  4/218] ⭐⭐⭐⭐⭐ bonappetit.com                   US/en ing=10 steps=4 method=curated http=200 ✓saved
+[  5/218] ⭐···· food52.com                       US/en ing=0 steps=0 method=curated http=429 — fetch failed 429
+[  6/218] ⭐···· seriouseats.com                  US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[  7/218] ⭐···· cooking.nytimes.com              US/en ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[  8/218] ⭐···· tasty.co                         US/en ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[  9/218] ⭐⭐⭐⭐⭐ delish.com                       US/en ing=14 steps=7 method=homepage-discovered http=200 ✓saved
+[ 10/218] ⭐···· simplyrecipes.com                US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[ 11/218] ⭐···· thekitchn.com                    US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 12/218] ⭐···· smittenkitchen.com               US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 13/218] ⭐···· halfbakedharvest.com             US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 14/218] ⭐···· minimalistbaker.com              US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 15/218] ⭐···· cookingclassy.com                US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 16/218] ⭐⭐⭐⭐⭐ sallysbakingaddiction.com        US/en ing=10 steps=7 method=curated http=200 ✓saved
+[ 17/218] ⭐···· budgetbytes.com                  US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 18/218] ⭐···· ohsheglows.com                   US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 19/218] ⭐⭐⭐⭐⭐ pinchofyum.com                   US/en ing=9 steps=5 method=curated http=200 ✓saved
+[ 20/218] ⭐···· skinnytaste.com                  US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 21/218] ⭐···· marthastewart.com                US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[ 22/218] ⭐···· eatingwell.com                   US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[ 23/218] ⭐···· cookinglight.com                 US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[ 24/218] ⭐···· wholefoodsmarket.com             US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 25/218] ⭐⭐⭐⭐⭐ bettycrocker.com                 US/en ing=10 steps=8 method=curated http=200 ✓saved
+[ 26/218] ⭐⭐⭐⭐⭐ kingarthurbaking.com             US/en ing=12 steps=9 method=curated http=200 ✓saved
+[ 27/218] ⭐⭐⭐⭐⭐ tasteofhome.com                  US/en ing=10 steps=8 method=curated http=200 ✓saved
+[ 28/218] ⭐···· cooksillustrated.com             US/en ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 29/218] ⭐···· ambitiouskitchen.com             US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 30/218] ⭐⭐⭐⭐⭐ loveandlemons.com                US/en ing=10 steps=9 method=curated http=200 ✓saved
+[ 31/218] ⭐···· cookieandkate.com                US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 32/218] ⭐···· damndelicious.net                US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 33/218] ⭐···· spendwithpennies.com             US/en ing=0 steps=0 method=homepage-discovered http=200 — import failed No JSON found in Claude response
+[ 34/218] ⭐⭐⭐⭐⭐ thepioneerwoman.com              US/en ing=11 steps=5 method=curated http=200 ✓saved
+[ 35/218] ⭐···· yummly.com                       US/en ing=0 steps=0 method=curated http=200 — title only
+[ 36/218] ⭐···· myrecipes.com                    US/en ing=0 steps=0 method=homepage-discovered http=460 — fetch failed 460
+[ 37/218] ⭐···· bakerbynature.com                US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 38/218] ⭐···· onceuponachef.com                US/en ing=0 steps=0 method=homepage-discovered http=200 — import failed No JSON found in Claude response
+[ 39/218] ⭐⭐⭐⭐· barefootcontessa.com             US/en ing=21 steps=9 method=homepage-discovered http=200 ✓saved
+[ 40/218] ⭐···· thespruceeats.com                US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[ 41/218] ⭐···· gimmesomeoven.com                US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 42/218] ⭐···· twopeasandtheirpod.com           US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 43/218] ⭐···· browneyedbaker.com               US/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 44/218] ⭐···· bakingmischief.com               US/en ing=0 steps=0 method=homepage-discovered http=200 — import failed No JSON found in Claude response
+[ 45/218] ⭐···· averiecooks.com                  US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 46/218] ⭐···· dinneratthezoo.com               US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 47/218] ⭐⭐⭐⭐⭐ iambaker.net                     US/en ing=11 steps=11 method=curated http=200 ✓saved
+[ 48/218] ⭐···· crazyforcrust.com                US/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Could not extract a technique from this page.
+[ 49/218] ⭐⭐⭐⭐⭐ jocooks.com                      US/en ing=12 steps=6 method=homepage-discovered http=200 ✓saved
+[ 50/218] ⭐···· natashaskitchen.com              US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 51/218] ⭐···· wellplated.com                   US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 52/218] ⭐···· cafedelites.com                  US/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 53/218] ⭐···· therecipecritic.com              US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 54/218] ⭐···· recipetineats.com                Australia/NZ/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 55/218] ⭐···· foodandwine.com                  US/en ing=0 steps=0 method=curated http=460 — fetch failed 460
+[ 56/218] ⭐⭐⭐⭐⭐ saveur.com                       US/en ing=13 steps=4 method=homepage-discovered http=200 ✓saved
+[ 57/218] ⭐···· americastestkitchen.com          US/en ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 58/218] ⭐⭐⭐⭐⭐ healthyrecipes101.com            US/en ing=17 steps=12 method=homepage-discovered http=200 ✓saved
+[ 59/218] ⭐⭐⭐⭐⭐ ifoodreal.com                    US/en ing=8 steps=7 method=curated http=200 ✓saved
+[ 60/218] ⭐⭐⭐⭐⭐ downshiftology.com               US/en ing=4 steps=3 method=homepage-discovered http=200 ✓saved
+[ 61/218] ⭐⭐⭐⭐⭐ wholesomeyum.com                 US/en ing=10 steps=9 method=curated http=200 ✓saved
+[ 62/218] ⭐⭐⭐⭐⭐ thepioneerwoman.com              US/en ing=14 steps=5 method=homepage-discovered http=200 ✓saved
+[ 63/218] ⭐···· theurbanpoacher.com              US/en ing=0 steps=0 method=curated http=0 — fetch failed 0
+[ 64/218] ⭐⭐··· bbcgoodfood.com                  UK/en ing=0 steps=0 method=homepage-discovered http=200 — title+desc only
+[ 65/218] ⭐···· jamieoliver.com                  UK/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Could not extract a technique from this page.
+[ 66/218] ⭐⭐⭐⭐⭐ nigella.com                      UK/en ing=11 steps=10 method=curated http=200 ✓saved
+[ 67/218] ⭐···· deliciousmagazine.co.uk          UK/en ing=0 steps=0 method=homepage-discovered http=403 — fetch failed 403
+[ 68/218] ⭐···· olivemagazine.com                UK/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 69/218] ⭐···· greatbritishchefs.com            UK/en ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 70/218] ⭐⭐⭐⭐⭐ lovefood.com                     UK/en ing=16 steps=9 method=curated http=200 ✓saved
+[ 71/218] ⭐···· waitrose.com                     UK/en ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 72/218] ⭐···· goodhousekeeping.com             UK/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 73/218] ⭐···· goodfood.com.au                  Australia/NZ/en ing=0 steps=0 method=curated http=200 — title only
+[ 74/218] ⭐···· taste.com.au                     Australia/NZ/en ing=0 steps=0 method=homepage-discovered http=200 — import failed No JSON found in Claude response
+[ 75/218] ⭐⭐⭐⭐⭐ womensweeklyfood.com.au          Australia/NZ/en ing=5 steps=5 method=homepage-discovered http=200 ✓saved
+[ 76/218] ⭐···· australiangoodtaste.com.au       Australia/NZ/en ing=0 steps=0 method=curated http=0 — fetch failed 0
+[ 77/218] ⭐···· foodnetwork.ca                   Canada/en ing=0 steps=0 method=curated http=0 — fetch failed 0
+[ 78/218] ⭐···· canadianliving.com               Canada/en ing=0 steps=0 method=homepage-discovered http=200 — import failed This looks like a category or index page, not a specific recipe.
+[ 79/218] ⭐···· chatelaine.com                   Canada/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 80/218] ⭐⭐⭐⭐· ricardocuisine.com               Canada/en ing=4 steps=3 method=curated http=200 ✓saved
+[ 81/218] ⭐⭐⭐⭐· marmiton.org                     France/fr ing=4 steps=2 method=curated http=200 ✓saved
+[ 82/218] ⭐···· cuisineaz.com                    France/fr ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 83/218] ⭐···· 750g.com                         France/fr ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 84/218] ⭐⭐⭐⭐· ptitchef.com                     France/fr ing=8 steps=8 method=curated http=200 ✓saved
+[ 85/218] ⭐···· cuisineactuelle.fr               France/fr ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 86/218] ⭐···· femmeactuelle.fr                 France/fr ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 87/218] ⭐···· linternaute.com                  France/fr ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 88/218] ⭐···· journaldesfemmes.fr              France/fr ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 89/218] ⭐···· papillesetpupilles.fr            France/fr ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 90/218] ⭐⭐⭐⭐· chefsimon.com                    France/fr ing=2 steps=2 method=curated http=200 ✓saved
+[ 91/218] ⭐···· hervecuisine.com                 France/fr ing=0 steps=0 method=homepage-discovered http=200 — import failed No JSON found in Claude response
+[ 92/218] ⭐···· recettes.de                      France/fr ing=0 steps=0 method=curated http=0 — fetch failed 0
+[ 93/218] ⭐···· elle.fr                          France/fr ing=0 steps=0 method=curated http=403 — fetch failed 403
+[ 94/218] ⭐···· recetasgratis.net                Spain/es ing=0 steps=0 method=error http=0 — exception: Assignment to constant variable.
+[ 95/218] ⭐···· hogarmania.com                   Spain/es ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 96/218] ⭐⭐⭐⭐⭐ pequerecetas.com                 Spain/es ing=11 steps=6 method=homepage-discovered http=200 ✓saved
+[ 97/218] ⭐···· recetasderechupete.com           Spain/es ing=0 steps=0 method=homepage-discovered http=200 — title only
+[ 98/218] ⭐···· directoalpaladar.com             Spain/es ing=0 steps=0 method=curated http=404 — fetch failed 404
+[ 99/218] ⭐⭐⭐⭐⭐ webosfritos.es                   Spain/es ing=8 steps=8 method=curated http=200 ✓saved
+[100/218] ⭐···· cocinafacil.com                  Spain/es ing=0 steps=0 method=homepage-discovered http=404 — fetch failed 404
+[101/218] ⭐⭐⭐⭐· elcomidista.elpais.com           Spain/es ing=9 steps=5 method=homepage-discovered http=200 ✓saved
+[102/218] ⭐⭐··· javirecetas.com                  Spain/es ing=0 steps=0 method=homepage-discovered http=200 — title+desc only
+[103/218] ⭐⭐⭐⭐· mis-recetas.org                  Spain/es ing=15 steps=2 method=curated http=200 ✓saved
+[104/218] ⭐···· mexicoinmykitchen.com            Latin America/es ing=0 steps=0 method=curated http=403 — fetch failed 403
+[105/218] ⭐···· kiwilimon.com                    Latin America/es ing=0 steps=0 method=curated http=200 — import failed This site requires a browser to load. Try the Chrome extension instead.
+[106/218] ⭐···· recetas.com.mx                   Latin America/es ing=0 steps=0 method=curated http=436 — fetch failed 436
+[107/218] ⭐···· isabeleats.com                   Latin America/es ing=0 steps=0 method=homepage-discovered http=200 — import failed No JSON found in Claude response
+[108/218] ⭐···· laylita.com                      Latin America/es ing=0 steps=0 method=homepage-discovered http=200 — import failed 200
+[109/218] ⭐···· giallozafferano.it               Italy/it ing=0 steps=0 method=curated http=404 — fetch failed 404
+[110/218] ⭐⭐⭐⭐⭐ cucchiaio.it                     Italy/it ing=9 steps=5 method=curated http=200 ✓saved
+[111/218] ⭐⭐⭐⭐⭐ lacucinaitaliana.it              Italy/it ing=12 steps=7 method=homepage-discovered http=200 ✓saved
+[112/218] ⭐···· agrodolce.it                     Italy/it ing=0 steps=0 method=curated http=403 — fetch failed 403
+[113/218] ⭐···· fattoincasadabenedetta.it        Italy/it ing=0 steps=0 method=curated http=403 — fetch failed 403
+[114/218] ⭐···· tavolartegusto.it                Italy/it ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[115/218] ⭐···· ricette.it                       Italy/it ing=0 steps=0 method=curated http=0 — fetch failed 0
+[116/218] ⭐···· sale-pepe.it                     Italy/it ing=0 steps=0 method=curated http=404 — fetch failed 404
+[117/218] ⭐···· finedininglovers.com             Italy/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[118/218] ⭐···· gnamgnam.it                      Italy/it ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[119/218] ⭐···· mysia.it                         Italy/it ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[120/218] ⭐···· blog.giallozafferano.it          Italy/it ing=0 steps=0 method=curated http=404 — fetch failed 404
+[121/218] ⭐···· buttalapasta.it                  Italy/it ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[122/218] ⭐···· chefkoch.de                      Germany/de ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[123/218] ⭐···· lecker.de                        Germany/de ing=0 steps=0 method=curated http=404 — fetch failed 404
+[124/218] ⭐···· essen-und-trinken.de             Germany/de ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[125/218] ⭐···· kochbar.de                       Germany/de ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[126/218] ⭐···· einfachkochen.at                 Austria/de ing=0 steps=0 method=curated http=0 — fetch failed 0
+[127/218] ⭐···· gutekueche.at                    Austria/de ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[128/218] ⭐···· gutekueche.ch                    Switzerland/de ing=0 steps=0 method=curated http=404 — fetch failed 404
+[129/218] ⭐···· springlane.de                    Germany/de ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[130/218] ⭐···· kuechengoetter.de                Germany/de ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[131/218] ⭐···· eatsmarter.de                    Germany/de ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[132/218] ⭐···· kuechentraum.de                  Germany/de ing=0 steps=0 method=curated http=0 — fetch failed 0
+[133/218] ⭐···· daskochrezept.de                 Germany/de ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[134/218] ⭐···· backenmachtgluecklich.de         Germany/de ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[135/218] ⭐···· matprat.no                       Nordic/no ing=0 steps=0 method=curated http=404 — fetch failed 404
+[136/218] ⭐···· godt.no                          Nordic/no ing=0 steps=0 method=curated http=404 — fetch failed 404
+[137/218] ⭐···· valdemarsro.dk                   Nordic/da ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[138/218] ⭐···· foodculture.dk                   Nordic/da ing=0 steps=0 method=curated http=404 — fetch failed 404
+[139/218] ⭐···· arla.se                          Nordic/sv ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[140/218] ⭐···· tasteline.com                    Nordic/sv ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[141/218] ⭐···· recepten.se                      Nordic/sv ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[142/218] ⭐···· ica.se                           Nordic/sv ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[143/218] ⭐···· koket.se                         Nordic/sv ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[144/218] ⭐···· maku.fi                          Nordic/fi ing=0 steps=0 method=curated http=404 — fetch failed 404
+[145/218] ⭐···· valio.fi                         Nordic/fi ing=0 steps=0 method=curated http=404 — fetch failed 404
+[146/218] ⭐···· k-ruoka.fi                       Nordic/fi ing=0 steps=0 method=curated http=403 — fetch failed 403
+[147/218] ⭐···· kotikokki.net                    Nordic/fi ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[148/218] ⭐···· mat.se                           Nordic/sv ing=0 steps=0 method=curated http=0 — fetch failed 0
+[149/218] ⭐···· allerhande.nl                    Benelux/nl ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[150/218] ⭐···· ah.nl                            Benelux/nl ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[151/218] ⭐···· leukerecepten.nl                 Benelux/nl ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[152/218] ⭐···· smulweb.nl                       Benelux/nl ing=0 steps=0 method=curated http=0 — fetch failed 0
+[153/218] ⭐···· culy.nl                          Benelux/nl ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[154/218] ⭐···· libelle-lekker.be                Benelux/nl ing=0 steps=0 method=curated http=200 — import failed This site requires a browser to load. Try the Chrome extension instead.
+[155/218] ⭐···· njam.tv                          Benelux/nl ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[156/218] ⭐···· 15gram.be                        Benelux/nl ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[157/218] ⭐···· dagelijksekost.een.be            Benelux/nl ing=0 steps=0 method=curated http=404 — fetch failed 404
+[158/218] ⭐···· lekkervanbijons.be               Benelux/nl ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[159/218] ⭐···· kwestiasmaku.com                 Eastern Europe/pl ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[160/218] ⭐···· aniagotuje.pl                    Eastern Europe/pl ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[161/218] ⭐···· przepisy.pl                      Eastern Europe/pl ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[162/218] ⭐···· doradcasmaku.pl                  Eastern Europe/pl ing=0 steps=0 method=curated http=404 — fetch failed 404
+[163/218] ⭐···· mojewypieki.com                  Eastern Europe/pl ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[164/218] ⭐···· toprecepty.cz                    Eastern Europe/cs ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[165/218] ⭐···· vareni.cz                        Eastern Europe/cs ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[166/218] ⭐···· recepty.cz                       Eastern Europe/cs ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[167/218] ⭐···· nosalty.hu                       Eastern Europe/hu ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[168/218] ⭐···· mindmegette.hu                   Eastern Europe/hu ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[169/218] ⭐···· femina.hu                        Eastern Europe/hu ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[170/218] ⭐···· jamilacuisine.ro                 Eastern Europe/ro ing=0 steps=0 method=curated http=404 — fetch failed 404
+[171/218] ⭐···· lauralaurentiu.ro                Eastern Europe/ro ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[172/218] ⭐···· bucataras.ro                     Eastern Europe/ro ing=0 steps=0 method=curated http=403 — fetch failed 403
+[173/218] ⭐···· retete-gustoase.ro               Eastern Europe/ro ing=0 steps=0 method=curated http=404 — fetch failed 404
+[174/218] ⭐···· coolinarika.com                  Eastern Europe/hr ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[175/218] ⭐···· argiro.gr                        Greek/el ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[176/218] ⭐···· sintagespareas.gr                Greek/el ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[177/218] ⭐···· gastronomos.gr                   Greek/el ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[178/218] ⭐···· akispetretzikis.com              Greek/el ing=0 steps=0 method=curated http=403 — fetch failed 403
+[179/218] ⭐···· cookpad.com                      Greek/el ing=0 steps=0 method=curated http=404 — fetch failed 404
+[180/218] ⭐···· teleculinaria.pt                 Portugal/pt ing=0 steps=0 method=curated http=404 — fetch failed 404
+[181/218] ⭐···· receitascomhistoria.pt           Portugal/pt ing=0 steps=0 method=curated http=0 — fetch failed 0
+[182/218] ⭐···· pingodoce.pt                     Portugal/pt ing=0 steps=0 method=curated http=403 — fetch failed 403
+[183/218] ⭐···· mulher.pt                        Portugal/pt ing=0 steps=0 method=curated http=0 — fetch failed 0
+[184/218] ⭐···· sabor-intenso.com                Portugal/pt ing=0 steps=0 method=curated http=404 — fetch failed 404
+[185/218] ⭐···· panelinha.com.br                 Latin America/pt ing=0 steps=0 method=curated http=404 — fetch failed 404
+[186/218] ⭐···· tudogostoso.com.br               Latin America/pt ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[187/218] ⭐···· nami-nami.ee                     Baltic/et ing=0 steps=0 method=curated http=404 — fetch failed 404
+[188/218] ⭐···· kulinar.lv                       Baltic/en ing=0 steps=0 method=curated http=0 — fetch failed 0
+[189/218] ⭐···· receptai.lt                      Baltic/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[190/218] ⭐···· woksoflife.com                   International/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[191/218] ⭐···· justonecookbook.com              International/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[192/218] ⭐···· maangchi.com                     International/en ing=0 steps=0 method=homepage-discovered http=403 — fetch failed 403
+[193/218] ⭐···· koreanbapsang.com                International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[194/218] ⭐···· chinasichuanfood.com             International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[195/218] ⭐···· hotthaikitchen.com               International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[196/218] ⭐···· omnivorescookbook.com            International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[197/218] ⭐···· rotinrice.com                    International/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[198/218] ⭐···· chopstickchronicles.com          International/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[199/218] ⭐···· rasamalaysia.com                 International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[200/218] ⭐···· mykoreankitchen.com              International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[201/218] ⭐···· indianhealthyrecipes.com         International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[202/218] ⭐···· vegrecipesofindia.com            International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[203/218] ⭐···· hebbarskitchen.com               International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[204/218] ⭐···· archanaskitchen.com              International/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[205/218] ⭐···· spiceupthecurry.com              International/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[206/218] ⭐···· cookwithmanali.com               International/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[207/218] ⭐···· sanjeevkapoor.com                International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[208/218] ⭐···· feelgoodfoodie.net               International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[209/218] ⭐···· themediterraneandish.com         International/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[210/218] ⭐···· thematbakh.com                   International/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[211/218] ⭐···· zaatarandzaytoun.com             International/en ing=0 steps=0 method=homepage-discovered http=200 — import failed Claude API error: 400
+[212/218] ⭐···· anediblemosaic.com               International/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[213/218] ⭐···· olivetomato.com                  International/en ing=0 steps=0 method=curated http=404 — fetch failed 404
+[214/218] ⭐···· davidlebovitz.com                International/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[215/218] ⭐···· food.com                         US/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[216/218] ⭐···· bigoven.com                      US/en ing=0 steps=0 method=curated http=200 — import failed Claude API error: 400
+[217/218] ⭐···· supercook.com                    US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
+[218/218] ⭐···· recipeland.com                   US/en ing=0 steps=0 method=curated http=403 — fetch failed 403
 
 === SUMMARY ===
-⭐⭐⭐⭐⭐ 5: 37
-⭐⭐⭐⭐· 4: 7
-⭐⭐⭐·· 3: 4
-⭐⭐··· 2: 0
-⭐···· 1: 170
-compat rate: 22%
+⭐⭐⭐⭐⭐ 5: 24
+⭐⭐⭐⭐· 4: 8
+⭐⭐⭐·· 3: 0
+⭐⭐··· 2: 2
+⭐···· 1: 184
+compat rate: 15% (32/218)
+recipes saved: 32
