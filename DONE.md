@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 136)
+- Created docs/landing-previews/concept-e.html — evolution of concept-d per 136 spec (base was existing docs/landing-previews/concept-d.html since /mnt/user-data/uploads path doesn't exist on Windows; flagged to user)
+- Change 1 (shorten ~20%): removed Language section (5-card grid), removed 3 parallax image breaks, reduced import-grid from 6 to 3 cards (URL/Photo scan/Speak — absorbed Instagram/YouTube/Files/ISBN into a caption line), reduced testimonials from 3 to 2 (removed Jamie — duplicated Plan magic moment content), reduced comm-stack from 3 to 2 cards (removed Family cookbook)
+- Change 2 (hero conversion): updated subheadline to "One beautiful system for your whole cooking life"; primary CTA → "Start Free — No credit card" with new .btn-hero (18px 40px padding, 17px font); added .hero-reassure line "Free forever · Upgrade anytime · iOS & Android"; sped workflow animation to ~740ms total (150+130ms sequence, was 400+220ms = 1460ms)
+- Change 3 (trust): restructured trust-row with stars separated by trust-dots; added new .compat-row "Works with Instagram · YouTube · NYT Cooking · Serious Eats · AllRecipes · + any website" wired to same lit-sequence (fires ~860ms after workflow complete)
+- Change 4 (moat): new .moat-section between testimonials and pricing — dark bg (var--ink), gold eyebrow/accents, 2-col grid with "Not just an app. An entire cooking system." + explanatory paragraph + 4-pillar stats (6+ / 5 / AI / ∞) on left; CSS-drawn radial platform-diagram on right (6 pill nodes via trig rotation around red CB center with faint gold spoke lines)
+- Change 5 (spacing/type): section padding 110→96px, magic gap 72→60px, hero headline letter-spacing -0.035→-0.04em, section-h min 38→40px, body-l line-height 1.7→1.75, eyebrow letter-spacing 0.14→0.16em, import cards 32/28→28/24px, price cards border-radius 20→22px
+- Change 6 (pricing polish): featured Chef card now translateY(-8px) scale(1.04) with larger red-tinted shadow and z-index:2; responsive rule resets scale on <=1000px; added .pricing-universal muted caption below cards: "All plans include: unlimited recipe storage · offline access · browser extension · iOS & Android apps"
+- All 5 unique image refs verified against images/; 9 sections; file is self-contained at 1168 lines
+
 ## 2026-04-15 (session 135)
 - Created docs/landing-previews/concept-d.html (1100 lines, self-contained) — evolution of concept-c, same soul (Fraunces+Inter, cream #faf7f0, muted red, food-led warmth), far stronger execution
 - Hero: split 2-col layout (copy+CTA left / staged phone over golden-hour pasta bg right), new headline "Everything you cook, finally connected", 4-step workflow pill animation (📸 Instagram → 📋 Recipe saved → 📅 Added to plan → 🛒 List ready) with 220ms sequence and delayed trust-signal fade ("★★★★★ Loved by home cooks · 5 languages · iOS & Android · Free to start")

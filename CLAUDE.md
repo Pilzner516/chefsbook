@@ -309,17 +309,16 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (135 — 2026-04-15)
-- Created concept-d.html — evolved concept-c into elite pitch-ready landing
-- Hero with animated 4-step workflow + trust signals; staged phone over food hero bg
-- 3 magic-moment blocks (Import / AI Plan / Shop) with scroll-triggered micro-animations
-- Alternating cream/white rhythm + 3 full-width parallax image breaks
-- Pricing: Monthly/Yearly toggle with live price swap + "Save 20%" pill; Chef featured
-- Final CTA: full-bleed darkened food bg, single red "Start Cooking Free →"
-- Motion via CSS + IntersectionObserver only, prefers-reduced-motion respected
+## Last session (136 — 2026-04-15)
+- Created concept-e.html — evolution of concept-d per 136 spec
+- Shortened ~20%: removed Language section, 3 parallax breaks, 3 import cards, 1 testimonial, 1 comm card
+- Hero: stronger CTA "Start Free — No credit card" (18/40 padding), reassurance line, compat-row ("Works with Instagram / YouTube / NYT Cooking / Serious Eats / AllRecipes"), workflow animation accelerated to ~0.7s total
+- Added dark moat/platform section between testimonials and pricing with CSS radial node diagram + 4 stat pillars
+- Pricing: featured Chef card now scale(1.04) with stronger shadow; universal features caption below cards
+- Spacing/typography tokens refined (96px section padding, tighter hero letter-spacing, larger section min, more body line-height)
 
 ## Next session
-- Decide A/B/C/D winner and integrate as apps/web landing route
+- Decide A/B/C/D/E winner and integrate as apps/web landing route
 - Cold-boot emulator or test APK on physical Android device to confirm UI renders
 - Configure ESLint for web app
 - AI impersonation flagging for usernames at signup
