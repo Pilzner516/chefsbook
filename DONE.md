@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 138 deploy)
+- Deployed session 138 to RPi5 (chefsbk.app production)
+- Resolved pre-existing local package.json drift on RPi5 (root-level i18next/react-i18next entries + missing react-native-worklets vs. upstream) — stashed local, pulled fe0cec5..9c3d748, discarded the stash after build succeeded with upstream (workspace deps don't need to be hoisted to root)
+- Cleaned apps/web caches: `rm -rf node_modules/react node_modules/react-dom .next` (prevents duplicate-React SSG 404 + stale .next render bugs documented in CLAUDE.md)
+- Build: `NODE_OPTIONS=--max-old-space-size=1536 npm run build` exited 0 on RPi5 (all 30+ routes static or dynamic, 102 kB shared JS, no errors)
+- `pm2 restart chefsbook-web` → process online (pid 2675068, fork mode)
+- Smoke test: localhost:3000 HTTP 200, https://chefsbk.app HTTP 200 via Cloudflare Tunnel
+- Working tree clean on RPi5 at 9c3d748
+
 ## 2026-04-15 (session 138) — Instagram import REMOVED; photo scan enhanced
 - Share-target test result: FAILS by design. Android SEND intent is declared in app.json but apps/mobile/app/_layout.tsx uses Linking.addEventListener('url', ...) which only captures VIEW deep links. No native SEND-intent receiver (expo-sharing-intent / react-native-receive-sharing-intent) is installed, so the Instagram app's share sheet cannot reach the JS layer. Combined with Meta actively blocking unauth'd IG scraping, decision was REMOVE.
 - packages/ai: commented out `export { fetchInstagramPost, extractRecipeFromInstagram }` and their types in src/index.ts with a preservation rationale; added DEPRECATED file header to src/instagramImport.ts. Source retained for potential future restoration (official Meta API / native share-intent receiver)
