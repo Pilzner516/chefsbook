@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 140 — Mobile AVD verification)
+- [2026-04-15] CB_API_34 AVD booted, release APK built + installed, 6 features tested on emulator
+- [2026-04-15] Feature 1 (Notification bell): PASS — 5-tab panel opens (All/Comments/Likes/Followers/Moderation) with "Mark all read"
+- [2026-04-15] Feature 2 (Messages inbox): PASS — chefsbook://messages deep link renders Messages screen with empty state
+- [2026-04-15] Feature 3 (Free plan like gate): FAIL — tapping heart shows optimistic red but NO DB insert AND no upgrade dialog (silent fail)
+- [2026-04-15] Feature 4 (Translated recipe titles): PARTIAL — UI strings fully translated, recipe detail title translated, BUT search/list shows English title (getBatchTranslatedTitles not wired to mobile list)
+- [2026-04-15] Feature 5 (Visibility toggle): PASS — Private/Shared Link/Public pills visible on edit screen, selection toggles correctly
+- [2026-04-15] Feature 6 (Instagram screenshot import): PARTIAL — scan tab UI + Instagram hint card + gallery picker all functional; end-to-end blocked because AVD MediaStore didn't index pushed JPEG ("No photos or videos")
+
 ## 2026-04-15 (session 141 — Import Intelligence System)
 - [2026-04-15] Migration 036 applied on RPi5: extended import_site_tracker (rating 1-5, is_blocked, block_reason, failure_taxonomy, sample_failing_urls, auto_test_enabled, notes); added import_attempts log table with RLS + 3 indexes; added recipes completeness columns (is_complete, missing_fields, ai_recipe_verdict, ai_verdict_reason, completeness_checked_at, ai_verdict_at); added scheduled_jobs table with site_compatibility_test job (cron '0 3 * * 1'). PostgREST restarted. Backfill marked 69 existing non-private recipes as is_complete=true.
 - [2026-04-15] packages/db/src/queries/completeness.ts: checkRecipeCompleteness() (ingredient qty check, step count, tag check), fetchRecipeCompleteness() (runs check on a saved recipe_id), logImportAttempt() + updateSiteTrackerFromAttempt() (upsert aggregates, compute status from success rate, sample failing URLs capped at 5), applyCompletenessGate() (sets visibility=private if incomplete), applyAiVerdict(), getSiteBlockStatus(), getUserImportStats(), getUserIncompleteRecipes(), extractDomain().
