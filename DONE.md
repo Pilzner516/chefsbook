@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 134)
+- Wired all 26 generated images into 3 landing concept HTML files
+- concept-a.html (Unified Kitchen): 6 images — hero editorial accent (rotated overlay beside phone mockup) + 4-image editorial band after Chaos section (herbs/veg/bread/plate) + final CTA background (breakfast morning with dark overlay)
+- concept-b.html (Operating System): 5 images — hero section dark-overlay background (hero-b-operating-system) + 3 persona card k-hero images with brightness 0.75 dark treatment (plated-dark/grain-bowl-dark/steam-pan) + final CTA texture-dark-slate with radial glow overlay
+- concept-c.html (Beautiful Food): 13 images — existing hero + final bg + 3 community avatars (pasta/veg/cookbook) + 3 testimonial avatars (plated/breakfast/bread) + plan-mock photo accent (meal-plan-paper) + shop-mock photo accent (farmers-market) + new 3-image editorial band (phone/cutting-board/grocery-bag) between Cook Together and Speak Your Language sections
+- Added CSS: .editorial-band (3-up), .editorial-row (4-up), .plan-photo, .shop-photo, .hero-editorial rotated overlay, .k-hero.has-img dark background pattern
+- Script verification: all 24 unique image refs across 3 concepts resolve to files on disk
+
 ## 2026-04-15 (session 133)
 - Generated 26 landing page images via Replicate flux-dev (aspect_ratio 16:9 for heroes, 3:2 for cards)
 - Created scripts/generate-landing-images.mjs with 429 retry + 11s rate-limit pacing (6 req/min burst limit on accounts < $5 credit)

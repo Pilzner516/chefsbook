@@ -309,11 +309,12 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (133 — 2026-04-15)
-- Generated 26 landing page images via Replicate flux-dev ($0.65, 26/26 succeeded)
-- scripts/generate-landing-images.mjs: 429 retry + 11s pacing for 6 req/min burst limit
-- Images in docs/pics/ + docs/landing-previews/images/
-- concept-c.html wired to local images; concept-a/b are CSS-only
+## Last session (134 — 2026-04-15)
+- Wired all 26 generated images into 3 landing concepts
+- concept-a: 6 images (editorial band + rotated hero accent + final bg)
+- concept-b: 5 images (hero bg + 3 dark persona cards + final texture)
+- concept-c: 13 images (avatars, mock photo accents, 3-up editorial band)
+- All image paths verified against docs/landing-previews/images/
 
 ## Next session
 - Pick winning landing concept (A/B/C) and integrate as apps/web landing route

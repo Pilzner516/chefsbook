@@ -234,6 +234,19 @@
   .comm-card:hover { transform: translateX(-4px); }
   .comm-avatar { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: var(--red); flex-shrink: 0; }
   .comm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Editorial band — 3-up food strip */
+  .editorial-band { margin: 80px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .editorial-band figure { margin: 0; border-radius: 18px; overflow: hidden; aspect-ratio: 4/3; box-shadow: var(--shadow); position: relative; }
+  .editorial-band img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--ease); }
+  .editorial-band figure:hover img { transform: scale(1.04); }
+  .editorial-band figcaption { position: absolute; bottom: 12px; left: 14px; font-family: 'Fraunces'; font-size: 14px; color: var(--cream); letter-spacing: -0.01em; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
+
+  /* Plan showcase photo accent */
+  .plan-photo { border-radius: 16px; overflow: hidden; margin-bottom: 18px; aspect-ratio: 16/9; box-shadow: var(--shadow-soft); }
+  .plan-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shop-photo { border-radius: 16px; overflow: hidden; margin-bottom: 18px; aspect-ratio: 4/3; box-shadow: var(--shadow-soft); }
+  .shop-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .comm-text { flex: 1; min-width: 0; }
   .comm-text strong { display: block; font-size: 14px; }
   .comm-text p { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
@@ -454,6 +467,7 @@
         </div>
       </div>
       <div class="plan-mock">
+        <div class="plan-photo"><img src="images/lifestyle-meal-plan-paper.jpg" alt="Handwritten meal plan on linen" /></div>
         <div class="plan-head">
           <h4>Week of March 10</h4>
           <span class="plan-chip">✓ AI generated</span>
@@ -487,6 +501,7 @@
         </div>
       </div>
       <div class="shop-mock">
+        <div class="shop-photo"><img src="images/shopping-farmers-market.jpg" alt="Hands at a farmers market" /></div>
         <div class="shop-h">
           <h4>Grocery run · Sat</h4>
           <span>12 items · 4 recipes</span>
@@ -526,22 +541,33 @@
       <div class="social-visual">
         <div class="comm-stack">
           <div class="comm-card">
-            <div class="comm-avatar"></div>
+            <div class="comm-avatar"><img src="images/closeup-pasta-bowl.jpg" alt="Pasta bowl" /></div>
             <div class="comm-text"><strong>Marta followed you</strong><p>She just saved your Nonna's ragù ❤️</p></div>
             <div class="heart">+ Follow</div>
           </div>
           <div class="comm-card">
-            <div class="comm-avatar" style="background:var(--green);"></div>
+            <div class="comm-avatar"><img src="images/closeup-vegetables-arranged.jpg" alt="Fresh vegetables" /></div>
             <div class="comm-text"><strong>Jamie's tip on Pasta alla Norma</strong><p>"Salt the aubergines for 30 min first — game changer."</p></div>
             <div class="heart">♥ 42</div>
           </div>
           <div class="comm-card">
-            <div class="comm-avatar" style="background:#d6a75a;"></div>
+            <div class="comm-avatar"><img src="images/lifestyle-open-cookbook.jpg" alt="Open cookbook" /></div>
             <div class="comm-text"><strong>Family cookbook updated</strong><p>Aunt Helen added "Sunday stew" · 6 members</p></div>
             <div class="heart">View →</div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- Editorial band -->
+<section class="reveal" style="padding: 40px 0 40px;">
+  <div class="wrap">
+    <div class="editorial-band">
+      <figure><img src="images/phone-in-kitchen-hands.jpg" alt="Hands holding a phone in a kitchen" /><figcaption>Read on any device</figcaption></figure>
+      <figure><img src="images/closeup-cutting-board-prep.jpg" alt="Cutting board with herbs and knife" /><figcaption>Cook with your hands free</figcaption></figure>
+      <figure><img src="images/lifestyle-grocery-bag.jpg" alt="Paper grocery bag overflowing with produce" /><figcaption>Shop with a plan</figcaption></figure>
     </div>
   </div>
 </section>
@@ -576,7 +602,7 @@
         <div class="stars">★★★★★</div>
         <p class="q-text">"I used to have recipes screenshot across three phones. Now it's all just... here. The Sunday panic is gone."</p>
         <div class="quote-who">
-          <div class="avatar"></div>
+          <div class="avatar"><img src="images/closeup-plated-dish.jpg" alt="" /></div>
           <div><strong>Marta R.</strong><span>Barcelona · Family plan</span></div>
         </div>
       </div>
@@ -584,7 +610,7 @@
         <div class="stars">★★★★★</div>
         <p class="q-text">"Scanning my grandmother's handwritten book was worth the subscription alone. That book is now searchable."</p>
         <div class="quote-who">
-          <div class="avatar" style="background:var(--green);"></div>
+          <div class="avatar"><img src="images/lifestyle-breakfast-morning.jpg" alt="" /></div>
           <div><strong>Anu K.</strong><span>London · Pro plan</span></div>
         </div>
       </div>
@@ -592,7 +618,7 @@
         <div class="stars">★★★★★</div>
         <p class="q-text">"The meal plan wizard nailed 'quick, toddler-friendly, use-up-the-spinach' on the first try. Magic."</p>
         <div class="quote-who">
-          <div class="avatar" style="background:#d6a75a;"></div>
+          <div class="avatar"><img src="images/closeup-bread-oven.jpg" alt="" /></div>
           <div><strong>Jamie T.</strong><span>Toronto · Chef plan</span></div>
         </div>
       </div>

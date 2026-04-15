@@ -108,7 +108,18 @@
   .hero {
     padding: 120px 0 140px; position: relative;
     text-align: center;
+    overflow: hidden;
   }
+  .hero::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(180deg, rgba(18,16,14,0.85) 0%, rgba(18,16,14,0.7) 45%, rgba(18,16,14,0.96) 100%),
+      url('images/hero-b-operating-system.jpg');
+    background-size: cover; background-position: center;
+    filter: saturate(0.85);
+    pointer-events: none;
+  }
+  .hero > .wrap { position: relative; z-index: 1; }
   .hero-eyebrow {
     display: inline-flex; align-items: center; gap: 10px;
     padding: 7px 16px; border-radius: 999px;
@@ -292,10 +303,15 @@
   .kitchen .k-hero {
     width: 100%; aspect-ratio: 4/3; border-radius: 10px; margin-bottom: 24px;
     background: linear-gradient(135deg, var(--garnet), #4a1610);
+    background-size: cover; background-position: center;
+    filter: brightness(0.75) contrast(1.1) saturate(0.85);
     position: relative; overflow: hidden;
   }
   .kitchen:nth-child(2) .k-hero { background: linear-gradient(135deg, var(--basil), #143023); }
   .kitchen:nth-child(3) .k-hero { background: linear-gradient(135deg, var(--gold), #6b5122); }
+  .kitchen:nth-child(1) .k-hero.has-img { background-image: linear-gradient(180deg, rgba(18,16,14,0.35), rgba(18,16,14,0.6)), url('images/closeup-plated-dish-dark.jpg'); }
+  .kitchen:nth-child(2) .k-hero.has-img { background-image: linear-gradient(180deg, rgba(18,16,14,0.35), rgba(18,16,14,0.6)), url('images/closeup-grain-bowl-dark.jpg'); }
+  .kitchen:nth-child(3) .k-hero.has-img { background-image: linear-gradient(180deg, rgba(18,16,14,0.35), rgba(18,16,14,0.6)), url('images/closeup-steam-pan.jpg'); }
   .k-hero::after {
     content: ''; position: absolute; inset: 0;
     background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.15), transparent 60%);
@@ -362,7 +378,10 @@
   .final { text-align: center; padding: 200px 0; position: relative; overflow: hidden; }
   .final::before {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, rgba(159,45,36,0.25), transparent 60%);
+    background:
+      radial-gradient(ellipse at center, rgba(159,45,36,0.25), transparent 60%),
+      linear-gradient(180deg, rgba(18,16,14,0.88), rgba(18,16,14,0.96)),
+      url('images/texture-dark-slate.jpg') center/cover no-repeat;
   }
   .final > * { position: relative; }
   .final h2 {
@@ -563,21 +582,21 @@
     <h2 class="section-h">Built for <em>how you actually cook</em>.</h2>
     <div class="kitchens-grid">
       <div class="kitchen">
-        <div class="k-hero"></div>
+        <div class="k-hero has-img"></div>
         <div class="k-role">The Solo Cook</div>
         <h3>Cooking for one, well.</h3>
         <p>Small-batch scaling, leftover-friendly plans, and a list that doesn't leave you with 500g of feta you'll never finish.</p>
         <div class="k-flow"><span>Scale → 1</span><span>Leftovers</span><span>Minimal waste</span></div>
       </div>
       <div class="kitchen">
-        <div class="k-hero"></div>
+        <div class="k-hero has-img"></div>
         <div class="k-role">The Busy Family</div>
         <h3>Dinner, for everyone.</h3>
         <p>Shared plan, shared list, kid-friendly swaps. Up to six members see the same Tuesday menu and the same grocery cart.</p>
         <div class="k-flow"><span>6 members</span><span>Allergy filters</span><span>Shared cart</span></div>
       </div>
       <div class="kitchen">
-        <div class="k-hero"></div>
+        <div class="k-hero has-img"></div>
         <div class="k-role">The Food Enthusiast</div>
         <h3>Your culinary library.</h3>
         <p>Unlimited recipes, 5 images per dish, PDF export, technique library, cookbook shelf. For the obsessive — in the best way.</p>
