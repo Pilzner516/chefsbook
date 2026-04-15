@@ -1,6 +1,36 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 139 — overnight cleanup)
+### Item 1 — locale cleanup (PASSED)
+- Inventoried all `instagram`/`Instagram` references in apps/mobile/locales and apps/web/locales: only en.json in each had matches (other 4 languages never had those keys translated)
+- Confirmed zero code references to any of the 10 orphaned keys (pasteInstagramUrl, fromInstagram, scan.instagram, scan.instagramSubtitle, scan.instagramImporting, scan.instagramFailed, scan.instagramPrivate, scan.instagramManual, scan.instagramInvalidUrl, postImport.instagramPhoto) via grep across {.ts,.tsx} files
+- Removed all 10 keys from apps/mobile/locales/en.json and apps/web/locales/en.json; JSON structure preserved with 2-space indent + trailing newline
+
+### Item 2 — app.json SEND intent filter removed (PASSED, rebuild pending)
+- Removed Android SEND intent filter with `mimeType: text/plain` from apps/mobile/app.json intentFilters array
+- Kept all VIEW intent filters (chefsbk.app/recipe/* deep link + generic https/http browser handoff)
+- JSON validated via `node -e "JSON.parse(...)"` → valid
+- CLAUDE.md Known Issues updated: filter change requires new APK build (expo run:android --variant release / eas build) before installed devices stop advertising the dead share target
+
+### Item 3 — AI cost audit (PASSED)
+- Inventoried every callClaude() invocation across packages/ai/src/ (25 source files, 29 call sites)
+- Switched mergeShoppingList() from default Sonnet → HAIKU (merge/classification task; ~10x cost reduction; quality expected to hold per ai-cost.md guide for list operations)
+- Switched suggestRecipes() from default Sonnet → HAIKU (structured suggestion from short ingredient list; same rationale)
+- Expanded CLAUDE.md AI cost reference table from 13 rows to 29 — added moderateMessage, classifyPage, reanalyseDish, matchFoldersToCategories (batch), lookupCookbook (ISBN image), translateRecipeTitle, generateVariation, importFromYouTube, importTechnique (+ YouTube variant), formatVoiceRecipe, cookbookTOC, aiChefComplete; marked fetchInstagramPost/extractRecipeFromInstagram DISABLED (session 138)
+- Typecheck packages/ai (via apps/web tsc) clean; apps/mobile tsc clean except pre-existing expo-file-system upstream error
+
+### Item 4 — APK verification (NOT EXECUTED — environment gap)
+- Session prompt explicitly excluded API 36 ("API 33 or 34 preferred, not 36")
+- Only installed AVD is `Medium_Phone_API_36.1`
+- API 34 system image IS present on disk at `$ANDROID_HOME/system-images/android-34/google_apis_playstore/x86_64` but there is no way to register it as an AVD from CLI because `cmdline-tools/` is not installed in the local SDK — `avdmanager` binary does not exist
+- Options to unblock: (a) install Android cmdline-tools via Android Studio's SDK Manager, then `avdmanager create avd -n CB_API_34 -k "system-images;android-34;google_apis_playstore;x86_64" -d pixel_5`; or (b) open Android Studio → Device Manager → Create → pick already-downloaded API 34 image; or (c) run on a physical Android device (API 33/34)
+- All 5 features (notification bell, messages link, free-plan like gate, translated recipe titles, visibility toggle) remain UNTESTED on a compliant emulator this session
+- No code changes made — session instruction was "Do not fix any failures found in Item 4 — just document them"
+
+### Deployment
+- Commit 8ecf6ac pushed to origin/main; RPi5 pulled 1c74a19..8ecf6ac; apps/web caches cleared; build exit 0; pm2 restarted; localhost:3000 HTTP 200; https://chefsbk.app HTTP 200
+
 ## 2026-04-15 (landing cleanup) — Instagram removed from landing copy
 - apps/web/app/page.tsx (live chefsbk.app landing):
   - featureGroups "Import & Capture" bullet: removed "Instagram import"; added "Import from PDFs, Word docs, and bookmark exports"; upgraded "Scan recipe photos" bullet to include "screenshots"
