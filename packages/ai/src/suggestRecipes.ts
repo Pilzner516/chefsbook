@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export interface RecipeSuggestion {
   title: string;
@@ -32,6 +32,7 @@ Rules:
 
 export async function suggestRecipes(ingredients: string[]): Promise<RecipeSuggestion[]> {
   const prompt = `${SUGGEST_PROMPT}\n\nAvailable ingredients:\n${ingredients.map((i) => `- ${i}`).join('\n')}`;
-  const text = await callClaude({ prompt, maxTokens: 2000 });
+  // Simple structured suggestion from a short ingredient list — Haiku is sufficient.
+  const text = await callClaude({ prompt, maxTokens: 2000, model: HAIKU });
   return extractJSON<RecipeSuggestion[]>(text);
 }

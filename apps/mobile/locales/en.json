@@ -297,18 +297,10 @@
     "shareBanner": "Share recipes directly from Chrome",
     "shareDescription": "Open any recipe in your browser, tap Share, select ChefsBook",
     "shareStep1": "Open a recipe page in Chrome",
-    "shareStep2": "Tap \u22EE menu \u2192 Share",
+    "shareStep2": "Tap ⋮ menu → Share",
     "shareStep3": "Select ChefsBook from the list",
     "scanFailed": "Scan failed",
-    "importFailed": "Import failed",
-    "instagram": "Instagram",
-    "instagramSubtitle": "Import from a post",
-    "instagramImporting": "Reading Instagram post...",
-    "instagramFailed": "Instagram import failed",
-    "instagramPrivate": "We couldn't access this Instagram post. It may be private or the link may have expired.",
-    "instagramManual": "Try pasting the recipe text manually",
-    "pasteInstagramUrl": "Paste Instagram post URL...",
-    "instagramInvalidUrl": "Please paste an Instagram post or reel link."
+    "importFailed": "Import failed"
   },
   "dishId": {
     "analysing": "Analysing image...",
@@ -338,10 +330,10 @@
     "noTryAgain": "No, try again",
     "cancel": "Cancel",
     "anyDetails": "Any details to add?",
-    "skipArrow": "Skip \u2192",
+    "skipArrow": "Skip →",
     "contextHint": "Add cooking notes, dietary needs, or key ingredients to improve results",
     "contextPlaceholder": "e.g. \"medium rare, no garlic, gluten-free version\"",
-    "continueArrow": "Continue \u2192",
+    "continueArrow": "Continue →",
     "typeItMyself": "Type the dish name myself",
     "whatDishIsThis": "What dish is this?",
     "manualNameHint": "Type the name of the dish and we'll find or generate a recipe for you",
@@ -484,20 +476,18 @@
     "longPress": "Long-press to set primary image",
     "primary": "PRIMARY",
     "findPhoto": "Find a photo",
-    "uploadFailed": "Upload failed \u2014 tap to retry",
+    "uploadFailed": "Upload failed — tap to retry",
     "coverSet": "Set as cover photo"
   },
   "postImport": {
     "title": "Choose a cover photo",
     "skip": "Skip",
-    "skipArrow": "Skip \u2192",
+    "skipArrow": "Skip →",
     "fromWebsite": "From website",
     "originalPhoto": "The recipe's original photo",
     "fromScan": "From scan",
     "scanPhoto": "Photo found in scanned page",
-    "findPhoto": "Find a photo",
-    "fromInstagram": "From Instagram post",
-    "instagramPhoto": "Photo from the Instagram post"
+    "findPhoto": "Find a photo"
   },
   "pexels": {
     "title": "Find a photo",

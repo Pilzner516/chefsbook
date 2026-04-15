@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, HAIKU } from './client';
 
 export interface MergedShoppingItem {
   ingredient: string;
@@ -41,6 +41,7 @@ export async function mergeShoppingList(
     .join('\n\n');
 
   const prompt = `${MERGE_PROMPT}\n\nIngredients by recipe:\n${formatted}`;
-  const text = await callClaude({ prompt, maxTokens: 3000 });
+  // Classification/merge task — Haiku handles this well at ~1/10 the cost of Sonnet.
+  const text = await callClaude({ prompt, maxTokens: 3000, model: HAIKU });
   return extractJSON<MergedShoppingItem[]>(text);
 }

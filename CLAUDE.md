@@ -326,6 +326,7 @@ Always run `\d [tablename]` on RPi5 before writing any new query.
 
 ## Known issues
 
+- **Mobile: app.json SEND intent filter removed (session 139) — needs new APK build to take effect.** The filter that made ChefsBook appear in Instagram/TikTok share sheets as a dead option was removed. Until the next `expo run:android --variant release` or `eas build`, installed APKs still advertise the share target. No code change is needed — just a rebuild + reinstall.
 - **Mobile: Android signing config is gitignored** — apps/mobile/android/ is in .gitignore (Expo pattern). The build.gradle release signing config is a local-only edit. After `expo prebuild --clean`, re-apply: signingConfigs.release block reading keystore.properties + swap `signingConfig signingConfigs.debug` → `signingConfig signingConfigs.release` in release buildType. Keystore file + keystore.properties must persist locally (both gitignored).
 - **Mobile: like button bypasses plan gate** — Calls toggleLike() directly instead of server API route; free users can like on mobile
 - **Mobile: no notification UI** — Web has 5-tab NotificationBell panel; mobile has nothing
@@ -407,18 +408,33 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 | Function | Model | Est. cost/call | Cached? |
 |----------|-------|---------------|---------|
 | moderateComment() | haiku | ~$0.00016 | No (new content each time) |
+| moderateMessage() | haiku | ~$0.00016 | No (new DM each send) |
 | moderateRecipe() | haiku | ~$0.00020 | Yes (skip if content unchanged) |
-| isUsernameFamilyFriendly() | haiku | ~$0.00008 | No (one-time at signup) |
-| classifyContent/classifyPage | haiku | ~$0.00016 | No (one-time per import) |
-| suggestPurchaseUnits() | haiku | ~$0.00040 | No (one-time per cart add) |
-| analyseScannedImage() | haiku | ~$0.00030 | No (each scan is new) |
-| socialShare/hashtags | haiku | ~$0.00020 | No (user-initiated) |
+| isUsernameFamilyFriendly() (usernameCheck) | haiku | ~$0.00008 | No (one-time at signup) |
+| classifyContent() | haiku | ~$0.00016 | No (one-time per import) |
+| classifyPage() (importFromUrl) | haiku | ~$0.00016 | No (one-time per import) |
+| suggestPurchaseUnit() | haiku | ~$0.00040 | No (one-time per cart add) |
+| analyseScannedImage() (dishIdentify) | haiku | ~$0.00030 | No (each scan is new) |
+| reanalyseDish() (dishIdentify) | haiku | ~$0.00030 | No (user-initiated clarification) |
+| socialShareText / socialShareHashtags | haiku | ~$0.00020 | No (user-initiated) |
 | matchFolderToCategory() | haiku | ~$0.00016 | No (one-time per import) |
-| translateRecipe() | sonnet | ~$0.011 | Yes (shared, one-time per recipe per lang) |
-| importFromUrl() | sonnet | ~$0.015 | Yes (one-time per import) |
-| scanRecipe() | sonnet | ~$0.015 | Yes (one-time per scan) |
-| generateMealPlan() | sonnet | ~$0.020 | No (user-initiated) |
-| generateDishRecipe() | sonnet | ~$0.015 | No (user-initiated) |
+| matchFoldersToCategories() (batch) | haiku | ~$0.0005 | No (one-time per bookmark import) |
+| lookupCookbook() (ISBN image) | haiku | ~$0.00020 | No (user-initiated) |
+| translateRecipeTitle() | haiku | ~$0.00020 | Yes (is_title_only row in recipe_translations) |
+| mergeShoppingList() | haiku | ~$0.0008 | No (user-initiated list merge) — SWITCHED from sonnet session 139 |
+| suggestRecipes() | haiku | ~$0.0006 | No (user-initiated "what can I make") — SWITCHED from sonnet session 139 |
+| translateRecipe() (full) | sonnet | ~$0.011 | Yes (shared row in recipe_translations per recipe+lang) |
+| importFromUrl() (extraction / gap-fill) | sonnet | ~$0.015 | Yes (one-time per import) |
+| scanRecipe() / scanRecipeMultiPage() | sonnet | ~$0.015 | Yes (one-time per scan) |
+| generateMealPlan() (mealPlanWizard) | sonnet | ~$0.020 | No (user-initiated) |
+| generateDishRecipe() (dishIdentify) | sonnet | ~$0.015 | No (user-initiated) |
+| generateVariation() | sonnet | ~$0.015 | No (user-initiated "make it vegan" etc.) |
+| importFromYouTube() | sonnet | ~$0.015 | Yes (one-time per YouTube import) |
+| importTechnique() / importTechniqueFromYouTube() | sonnet | ~$0.015 | Yes (one-time per technique import) |
+| formatVoiceRecipe() | sonnet | ~$0.010 | No (user-initiated dictation) |
+| cookbookTOC() (generateTableOfContents) | sonnet | ~$0.020 | No (one-time per cookbook add) |
+| aiChefComplete() | sonnet | ~$0.015 | No (user-initiated "finish this recipe") |
+| fetchInstagramPost / extractRecipeFromInstagram | sonnet | DISABLED | DEPRECATED session 138 — no longer exported |
 
 ## Builds
 
