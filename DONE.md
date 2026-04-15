@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 133)
+- Generated 26 landing page images via Replicate flux-dev (aspect_ratio 16:9 for heroes, 3:2 for cards)
+- Created scripts/generate-landing-images.mjs with 429 retry + 11s rate-limit pacing (6 req/min burst limit on accounts < $5 credit)
+- Saved all 26 images to docs/pics/ and copied to docs/landing-previews/images/ for self-contained previews
+- concept-c.html: replaced 2 Unsplash hero backgrounds with local images (hero-c-warm-pasta + closeup-herbs-hands), removed 6 Unsplash portrait img tags (parent div color fallbacks remain)
+- concept-a.html and concept-b.html: no image refs (CSS-only) — no changes needed
+- Total cost: 26 × $0.025 = $0.65; 26/26 succeeded on retry pass
+
 ## 2026-04-14 (session 138)
 - Full clean rebuild: rm -rf android/app/build + .gradle + node_modules/.cache
 - Missing react/react-dom in apps/mobile/node_modules (only in root) — causes jsx-runtime resolution failure

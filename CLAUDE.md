@@ -309,15 +309,15 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (138 — 2026-04-14)
-- Clean rebuild: bundle regenerated fresh, APK installed, RN JS runs ("Running main")
-- BUT emulator display frozen on "Hello Android!" launcher despite app focus
-- Worked around missing react in mobile/node_modules (EOVERRIDE blocks npm install) by copying from root
-- Emulator display issue, not app issue — signing + JS all working per logcat
+## Last session (133 — 2026-04-15)
+- Generated 26 landing page images via Replicate flux-dev ($0.65, 26/26 succeeded)
+- scripts/generate-landing-images.mjs: 429 retry + 11s pacing for 6 req/min burst limit
+- Images in docs/pics/ + docs/landing-previews/images/
+- concept-c.html wired to local images; concept-a/b are CSS-only
 
 ## Next session
-- Cold-boot emulator OR test APK on physical Android device to confirm UI renders
-- Pick winning landing concept and integrate as apps/web landing
+- Pick winning landing concept (A/B/C) and integrate as apps/web landing route
+- Cold-boot emulator or test APK on physical Android device to confirm UI renders
 - Configure ESLint for web app
 - AI impersonation flagging for usernames at signup
 
