@@ -309,19 +309,20 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (136 — 2026-04-15)
-- Created concept-e.html — evolution of concept-d per 136 spec
-- Shortened ~20%: removed Language section, 3 parallax breaks, 3 import cards, 1 testimonial, 1 comm card
-- Hero: stronger CTA "Start Free — No credit card" (18/40 padding), reassurance line, compat-row ("Works with Instagram / YouTube / NYT Cooking / Serious Eats / AllRecipes"), workflow animation accelerated to ~0.7s total
-- Added dark moat/platform section between testimonials and pricing with CSS radial node diagram + 4 stat pillars
-- Pricing: featured Chef card now scale(1.04) with stronger shadow; universal features caption below cards
-- Spacing/typography tokens refined (96px section padding, tighter hero letter-spacing, larger section min, more body line-height)
+## Last session (137 — 2026-04-15)
+- Created concept-f.html — final polish pass on concept-e
+- Emoji → inline SVG across entire page (23 replacements: flow icons, feature-row icons, import cards, lock, hearts, app store logos, platform diagram text-only, footer lang codes)
+- Hero eyebrow → "The operating system for modern cooking" (no pulsing dot); subheadline trimmed to 3 sentences; trust-row now "12,000+ recipes imported"
+- Magic-moment eyebrows renamed to Import / Meal Planning / Shopping
+- Moat .mp-num 48px italic Fraunces; pricing .price-reassure reassurance added
+- Final CTA: 0.55 flat overlay; new .btn-final transparent border variant
+- Created docs/landing-previews/new-image-prompts.md (dinner-table / organized-kitchen / chaos-phones)
 
 ## Next session
-- Decide A/B/C/D/E winner and integrate as apps/web landing route
-- Cold-boot emulator or test APK on physical Android device to confirm UI renders
-- Configure ESLint for web app
-- AI impersonation flagging for usernames at signup
+- Generate the 3 concept-f images via Replicate (~$0.08) and swap final CTA bg
+- Decide A/B/C/D/E/F winner and integrate as apps/web landing route
+- Cold-boot emulator or test APK on physical Android device
+- ESLint; AI impersonation flagging for usernames at signup
 
 ## Known issues
 

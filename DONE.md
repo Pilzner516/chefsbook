@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-15 (session 137)
+- Created docs/landing-previews/concept-f.html — final polish pass on concept-e (base was docs/landing-previews/concept-e.html since /mnt/user-data/uploads path doesn't exist on Windows; flagged)
+- Emoji-to-SVG sweep (most impactful change): all 23 decorative emoji replaced with inline Feather-style 1.5/2-stroke SVGs — camera, clipboard, calendar, cart (16px flow-step icons); globe, camera, microphone, brain, carrot, people, box, store, sync, heart, comment (20px feature-row + import-card .ic); 14px lock SVG in mv-url; 12px filled heart SVG + span for "♥ 42" comm card; Apple + Play Store SVG logos replacing 🍎/▶ in app badges; platform diagram nodes now text-only (Import/Plan/Shop/Family/Translate/Discover); footer flag strip 🇬🇧🇫🇷🇪🇸🇮🇹🇩🇪 replaced with elegant "EN · FR · ES · IT · DE" text. Kept ★★★★★ (real Unicode stars, not emoji) and CSS content:'✓' bullets
+- Hero eyebrow: "Now with AI meal planning" → "The operating system for modern cooking" (static, pulsing red dot disabled via new .hero-eyebrow--static modifier)
+- Hero subheadline trimmed from 4 sentences to 3 (removed redundant "One beautiful system for your whole cooking life" — headline already carries it)
+- Trust row: "Loved by home cooks" → "12,000+ recipes imported" for concrete specificity
+- Magic-moment eyebrows: "Magic moment · Import/Plan/Shop" → "Import / Meal Planning / Shopping"
+- Moat pillars: .mp-num 36px → 48px + font-style: italic Fraunces for elegance; "Import sources" → "Ways to import"
+- Pricing: added .price-reassure line below cards: "Cancel anytime. Your recipes are always yours — export everything with one click." (14px muted centered)
+- Final CTA: darker dinner-scene vibe via simplified 0.55 flat overlay on hero-c-warm-pasta (fallback until concept-f-dinner-table.jpg is generated); new .btn-final variant — transparent bg, cream text, 2px rgba(255,250,240,0.4) border, 18/40 padding; button text "Start Free — No credit card" matches hero CTA
+- Created docs/landing-previews/new-image-prompts.md with 3 image prompts (dinner-table 1440×900, organized-kitchen 1200×800, chaos-phones 1200×800) including flux-dev aspect_ratio mapping and cost estimate (~$0.08 for all 3)
+- All 5 unique image refs verified; 1179 lines total; zero decorative emoji remain
+
 ## 2026-04-15 (session 136)
 - Created docs/landing-previews/concept-e.html — evolution of concept-d per 136 spec (base was existing docs/landing-previews/concept-d.html since /mnt/user-data/uploads path doesn't exist on Windows; flagged to user)
 - Change 1 (shorten ~20%): removed Language section (5-card grid), removed 3 parallax image breaks, reduced import-grid from 6 to 3 cards (URL/Photo scan/Speak — absorbed Instagram/YouTube/Files/ISBN into a caption line), reduced testimonials from 3 to 2 (removed Jamie — duplicated Plan magic moment content), reduced comm-stack from 3 to 2 cards (removed Family cookbook)
