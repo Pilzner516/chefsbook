@@ -11,7 +11,7 @@ import { isActuallyARecipe } from '@chefsbook/ai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { recipeId, userId, url, source } = await req.json();
+    const { recipeId, userId, url, source, isNewDiscovery } = await req.json();
     if (!recipeId) return Response.json({ error: 'recipeId required' }, { status: 400 });
 
     const { data: recipe } = await supabaseAdmin
@@ -53,10 +53,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (url) {
+      const domain = extractDomain(url);
       await logImportAttempt({
         userId: userId ?? null,
         url,
-        domain: extractDomain(url),
+        domain,
         success: completeness.isComplete && aiVerdict === 'approved',
         recipeId,
         failureReason: !completeness.isComplete
@@ -72,7 +73,34 @@ export async function POST(req: NextRequest) {
             : aiVerdict === 'flagged'
               ? 'flagged'
               : 'complete',
+        isNewDiscovery: !!isNewDiscovery,
       });
+
+      // Attribute + auto-promote successful unknown-site discoveries.
+      if (isNewDiscovery && domain) {
+        if (userId) {
+          await supabaseAdmin
+            .from('import_site_tracker')
+            .update({ first_discovered_by: userId })
+            .eq('domain', domain)
+            .is('first_discovered_by', null);
+          const { data: profile } = await supabaseAdmin
+            .from('user_profiles')
+            .select('sites_discovered_count')
+            .eq('id', userId)
+            .maybeSingle();
+          await supabaseAdmin
+            .from('user_profiles')
+            .update({ sites_discovered_count: (profile?.sites_discovered_count ?? 0) + 1 })
+            .eq('id', userId);
+        }
+        if (completeness.isComplete && aiVerdict === 'approved') {
+          await supabaseAdmin
+            .from('import_site_tracker')
+            .update({ review_status: 'added_to_list', rating: 4, status: 'working' })
+            .eq('domain', domain);
+        }
+      }
     }
 
     return Response.json({

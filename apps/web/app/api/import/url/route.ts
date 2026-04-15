@@ -2,7 +2,7 @@
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
-import { supabaseAdmin, getSiteBlockStatus, extractDomain } from '@chefsbook/db';
+import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
@@ -34,6 +34,8 @@ export async function POST(req: Request) {
 
   const domain = extractDomain(url);
   const siteStatus = await getSiteBlockStatus(domain).catch(() => null);
+  // Detect a first-time domain BEFORE anything else writes to import_site_tracker.
+  const discovery = await recordSiteDiscovery(domain, null).catch(() => ({ isNewDiscovery: false, discoveryCount: 0 }));
   if (siteStatus?.is_blocked) {
     return Response.json({
       error: 'site_blocked',
@@ -153,6 +155,14 @@ export async function POST(req: Request) {
       titleGenerated: generated,
       completeness,
       siteWarning,
+      discovery: discovery.isNewDiscovery
+        ? {
+            isNew: true,
+            domain,
+            message: "You've helped ChefsBook discover something new!",
+            subMessage: `We hadn't seen ${domain} before. We've added it to our list and we'll test it soon so every future import from this site works beautifully.`,
+          }
+        : null,
     });
   } catch (e: any) {
     return Response.json({ error: e.message }, { status: 500 });

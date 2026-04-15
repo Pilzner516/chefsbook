@@ -178,6 +178,11 @@ export default function ScanPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Import failed');
 
+      // Warm-discovery signal: store the message for the next page to show.
+      if (data.discovery?.isNew && typeof window !== 'undefined') {
+        sessionStorage.setItem('chefsbook_discovery', JSON.stringify(data.discovery));
+      }
+
       // Route by content type
       if (data.contentType === 'technique' && !data.videoOnly) {
         // Technique extracted
@@ -218,6 +223,7 @@ export default function ScanPage() {
           image_url: data.thumbnail ?? data.imageUrl ?? undefined,
           youtube_video_id: data.videoId ?? undefined,
           channel_name: data.channelName ?? undefined,
+          is_new_discovery: !!data.discovery?.isNew,
         };
         if (data.titleGenerated) {
           recipeData.tags = [...(recipeData.tags ?? []), '_unresolved'];

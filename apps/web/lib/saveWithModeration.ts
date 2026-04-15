@@ -19,13 +19,14 @@ async function finalizeRecipe(
   recipeId: string,
   userId: string,
   sourceUrl: string | undefined,
-  source: string
+  source: string,
+  isNewDiscovery?: boolean,
 ) {
   try {
     const res = await fetch('/api/recipes/finalize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipeId, userId, url: sourceUrl, source }),
+      body: JSON.stringify({ recipeId, userId, url: sourceUrl, source, isNewDiscovery }),
     });
     if (!res.ok) return undefined;
     return (await res.json()) as SaveResult['completeness'];
@@ -43,6 +44,7 @@ export async function createRecipeWithModeration(
   recipe: ScannedRecipe & {
     image_url?: string | null; source_url?: string; cookbook_id?: string;
     page_number?: number; youtube_video_id?: string; channel_name?: string; video_only?: boolean;
+    is_new_discovery?: boolean;
   },
 ): Promise<SaveResult> {
   const created = await createRecipe(userId, recipe);
@@ -91,7 +93,8 @@ export async function createRecipeWithModeration(
     created.id,
     userId,
     recipe.source_url,
-    recipe.source_type ?? 'manual'
+    recipe.source_type ?? 'manual',
+    recipe.is_new_discovery,
   );
 
   return { recipe: created, moderation, completeness };

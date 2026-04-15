@@ -132,6 +132,9 @@ export async function GET(req: NextRequest) {
     const successes = attempts?.filter((a: any) => a.success).length ?? 0;
     const lowRating = (data ?? []).filter((s: any) => s.rating && s.rating <= 2).length;
     const blocked = (data ?? []).filter((s: any) => s.is_blocked).length;
+    const pendingDiscoveries = (data ?? []).filter(
+      (s: any) => s.is_user_discovered && s.review_status === 'pending',
+    ).length;
     const { data: schedule } = await supabaseAdmin
       .from('scheduled_jobs')
       .select('*')
@@ -145,6 +148,7 @@ export async function GET(req: NextRequest) {
         lowRating,
         blocked,
         flagged: flaggedCount ?? 0,
+        pendingDiscoveries,
       },
       schedule: schedule ?? null,
     });
@@ -422,6 +426,7 @@ export async function POST(req: NextRequest) {
     if (body.blockReason !== undefined) updates.block_reason = body.blockReason;
     if (body.autoTestEnabled !== undefined) updates.auto_test_enabled = body.autoTestEnabled;
     if (body.notes !== undefined) updates.notes = body.notes;
+    if (body.reviewStatus !== undefined) updates.review_status = body.reviewStatus;
     if (body.markReviewed) updates.last_checked_by = adminId;
     const { error } = await supabaseAdmin.from('import_site_tracker').update(updates).eq('id', body.siteId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

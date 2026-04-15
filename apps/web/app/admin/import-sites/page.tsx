@@ -21,6 +21,10 @@ interface SiteRow {
   sample_failing_urls: string[] | null;
   notes: string | null;
   created_at: string;
+  is_user_discovered?: boolean;
+  discovery_count?: number;
+  first_discovered_at?: string | null;
+  review_status?: 'pending' | 'reviewed' | 'added_to_list' | 'ignored' | null;
 }
 
 interface Kpi {
@@ -29,6 +33,7 @@ interface Kpi {
   lowRating: number;
   blocked: number;
   flagged: number;
+  pendingDiscoveries?: number;
 }
 
 interface ScheduledJob {
@@ -38,7 +43,7 @@ interface ScheduledJob {
   last_run_result: { tested: number; passed: number; failed: number } | null;
 }
 
-type Filter = 'all' | 'working' | 'partial' | 'broken' | 'unknown' | 'blocked';
+type Filter = 'all' | 'working' | 'partial' | 'broken' | 'unknown' | 'blocked' | 'discoveries';
 
 const STATUS_STYLE: Record<string, string> = {
   working: 'bg-green-100 text-green-700',
@@ -94,6 +99,7 @@ export default function ImportSitesPage() {
   const filtered = sites.filter((s) =>
     filter === 'all' ? true
     : filter === 'blocked' ? s.is_blocked
+    : filter === 'discoveries' ? !!s.is_user_discovered && s.review_status === 'pending'
     : s.status === filter
   );
 
@@ -191,11 +197,29 @@ export default function ImportSitesPage() {
       </div>
 
       <div className="flex gap-2 mb-4">
-        {(['all', 'working', 'partial', 'broken', 'unknown', 'blocked'] as Filter[]).map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${filter === f ? 'bg-cb-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-            {f} ({f === 'all' ? sites.length : f === 'blocked' ? sites.filter((s) => s.is_blocked).length : sites.filter((s) => s.status === f).length})
-          </button>
-        ))}
+        {(['all', 'working', 'partial', 'broken', 'unknown', 'blocked', 'discoveries'] as Filter[]).map((f) => {
+          const count =
+            f === 'all' ? sites.length
+            : f === 'blocked' ? sites.filter((s) => s.is_blocked).length
+            : f === 'discoveries' ? sites.filter((s) => s.is_user_discovered && s.review_status === 'pending').length
+            : sites.filter((s) => s.status === f).length;
+          const isDiscovery = f === 'discoveries';
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                filter === f
+                  ? 'bg-cb-primary text-white'
+                  : isDiscovery && count > 0
+                    ? 'bg-cb-green-soft text-cb-green hover:bg-cb-green/20'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {isDiscovery ? '🌍 Discoveries' : f} ({count})
+            </button>
+          );
+        })}
       </div>
 
       {loading ? <p className="text-gray-500">Loading...</p> : (
@@ -238,6 +262,12 @@ export default function ImportSitesPage() {
                       <td className="px-3 py-3 flex gap-2">
                         <button onClick={() => runTests(s.domain)} disabled={testing} className="text-xs px-2 py-1 rounded bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-50">Test</button>
                         <button onClick={() => setExpanded(isOpen ? null : s.id)} className="text-xs px-2 py-1 rounded bg-gray-50 text-gray-700 hover:bg-gray-100">{isOpen ? 'Close' : 'Edit'}</button>
+                        {s.is_user_discovered && s.review_status === 'pending' && (
+                          <>
+                            <button onClick={() => update(s.id, { reviewStatus: 'added_to_list' })} title={`Discovered ${s.discovery_count ?? 1}×`} className="text-xs px-2 py-1 rounded bg-cb-green-soft text-cb-green hover:bg-cb-green/20">Add</button>
+                            <button onClick={() => update(s.id, { reviewStatus: 'ignored' })} className="text-xs px-2 py-1 rounded bg-gray-50 text-gray-500 hover:bg-gray-100">Ignore</button>
+                          </>
+                        )}
                       </td>
                     </tr>
                     {isOpen && (

@@ -87,6 +87,7 @@ export interface ImportAttemptLog {
   failureReason?: string | null;
   completeness?: CompletenessResult | null;
   aiVerdict?: 'complete' | 'incomplete' | 'not_a_recipe' | 'flagged' | null;
+  isNewDiscovery?: boolean;
 }
 
 export function extractDomain(url: string): string {
@@ -115,6 +116,7 @@ export async function logImportAttempt(attempt: ImportAttemptLog): Promise<void>
     ingredient_count: c?.ingredientCount ?? 0,
     step_count: c?.stepCount ?? 0,
     ai_completeness_verdict: attempt.aiVerdict ?? null,
+    is_new_discovery: attempt.isNewDiscovery ?? false,
   });
 
   await updateSiteTrackerFromAttempt(attempt.domain, attempt.success, c ?? null, attempt.url);
@@ -217,6 +219,71 @@ export async function applyAiVerdict(
     .eq('id', recipeId);
 }
 
+/**
+ * Record a first-time domain discovery. Returns true if the domain was truly
+ * new (i.e. this call inserted the tracker row) so callers can surface the
+ * warm "thank you" message to the user.
+ */
+export async function recordSiteDiscovery(
+  domain: string,
+  userId: string | null,
+): Promise<{ isNewDiscovery: boolean; discoveryCount: number }> {
+  if (!domain) return { isNewDiscovery: false, discoveryCount: 0 };
+
+  const { data: existing } = await supabaseAdmin
+    .from('import_site_tracker')
+    .select('id, is_user_discovered, discovery_count, review_status')
+    .eq('domain', domain)
+    .maybeSingle();
+
+  if (existing) {
+    // Known or already-discovered site: bump discovery_count only if flagged
+    // as a user-discovered (not officially curated) entry.
+    if (existing.is_user_discovered) {
+      const newCount = (existing.discovery_count ?? 0) + 1;
+      await supabaseAdmin
+        .from('import_site_tracker')
+        .update({ discovery_count: newCount })
+        .eq('id', existing.id);
+      return { isNewDiscovery: false, discoveryCount: newCount };
+    }
+    return { isNewDiscovery: false, discoveryCount: 0 };
+  }
+
+  const { error } = await supabaseAdmin.from('import_site_tracker').insert({
+    domain,
+    status: 'unknown',
+    is_user_discovered: true,
+    discovery_count: 1,
+    first_discovered_at: new Date().toISOString(),
+    first_discovered_by: userId,
+    review_status: 'pending',
+    auto_test_enabled: true,
+    total_attempts: 0,
+    successful_attempts: 0,
+    notes: 'Discovered via user import',
+  });
+
+  if (error) {
+    // Race: another request inserted first — treat as existing.
+    return { isNewDiscovery: false, discoveryCount: 0 };
+  }
+
+  if (userId) {
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('sites_discovered_count')
+      .eq('id', userId)
+      .maybeSingle();
+    await supabaseAdmin
+      .from('user_profiles')
+      .update({ sites_discovered_count: (profile?.sites_discovered_count ?? 0) + 1 })
+      .eq('id', userId);
+  }
+
+  return { isNewDiscovery: true, discoveryCount: 1 };
+}
+
 export async function getSiteBlockStatus(domain: string): Promise<{
   is_blocked: boolean;
   block_reason: string | null;
@@ -241,6 +308,7 @@ export async function getUserImportStats(userId: string): Promise<{
   imported: number;
   withIssues: number;
   flagged: number;
+  sitesDiscovered: number;
 }> {
   const { data: attempts } = await supabaseAdmin
     .from('import_attempts')
@@ -256,7 +324,17 @@ export async function getUserImportStats(userId: string): Promise<{
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
     .in('ai_recipe_verdict', ['flagged', 'not_a_recipe']);
-  return { imported, withIssues, flagged: flagged ?? 0 };
+  const { data: profile } = await supabaseAdmin
+    .from('user_profiles')
+    .select('sites_discovered_count')
+    .eq('id', userId)
+    .maybeSingle();
+  return {
+    imported,
+    withIssues,
+    flagged: flagged ?? 0,
+    sitesDiscovered: profile?.sites_discovered_count ?? 0,
+  };
 }
 
 export async function getUserIncompleteRecipes(userId: string): Promise<

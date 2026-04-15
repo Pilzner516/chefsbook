@@ -26,6 +26,7 @@ import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
 import { PostImportImageSheet } from '../../components/PostImportImageSheet';
 import { DishIdentificationFlow } from '../../components/DishIdentificationFlow';
+import { DiscoveryToast } from '../../components/DiscoveryToast';
 
 // TODO(web): replicate multi-page scan support
 
@@ -66,6 +67,8 @@ export default function ScanTab() {
   const [dishFlowAnalysis, setDishFlowAnalysis] = useState<ScanImageAnalysis | null>(null);
   // Social-media tip card (dismissible)
   const [showSocialTip, setShowSocialTip] = useState(true);
+  // Discovery toast — shown when the imported URL is from a site we hadn't seen
+  const [discoveryDomain, setDiscoveryDomain] = useState<string | null>(null);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -323,6 +326,19 @@ export default function ScanTab() {
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
 
+      // Fire-and-forget: record the site as discovered and surface the warm toast
+      // when the domain is genuinely new. Failure is silent — purely non-critical.
+      fetch('https://chefsbk.app/api/sites/discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: target, userId: session.user.id }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d?.isNewDiscovery && d.domain) setDiscoveryDomain(d.domain);
+        })
+        .catch(() => {});
+
       // Always show image sheet — website image offered if available
       setImageSheetRecipeId(recipe.id);
       setImageSheetWebsiteUrl(imageUrl);
@@ -448,6 +464,11 @@ export default function ScanTab() {
         onPickLibrary={async () => { const uri = await pickImage(); if (uri) uploadCoverImage(uri); }}
         onSkip={() => setShowImageSheet(false)}
       />
+
+      {/* Site discovery warm toast */}
+      {discoveryDomain && (
+        <DiscoveryToast domain={discoveryDomain} onDismiss={() => setDiscoveryDomain(null)} />
+      )}
 
       {/* Dish identification flow */}
       {dishFlowAnalysis && (

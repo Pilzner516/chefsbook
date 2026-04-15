@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@chefsbook/db';
 import Link from 'next/link';
 
-interface Stats { imported: number; withIssues: number; flagged: number; }
+interface Stats { imported: number; withIssues: number; flagged: number; sitesDiscovered?: number; }
 interface IncompleteRecipe { id: string; title: string; missing_fields: string[]; created_at: string; }
 
 export default function ImportActivityCard() {
@@ -40,6 +40,14 @@ export default function ImportActivityCard() {
           )}
         </div>
         <div className="flex items-center gap-2">🚩 {stats.flagged} flagged</div>
+        {!!stats.sitesDiscovered && stats.sitesDiscovered > 0 && (
+          <div
+            className="flex items-center gap-2 text-cb-green"
+            title="Sites you were the first ChefsBook user to import from"
+          >
+            🌍 {stats.sitesDiscovered} site{stats.sitesDiscovered === 1 ? '' : 's'} you helped discover
+          </div>
+        )}
       </div>
 
       {modalOpen && (
