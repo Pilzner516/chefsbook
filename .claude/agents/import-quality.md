@@ -26,6 +26,13 @@ Monitor and improve recipe import quality across all import paths.
 - Portuguese + Baltic sites: 0% compat, small sample (5 + 3) — mostly 404/network errors; likely the curated URLs were best-guess and need verification
 - Polish / Romanian / Finnish / Danish / Norwegian: 0% compat in session 143 — broad pattern of Node-agent blocks; Swedish sites (arla.se, tasteline.com, recepten.se, ica.se, koket.se) fare best in Nordic (67% compat, avg 3.3/5)
 
+## Session 146 — Silent extension handoff + refresh-from-source (2026-04-15)
+- `/api/import/url` now returns HTTP 206 with `needsBrowserExtraction: true` on any bot-block (403/460/429 or failed fetch). Clients detect this and either hand off to the installed extension via `postMessage({ type: 'CHEFSBOOK_PDF_IMPORT', url })` or show an install-extension prompt.
+- Extension v1.1.0 is the official unblock for ~90 Cloudflare-protected sites: content script injects a presence marker on chefsbk.app, background worker opens the target URL in a background tab, waits 1.5s for recipe-plugin JS, scrapes outerHTML, posts to `/api/extension/import`. The user sees only "Importing recipe..." on normal sites or "Getting full recipe..." on the 60-site hardcoded blocked list.
+- `/api/recipes/refresh` provides a one-shot refresh for any recipe with a source_url: merge-only (never overwrites), re-runs completeness + isActuallyARecipe, and returns the same `needsBrowserExtraction` signal if the server can't fetch.
+- Admin `/admin/incomplete-recipes` has a "Refresh all from source" button that runs the refresh endpoint serially at 1/5s across every incomplete recipe.
+- Expected post-fix compatibility: combining the session 145 JSON-LD fix (already live) with the session 146 extension handoff, the practical user-facing success rate should rise from 15% server-only to ~55–65% when the user has the extension installed, because the ~90 Cloudflare-blocked sites become usable via the same UX.
+
 ## Session 145 crawl highlights (2026-04-15, post-fix)
 - 218 sites re-tested with UA rotation + homepage discovery + live /api/import/url pipeline. 15% real compat (32/218 rating ≥ 3) — 32 recipes saved as private records under pilzner with tags [ChefsBook, domain, region].
 - The 22% in session 143 was inflated because it rated on JSON-LD presence alone. Session 145 rates on what the pipeline actually extracts end-to-end. Numeric drop is honest.
