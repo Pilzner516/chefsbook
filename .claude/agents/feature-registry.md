@@ -73,7 +73,7 @@
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
 | URL import (JSON-LD first) | LIVE | packages/ai (importFromUrl), apps/web/app/api/import/ | 02 | 25k char limit |
-| Instagram import | LIVE | packages/ai, apps/mobile/app/scan | 07 | Must route via isInstagramUrl() check |
+| Instagram import | REMOVED | packages/ai (commented), apps/mobile/app/scan | 07, 138 | Removed session 138 — scraping unreliable, no native SEND-intent receiver wired. Use photo scan on a screenshot instead. fetchInstagramPost / extractRecipeFromInstagram kept in source but no longer exported from packages/ai. scanRecipe prompt now handles social media screenshots (caption extraction). |
 | Multi-page photo scan | LIVE | apps/mobile/app/scan | 06 | Up to 5 pages |
 | Dish identification from photo | LIVE | packages/ai (analyseScannedImage), apps/mobile/app/scan | 21 | classifies → clarifying Qs → recipe |
 | Speak a Recipe | LIVE | apps/web/dashboard/speak/, apps/mobile | 06 | Web Speech API |

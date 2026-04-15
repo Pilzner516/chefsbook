@@ -98,7 +98,9 @@ function RootNav() {
 
   const showFrozenBanner = profile?.recipes_frozen && !frozenDismissed;
 
-  // Handle URLs shared from browser / Instagram share sheet
+  // Handle URLs shared from browser (Android VIEW deep-link intents only — SEND intents are NOT received;
+  // that would require a native share-intent receiver module). Instagram scraping was removed in
+  // session 138 as unreliable without auth — IG URLs now route to scan with a "screenshot instead" tip.
   useEffect(() => {
     const isInstagramUrl = (u: string) =>
       u.includes('instagram.com/p/') || u.includes('instagram.com/reel/');
@@ -112,7 +114,8 @@ function RootNav() {
         const recipeId = url.split('/recipe/')[1]?.split('?')[0];
         if (recipeId) router.push(`/recipe/${recipeId}`);
       } else if (isInstagramUrl(url)) {
-        router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
+        // IG scraping removed in session 138 — route to scan tab and show "screenshot instead" tip.
+        router.push({ pathname: '/(tabs)/scan', params: { instagramTip: '1' } });
       } else {
         router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
       }
@@ -125,7 +128,8 @@ function RootNav() {
         const recipeId = url.split('/recipe/')[1]?.split('?')[0];
         if (recipeId) router.push(`/recipe/${recipeId}`);
       } else if (isInstagramUrl(url)) {
-        router.push({ pathname: '/(tabs)/scan', params: { instagramUrl: url } });
+        // IG scraping removed in session 138 — route to scan tab and show "screenshot instead" tip.
+        router.push({ pathname: '/(tabs)/scan', params: { instagramTip: '1' } });
       } else {
         router.push({ pathname: '/(tabs)/scan', params: { importUrl: url } });
       }

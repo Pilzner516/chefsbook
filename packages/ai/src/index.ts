@@ -32,8 +32,10 @@ export { translateRecipe, translateRecipeTitle } from './translateRecipe';
 export type { TranslatedRecipe, TranslatedIngredient, TranslatedStep } from './translateRecipe';
 export { analyseScannedImage, reanalyseDish, generateDishRecipe } from './dishIdentify';
 export type { ScanImageAnalysis, ClarifyingQuestion } from './dishIdentify';
-export { fetchInstagramPost, extractRecipeFromInstagram } from './instagramImport';
-export type { InstagramPostData, InstagramRecipeResult } from './instagramImport';
+// Instagram scraping disabled — unreliable without auth, removed from UI in session 138.
+// Source kept in ./instagramImport.ts for potential future re-use (Meta official API / native share-intent receiver).
+// export { fetchInstagramPost, extractRecipeFromInstagram } from './instagramImport';
+// export type { InstagramPostData, InstagramRecipeResult } from './instagramImport';
 export { moderateComment } from './moderateComment';
 export type { ModerationResult } from './moderateComment';
 export { moderateRecipe } from './moderateRecipe';

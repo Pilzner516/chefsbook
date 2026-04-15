@@ -43,7 +43,16 @@ Timer extraction (critical for auto-timer feature):
 Food photo detection:
 - Identify if the scanned page(s) contain a photograph of the finished dish (not the recipe text, not raw ingredients laid out, but an actual plated/finished food photo).
 - Return "has_food_photo": true if found, false otherwise.
-- Return "food_photo_region": one of "top-left", "top-right", "bottom-left", "bottom-right", "full-page", or null if not found.`;
+- Return "food_photo_region": one of "top-left", "top-right", "bottom-left", "bottom-right", "full-page", or null if not found.
+
+Social media screenshots (Instagram, TikTok, Facebook, Threads, Pinterest, Reddit):
+- If this appears to be a screenshot of a social media post, extract any recipe content from BOTH the photo area AND any visible caption / comment / overlay text.
+- Treat handles, timestamps, like counts, and UI chrome (header bars, reaction buttons) as noise — ignore them.
+- Captions often list ingredients informally ("1 can black beans, 2 cups rice, cumin to taste") and steps as run-on sentences with emoji dividers (🔥, ➡️, •, 1️⃣). Parse these into structured ingredient + step arrays.
+- Common social-media cues: "Recipe 👇", "Save this 📌", "Full recipe in caption", "Ingredients:" / "Method:" / "Instructions:" headers, emoji bullets.
+- If the caption is truncated ("…more"), extract what is visible and note the truncation in "notes".
+- Username and post context: set the username (e.g. "@bon_appetit") as the recipe notes field only if no other notes apply; do not use it as the title.
+- For screenshots, set has_food_photo true if the main image clearly shows a finished dish. food_photo_region is typically "full-page" or "top" for social screenshots.`;
 
 export async function scanRecipe(imageBase64: string, mimeType = 'image/jpeg'): Promise<ScannedRecipe> {
   const text = await callClaude({ prompt: SCAN_PROMPT, imageBase64, imageMimeType: mimeType, maxTokens: 3000 });

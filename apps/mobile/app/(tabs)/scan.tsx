@@ -36,7 +36,7 @@ export default function ScanTab() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { importUrl, instagramUrl } = useLocalSearchParams<{ importUrl?: string; instagramUrl?: string }>();
+  const { importUrl, instagramTip } = useLocalSearchParams<{ importUrl?: string; instagramTip?: string }>();
   const session = useAuthStore((s) => s.session);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
 
@@ -64,10 +64,8 @@ export default function ScanTab() {
   const [dishFlowBase64, setDishFlowBase64] = useState('');
   const [dishFlowMime, setDishFlowMime] = useState('image/jpeg');
   const [dishFlowAnalysis, setDishFlowAnalysis] = useState<ScanImageAnalysis | null>(null);
-  // Instagram import state
-  const [instagramImageUrl, setInstagramImageUrl] = useState<string | null>(null);
-  const [showInstagramInput, setShowInstagramInput] = useState(false);
-  const [instagramUrlInput, setInstagramUrlInput] = useState('');
+  // Social-media tip card (dismissible)
+  const [showSocialTip, setShowSocialTip] = useState(true);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -141,12 +139,16 @@ export default function ScanTab() {
     }
   }, [importUrl]);
 
-  // Auto-import from Instagram share
+  // Instagram URL arrived via deep link — show a tip (scraping is no longer supported)
   useEffect(() => {
-    if (instagramUrl) {
-      handleInstagramImport(instagramUrl);
+    if (instagramTip === '1') {
+      Alert.alert(
+        'Instagram import',
+        "Instagram no longer lets us import posts directly. Screenshot the post, then tap \"Scan a photo\" below — we'll read it for you.",
+        [{ text: 'Got it' }],
+      );
     }
-  }, [instagramUrl]);
+  }, [instagramTip]);
 
   // Start multi-page scan — capture first page and enter scan mode
   const startScan = async (getUri: () => Promise<string | null>) => {
@@ -262,117 +264,26 @@ export default function ScanTab() {
     }
   };
 
-  // ── Instagram import ──
+  // Instagram URL detection — kept as a guard so we can redirect users to photo scan.
+  // Direct Instagram scraping was removed in session 138 (unreliable without auth).
   const isInstagramUrl = (u: string) =>
     u.includes('instagram.com/p/') || u.includes('instagram.com/reel/');
 
-  const handleInstagramImport = async (url?: string) => {
-    const target = url || instagramUrlInput.trim();
-    if (!target || !session?.user?.id) return;
-
-    if (!isInstagramUrl(target)) {
-      Alert.alert(t('scan.instagramFailed'), t('scan.instagramInvalidUrl'));
-      return;
-    }
-
-    setImportStatus('importing');
-    setInstagramImageUrl(null);
-    setPexelsLoading(true);
-    setPexelsPhotos([]);
-    try {
-      const { fetchInstagramPost, extractRecipeFromInstagram } = await import('@chefsbook/ai');
-
-      // Fetch Instagram post data
-      const postData = await fetchInstagramPost(target);
-      setInstagramImageUrl(postData.imageUrl);
-
-      // Pre-fetch Pexels in parallel with recipe extraction
-      const pexelsPromise = searchPexels('food recipe dish')
-        .then((r) => { setPexelsPhotos(r); setPexelsLoading(false); })
-        .catch(() => setPexelsLoading(false));
-
-      const [result] = await Promise.all([
-        extractRecipeFromInstagram(postData),
-        pexelsPromise,
-      ]);
-
-      if (result.has_recipe) {
-        // Refetch Pexels with actual title
-        if (result.recipe.title) {
-          setPexelsLoading(true);
-          searchPexels(result.recipe.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
-        }
-
-        const recipe = await addRecipe(session.user.id, { ...result.recipe, source_url: target, image_url: postData.imageUrl });
-        setImportedRecipeId(recipe.id);
-        setImportStatus('success');
-
-        // Show image sheet with Instagram image as option
-        setImageSheetRecipeId(recipe.id);
-        setImageSheetWebsiteUrl(null);
-        setImageSheetScanUri(null);
-        setShowImageSheet(true);
-      } else {
-        // No recipe — route to dish identification flow
-        setImportStatus('idle');
-        setPexelsLoading(false);
-
-        // Download the IG image to get base64 for dish flow
-        if (postData.imageUrl) {
-          try {
-            const imgRes = await fetch(postData.imageUrl);
-            const buffer = await imgRes.arrayBuffer();
-            const bytes = new Uint8Array(buffer);
-            let binary = '';
-            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-            const base64 = btoa(binary);
-
-            setDishFlowImageUri(postData.imageUrl);
-            setDishFlowBase64(base64);
-            setDishFlowMime('image/jpeg');
-            setDishFlowAnalysis({
-              type: 'dish_photo',
-              dish_name: result.dish_name,
-              dish_confidence: 'high',
-              cuisine_guess: null,
-            } as ScanImageAnalysis);
-            setShowDishFlow(true);
-          } catch {
-            // Image download failed — show dish flow without image
-            setDishFlowAnalysis({
-              type: 'dish_photo',
-              dish_name: result.dish_name,
-              dish_confidence: 'high',
-              cuisine_guess: null,
-            } as ScanImageAnalysis);
-            setShowDishFlow(true);
-          }
-        } else {
-          // No image at all — navigate to search with dish name
-          router.push({ pathname: '/(tabs)/search', params: { q: result.dish_name } });
-        }
-      }
-    } catch (e: any) {
-      setImportStatus('error');
-      setPexelsLoading(false);
-      Alert.alert(
-        t('scan.instagramFailed'),
-        e.message || t('scan.instagramPrivate'),
-        [
-          { text: t('scan.instagramManual'), onPress: () => router.push('/recipe/new') },
-          { text: t('dishId.cancel'), style: 'cancel' },
-        ],
-      );
-    }
+  const showInstagramRedirect = () => {
+    Alert.alert(
+      'Instagram import',
+      "Instagram no longer lets us import posts directly. Screenshot the post, then tap \"Scan a photo\" below — we'll read the ingredients and steps from the caption.",
+      [{ text: 'OK' }],
+    );
   };
 
   const handleImport = async (urlToImport?: string) => {
     const target = urlToImport || urlInput.trim();
     if (!target || !session?.user?.id) return;
 
-    // Redirect Instagram URLs to the dedicated IG handler
+    // Instagram scraping was removed in session 138 — redirect users to screenshot → photo scan.
     if (isInstagramUrl(target)) {
-      handleInstagramImport(target);
+      showInstagramRedirect();
       return;
     }
 
@@ -457,10 +368,8 @@ export default function ScanTab() {
   const handleClipboardPaste = () => {
     if (clipboardUrl) {
       if (isInstagramUrl(clipboardUrl)) {
-        setInstagramUrlInput(clipboardUrl);
-        setShowInstagramInput(true);
         setClipboardUrl(null);
-        handleInstagramImport(clipboardUrl);
+        showInstagramRedirect();
       } else {
         setUrlInput(clipboardUrl);
         setShowUrlInput(true);
@@ -470,18 +379,14 @@ export default function ScanTab() {
     }
   };
 
+  // Scan-a-photo is primary — it's now the import path for social media screenshots too.
   const gridCells = [
     {
       iconName: 'camera' as const,
       label: t('scan.scanPhoto'),
       subtitle: t('scan.scanSubtitle'),
       onPress: () => startScan(takePhoto),
-    },
-    {
-      iconName: 'link' as const,
-      label: t('scan.importUrl'),
-      subtitle: t('scan.importSubtitle'),
-      onPress: () => { setShowUrlInput(!showUrlInput); setShowInstagramInput(false); },
+      primary: true,
     },
     {
       iconName: 'images' as const,
@@ -490,10 +395,10 @@ export default function ScanTab() {
       onPress: () => startScan(pickImage),
     },
     {
-      iconName: 'camera-outline' as const,
-      label: t('scan.instagram'),
-      subtitle: t('scan.instagramSubtitle'),
-      onPress: () => { setShowInstagramInput(!showInstagramInput); setShowUrlInput(false); },
+      iconName: 'link' as const,
+      label: t('scan.importUrl'),
+      subtitle: t('scan.importSubtitle'),
+      onPress: () => { setShowUrlInput(!showUrlInput); },
     },
     {
       iconName: 'create' as const,
@@ -534,12 +439,10 @@ export default function ScanTab() {
         visible={showImageSheet}
         websiteImageUrl={imageSheetWebsiteUrl}
         scanImageUri={imageSheetScanUri}
-        instagramImageUrl={instagramImageUrl}
         pexelsPhotos={pexelsPhotos}
         pexelsLoading={pexelsLoading}
         onSelectWebsiteImage={() => { if (imageSheetWebsiteUrl) uploadCoverFromUrl(imageSheetWebsiteUrl); }}
         onSelectScanImage={() => { if (imageSheetScanUri) uploadCoverImage(imageSheetScanUri); }}
-        onSelectInstagramImage={() => { if (instagramImageUrl) uploadCoverFromUrl(instagramImageUrl); }}
         onSelectPexels={(photo) => uploadCoverFromUrl(photo.fullUrl)}
         onTakePhoto={async () => { const uri = await takePhoto(); if (uri) uploadCoverImage(uri); }}
         onPickLibrary={async () => { const uri = await pickImage(); if (uri) uploadCoverImage(uri); }}
@@ -744,47 +647,31 @@ export default function ScanTab() {
           </View>
         </Animated.View>
 
-        {/* Collapsible Instagram URL input */}
-        {showInstagramInput && (
-          <View style={{ marginBottom: 12 }}>
-            <Input
-              value={instagramUrlInput}
-              onChangeText={setInstagramUrlInput}
-              placeholder={t('scan.pasteInstagramUrl')}
-              autoCapitalize="none"
-            />
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-              <TouchableOpacity
-                onPress={async () => {
-                  try {
-                    const text = await Clipboard.getStringAsync();
-                    if (text) setInstagramUrlInput(text);
-                  } catch {}
-                }}
-                style={{
-                  flex: 1, height: 40, backgroundColor: colors.bgBase, borderRadius: 10,
-                  borderWidth: 1, borderColor: colors.borderDefault,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="clipboard-outline" size={16} color={colors.textPrimary} style={{ marginRight: 4 }} />
-                  <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>{t('scan.paste')}</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleInstagramImport()}
-                disabled={!instagramUrlInput.trim()}
-                style={{
-                  flex: 1, height: 40,
-                  backgroundColor: instagramUrlInput.trim() ? colors.accent : colors.bgBase,
-                  borderRadius: 10, alignItems: 'center', justifyContent: 'center',
-                  opacity: instagramUrlInput.trim() ? 1 : 0.5,
-                }}
-              >
-                <Text style={{ color: instagramUrlInput.trim() ? '#ffffff' : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>{t('scan.import')}</Text>
-              </TouchableOpacity>
+        {/* Social-media screenshot tip (dismissible) — replaces the removed Instagram import card */}
+        {showSocialTip && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: 12,
+            backgroundColor: colors.bgCard,
+            borderWidth: 1,
+            borderColor: colors.borderDefault,
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 12,
+          }}>
+            <Ionicons name="bulb-outline" size={20} color={colors.accent} style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 2 }}>
+                See a recipe on Instagram or TikTok?
+              </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 17 }}>
+                Screenshot it and tap Scan a photo — we'll read the photo and the caption.
+              </Text>
             </View>
+            <TouchableOpacity onPress={() => setShowSocialTip(false)} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
           </View>
         )}
 

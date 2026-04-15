@@ -144,7 +144,7 @@ export default function ScanPage() {
   const handleUrlImport = async () => {
     if (!url.trim()) return;
     if (isInstagramUrl(url.trim())) {
-      setError('Instagram import is available on the mobile app. Open this link in the ChefsBook app instead.');
+      setError('Instagram import is no longer supported. Take a screenshot of the post and use Photo Import — we\'ll read the photo and caption.');
       return;
     }
     setLoading('url');

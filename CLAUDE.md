@@ -309,20 +309,21 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (137 — 2026-04-15)
-- Created concept-f.html — final polish pass on concept-e
-- Emoji → inline SVG across entire page (23 replacements: flow icons, feature-row icons, import cards, lock, hearts, app store logos, platform diagram text-only, footer lang codes)
-- Hero eyebrow → "The operating system for modern cooking" (no pulsing dot); subheadline trimmed to 3 sentences; trust-row now "12,000+ recipes imported"
-- Magic-moment eyebrows renamed to Import / Meal Planning / Shopping
-- Moat .mp-num 48px italic Fraunces; pricing .price-reassure reassurance added
-- Final CTA: 0.55 flat overlay; new .btn-final transparent border variant
-- Created docs/landing-previews/new-image-prompts.md (dinner-table / organized-kitchen / chaos-phones)
+## Last session (138 — 2026-04-15)
+- Instagram URL import REMOVED. Share target fails by design (no native SEND-intent receiver), scraping unreliable without auth.
+- packages/ai: IG exports commented out; scanRecipe SCAN_PROMPT extended with social-media-screenshot handling (caption parsing, emoji-bullet cues, UI-chrome filtering, truncation notes)
+- mobile scan.tsx: IG state/handlers/collapsible input/grid cell removed; gridCells reordered (Scan a photo first); dismissible bulb tip card added; isInstagramUrl guard now routes to "screenshot instead" Alert
+- mobile _layout.tsx: IG deep links now route to scan tab with instagramTip=1 param instead of attempting import
+- PostImportImageSheet: Instagram props + option block removed
+- web scan page: Instagram guard message updated to "use Photo Import instead"
+- feature-registry: Instagram import → REMOVED (sessions 07, 138)
 
 ## Next session
-- Generate the 3 concept-f images via Replicate (~$0.08) and swap final CTA bg
+- Deploy session 138 to RPi5 (held for user authorization — git pull + rebuild + pm2 restart)
+- Test photo import with a real Instagram screenshot on device/emulator to validate social-media prompt quality
+- Generate the 3 concept-f images via Replicate and swap final CTA bg
 - Decide A/B/C/D/E/F winner and integrate as apps/web landing route
-- Cold-boot emulator or test APK on physical Android device
-- ESLint; AI impersonation flagging for usernames at signup
+- ESLint for web app; AI impersonation flagging for usernames at signup
 
 ## Known issues
 

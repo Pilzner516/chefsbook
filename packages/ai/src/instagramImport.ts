@@ -1,3 +1,6 @@
+// DEPRECATED (session 138): Instagram scraping disabled — unreliable without auth.
+// No longer exported from packages/ai/src/index.ts. Users are routed to screenshot → photo scan.
+// Kept in source only for reference or future restoration if a reliable mechanism (Meta API / native share-intent) becomes available.
 import { callClaude, extractJSON } from './client';
 import type { ScannedRecipe } from '@chefsbook/db';
 
