@@ -7,10 +7,10 @@ const featureGroups = [
   {
     title: 'Import & Capture',
     items: [
-      'Scan recipe photos (multi-page, cookbook pages)',
+      'Scan recipe photos (multi-page, cookbook pages, screenshots)',
       'Import from any URL',
       'Speak a recipe (voice entry)',
-      'Instagram import',
+      'Import from PDFs, Word docs, and bookmark exports',
       'Identify dishes from photos with AI',
     ],
   },
@@ -82,7 +82,7 @@ const tiers = [
 
 const steps = [
   { num: '1', title: 'Sign up', desc: 'Free, takes 30 seconds.' },
-  { num: '2', title: 'Import recipes', desc: 'Scan a photo, paste a URL, speak it, or import from Instagram.' },
+  { num: '2', title: 'Import recipes', desc: 'Scan a photo, paste a URL, speak it, or upload a PDF.' },
   { num: '3', title: 'Organise & plan', desc: 'Meal planner, shopping lists, cookbooks.' },
   { num: '4', title: 'Discover & share', desc: 'Follow chefs, share recipes, build your collection.' },
 ];
