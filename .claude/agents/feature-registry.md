@@ -190,7 +190,15 @@
 | Admin email column | LIVE | /admin/users, /api/admin (auth.admin.listUsers) | 110 | Reads from auth.users via service role |
 | Admin DM + bulk messaging | LIVE | /admin/users, /api/admin (sendMessage) | 110 | Single + bulk compose; progress indicator |
 | Admin recipes sorting | LIVE | /admin/recipes | 110 | Sortable columns + submitter pill |
-| Import site tracker | LIVE | import_site_tracker table, /admin/import-sites, /api/import/url | 116 | Auto-tracks domain success rates; filter pills; admin edit + review |
+| Import site tracker | LIVE | import_site_tracker table, /admin/import-sites, /api/import/url | 116, 141 | Auto-tracks domain success rates; filter pills; admin edit + review; session 141 added rating 1-5, blocked toggle, block_reason, failure_taxonomy, sample_failing_urls, auto_test_enabled, KPI cards, CSV export |
+| Import completeness gate | LIVE | packages/db (checkRecipeCompleteness, applyCompletenessGate, applyAiVerdict), /api/recipes/finalize | 141 | Runs after every recipe save; visibility locked to private until title+description+≥2 ingredients w/qty+≥1 step+≥1 tag + AI approved |
+| isActuallyARecipe (HAIKU AI check) | LIVE | packages/ai (isActuallyARecipe) | 141 | Runs after completeness passes; verdicts: approved/flagged/not_a_recipe |
+| Import attempts log | LIVE | import_attempts table, logImportAttempt() | 141 | Per-attempt row; auto-updates import_site_tracker aggregates |
+| Site compatibility testing | LIVE | /api/admin/test-sites, KNOWN_RECIPE_SITES (60 sites), /api/cron | 141 | Manual trigger + weekly cron; rates each site 1-5; rate-limited 1/3s |
+| Blocked site handling | LIVE | getSiteBlockStatus, /api/import/url | 141 | Domain pre-check returns friendly error with alternative; rating ≤2 shows warning |
+| Incomplete recipes admin | LIVE | /admin/incomplete-recipes, /api/admin?page=incomplete-recipes | 141 | Lists all is_complete=false + flagged recipes; force approve / remove |
+| User import stats card | LIVE | /dashboard/settings, ImportActivityCard.tsx, /api/user/import-stats | 141 | Shows imported/with issues/flagged + "View" modal |
+| Incomplete recipes banner | LIVE | /dashboard, IncompleteRecipesBanner.tsx | 141 | Amber banner, dismissible via localStorage |
 | Flagged comments (admin) | LIVE | /admin/flags, /api/admin (flagged-comments) | 116 | Queries comment_flags; shows comment + commenter + recipe; approve/remove |
 | Flagged messages (admin) | LIVE | /admin/messages, /api/admin (messages) | 116 | Includes user-flagged messages via message_flags; shows flag count + reasons |
 

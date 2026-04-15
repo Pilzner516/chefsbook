@@ -116,7 +116,56 @@ export async function GET(req: NextRequest) {
   if (page === 'import-sites') {
     const { data, error } = await supabaseAdmin.from('import_site_tracker').select('*').order('total_attempts', { ascending: false });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ sites: data ?? [] });
+
+    // KPIs: last 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: attempts } = await supabaseAdmin
+      .from('import_attempts')
+      .select('success')
+      .gte('attempted_at', thirtyDaysAgo);
+    const { count: flaggedCount } = await supabaseAdmin
+      .from('recipes')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_complete', false)
+      .gte('created_at', thirtyDaysAgo);
+    const totalAttempts = attempts?.length ?? 0;
+    const successes = attempts?.filter((a: any) => a.success).length ?? 0;
+    const lowRating = (data ?? []).filter((s: any) => s.rating && s.rating <= 2).length;
+    const blocked = (data ?? []).filter((s: any) => s.is_blocked).length;
+    const { data: schedule } = await supabaseAdmin
+      .from('scheduled_jobs')
+      .select('*')
+      .eq('job_name', 'site_compatibility_test')
+      .maybeSingle();
+    return NextResponse.json({
+      sites: data ?? [],
+      kpi: {
+        totalAttempts,
+        successRate: totalAttempts ? Math.round((successes / totalAttempts) * 100) : 0,
+        lowRating,
+        blocked,
+        flagged: flaggedCount ?? 0,
+      },
+      schedule: schedule ?? null,
+    });
+  }
+
+  if (page === 'incomplete-recipes') {
+    const { data, error } = await supabaseAdmin
+      .from('recipes')
+      .select('id, title, user_id, missing_fields, ai_recipe_verdict, ai_verdict_reason, source_url, source_type, created_at, is_complete')
+      .or('is_complete.eq.false,ai_recipe_verdict.eq.flagged,ai_recipe_verdict.eq.not_a_recipe')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const userIds = [...new Set((data ?? []).map((r: any) => r.user_id))];
+    const { data: profiles } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, username, display_name')
+      .in('id', userIds);
+    const profMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    const enriched = (data ?? []).map((r: any) => ({ ...r, owner: profMap.get(r.user_id) ?? null }));
+    return NextResponse.json({ recipes: enriched });
   }
 
   if (page === 'flagged-comments') {
@@ -368,8 +417,42 @@ export async function POST(req: NextRequest) {
     const updates: any = { updated_at: new Date().toISOString() };
     if (body.status !== undefined) updates.status = body.status;
     if (body.knownIssue !== undefined) updates.known_issue = body.knownIssue;
+    if (body.rating !== undefined) updates.rating = body.rating;
+    if (body.isBlocked !== undefined) updates.is_blocked = body.isBlocked;
+    if (body.blockReason !== undefined) updates.block_reason = body.blockReason;
+    if (body.autoTestEnabled !== undefined) updates.auto_test_enabled = body.autoTestEnabled;
+    if (body.notes !== undefined) updates.notes = body.notes;
     if (body.markReviewed) updates.last_checked_by = adminId;
     const { error } = await supabaseAdmin.from('import_site_tracker').update(updates).eq('id', body.siteId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'toggleScheduledJob') {
+    const { error } = await supabaseAdmin
+      .from('scheduled_jobs')
+      .update({ is_enabled: body.enabled })
+      .eq('job_name', body.jobName);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'deleteRecipe') {
+    const { error } = await supabaseAdmin.from('recipes').delete().eq('id', body.recipeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'forceApproveRecipe') {
+    const { error } = await supabaseAdmin
+      .from('recipes')
+      .update({
+        ai_recipe_verdict: 'approved',
+        is_complete: true,
+        ai_verdict_at: new Date().toISOString(),
+        ai_verdict_reason: 'admin override',
+      })
+      .eq('id', body.recipeId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
   }

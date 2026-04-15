@@ -87,6 +87,21 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       // Moderation failure should not block recipe creation
     }
 
+    // Import intelligence: completeness gate + AI recipe verdict + logging
+    // Fire and forget — runs server-side, updates visibility + missing_fields on the recipe
+    try {
+      fetch('https://chefsbk.app/api/recipes/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipeId: created.id,
+          userId,
+          url: recipe.source_url ?? null,
+          source: recipe.source_type ?? 'manual',
+        }),
+      }).catch(() => {});
+    } catch {}
+
     set((s) => ({ recipes: [created, ...s.recipes] }));
     return created;
   },

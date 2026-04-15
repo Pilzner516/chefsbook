@@ -184,6 +184,40 @@ export async function POST(req: Request) {
       );
     }
 
+    // Apply completeness gate + AI verdict + import logging
+    try {
+      const { fetchRecipeCompleteness, applyCompletenessGate, applyAiVerdict, logImportAttempt, extractDomain } = await import('@chefsbook/db');
+      const { isActuallyARecipe } = await import('@chefsbook/ai');
+      const completeness = await fetchRecipeCompleteness(newRecipe.id);
+      await applyCompletenessGate(newRecipe.id, completeness, newRecipe.visibility);
+      let verdict: 'approved' | 'flagged' | 'not_a_recipe' = 'approved';
+      let verdictReason = '';
+      if (completeness.isComplete) {
+        const ai = await isActuallyARecipe({
+          title: newRecipe.title,
+          description: recipe.description ?? '',
+          ingredients: (recipe.ingredients ?? []).slice(0, 3).map((i: any) => i.ingredient),
+          steps: (recipe.steps ?? []).slice(0, 1).map((s: any) => s.instruction),
+        });
+        verdict = ai.verdict;
+        verdictReason = ai.reason;
+        await applyAiVerdict(newRecipe.id, verdict, verdictReason, newRecipe.visibility);
+      }
+      const urlForLog = recipe.source_url ?? '';
+      if (urlForLog) {
+        await logImportAttempt({
+          userId: user.id,
+          url: urlForLog,
+          domain: extractDomain(urlForLog),
+          success: completeness.isComplete && verdict === 'approved',
+          recipeId: newRecipe.id,
+          failureReason: !completeness.isComplete ? completeness.missingFields.join(', ') : verdict !== 'approved' ? verdictReason : null,
+          completeness,
+          aiVerdict: !completeness.isComplete ? 'incomplete' : verdict === 'not_a_recipe' ? 'not_a_recipe' : verdict === 'flagged' ? 'flagged' : 'complete',
+        });
+      }
+    } catch {}
+
     return Response.json({
       success: true,
       contentType: 'recipe',

@@ -55,6 +55,13 @@ export const useImportStore = create<ImportState>((set, get) => ({
           source_type: 'url',
           tags: folder ? [folder] : [],
         } as any);
+        try {
+          fetch('https://chefsbk.app/api/recipes/finalize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipeId: recipe.id, userId, url, source: 'url' }),
+          }).catch(() => {});
+        } catch {}
         set((s) => {
           if (!s.currentJob || s.currentJob.id !== jobId) return s;
           const completed = s.currentJob.completed + 1;

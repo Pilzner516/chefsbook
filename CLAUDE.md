@@ -26,6 +26,7 @@ agents before writing any code.
 |---------------------------|----------------|
 | Any screen, modal, or component | ui-guardian.md (ALWAYS) |
 | Any import path (URL, scan, Instagram, speak, file) | import-pipeline.md |
+| Any session touching import pipeline / site testing | import-quality.md (ALWAYS) |
 | Any image upload, display, or storage | image-system.md |
 | Any Zustand store, data fetch, or cache | data-flow.md |
 | ANY feature on ANY session | testing.md (ALWAYS) |
@@ -54,13 +55,13 @@ Every Claude Code session MUST begin with these steps in order:
 1. Read CLAUDE.md (this file) fully
 2. Read DONE.md to understand what was last built
 3. Read .claude/agents/testing.md — MANDATORY EVERY SESSION
-3a. Read .claude/agents/feature-registry.md — check status of any feature your session will touch before writing a single line of code
-4. If session touches web: read .claude/agents/deployment.md — MANDATORY
-5. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
-6. Read all other applicable agents based on the lookup table above
-7. Run ALL pre-flight checklists from every agent loaded
-8. For any table you will query: run `\d tablename` on RPi5 to verify columns
-9. Only then begin writing code
+4. Read .claude/agents/feature-registry.md — check status of any feature your session will touch before writing a single line of code
+5. If session touches web: read .claude/agents/deployment.md — MANDATORY
+6. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
+7. Read all other applicable agents based on the lookup table above
+8. Run ALL pre-flight checklists from every agent loaded
+9. For any table you will query: run `\d tablename` on RPi5 to verify columns
+10. Only then begin writing code
 
 Do not skip any step. Agents exist because the same bugs have been introduced
 and fixed 3-5 times each. Reading the agents prevents repeating known mistakes.
@@ -309,23 +310,7 @@ stores:
 
 Always run `\d [tablename]` on RPi5 before writing any new query.
 
-## Last session (138 — 2026-04-15)
-- Instagram URL import REMOVED. Share target fails by design (no native SEND-intent receiver), scraping unreliable without auth.
-- packages/ai: IG exports commented out; scanRecipe SCAN_PROMPT extended with social-media-screenshot handling (caption parsing, emoji-bullet cues, UI-chrome filtering, truncation notes)
-- mobile scan.tsx: IG state/handlers/collapsible input/grid cell removed; gridCells reordered (Scan a photo first); dismissible bulb tip card added; isInstagramUrl guard now routes to "screenshot instead" Alert
-- mobile _layout.tsx: IG deep links now route to scan tab with instagramTip=1 param instead of attempting import
-- PostImportImageSheet: Instagram props + option block removed
-- web scan page: Instagram guard message updated to "use Photo Import instead"
-- feature-registry: Instagram import → REMOVED (sessions 07, 138)
-
-## Next session
-- **Free 5+ GB on C:\** (current: 3.4 GB free / 476 GB total) — Android 14 emulator userdata creation requires 7.2 GB fixed. Then run session 140 from STEP 3 (emulator launch) — cmdline-tools, API 34 system image, and CB_API_34 AVD are already prepared.
-- Alternative: verify all 6 session-131 features on a physical Android device via USB debugging.
-- **Rebuild release APK** once disk is freed — picks up app.json SEND-intent-filter removal (session 139) so ChefsBook stops appearing in Instagram/TikTok share sheets as a dead option.
-- Test photo import with a real Instagram screenshot on device/emulator to validate social-media prompt quality (session 138 prompt extension).
-- Generate the 3 concept-f images via Replicate and swap final CTA bg
-- Decide A/B/C/D/E/F winner and integrate as apps/web landing route
-- ESLint for web app; AI impersonation flagging for usernames at signup
+Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not duplicate here.
 
 ## Known issues
 
@@ -414,6 +399,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 | moderateMessage() | haiku | ~$0.00016 | No (new DM each send) |
 | moderateRecipe() | haiku | ~$0.00020 | Yes (skip if content unchanged) |
 | isUsernameFamilyFriendly() (usernameCheck) | haiku | ~$0.00008 | No (one-time at signup) |
+| isActuallyARecipe() | haiku | ~$0.0002 | No (one-time per completed import) |
 | classifyContent() | haiku | ~$0.00016 | No (one-time per import) |
 | classifyPage() (importFromUrl) | haiku | ~$0.00016 | No (one-time per import) |
 | suggestPurchaseUnit() | haiku | ~$0.00040 | No (one-time per cart add) |

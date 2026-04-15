@@ -11,6 +11,7 @@ import { addIngredientsToList } from '@/lib/addToShoppingList';
 import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import FeedbackCard from '@/components/FeedbackCard';
 import NotificationBell from '@/components/NotificationBell';
+import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 type ViewMode = 'grid' | 'list' | 'table';
@@ -252,6 +253,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
+      <IncompleteRecipesBanner />
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Recipes</h1>

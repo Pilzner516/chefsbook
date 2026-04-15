@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@chefsbook/db';
 import { proxyIfNeeded } from '@/lib/recipeImage';
+import ImportActivityCard from '@/components/ImportActivityCard';
 
 export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('');
@@ -172,6 +173,7 @@ export default function SettingsPage() {
           ))}
         </div>
         <p className="text-[10px] text-cb-secondary text-center">Payment integration coming soon. Plans can be selected freely during beta.</p>
+        <ImportActivityCard />
       </section>
 
       {/* Appearance */}

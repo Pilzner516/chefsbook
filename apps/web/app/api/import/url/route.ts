@@ -2,7 +2,7 @@
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
-import { supabaseAdmin } from '@chefsbook/db';
+import { supabaseAdmin, getSiteBlockStatus, extractDomain } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
@@ -31,6 +31,21 @@ export async function POST(req: Request) {
   if (!preflight.ok) {
     return Response.json({ error: preflight.error }, { status: 422 });
   }
+
+  const domain = extractDomain(url);
+  const siteStatus = await getSiteBlockStatus(domain).catch(() => null);
+  if (siteStatus?.is_blocked) {
+    return Response.json({
+      error: 'site_blocked',
+      message: siteStatus.block_reason
+        ? `We're unable to import from ${domain} at this time. ${siteStatus.block_reason}`
+        : `Import unavailable from ${domain}. Try copying the recipe text and pasting it, or take a photo of the recipe.`,
+      userMessage: true,
+    }, { status: 422 });
+  }
+  const siteWarning = siteStatus?.rating && siteStatus.rating <= 2
+    ? "This site has known import issues but don't worry — we'll help you fill any gaps automatically after import."
+    : null;
 
   try {
     const { html: rawHtml } = await fetchWithFallback(url);
@@ -137,6 +152,7 @@ export async function POST(req: Request) {
       imageUrl,
       titleGenerated: generated,
       completeness,
+      siteWarning,
     });
   } catch (e: any) {
     return Response.json({ error: e.message }, { status: 500 });

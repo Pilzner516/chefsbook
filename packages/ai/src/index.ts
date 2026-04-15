@@ -43,3 +43,7 @@ export type { RecipeModerationResult } from './moderateRecipe';
 export { moderateMessage } from './moderateMessage';
 export type { MessageModerationResult } from './moderateMessage';
 export { isUsernameFamilyFriendly } from './usernameCheck';
+export { isActuallyARecipe } from './isActuallyARecipe';
+export type { RecipeVerdict } from './isActuallyARecipe';
+export { KNOWN_RECIPE_SITES } from './siteList';
+export type { KnownSite } from './siteList';

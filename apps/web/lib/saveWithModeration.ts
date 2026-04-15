@@ -6,7 +6,33 @@ import type { RecipeModerationResult } from '@chefsbook/ai';
 export type SaveResult = {
   recipe: RecipeWithDetails;
   moderation: RecipeModerationResult;
+  completeness?: {
+    isComplete: boolean;
+    missingFields: string[];
+    aiVerdict: 'approved' | 'flagged' | 'not_a_recipe';
+    aiReason: string;
+    needsReview: boolean;
+  };
 };
+
+async function finalizeRecipe(
+  recipeId: string,
+  userId: string,
+  sourceUrl: string | undefined,
+  source: string
+) {
+  try {
+    const res = await fetch('/api/recipes/finalize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipeId, userId, url: sourceUrl, source }),
+    });
+    if (!res.ok) return undefined;
+    return (await res.json()) as SaveResult['completeness'];
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Create recipe + run AI moderation. Returns the saved recipe + moderation result.
@@ -61,5 +87,12 @@ export async function createRecipeWithModeration(
     // Moderation failure should not block recipe creation
   }
 
-  return { recipe: created, moderation };
+  const completeness = await finalizeRecipe(
+    created.id,
+    userId,
+    recipe.source_url,
+    recipe.source_type ?? 'manual'
+  );
+
+  return { recipe: created, moderation, completeness };
 }
