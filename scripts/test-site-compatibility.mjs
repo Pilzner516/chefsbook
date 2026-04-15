@@ -1,20 +1,29 @@
 #!/usr/bin/env node
 /**
- * Recipe-site compatibility crawl.
+ * Recipe-site compatibility crawl — v2 (session 145)
  *
- * Fetches the curated test URL for every site in packages/ai/src/siteList.ts,
- * extracts JSON-LD where available, runs the same completeness heuristics as the
- * live /api/admin/test-sites endpoint, assigns a 1–5 rating, and upserts the
- * results to import_site_tracker.
+ * Improvements over v1:
+ *   - Finds a real recipe URL from each site's homepage when the curated
+ *     testUrl fails
+ *   - Rotates 3 User-Agents (Chrome desktop, mobile Safari, Googlebot) before
+ *     giving up on a 403/404
+ *   - Runs the actual /api/import/url pipeline (so the rating reflects what
+ *     the real importer produces, including the new JSON-LD ingredient fix)
+ *   - On success, saves the imported recipe as a private record under the
+ *     pilzner account with tags [ChefsBook, <domain>, <region>]
+ *   - Records structured taxonomy (what was FOUND, not just what was missing)
  *
  * Usage on RPi5:
- *   SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/test-site-compatibility.mjs
+ *   SUPABASE_URL=http://localhost:8000 \
+ *   SUPABASE_SERVICE_ROLE_KEY=<key> \
+ *   IMPORT_ENDPOINT=https://chefsbk.app/api/import/url \
+ *   SAVE_USER_ID=b589743b-99bd-4f55-983a-c31f5167c425 \
+ *   node scripts/test-site-compatibility.mjs
  *
  * Env:
- *   SUPABASE_URL (default http://kong:8000)
- *   SUPABASE_SERVICE_ROLE_KEY (required)
- *   SITE_DELAY_MS (default 5000)
- *   SITE_LIMIT (optional — test only first N sites)
+ *   SITE_DELAY_MS (default 8000)
+ *   SITE_LIMIT (optional)
+ *   SAVE_RECIPES (default "1" — set "0" to skip saving)
  */
 
 import fs from 'node:fs';
@@ -28,19 +37,32 @@ const SITE_LIST_PATH = path.join(ROOT, 'packages/ai/src/siteList.ts');
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://localhost:8000';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const DELAY_MS = Number(process.env.SITE_DELAY_MS ?? 5000);
+const IMPORT_ENDPOINT = process.env.IMPORT_ENDPOINT ?? 'https://chefsbk.app/api/import/url';
+const SAVE_USER_ID = process.env.SAVE_USER_ID;
+const SAVE_RECIPES = (process.env.SAVE_RECIPES ?? '1') === '1';
+const DELAY_MS = Number(process.env.SITE_DELAY_MS ?? 8000);
 const LIMIT = process.env.SITE_LIMIT ? Number(process.env.SITE_LIMIT) : Infinity;
 
 if (!SERVICE_KEY) {
   console.error('SUPABASE_SERVICE_ROLE_KEY is required');
   process.exit(1);
 }
+if (SAVE_RECIPES && !SAVE_USER_ID) {
+  console.error('SAVE_USER_ID is required when SAVE_RECIPES=1');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-const UA =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+  'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+];
 
+// ------------------------------------------------------------------
+// Parse siteList.ts
+// ------------------------------------------------------------------
 function parseSiteList(source) {
   const lines = source.split(/\r?\n/);
   const sites = [];
@@ -53,94 +75,24 @@ function parseSiteList(source) {
   return sites;
 }
 
-function extractJsonLdRecipe(html) {
-  const scripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
-  for (const match of scripts) {
-    const raw = match[1].trim();
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      continue;
-    }
-    const candidates = Array.isArray(parsed) ? parsed : parsed['@graph'] ?? [parsed];
-    for (const item of candidates) {
-      if (!item) continue;
-      const type = item['@type'];
-      const types = Array.isArray(type) ? type : [type];
-      if (types.includes('Recipe')) return item;
-    }
-  }
-  return null;
-}
-
-function countIngredientsWithQty(recipe) {
-  const list = recipe?.recipeIngredient ?? recipe?.ingredients ?? [];
-  if (!Array.isArray(list)) return { total: 0, withQty: 0 };
-  let withQty = 0;
-  for (const ing of list) {
-    if (typeof ing !== 'string') continue;
-    if (/\d/.test(ing)) withQty += 1;
-  }
-  return { total: list.length, withQty };
-}
-
-function countSteps(recipe) {
-  const inst = recipe?.recipeInstructions;
-  if (!inst) return 0;
-  if (typeof inst === 'string') return inst.split(/\n|\./).filter((s) => s.trim().length > 20).length;
-  if (Array.isArray(inst)) {
-    let n = 0;
-    for (const step of inst) {
-      if (typeof step === 'string' && step.length > 10) n += 1;
-      else if (step?.['@type'] === 'HowToStep' && (step.text || step.name)) n += 1;
-      else if (step?.['@type'] === 'HowToSection' && Array.isArray(step.itemListElement)) n += step.itemListElement.length;
-    }
-    return n;
-  }
-  return 0;
-}
-
-function rateRecipe(recipe) {
-  if (!recipe) return { rating: 1, missing: ['json-ld not found'] };
-  const missing = [];
-  const title = recipe.name ?? recipe.headline;
-  const description = recipe.description;
-  const { total, withQty } = countIngredientsWithQty(recipe);
-  const stepCount = countSteps(recipe);
-
-  if (!title) missing.push('title');
-  if (!description) missing.push('description');
-  if (total < 2) missing.push('ingredients');
-  if (withQty < Math.min(2, total)) missing.push('quantities');
-  if (stepCount < 1) missing.push('steps');
-
-  let rating;
-  if (!title || total === 0 || stepCount === 0) rating = 1;
-  else if (missing.includes('ingredients') || missing.includes('steps')) rating = 2;
-  else if (missing.includes('description') || missing.includes('quantities')) rating = 3;
-  else if (total >= 5 && withQty >= 5 && stepCount >= 3 && description && title) rating = 5;
-  else rating = 4;
-
-  return { rating, missing, ingredientCount: total, ingredientsWithQty: withQty, stepCount };
-}
-
-async function fetchHtml(url) {
+// ------------------------------------------------------------------
+// Fetch with UA rotation
+// ------------------------------------------------------------------
+async function fetchOnce(url, ua) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 20000);
   try {
     const res = await fetch(url, {
       headers: {
-        'user-agent': UA,
+        'user-agent': ua,
         accept: 'text/html,application/xhtml+xml',
-        'accept-language': 'en-US,en;q=0.9,fr;q=0.6,de;q=0.5,it;q=0.5,es;q=0.5',
+        'accept-language': 'en-US,en;q=0.9,fr;q=0.7,de;q=0.6,it;q=0.6,es;q=0.6',
       },
       redirect: 'follow',
       signal: ctrl.signal,
     });
-    if (!res.ok) return { ok: false, status: res.status, html: '' };
-    const html = await res.text();
-    return { ok: true, status: res.status, html };
+    const html = res.ok ? await res.text() : '';
+    return { ok: res.ok, status: res.status, html };
   } catch (e) {
     return { ok: false, status: 0, html: '', error: String(e?.message ?? e) };
   } finally {
@@ -148,57 +100,199 @@ async function fetchHtml(url) {
   }
 }
 
-async function testSite(site) {
-  const fetchResult = await fetchHtml(site.testUrl);
-  if (!fetchResult.ok) {
-    return {
-      ...site,
-      rating: 1,
-      missing: [`fetch failed (${fetchResult.status || 'network'})`],
-      notes: fetchResult.error ?? `HTTP ${fetchResult.status}`,
-      ingredientCount: 0,
-      stepCount: 0,
-    };
+async function fetchWithRetry(url) {
+  let last = { ok: false, status: 0, html: '' };
+  for (const ua of USER_AGENTS) {
+    const r = await fetchOnce(url, ua);
+    if (r.ok) return { ...r, ua };
+    last = { ...r, ua };
+    if (![403, 404, 429, 0].includes(r.status)) break;
   }
-  const recipe = extractJsonLdRecipe(fetchResult.html);
-  const rated = rateRecipe(recipe);
-  return {
-    ...site,
-    ...rated,
-    notes: recipe ? null : 'no JSON-LD Recipe',
-  };
+  return last;
 }
 
-async function upsertTracker(result) {
+// ------------------------------------------------------------------
+// Homepage recipe-link discovery
+// ------------------------------------------------------------------
+const RECIPE_PATTERNS = [
+  /href=["']([^"']*\/recipes?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/recette[s]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/rezept[e]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/ricett[ae]\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/receta[s]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/przepis[y]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/recept[yu]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/oppskrift[er]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/opskrift[er]?\/[a-z0-9][^"']{4,})["']/gi,
+  /href=["']([^"']*\/syntagi[s]?\/[a-z0-9][^"']{4,})["']/gi,
+];
+
+async function findRecipeUrlOnHomepage(domain) {
+  const homepages = [`https://www.${domain}`, `https://${domain}`];
+  for (const home of homepages) {
+    const res = await fetchWithRetry(home);
+    if (!res.ok || !res.html) continue;
+    for (const rx of RECIPE_PATTERNS) {
+      rx.lastIndex = 0;
+      const matches = [...res.html.matchAll(rx)].map((m) => m[1]).filter(Boolean);
+      // Prefer URLs that look like actual recipe detail pages (not category landings)
+      const candidate = matches.find((u) => {
+        const path = u.replace(/https?:\/\/[^/]+/, '');
+        return path.split('/').filter(Boolean).length >= 2 && !/\/(category|tag|page)\//.test(path);
+      }) ?? matches[0];
+      if (candidate) {
+        return candidate.startsWith('http')
+          ? candidate
+          : `https://www.${domain}${candidate.startsWith('/') ? '' : '/'}${candidate}`;
+      }
+    }
+  }
+  return null;
+}
+
+// ------------------------------------------------------------------
+// Import via deployed /api/import/url (uses the real pipeline + fix)
+// ------------------------------------------------------------------
+async function callImporter(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 90000);
+  try {
+    const res = await fetch(IMPORT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+      signal: ctrl.signal,
+    });
+    const body = await res.json();
+    return { ok: res.ok, status: res.status, body };
+  } catch (e) {
+    return { ok: false, status: 0, body: { error: String(e?.message ?? e) } };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ------------------------------------------------------------------
+// Rating based on actual extracted content
+// ------------------------------------------------------------------
+function rateImport(recipe) {
+  if (!recipe || !recipe.title) return { rating: 1, reason: 'no title' };
+  const ingredients = recipe.ingredients ?? [];
+  const withQty = ingredients.filter((i) => i.quantity != null && i.unit).length;
+  const steps = recipe.steps ?? [];
+  const hasDesc = !!recipe.description;
+
+  if (ingredients.length >= 3 && withQty >= 3 && steps.length >= 2 && hasDesc) {
+    return { rating: 5, reason: 'complete' };
+  }
+  if (ingredients.length >= 2 && steps.length >= 1) return { rating: 4, reason: 'good' };
+  if (ingredients.length >= 1 || steps.length >= 1) return { rating: 3, reason: 'partial' };
+  if (hasDesc) return { rating: 2, reason: 'title+desc only' };
+  return { rating: 1, reason: 'title only' };
+}
+
+// ------------------------------------------------------------------
+// Save a recipe under pilzner
+// ------------------------------------------------------------------
+async function saveRecipe(userId, recipe, sourceUrl, site) {
+  const tags = ['ChefsBook', site.domain, site.region].concat(site.cuisine ? [site.cuisine] : []);
+  const { data: row, error } = await supabase
+    .from('recipes')
+    .insert({
+      user_id: userId,
+      title: recipe.title,
+      description: recipe.description ?? null,
+      servings: recipe.servings ?? 4,
+      prep_minutes: recipe.prep_minutes ?? null,
+      cook_minutes: recipe.cook_minutes ?? null,
+      cuisine: recipe.cuisine ?? null,
+      course: recipe.course ?? null,
+      source_type: 'url',
+      source_url: sourceUrl,
+      image_url: null,
+      notes: recipe.notes ?? null,
+      visibility: 'private',
+      tags,
+    })
+    .select('id')
+    .single();
+  if (error || !row) return { savedId: null, error: error?.message ?? 'insert failed' };
+
+  if (recipe.ingredients?.length) {
+    const ingredients = recipe.ingredients.map((ing, i) => ({
+      recipe_id: row.id,
+      user_id: userId,
+      sort_order: i,
+      quantity: ing.quantity ?? null,
+      unit: ing.unit ?? null,
+      ingredient: ing.ingredient ?? '',
+      preparation: ing.preparation ?? null,
+      optional: ing.optional ?? false,
+      group_label: ing.group_label ?? null,
+    }));
+    await supabase.from('recipe_ingredients').insert(ingredients);
+  }
+  if (recipe.steps?.length) {
+    const steps = recipe.steps.map((s, i) => ({
+      recipe_id: row.id,
+      user_id: userId,
+      step_number: s.step_number ?? i + 1,
+      instruction: s.instruction ?? '',
+      timer_minutes: s.timer_minutes ?? null,
+      group_label: s.group_label ?? null,
+    }));
+    await supabase.from('recipe_steps').insert(steps);
+  }
+  return { savedId: row.id, error: null };
+}
+
+// ------------------------------------------------------------------
+// Upsert tracker with taxonomy of what was FOUND
+// ------------------------------------------------------------------
+async function upsertTracker({ site, chosenUrl, recipe, rating, reason, httpStatus, fetchMethod }) {
+  const ingredients = recipe?.ingredients ?? [];
+  const withQty = ingredients.filter((i) => i.quantity != null).length;
+  const taxonomy = {
+    title: !!recipe?.title,
+    description: !!recipe?.description,
+    ingredients_count: ingredients.length,
+    ingredients_with_qty: withQty,
+    steps_count: recipe?.steps?.length ?? 0,
+    has_cuisine: !!recipe?.cuisine,
+    http_status: httpStatus,
+    fetch_method: fetchMethod,
+  };
+
   const { data: existing } = await supabase
     .from('import_site_tracker')
-    .select('id, total_attempts, successful_attempts, failure_taxonomy, sample_failing_urls')
-    .eq('domain', result.domain)
+    .select('id, total_attempts, successful_attempts, sample_failing_urls')
+    .eq('domain', site.domain)
     .maybeSingle();
 
-  const success = result.rating >= 3;
-  const taxonomy = { ...(existing?.failure_taxonomy ?? {}) };
-  for (const m of result.missing ?? []) taxonomy[`missing_${m.replace(/ /g, '_')}`] = (taxonomy[m] ?? 0) + 1;
+  const success = rating >= 3;
   const sampleFailing = existing?.sample_failing_urls ?? [];
-  if (!success) {
-    sampleFailing.unshift(result.testUrl);
-    sampleFailing.splice(5);
+  if (!success && chosenUrl) {
+    const next = [chosenUrl, ...sampleFailing.filter((u) => u !== chosenUrl)].slice(0, 5);
+    sampleFailing.length = 0;
+    sampleFailing.push(...next);
   }
 
   const payload = {
-    domain: result.domain,
-    rating: result.rating,
-    status: result.rating >= 4 ? 'working' : result.rating === 3 ? 'partial' : 'broken',
+    domain: site.domain,
+    rating,
+    status: rating >= 4 ? 'working' : rating === 3 ? 'partial' : 'broken',
     last_auto_tested_at: new Date().toISOString(),
     failure_taxonomy: taxonomy,
     sample_failing_urls: sampleFailing,
     notes: [
-      result.notes,
-      `region=${result.region}`,
-      `language=${result.language}`,
-      result.cuisine ? `cuisine=${result.cuisine}` : null,
-      `ingredients=${result.ingredientCount ?? 0}`,
-      `steps=${result.stepCount ?? 0}`,
+      `region=${site.region}`,
+      `language=${site.language}`,
+      site.cuisine ? `cuisine=${site.cuisine}` : null,
+      `method=${fetchMethod}`,
+      `status=${httpStatus}`,
+      `ingredients=${ingredients.length}/${withQty}qty`,
+      `steps=${recipe?.steps?.length ?? 0}`,
+      reason,
     ].filter(Boolean).join(' · '),
   };
 
@@ -221,43 +315,140 @@ async function upsertTracker(result) {
   }
 }
 
+// ------------------------------------------------------------------
+// Per-site flow
+// ------------------------------------------------------------------
+async function processSite(site) {
+  // Attempt 1: curated URL
+  let chosenUrl = site.testUrl;
+  let fetchMethod = 'curated';
+  let httpStatus = 0;
+
+  let pre = await fetchWithRetry(chosenUrl);
+  httpStatus = pre.status;
+
+  // Attempt 2: homepage discovery when curated fails
+  if (!pre.ok) {
+    const discovered = await findRecipeUrlOnHomepage(site.domain);
+    if (discovered) {
+      chosenUrl = discovered;
+      fetchMethod = 'homepage-discovered';
+      pre = await fetchWithRetry(chosenUrl);
+      httpStatus = pre.status;
+    }
+  }
+
+  if (!pre.ok) {
+    return {
+      ...site,
+      chosenUrl,
+      fetchMethod,
+      httpStatus,
+      rating: 1,
+      reason: `fetch failed ${httpStatus}`,
+      saved: false,
+      recipe: null,
+    };
+  }
+
+  // Delegate to the live importer (uses our improved JSON-LD path)
+  const imp = await callImporter(chosenUrl);
+  if (!imp.ok || !imp.body?.recipe) {
+    return {
+      ...site,
+      chosenUrl,
+      fetchMethod,
+      httpStatus,
+      rating: 1,
+      reason: `import failed ${imp.body?.error ?? imp.status}`,
+      saved: false,
+      recipe: null,
+    };
+  }
+
+  const recipe = imp.body.recipe;
+  const { rating, reason } = rateImport(recipe);
+
+  let saved = false;
+  let savedId = null;
+  if (SAVE_RECIPES && rating >= 3) {
+    const r = await saveRecipe(SAVE_USER_ID, recipe, chosenUrl, site);
+    saved = !!r.savedId;
+    savedId = r.savedId;
+    if (r.error) reason += ` | save: ${r.error}`;
+  }
+
+  return { ...site, chosenUrl, fetchMethod, httpStatus, rating, reason, saved, savedId, recipe };
+}
+
+// ------------------------------------------------------------------
+// Main
+// ------------------------------------------------------------------
 async function main() {
   const source = fs.readFileSync(SITE_LIST_PATH, 'utf8');
   const sites = parseSiteList(source).slice(0, LIMIT);
-  console.log(`[crawl] ${sites.length} sites · ${DELAY_MS}ms delay · ≈${Math.round((sites.length * DELAY_MS) / 60000)} min`);
+  console.log(`[crawl v2] ${sites.length} sites · ${DELAY_MS}ms · save=${SAVE_RECIPES}`);
 
   const results = [];
   for (let i = 0; i < sites.length; i++) {
-    const s = sites[i];
-    const start = Date.now();
-    const result = await testSite(s);
+    const site = sites[i];
+    const t0 = Date.now();
+    let result;
+    try {
+      result = await processSite(site);
+    } catch (e) {
+      result = { ...site, chosenUrl: site.testUrl, fetchMethod: 'error', httpStatus: 0, rating: 1, reason: `exception: ${e?.message ?? e}`, saved: false, recipe: null };
+    }
     results.push(result);
-    const line = `[${String(i + 1).padStart(3)}/${sites.length}] ${result.rating === 5 ? '⭐⭐⭐⭐⭐' : result.rating === 4 ? '⭐⭐⭐⭐·' : result.rating === 3 ? '⭐⭐⭐··' : result.rating === 2 ? '⭐⭐···' : '⭐····'} ${s.domain.padEnd(30)} ${s.region}/${s.language} ${result.missing?.length ? '(' + result.missing.join(',') + ')' : ''}`;
-    console.log(line);
-    try { await upsertTracker(result); } catch (e) { console.error('  upsert failed:', e.message); }
-    const elapsed = Date.now() - start;
+
+    const stars = '⭐'.repeat(result.rating) + '·'.repeat(5 - result.rating);
+    const ing = result.recipe?.ingredients?.length ?? 0;
+    const steps = result.recipe?.steps?.length ?? 0;
+    console.log(
+      `[${String(i + 1).padStart(3)}/${sites.length}] ${stars} ${site.domain.padEnd(32)} ${site.region}/${site.language} ` +
+      `ing=${ing} steps=${steps} method=${result.fetchMethod} http=${result.httpStatus}` +
+      (result.saved ? ' ✓saved' : '') +
+      (result.rating <= 2 ? ` — ${result.reason}` : '')
+    );
+
+    try {
+      await upsertTracker({
+        site,
+        chosenUrl: result.chosenUrl,
+        recipe: result.recipe,
+        rating: result.rating,
+        reason: result.reason,
+        httpStatus: result.httpStatus,
+        fetchMethod: result.fetchMethod,
+      });
+    } catch (e) {
+      console.error('  tracker upsert failed:', e.message);
+    }
+
     if (i < sites.length - 1) {
+      const elapsed = Date.now() - t0;
       const wait = Math.max(0, DELAY_MS - elapsed);
       if (wait) await new Promise((r) => setTimeout(r, wait));
     }
   }
 
-  // Write results JSON for the report generator
   fs.writeFileSync(
     path.join(ROOT, 'scripts/site-compatibility-results.json'),
-    JSON.stringify(results, null, 2),
+    JSON.stringify(
+      results.map((r) => ({ ...r, recipe: r.recipe ? { ingredientCount: r.recipe.ingredients?.length ?? 0, stepCount: r.recipe.steps?.length ?? 0, hasDescription: !!r.recipe.description } : null })),
+      null,
+      2,
+    ),
   );
 
-  // Summary
-  const byRating = { 5: [], 4: [], 3: [], 2: [], 1: [] };
-  for (const r of results) byRating[r.rating].push(r);
+  const byRating = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  for (const r of results) byRating[r.rating] = (byRating[r.rating] ?? 0) + 1;
+  const compat = results.filter((r) => r.rating >= 3).length;
+  const savedCount = results.filter((r) => r.saved).length;
   console.log('\n=== SUMMARY ===');
-  console.log(`⭐⭐⭐⭐⭐ 5: ${byRating[5].length}`);
-  console.log(`⭐⭐⭐⭐· 4: ${byRating[4].length}`);
-  console.log(`⭐⭐⭐·· 3: ${byRating[3].length}`);
-  console.log(`⭐⭐··· 2: ${byRating[2].length}`);
-  console.log(`⭐···· 1: ${byRating[1].length}`);
-  console.log(`compat rate: ${Math.round((results.filter((r) => r.rating >= 3).length / results.length) * 100)}%`);
+  for (const r of [5, 4, 3, 2, 1]) console.log(`${'⭐'.repeat(r)}${'·'.repeat(5 - r)} ${r}: ${byRating[r]}`);
+  console.log(`compat rate: ${Math.round((compat / results.length) * 100)}% (${compat}/${results.length})`);
+  console.log(`recipes saved: ${savedCount}`);
 }
 
 main().catch((e) => {
