@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 156 — Targeted recrawl v3 + image generation for all recipes)
+- [2026-04-16] Crawl script v3: passes userLanguage:'en' for import-time translation, tags ChefsBook-v2, blocked sites get NULL rating (not 1★) with "extension required" note, --targets flag filters to 35 priority sites, saves source_language/translated_from, auto-loads .env.local, uses localhost:3000 import endpoint.
+- [2026-04-16] Crawl v3 executed on RPi5: 36 sites tested. Results: 12× 5★, 3× 4★, 1× 3★, 15× 1★, 5× extension-required (NULL). Server-side compat 44% (16/36). 16 recipes saved in English under pilzner.
+- [2026-04-16] Translation confirmed: 5 non-English recipes auto-translated to English at import. marmiton.org fr→en, lacucinaitaliana.it fr→en, pequerecetas.com es→en, bbcgoodfood.com it→en.
+- [2026-04-16] Extension-required sites (NULL rating): allrecipes.com (460), seriouseats.com (460), marthastewart.com (460), eatingwell.com (460), cookieandkate.com (403).
+- [2026-04-16] Image generation: 75 total AI images generated this session (5+30+40 batches). All 16 ChefsBook-v2 recipes + all older recipes now have watermarked images. Zero recipes without images remain. Total Replicate cost ~$1.88.
+- [2026-04-16] feature-registry.md updated: crawl v3 row with --targets, translation, NULL blocked.
+
 ## 2026-04-16 (session 155 — Fix rating overwrite: aggregate-only recalculation)
 - [2026-04-16] Added `recalculateRating(domain)` + `recalculateAllRatings()` to @chefsbook/db. Rating always derived from aggregate total_attempts/successful_attempts (≥80%=5★, 60-79%=4★, 40-59%=3★, 20-39%=2★, <20%=1★, no data=NULL). Single source of truth.
 - [2026-04-16] Fixed test-sites route: logs to import_attempts + triggers recalculateRating() instead of directly overwriting rating from a single test result. This was the root cause of ratings dropping (e.g. 3★→1★ after one failed crawl).
