@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 165 — Tag translation + wire translation into all import paths)
+- [2026-04-16] translateRecipeContent() now translates tags: filters system/domain tags (ChefsBook-v2, _incomplete, *.com etc.), translates remaining user tags to target language via Claude, merges back with system tags preserved.
+- [2026-04-16] Mobile import (scan.tsx): wired detectLanguage + translateRecipeContent after importFromUrl. Mobile was calling @chefsbook/ai directly without server-side translation — now translates non-English recipes to English before saving.
+- [2026-04-16] Extension import (/api/extension/import): wired detectLanguage + translateRecipeContent after extraction. Saves source_language + translated_from on the recipe row.
+- [2026-04-16] File import (/api/import/file): wired detectLanguage + translateRecipeContent on each extracted recipe before returning to client.
+- [2026-04-16] scripts/backfill-translated-tags.mjs: translates non-English tags on existing translated recipes via HAIKU. Ran on RPi5: 4 translated recipes found, 2 updated (Baby Eels: sautéed→sauteed; Daily Menu: bebé→baby, alimentación complementaria→complementary feeding, etc.), 2 skipped (tags already English). 2 remaining Spanish tags (6-9 meses, papillas) fixed manually to (6-9 months, baby-food).
+- [2026-04-16] Verified: "Daily Menu for Babies 6 to 9 Months" tags now all English: ChefsBook-v2, pequerecetas.com, Spain, 6-9 months, baby-food, BLW, baby, complementary feeding, food introduction, child nutrition.
+- [2026-04-16] Typecheck clean (web + mobile). Deployed to RPi5 at commit 73d8766, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 164 — Move theme button to header row)
 - [2026-04-16] Moved "My Image Theme" button from filter pills row to header row between Select and + Add Recipe. Styled to match existing header buttons (border, rounded-input).
 - [2026-04-16] Renamed button label from "Theme" to "My Image Theme".
