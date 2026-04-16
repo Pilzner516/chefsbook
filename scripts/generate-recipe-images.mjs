@@ -87,7 +87,7 @@ async function generateImage(prompt) {
           prompt,
           aspect_ratio: '4:3',
           num_outputs: 1,
-          output_format: 'jpeg',
+          output_format: 'jpg',
           output_quality: 85,
           safety_tolerance: 5,
         },
@@ -245,7 +245,7 @@ async function main() {
       console.error(`         FAIL: ${err.message}`);
 
       // Mark failed
-      await supabase.from('recipes').update({ image_generation_status: 'failed' }).eq('id', recipe.id).catch(() => {});
+      try { await supabase.from('recipes').update({ image_generation_status: 'failed' }).eq('id', recipe.id); } catch {}
 
       // Abort on auth/billing errors
       if (err.message?.includes('authentication') || err.message?.includes('billing') || err.message?.includes('401')) {

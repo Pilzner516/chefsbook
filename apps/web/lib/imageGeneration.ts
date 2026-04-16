@@ -60,7 +60,7 @@ export async function generateRecipeImage(recipe: {
           prompt,
           aspect_ratio: '4:3',
           num_outputs: 1,
-          output_format: 'jpeg',
+          output_format: 'jpg',
           output_quality: 85,
           safety_tolerance: 5,
         },
