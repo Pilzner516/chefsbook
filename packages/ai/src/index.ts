@@ -52,3 +52,5 @@ export type { WatermarkCheckResult } from './checkImageForWatermarks';
 export { detectLanguage, translateRecipeContent } from './translateImport';
 export { KNOWN_RECIPE_SITES } from './siteList';
 export type { KnownSite } from './siteList';
+export { IMAGE_THEMES, REGEN_PILLS, buildImagePrompt, getImageModel, describeSourceImage } from './imageThemes';
+export type { ImageTheme, ThemeDefinition, RegenPill } from './imageThemes';
