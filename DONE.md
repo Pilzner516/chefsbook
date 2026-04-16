@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 159 — Audit: non-English + old ChefsBook recipes)
+- [2026-04-16] Audit: queried for non-English untranslated recipes (source_language != 'en' AND translated_from IS NULL) — 0 found. All non-English imports already went through the translation pipeline.
+- [2026-04-16] Audit: queried for old "ChefsBook" tagged recipes (not "ChefsBook-v2") — 0 found. Session 152 already deleted all 32.
+
 ## 2026-04-16 (session 158 — ChefsBook branded watermark badge on all AI images)
 - [2026-04-16] scripts/create-watermark-badge.mjs: generates 160x36px badge PNG via SVG+sharp. "Chefs" in red (#ce2b37) + "book" in near-black (#1a1a1a) + chef hat icon on white pill background with rounded corners and drop shadow.
 - [2026-04-16] scripts/apply-watermarks.mjs: downloads AI images from Supabase storage, composites badge bottom-right (12px padding), applies invisible LSB watermark, re-uploads. Zero Replicate cost.
