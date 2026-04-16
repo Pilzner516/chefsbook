@@ -2,7 +2,9 @@ import sharp from 'sharp';
 import path from 'path';
 import { supabaseAdmin } from '@chefsbook/db';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://100.110.47.62:8000';
+// Use the Tailscale IP for storage URLs stored in DB — reachable from all devices
+// (NOT api.chefsbk.app which needs apikey header, NOT localhost which is unreachable from browsers)
+const SUPABASE_STORAGE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'http://100.110.47.62:8000';
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 // Path to the CBHat watermark image
@@ -227,7 +229,7 @@ export async function generateAndSaveRecipeImage(
 
   if (uploadError) throw uploadError;
 
-  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
+  const publicUrl = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
 
   // Insert as primary photo
   await supabaseAdmin.from('recipe_user_photos').insert({

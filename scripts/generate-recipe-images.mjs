@@ -36,8 +36,10 @@ function loadEnvFile() {
 }
 loadEnvFile();
 
-// Prefer localhost for scripts running on RPi5 (avoids Cloudflare tunnel overhead)
+// Use localhost for DB/storage API calls (fast, no tunnel overhead)
 const SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost:8000';
+// Public URL for image references stored in DB — must be reachable from browsers
+const SUPABASE_PUBLIC_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'http://100.110.47.62:8000';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const REPLICATE_TOKEN = process.env.REPLICATE_API_TOKEN;
 
@@ -218,7 +220,7 @@ async function main() {
         .upload(fileName, buf, { contentType: 'image/jpeg', upsert: true });
       if (upErr) throw new Error(`Upload: ${upErr.message}`);
 
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
+      const publicUrl = `${SUPABASE_PUBLIC_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
 
       // Insert photo row
       await supabase.from('recipe_user_photos').insert({
