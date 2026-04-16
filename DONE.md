@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 168 — Change Image modal + regen loading + polling)
+- [2026-04-16] Moved regen pills from permanently below image into "Change Image" modal with two sections: Upload photo / Regenerate with AI.
+- [2026-04-16] Regeneration loading state: pulsing chef hat overlay inside image container with "Regenerating your image... This takes about 10-15 seconds".
+- [2026-04-16] Polling every 1.5s via GET /api/recipes/[id]/image-status. New image swaps in-place when complete; regen_count updated in state.
+- [2026-04-16] GET /api/recipes/[id]/image-status endpoint: returns status, url, isAiGenerated, regenCount.
+- [2026-04-16] Pills disabled after use (regen_count >= 1). Non-AI images show "Generate an AI image" instead of pills.
+- [2026-04-16] Deployed to RPi5 at commit 18db83c. All pages HTTP 200. image-status endpoint verified.
+
 ## 2026-04-16 (session 167 — AI ingredient generation + fix Katsu recipe)
 - [2026-04-16] Confirmed PDF fallback is already universal (session 160): needsBrowserExtraction triggers for ANY site with title but no ingredients/steps, no domain whitelist. Tested halfbakedharvest.com homepage → correctly fires. halfbakedharvest.com recipe URL now returns 14 ingredients server-side (original import was from buggier era).
 - [2026-04-16] packages/ai/src/generateMissingIngredients.ts: Sonnet-powered (~$0.003/call) ingredient generation from title+description+steps+servings+cuisine+tags. Returns structured array with amount/unit/name. Exported from packages/ai.
