@@ -67,7 +67,8 @@ async function applyWatermark(imageBuffer, recipeId) {
     throw new Error(`Watermark badge not found at ${WATERMARK_PATH}. Run create-watermark-badge.mjs first.`);
   }
 
-  const metadata = await sharp(imageBuffer).metadata();
+  // Use failOnError:false to handle images with corrupt headers from prior LSB watermarking
+  const metadata = await sharp(imageBuffer, { failOnError: false }).metadata();
   const { width, height } = metadata;
 
   // Resize watermark proportionally for the image size (20% of image width, cap at 240)
@@ -81,12 +82,13 @@ async function applyWatermark(imageBuffer, recipeId) {
   const left = width - wmMeta.width - 12;
   const top = height - wmMeta.height - 12;
 
-  let result = await sharp(imageBuffer)
+  // Re-encode with failOnError:false to repair corrupt JPEG headers
+  const result = await sharp(imageBuffer, { failOnError: false })
     .composite([{ input: watermarkBuffer, left, top, blend: 'over' }])
     .jpeg({ quality: 88 })
     .toBuffer();
 
-  result = embedLsbWatermark(result, recipeId);
+  // Skip LSB steganographic watermark — it corrupted JPEG headers in prior runs
   return result;
 }
 
