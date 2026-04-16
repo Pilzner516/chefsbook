@@ -135,7 +135,8 @@ async function addWatermark(imageBuffer) {
 
   const imgMeta = await sharp(imageBuffer).metadata();
   const wmMeta = await sharp(watermarkBuf).metadata();
-  const left = imgMeta.width - wmMeta.width - 12;
+  // Bottom-LEFT (avoids CSS object-fit:cover cropping on right side)
+  const left = 12;
   const top = imgMeta.height - wmMeta.height - 12;
 
   return sharp(imageBuffer)

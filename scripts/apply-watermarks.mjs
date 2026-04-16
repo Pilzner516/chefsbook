@@ -79,7 +79,8 @@ async function applyWatermark(imageBuffer, recipeId) {
     .toBuffer();
 
   const wmMeta = await sharp(watermarkBuffer).metadata();
-  const left = width - wmMeta.width - 12;
+  // Bottom-LEFT (avoids CSS object-fit:cover cropping on right side)
+  const left = 12;
   const top = height - wmMeta.height - 12;
 
   // Re-encode with failOn:'none' to repair corrupt JPEG headers
