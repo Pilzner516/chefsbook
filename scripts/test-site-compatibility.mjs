@@ -1,29 +1,29 @@
 #!/usr/bin/env node
 /**
- * Recipe-site compatibility crawl — v2 (session 145)
+ * Recipe-site compatibility crawl — v3 (session 154)
  *
- * Improvements over v1:
- *   - Finds a real recipe URL from each site's homepage when the curated
- *     testUrl fails
- *   - Rotates 3 User-Agents (Chrome desktop, mobile Safari, Googlebot) before
- *     giving up on a 403/404
- *   - Runs the actual /api/import/url pipeline (so the rating reflects what
- *     the real importer produces, including the new JSON-LD ingredient fix)
- *   - On success, saves the imported recipe as a private record under the
- *     pilzner account with tags [ChefsBook, <domain>, <region>]
- *   - Records structured taxonomy (what was FOUND, not just what was missing)
+ * v3 improvements:
+ *   - Passes userLanguage:'en' so non-English recipes are translated at import
+ *   - Tags saved recipes as ChefsBook-v2 (not ChefsBook — those were deleted)
+ *   - Blocked sites (403/429/0 after all retries) get NULL rating + needs_extension note
+ *   - --targets flag runs only the 35 priority sites
+ *   - Saves source_language + translated_from on recipes
  *
  * Usage on RPi5:
  *   SUPABASE_URL=http://localhost:8000 \
  *   SUPABASE_SERVICE_ROLE_KEY=<key> \
- *   IMPORT_ENDPOINT=https://chefsbk.app/api/import/url \
+ *   IMPORT_ENDPOINT=http://localhost:3000/api/import/url \
  *   SAVE_USER_ID=b589743b-99bd-4f55-983a-c31f5167c425 \
- *   node scripts/test-site-compatibility.mjs
+ *   node scripts/test-site-compatibility.mjs --targets
  *
  * Env:
- *   SITE_DELAY_MS (default 8000)
+ *   SITE_DELAY_MS (default 10000)
  *   SITE_LIMIT (optional)
  *   SAVE_RECIPES (default "1" — set "0" to skip saving)
+ *
+ * Flags:
+ *   --targets   Only run the 35 priority sites (Tier 1 + Tier 2 + Tier 3)
+ *   --all       Run all 218 sites (default if no flag)
  */
 
 import fs from 'node:fs';
@@ -37,11 +37,30 @@ const SITE_LIST_PATH = path.join(ROOT, 'packages/ai/src/siteList.ts');
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://localhost:8000';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const IMPORT_ENDPOINT = process.env.IMPORT_ENDPOINT ?? 'https://chefsbk.app/api/import/url';
-const SAVE_USER_ID = process.env.SAVE_USER_ID;
+const IMPORT_ENDPOINT = process.env.IMPORT_ENDPOINT ?? 'http://localhost:3000/api/import/url';
+const SAVE_USER_ID = process.env.SAVE_USER_ID ?? 'b589743b-99bd-4f55-983a-c31f5167c425';
 const SAVE_RECIPES = (process.env.SAVE_RECIPES ?? '1') === '1';
-const DELAY_MS = Number(process.env.SITE_DELAY_MS ?? 8000);
+const DELAY_MS = Number(process.env.SITE_DELAY_MS ?? 10000);
 const LIMIT = process.env.SITE_LIMIT ? Number(process.env.SITE_LIMIT) : Infinity;
+const USE_TARGETS = process.argv.includes('--targets');
+
+// 35 priority sites for targeted recrawl
+const TARGET_DOMAINS = new Set([
+  // Tier 1 — previously rescued via homepage discovery
+  'barefootcontessa.com', 'thepioneerwoman.com', 'delish.com', 'saveur.com',
+  'healthyrecipes101.com', 'lacucinaitaliana.it', 'pequerecetas.com',
+  'bonappetit.com', 'pinchofyum.com', 'sallysbakingaddiction.com',
+  'kingarthurbaking.com', 'loveandlemons.com', 'tasteofhome.com', 'bettycrocker.com',
+  // Tier 2 — Cloudflare-blocked, needs extension
+  'allrecipes.com', 'bbcgoodfood.com', 'jamieoliver.com', 'seriouseats.com',
+  'foodnetwork.com', 'eatingwell.com', 'marthastewart.com',
+  // Tier 3 — International with translation
+  'marmiton.org', 'chefkoch.de', 'giallozafferano.it', 'matprat.no',
+  'valdemarsro.dk', 'allerhande.nl', 'kwestiasmaku.com',
+  // Bonus: known good US sites
+  'alexandracooks.com', 'momsdish.com', 'rasamalaysia.com',
+  'budgetbytes.com', 'cookieandkate.com', 'minimalistbaker.com', 'smittenkitchen.com',
+]);
 
 if (!SERVICE_KEY) {
   console.error('SUPABASE_SERVICE_ROLE_KEY is required');
@@ -160,7 +179,7 @@ async function callImporter(url) {
     const res = await fetch(IMPORT_ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, userLanguage: 'en' }),
       signal: ctrl.signal,
     });
     const body = await res.json();
@@ -195,7 +214,7 @@ function rateImport(recipe) {
 // Save a recipe under pilzner
 // ------------------------------------------------------------------
 async function saveRecipe(userId, recipe, sourceUrl, site) {
-  const tags = ['ChefsBook', site.domain, site.region].concat(site.cuisine ? [site.cuisine] : []);
+  const tags = ['ChefsBook-v2', site.domain, site.region].concat(site.cuisine ? [site.cuisine] : []).concat(recipe.tags ?? []);
   const { data: row, error } = await supabase
     .from('recipes')
     .insert({
@@ -213,6 +232,8 @@ async function saveRecipe(userId, recipe, sourceUrl, site) {
       notes: recipe.notes ?? null,
       visibility: 'private',
       tags,
+      source_language: recipe.source_language ?? null,
+      translated_from: recipe.translated_from ?? null,
     })
     .select('id')
     .single();
@@ -269,7 +290,7 @@ async function upsertTracker({ site, chosenUrl, recipe, rating, reason, httpStat
     .eq('domain', site.domain)
     .maybeSingle();
 
-  const success = rating >= 3;
+  const success = rating !== null && rating >= 3;
   const sampleFailing = existing?.sample_failing_urls ?? [];
   if (!success && chosenUrl) {
     const next = [chosenUrl, ...sampleFailing.filter((u) => u !== chosenUrl)].slice(0, 5);
@@ -280,7 +301,7 @@ async function upsertTracker({ site, chosenUrl, recipe, rating, reason, httpStat
   const payload = {
     domain: site.domain,
     rating,
-    status: rating >= 4 ? 'working' : rating === 3 ? 'partial' : 'broken',
+    status: rating === null ? 'needs_extension' : rating >= 4 ? 'working' : rating === 3 ? 'partial' : 'broken',
     last_auto_tested_at: new Date().toISOString(),
     failure_taxonomy: taxonomy,
     sample_failing_urls: sampleFailing,
@@ -339,20 +360,38 @@ async function processSite(site) {
   }
 
   if (!pre.ok) {
+    const isBlocked = [403, 429, 460, 0].includes(httpStatus);
     return {
       ...site,
       chosenUrl,
       fetchMethod,
       httpStatus,
-      rating: 1,
-      reason: `fetch failed ${httpStatus}`,
+      rating: isBlocked ? null : 1,  // NULL = extension required, not 1★
+      reason: isBlocked ? 'blocked — extension required' : `fetch failed ${httpStatus}`,
       saved: false,
       recipe: null,
+      needsExtension: isBlocked,
     };
   }
 
-  // Delegate to the live importer (uses our improved JSON-LD path)
+  // Delegate to the live importer (with translation to English)
   const imp = await callImporter(chosenUrl);
+
+  // Check if importer itself says extension needed (206 response)
+  if (imp.status === 206 && imp.body?.needsBrowserExtraction) {
+    return {
+      ...site,
+      chosenUrl,
+      fetchMethod,
+      httpStatus: 206,
+      rating: null,
+      reason: 'blocked — extension required (importer 206)',
+      saved: false,
+      recipe: null,
+      needsExtension: true,
+    };
+  }
+
   if (!imp.ok || !imp.body?.recipe) {
     return {
       ...site,
@@ -386,8 +425,18 @@ async function processSite(site) {
 // ------------------------------------------------------------------
 async function main() {
   const source = fs.readFileSync(SITE_LIST_PATH, 'utf8');
-  const sites = parseSiteList(source).slice(0, LIMIT);
-  console.log(`[crawl v2] ${sites.length} sites · ${DELAY_MS}ms · save=${SAVE_RECIPES}`);
+  let sites = parseSiteList(source);
+  if (USE_TARGETS) {
+    sites = sites.filter((s) => TARGET_DOMAINS.has(s.domain));
+    // Also add any target domains not in siteList.ts with a homepage fallback
+    for (const d of TARGET_DOMAINS) {
+      if (!sites.find((s) => s.domain === d)) {
+        sites.push({ domain: d, testUrl: `https://www.${d}`, region: 'unknown', language: 'en', cuisine: null });
+      }
+    }
+  }
+  sites = sites.slice(0, LIMIT);
+  console.log(`[crawl v3] ${sites.length} sites · ${DELAY_MS}ms · save=${SAVE_RECIPES} · targets=${USE_TARGETS}`);
 
   const results = [];
   for (let i = 0; i < sites.length; i++) {
@@ -401,14 +450,17 @@ async function main() {
     }
     results.push(result);
 
-    const stars = '⭐'.repeat(result.rating) + '·'.repeat(5 - result.rating);
+    const stars = result.rating === null ? '🔌 EXT' : '⭐'.repeat(result.rating) + '·'.repeat(5 - result.rating);
     const ing = result.recipe?.ingredients?.length ?? 0;
     const steps = result.recipe?.steps?.length ?? 0;
+    const lang = result.recipe?.source_language ? ` lang=${result.recipe.source_language}` : '';
+    const translated = result.recipe?.translated_from ? ` xlat=${result.recipe.translated_from}→en` : '';
     console.log(
       `[${String(i + 1).padStart(3)}/${sites.length}] ${stars} ${site.domain.padEnd(32)} ${site.region}/${site.language} ` +
-      `ing=${ing} steps=${steps} method=${result.fetchMethod} http=${result.httpStatus}` +
+      `ing=${ing} steps=${steps} method=${result.fetchMethod} http=${result.httpStatus}${lang}${translated}` +
       (result.saved ? ' ✓saved' : '') +
-      (result.rating <= 2 ? ` — ${result.reason}` : '')
+      (result.needsExtension ? ' 🔌extension-required' : '') +
+      (result.rating !== null && result.rating <= 2 ? ` — ${result.reason}` : '')
     );
 
     try {
@@ -441,14 +493,19 @@ async function main() {
     ),
   );
 
-  const byRating = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  const byRating = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, null: 0 };
   for (const r of results) byRating[r.rating] = (byRating[r.rating] ?? 0) + 1;
-  const compat = results.filter((r) => r.rating >= 3).length;
+  const compat = results.filter((r) => r.rating !== null && r.rating >= 3).length;
+  const extNeeded = results.filter((r) => r.needsExtension).length;
   const savedCount = results.filter((r) => r.saved).length;
+  const translated = results.filter((r) => r.recipe?.translated_from && r.recipe.translated_from !== 'en').length;
   console.log('\n=== SUMMARY ===');
   for (const r of [5, 4, 3, 2, 1]) console.log(`${'⭐'.repeat(r)}${'·'.repeat(5 - r)} ${r}: ${byRating[r]}`);
-  console.log(`compat rate: ${Math.round((compat / results.length) * 100)}% (${compat}/${results.length})`);
-  console.log(`recipes saved: ${savedCount}`);
+  console.log(`🔌 Extension required: ${byRating.null}`);
+  console.log(`Server-side compat: ${Math.round((compat / results.length) * 100)}% (${compat}/${results.length})`);
+  console.log(`Recipes saved: ${savedCount}`);
+  console.log(`Translated to English: ${translated}`);
+  console.log(`Extension-required sites: ${extNeeded}`);
 }
 
 main().catch((e) => {
