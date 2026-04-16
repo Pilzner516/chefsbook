@@ -70,8 +70,8 @@ async function applyWatermark(imageBuffer, recipeId) {
   const metadata = await sharp(imageBuffer).metadata();
   const { width, height } = metadata;
 
-  // Resize watermark proportionally for the image size
-  const wmWidth = Math.min(160, Math.round(width * 0.2));
+  // Resize watermark proportionally for the image size (20% of image width, cap at 240)
+  const wmWidth = Math.min(240, Math.round(width * 0.2));
   const watermarkBuffer = await sharp(WATERMARK_PATH)
     .resize(wmWidth, null, { fit: 'inside' })
     .png()

@@ -120,7 +120,7 @@ async function addWatermark(imageBuffer) {
       // New badge: resize proportionally, position bottom-right with padding
       if (meta.width > 100) {
         // Badge format — resize to 160px wide
-        watermarkBuf = await sharp(p).resize(160, null, { fit: 'inside' }).png().toBuffer();
+        watermarkBuf = await sharp(p).resize(240, null, { fit: 'inside' }).png().toBuffer();
       } else {
         // Old hat fallback — 60x60
         watermarkBuf = await sharp(p).resize(60, 60).ensureAlpha().png().toBuffer();
