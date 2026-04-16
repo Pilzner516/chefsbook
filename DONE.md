@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 176 — Complete session 162 incomplete items)
+- [SESSION 166] Part 0: buildImagePrompt() now always leads with cleaned dish name (removes "recipe", "how to make", site names). Source description is supplementary only ("presented similarly to:") at levels 1-2, never replaces dish name.
+- [SESSION 166] Part 0: REGEN_PILLS strengthened — 'wrong_dish' now says "CRITICAL: the image must clearly show the dish named in the title", 'update_scene' adds "different color palette", 'brighter'/'moodier' are more specific, 'closer'/'overhead' are more directive.
+- [SESSION 166] Part 0: Random seed added to Replicate calls (Math.floor(Math.random() * 999999)) — guarantees different image on every generation.
+- [SESSION 166] Part 1: logAiCall() wired into 10 API routes: /api/import/url, /api/recipes/generate-image, /api/recipes/[id]/generate-ingredients, /api/extension/import, /api/recipes/translate, /api/meal-plan/generate, /api/speak, /api/recipes/auto-tag, /api/recipes/check-image, /api/recipes/finalize.
+- [SESSION 166] Part 1: checkAndUpdateThrottle() now fires automatically after every logAiCall() (non-blocking).
+- [SESSION 166] Part 2: isUserThrottled() check wired into /api/recipes/generate-image — returns 429 with soft message for throttled users.
+- [SESSION 166] Part 3: Throttle settings form on /admin/settings — all 9 settings editable (enabled toggle, window days, grace days, yellow/red percentages, expected cost per plan). Effective red thresholds calculated and shown live. Amber warning if any threshold < $0.10.
+- [SESSION 166] Part 4: Cost MTD / Revenue MTD / Delta / Throttle columns added to /admin/users table (between Image Quality and Role). Cost from user_throttle.monthly_cost_usd. Revenue from plan price. Delta green/red. Throttle pill (Red/Yellow/—).
+- [SESSION 166] Part 5: Activity feed on admin overview — last 20 AI events from ai_usage_log (24h), shows action icon + time ago + action name + user + model + cost.
+- [SESSION 166] Part 6: Monthly throttle reset in cron job — on 1st of month, clears all non-whitelisted throttles and resets monthly_cost_usd to 0.
+- [SESSION 166] Typecheck clean (web). Deployed to RPi5 at commit 9b6cb8b, pm2 restarted; chefsbk.app/, /admin, /admin/costs, /admin/settings, /admin/users all HTTP 200.
+
 ## 2026-04-16 (session 174 — AI cost tracking + throttle system + admin dashboards)
 - [2026-04-16] Migration 045 applied on RPi5: ai_usage_log table (user_id, action, model, tokens_in/out, cost_usd, recipe_id, metadata, created_at) with 3 indexes. ai_usage_daily table (pre-aggregated daily totals per user/action/model, UNIQUE constraint). user_throttle table (is_throttled, throttle_level yellow/red, admin_override, monthly_cost_usd). 9 throttle settings in system_settings. aggregate_ai_usage_daily() SQL function. PostgREST restarted.
 - [2026-04-16] packages/db/src/queries/aiUsage.ts: logAiCall() logs action/model/tokens/cost per AI call with MODEL_COSTS lookup (haiku/sonnet/flux-schnell/flux-dev). getThrottleSettings() reads all thresholds from system_settings. isUserThrottled() checks user_throttle with admin_override support. checkAndUpdateThrottle() calculates rolling window cost vs plan-based thresholds, upserts throttle state.
