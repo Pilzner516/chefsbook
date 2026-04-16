@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 173 — Admin users: Image Quality column)
+- [2026-04-16] /admin/users: new "Image Quality" column between Plan and Role with dropdown (Auto / Standard (Flux Schnell) / Premium (Flux Dev)). Saves on change via existing setImageQuality admin action (null / 'schnell' / 'dev'). Optimistic row update so the select reflects choice instantly; reverts via load() on error.
+- [2026-04-16] 🎨 Dev green badge renders next to the dropdown when image_quality_override is 'dev' so premium overrides are visible at a glance.
+- [2026-04-16] UserRow interface extended with image_quality_override. GET users handler already returned user_profiles.* so no API change needed. No separate user detail page exists in /admin/users — column-level control covers the requirement.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit ffb6264, pm2 restarted; https://chefsbk.app/admin/users HTTP 200.
+
 ## 2026-04-16 (session 172 — Fix stuck "Generating recipe image" state)
 - [2026-04-16] DB audit: 0 stuck recipes (status in pending/generating with no AI photo). Distribution: 69 complete, 18 NULL, 3 failed (incl. Thai Chicken Satay, Slow-Roasted Lamb Shoulder, Sous Vide Pulled Pork). No DB reset needed — already failed from prior Replicate credit exhaustion.
 - [2026-04-16] Migration 044 applied on RPi5: image_generation_started_at TIMESTAMPTZ on recipes + partial index on pending/generating rows. PostgREST restarted.
