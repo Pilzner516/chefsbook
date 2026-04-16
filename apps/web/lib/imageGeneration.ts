@@ -183,7 +183,10 @@ export async function generateAndSaveRecipeImage(
   // Mark as generating
   await supabaseAdmin
     .from('recipes')
-    .update({ image_generation_status: 'generating' })
+    .update({
+      image_generation_status: 'generating',
+      image_generation_started_at: new Date().toISOString(),
+    })
     .eq('id', recipeId);
 
   const result = await generateRecipeImage(recipe, options);
@@ -262,7 +265,10 @@ export function triggerImageGeneration(
     try {
       await supabaseAdmin
         .from('recipes')
-        .update({ image_generation_status: 'pending' })
+        .update({
+          image_generation_status: 'pending',
+          image_generation_started_at: new Date().toISOString(),
+        })
         .eq('id', recipeId);
 
       // Fetch user's theme + plan + quality override

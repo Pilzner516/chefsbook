@@ -104,6 +104,7 @@ export default function RecipePage() {
   const [flagComment, setFlagComment] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [generationFailed, setGenerationFailed] = useState(false);
   const [showChangeImageModal, setShowChangeImageModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
@@ -185,6 +186,46 @@ export default function RecipePage() {
     })();
     return () => { cancelled = true; };
   }, [recipe?.id, userLanguage]);
+
+  // Poll image-status while generation is pending/generating. Time out after 30s.
+  useEffect(() => {
+    if (!recipe) return;
+    const status = (recipe as any).image_generation_status;
+    if (status !== 'pending' && status !== 'generating') return;
+    if (generationFailed) return;
+
+    const MAX_POLL_ATTEMPTS = 20;
+    const POLL_INTERVAL_MS = 1500;
+    let attempts = 0;
+    let cancelled = false;
+
+    const timer = setInterval(async () => {
+      if (cancelled) return;
+      attempts++;
+      if (attempts > MAX_POLL_ATTEMPTS) {
+        clearInterval(timer);
+        if (!cancelled) setGenerationFailed(true);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/recipes/${recipe.id}/image-status`);
+        if (!res.ok) return;
+        const { status: next, url } = await res.json();
+        if (cancelled) return;
+        if (next === 'complete' && url) {
+          clearInterval(timer);
+          // Reload recipe photos so the new image renders
+          listRecipePhotos(recipe.id).then(setUserPhotos).catch(() => {});
+          setRecipe((prev) => prev ? ({ ...prev, image_generation_status: 'complete' } as any) : prev);
+        } else if (next === 'failed') {
+          clearInterval(timer);
+          setGenerationFailed(true);
+        }
+      } catch { /* keep polling */ }
+    }, POLL_INTERVAL_MS);
+
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [recipe?.id, (recipe as any)?.image_generation_status, generationFailed]);
 
   // Translated display values
   const displayTitle = translation?.translated_title ?? recipe?.title ?? '';
@@ -929,12 +970,27 @@ export default function RecipePage() {
           </div>
         ) : isOwner ? (
           <div className="h-48 rounded-card border-2 border-dashed border-cb-border bg-cb-card flex flex-col items-center justify-center gap-3">
-            {(recipe as any).image_generation_status === 'generating' || (recipe as any).image_generation_status === 'pending' ? (
+            {generationFailed ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-cb-bg flex items-center justify-center">
+                  <img src="/images/chefs-hat.png" alt="" className="w-10 h-10 opacity-60" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+                <p className="text-cb-secondary text-sm">Image generation is temporarily unavailable.</p>
+                <button
+                  onClick={() => { setGenerationFailed(false); handleGenerateImage(); }}
+                  disabled={generatingImage}
+                  className="mt-1 px-4 py-2 rounded-input text-sm font-medium bg-cb-primary text-white hover:bg-cb-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {generatingImage ? 'Starting...' : 'Try again'}
+                </button>
+              </div>
+            ) : ((recipe as any).image_generation_status === 'generating' || (recipe as any).image_generation_status === 'pending') ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-16 h-16 rounded-full bg-cb-bg flex items-center justify-center animate-pulse">
-                  <img src="/images/chefs-hat.png" alt="" className="w-10 h-10 opacity-60" />
+                  <img src="/images/chefs-hat.png" alt="" className="w-10 h-10 opacity-60" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 </div>
                 <span className="text-cb-secondary text-sm">Generating recipe image...</span>
+                <span className="text-cb-muted text-xs">This takes about 10-15 seconds</span>
               </div>
             ) : (
               <>
