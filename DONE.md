@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 163 — Fix "Review now" link on incomplete recipes banner)
+- [2026-04-16] Fixed: "Review now →" link on the amber IncompleteRecipesBanner was a dead link. It navigated to /dashboard?filter=incomplete but the dashboard never read the URL parameter.
+- [2026-04-16] Added useSearchParams() to dashboard page — reads ?filter=incomplete from URL and auto-activates the 'Incomplete' filter pill on mount.
+- [2026-04-16] Added 'Incomplete' pill to dynamic filters (appears when any recipe has is_complete=false). Filters recipe list to show only incomplete recipes. Clearable by clicking 'All'.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit fc1c565, pm2 restarted; /dashboard and /dashboard?filter=incomplete both HTTP 200.
+
 ## 2026-04-16 (session 162 — AI image themes + regeneration pills + source image descriptions)
 - [2026-04-16] Migration 043 applied: source_image_url/description on recipes, image_theme/image_quality_override on user_profiles, regen_count on recipe_user_photos.
 - [2026-04-16] 10 image themes defined in packages/ai/src/imageThemes.ts (Bright & Fresh, Farmhouse, Fine Dining, Editorial, Garden Fresh, Candlelit, Japanese Minimal, Mediterranean, Cozy Autumn, Modern Glam). Each with prompt, emoji, preview path.
