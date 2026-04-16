@@ -54,5 +54,6 @@ export { generateMissingIngredients } from './generateMissingIngredients';
 export type { GeneratedIngredient } from './generateMissingIngredients';
 export { KNOWN_RECIPE_SITES } from './siteList';
 export type { KnownSite } from './siteList';
-export { IMAGE_THEMES, REGEN_PILLS, buildImagePrompt, getImageModel, describeSourceImage } from './imageThemes';
+export { IMAGE_THEMES, REGEN_PILLS, CREATIVITY_LEVELS, buildImagePrompt, getImageModel, describeSourceImage } from './imageThemes';
+export type { CreativityLevel } from './imageThemes';
 export type { ImageTheme, ThemeDefinition, RegenPill } from './imageThemes';

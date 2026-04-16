@@ -94,6 +94,63 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
+      {/* Creativity slider */}
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 max-w-xl">
+        <h2 className="text-lg font-semibold mb-2">Image Creativity Level</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Controls how different AI-generated images are from source photos. Higher values ensure more copyright distance.
+        </p>
+        {(() => {
+          const currentLevel = parseInt(settings['image_creativity_level']?.value ?? '3', 10);
+          const levels = [
+            { n: 1, label: 'Very Faithful', desc: 'Very similar to source' },
+            { n: 2, label: 'Faithful', desc: 'Similar presentation' },
+            { n: 3, label: 'Balanced', desc: 'Same dish, different style (recommended)' },
+            { n: 4, label: 'Creative', desc: 'Unique styling' },
+            { n: 5, label: 'Very Creative', desc: 'Completely original' },
+          ];
+          return (
+            <div className="space-y-2 mb-4">
+              {levels.map((l) => (
+                <label
+                  key={l.n}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer border transition ${
+                    currentLevel === l.n ? 'border-cb-primary bg-cb-primary/5' : 'border-transparent hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="creativity"
+                    checked={currentLevel === l.n}
+                    onChange={async () => {
+                      setSaving(true);
+                      try {
+                        await adminPost({ action: 'updateSetting', key: 'image_creativity_level', value: String(l.n) });
+                        await load();
+                      } catch (err) { console.error(err); }
+                      setSaving(false);
+                    }}
+                    className="accent-cb-primary"
+                  />
+                  <div>
+                    <span className="text-sm font-medium">{l.n}. {l.label}</span>
+                    <span className="text-xs text-gray-400 ml-2">{l.desc}</span>
+                  </div>
+                </label>
+              ))}
+              {currentLevel <= 2 && (
+                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                  Levels 1-2 may produce images visually similar to source photos, which could raise copyright concerns.
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-2">
+                Level 3+ skips source image description in prompts — uses only recipe title and ingredients.
+              </p>
+            </div>
+          );
+        })()}
+      </div>
+
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 max-w-xl">
         <h2 className="text-lg font-semibold mb-2">Permission Model</h2>
         <div className="text-sm text-gray-600 space-y-2">

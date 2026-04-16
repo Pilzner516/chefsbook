@@ -123,12 +123,30 @@ export const REGEN_PILLS: RegenPill[] = [
   { id: 'overhead', label: 'Overhead view', modifier: 'overhead flat lay aerial view, looking straight down' },
 ];
 
+// ── Creativity Levels ──
+
+export type CreativityLevel = 1 | 2 | 3 | 4 | 5;
+
+export const CREATIVITY_LEVELS: Record<CreativityLevel, {
+  label: string;
+  description: string;
+  useSourceDescription: boolean;
+  promptModifier: string;
+}> = {
+  1: { label: 'Very Faithful', description: 'Very similar to source image', useSourceDescription: true, promptModifier: 'match the original presentation style closely' },
+  2: { label: 'Faithful', description: 'Similar dish, similar presentation', useSourceDescription: true, promptModifier: 'similar plating style but with fresh styling' },
+  3: { label: 'Balanced', description: 'Same dish, different presentation (recommended)', useSourceDescription: false, promptModifier: 'creative food styling, different from typical presentations' },
+  4: { label: 'Creative', description: 'Inspired by the dish, unique styling', useSourceDescription: false, promptModifier: 'highly creative and artistic food photography, unique angle and styling' },
+  5: { label: 'Very Creative', description: 'Completely original interpretation', useSourceDescription: false, promptModifier: 'completely original artistic interpretation, avant-garde food photography' },
+};
+
 // ── Prompt Builder ──
 
 export function buildImagePrompt(
   recipe: { title: string; cuisine?: string | null; ingredients?: { ingredient?: string; name?: string }[]; source_image_description?: string | null },
   theme: ImageTheme = 'bright_fresh',
   modifier?: string,
+  creativityLevel: CreativityLevel = 3,
 ): string {
   const keyIng = (recipe.ingredients ?? [])
     .slice(0, 4)
@@ -136,13 +154,18 @@ export function buildImagePrompt(
     .filter(Boolean)
     .join(', ');
 
-  const visualBase = recipe.source_image_description
-    ?? `${recipe.title}${recipe.cuisine ? `, ${recipe.cuisine} cuisine` : ''}${keyIng ? `, featuring ${keyIng}` : ''}`;
+  const creativity = CREATIVITY_LEVELS[creativityLevel];
+
+  // Only use source description at levels 1-2 (faithful); 3+ uses title+ingredients only
+  const visualBase = (creativity.useSourceDescription && recipe.source_image_description)
+    ? recipe.source_image_description
+    : `${recipe.title}${recipe.cuisine ? `, ${recipe.cuisine} cuisine` : ''}${keyIng ? `, featuring ${keyIng}` : ''}`;
 
   const themePrompt = IMAGE_THEMES[theme]?.prompt ?? IMAGE_THEMES.bright_fresh.prompt;
   const modifierPrompt = modifier ? `, ${modifier}` : '';
+  const creativityPrompt = creativity.promptModifier ? `, ${creativity.promptModifier}` : '';
 
-  return `Professional food photography of ${visualBase}, ${themePrompt}${modifierPrompt}, high resolution, no text, no watermarks, no people, photorealistic`;
+  return `Professional food photography of ${visualBase}, ${themePrompt}${creativityPrompt}${modifierPrompt}, high resolution, no text, no watermarks, no people, photorealistic`;
 }
 
 // ── Model Selection ──
