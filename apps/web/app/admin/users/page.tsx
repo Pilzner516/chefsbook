@@ -296,6 +296,10 @@ export default function UsersPage() {
                 <SortHeader label="Email" sortKeyName="email" />
                 <SortHeader label="Plan" sortKeyName="plan_tier" />
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Image Quality</th>
+                <th className="px-3 py-3 text-right font-medium text-gray-500 text-xs">Cost</th>
+                <th className="px-3 py-3 text-right font-medium text-gray-500 text-xs">Rev</th>
+                <th className="px-3 py-3 text-right font-medium text-gray-500 text-xs">Delta</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-500 text-xs">Throttle</th>
                 <SortHeader label="Role" sortKeyName="role" />
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Tags</th>
                 <th className="px-2 py-3 text-left font-medium text-gray-500 w-6">⚑</th>
@@ -354,6 +358,19 @@ export default function UsersPage() {
                         )}
                       </div>
                     </td>
+                    {(() => {
+                      const planPrices: Record<string, number> = { free: 0, chef: 4.99, family: 9.99, pro: 14.99 };
+                      const cost = (u as any).monthly_cost_usd ?? 0;
+                      const rev = planPrices[u.plan_tier] ?? 0;
+                      const delta = rev - cost;
+                      const tLevel = (u as any).throttle_level;
+                      return (<>
+                        <td className={`px-3 py-3 text-right text-xs font-mono ${cost > 1 ? 'text-red-600' : cost > 0.3 ? 'text-amber-600' : 'text-gray-400'}`}>${cost.toFixed(2)}</td>
+                        <td className="px-3 py-3 text-right text-xs font-mono text-gray-500">${rev.toFixed(2)}</td>
+                        <td className={`px-3 py-3 text-right text-xs font-mono ${delta >= 0 ? 'text-green-600' : 'text-red-600'}`}>{delta >= 0 ? '+' : ''}{delta.toFixed(2)}</td>
+                        <td className="px-3 py-3">{tLevel === 'red' ? <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Red</span> : tLevel === 'yellow' ? <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Yellow</span> : <span className="text-[10px] text-gray-300">—</span>}</td>
+                      </>);
+                    })()}
                     <td className="px-4 py-3"><span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleStyle.bg} ${roleStyle.text}`}>{roleStyle.label}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">

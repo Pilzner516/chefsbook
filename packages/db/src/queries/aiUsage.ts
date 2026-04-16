@@ -41,6 +41,11 @@ export async function logAiCall(params: AiCallLog): Promise<number> {
     });
   } catch { /* logging failure must never block AI calls */ }
 
+  // Check throttle after logging (non-blocking)
+  if (userId) {
+    checkAndUpdateThrottle(userId).catch(() => {});
+  }
+
   return costUsd;
 }
 

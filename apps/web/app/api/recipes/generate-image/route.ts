@@ -1,4 +1,4 @@
-import { supabaseAdmin, logAiCall } from '@chefsbook/db';
+import { supabaseAdmin, logAiCall, isUserThrottled } from '@chefsbook/db';
 import { triggerImageGeneration } from '../../../../lib/imageGeneration';
 
 export async function POST(req: Request) {
@@ -22,6 +22,11 @@ export async function POST(req: Request) {
     // Don't re-generate if already in progress or complete
     if (recipe.image_generation_status === 'generating' || recipe.image_generation_status === 'pending') {
       return Response.json({ status: 'already_generating' });
+    }
+
+    // Throttle check — soft failure for throttled users
+    if (await isUserThrottled(recipe.user_id)) {
+      return Response.json({ error: 'AI features are temporarily limited due to high demand.', throttled: true }, { status: 429 });
     }
 
     // Fetch ingredients for prompt

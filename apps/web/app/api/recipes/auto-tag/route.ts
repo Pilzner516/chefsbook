@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { callClaude, extractJSON } from '@chefsbook/ai';
+import { logAiCall } from '@chefsbook/db';
 
 function getServiceClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '', process.env.SUPABASE_SERVICE_ROLE_KEY ?? '');
@@ -95,6 +96,8 @@ export async function POST(req: Request) {
       await new Promise((r) => setTimeout(r, 1000));
     }
   }
+
+  logAiCall({ userId: null, action: 'suggest_tags', model: 'haiku' }).catch(() => {});
 
   return Response.json({ total, updated });
 }

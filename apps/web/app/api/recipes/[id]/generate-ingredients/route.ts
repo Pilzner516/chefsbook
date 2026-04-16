@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin, logAiCall } from '@chefsbook/db';
 import { generateMissingIngredients } from '@chefsbook/ai';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -49,6 +49,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       cuisine: recipe.cuisine,
       tags: recipe.tags,
     });
+
+    logAiCall({ userId: user.id, action: 'generate_ingredients', model: 'sonnet', recipeId }).catch(() => {});
 
     return Response.json({
       ingredients: generated,

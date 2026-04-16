@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin, logAiCall } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
 
 export async function POST(req: NextRequest) {
@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await translateRecipe(recipe, targetLanguage);
+
+    logAiCall({ userId: user?.id, action: 'translate_recipe', model: 'sonnet' }).catch(() => {});
 
     // Save full translation to DB (overwrites title-only)
     if (recipeId) {

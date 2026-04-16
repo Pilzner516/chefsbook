@@ -198,7 +198,7 @@ export async function POST(req: Request) {
 
     // Apply completeness gate + AI verdict + import logging
     try {
-      const { fetchRecipeCompleteness, applyCompletenessGate, applyAiVerdict, logImportAttempt, extractDomain } = await import('@chefsbook/db');
+      const { fetchRecipeCompleteness, applyCompletenessGate, applyAiVerdict, logImportAttempt, extractDomain, logAiCall } = await import('@chefsbook/db');
       const { isActuallyARecipe } = await import('@chefsbook/ai');
       const completeness = await fetchRecipeCompleteness(newRecipe.id);
       await applyCompletenessGate(newRecipe.id, completeness, newRecipe.visibility);
@@ -229,6 +229,8 @@ export async function POST(req: Request) {
         });
       }
     } catch {}
+
+    try { const { logAiCall } = await import('@chefsbook/db'); await logAiCall({ userId: user.id, action: 'import_url', model: 'sonnet' }); } catch {}
 
     return Response.json({
       success: true,

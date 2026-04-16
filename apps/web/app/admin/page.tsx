@@ -121,7 +121,35 @@ export default function AdminOverview() {
         ))}
       </div>
 
-      {/* Section 4 — Users by Plan (detail) */}
+      {/* Section 4 — Activity Feed */}
+      {(stats as any).activityFeed?.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <h2 className="text-sm font-semibold mb-3">Recent AI Activity (24h)</h2>
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
+            {((stats as any).activityFeed as any[]).map((ev: any, i: number) => {
+              const icons: Record<string, string> = {
+                import_url: '📥', generate_image: '🎨', regenerate_image: '🎨',
+                translate_recipe: '🌐', moderate_recipe: '🛡️', generate_ingredients: '🧪',
+                generate_meal_plan: '📅', suggest_tags: '🏷️', check_watermark: '🔍',
+                import_speak: '🎤', detect_language: '🔤',
+              };
+              const ago = Math.round((Date.now() - new Date(ev.time).getTime()) / 60000);
+              const agoStr = ago < 60 ? `${ago}m ago` : `${Math.round(ago / 60)}h ago`;
+              return (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <span className="w-4 text-center">{icons[ev.action] ?? '⚡'}</span>
+                  <span className="text-gray-400 w-12">{agoStr}</span>
+                  <span className="text-gray-600">{ev.action.replace(/_/g, ' ')}</span>
+                  {ev.user && <span className="text-gray-400">by @{ev.user}</span>}
+                  <span className="text-gray-300 ml-auto">{ev.model} ${ev.cost.toFixed(4)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Section 5 — Users by Plan */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h2 className="text-sm font-semibold mb-3">Users by Plan</h2>
         <div className="grid grid-cols-4 gap-3">

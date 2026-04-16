@@ -47,6 +47,7 @@ export async function generateRecipeImage(
           num_outputs: 1,
           output_format: 'jpg',
           output_quality: 85,
+          seed: Math.floor(Math.random() * 999999),
           ...(model.includes('flux-dev') ? { safety_tolerance: 5 } : {}),
         },
       }),

@@ -151,6 +151,81 @@ export default function AdminSettingsPage() {
         })()}
       </div>
 
+      {/* Throttle configuration */}
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 max-w-xl">
+        <h2 className="text-lg font-semibold mb-2">Throttle Configuration</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Automatically limits AI features for users who exceed expected cost thresholds.
+        </p>
+        {(() => {
+          const enabled = settings['throttle_enabled']?.value === 'true';
+          const windowDays = settings['throttle_window_days']?.value ?? '7';
+          const graceDays = settings['throttle_grace_days']?.value ?? '30';
+          const yellowPct = settings['throttle_yellow_pct']?.value ?? '150';
+          const redPct = settings['throttle_red_pct']?.value ?? '300';
+          const costs: Record<string, string> = {
+            free: settings['throttle_expected_cost_free']?.value ?? '0.05',
+            chef: settings['throttle_expected_cost_chef']?.value ?? '0.20',
+            family: settings['throttle_expected_cost_family']?.value ?? '0.71',
+            pro: settings['throttle_expected_cost_pro']?.value ?? '0.44',
+          };
+
+          const saveSetting = async (key: string, value: string) => {
+            setSaving(true);
+            try { await adminPost({ action: 'updateSetting', key, value }); await load(); } catch (e) { console.error(e); }
+            setSaving(false);
+          };
+
+          const w = parseInt(windowDays); const rp = parseInt(redPct);
+          return (
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-3">
+                <span className="w-28 text-gray-600">Status:</span>
+                <button onClick={() => saveSetting('throttle_enabled', enabled ? 'false' : 'true')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                >{enabled ? 'Enabled' : 'Disabled'}</button>
+              </div>
+              {[
+                { label: 'Rolling window', key: 'throttle_window_days', val: windowDays, suffix: 'days' },
+                { label: 'Grace period', key: 'throttle_grace_days', val: graceDays, suffix: 'days' },
+                { label: 'Yellow threshold', key: 'throttle_yellow_pct', val: yellowPct, suffix: '% of expected' },
+                { label: 'Red threshold', key: 'throttle_red_pct', val: redPct, suffix: '% of expected' },
+              ].map((f) => (
+                <div key={f.key} className="flex items-center gap-3">
+                  <span className="w-28 text-gray-600">{f.label}:</span>
+                  <input type="number" defaultValue={f.val} className="w-16 border border-gray-200 rounded px-2 py-1 text-sm"
+                    onBlur={(e) => saveSetting(f.key, e.target.value)} />
+                  <span className="text-xs text-gray-400">{f.suffix}</span>
+                </div>
+              ))}
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs text-gray-500 mb-2">Expected monthly cost by plan:</p>
+                {Object.entries(costs).map(([plan, val]) => (
+                  <div key={plan} className="flex items-center gap-3 mb-1">
+                    <span className="w-28 text-gray-600 capitalize">{plan}:</span>
+                    <span className="text-xs text-gray-400">$</span>
+                    <input type="text" defaultValue={val} className="w-16 border border-gray-200 rounded px-2 py-1 text-sm"
+                      onBlur={(e) => saveSetting(`throttle_expected_cost_${plan}`, e.target.value)} />
+                  </div>
+                ))}
+              </div>
+              <div className="pt-2 border-t border-gray-100 text-xs text-gray-400">
+                <p className="font-medium text-gray-500 mb-1">Effective red thresholds ({w}-day window):</p>
+                {Object.entries(costs).map(([plan, val]) => {
+                  const eff = (parseFloat(val) * (w / 30) * (rp / 100)).toFixed(3);
+                  return <span key={plan} className="mr-3">{plan}: ${eff}</span>;
+                })}
+              </div>
+              {parseInt(redPct) > 0 && Object.values(costs).some((v) => parseFloat(v) * (w / 30) * (rp / 100) < 0.10) && (
+                <div className="p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                  Some red thresholds are very low (&lt;$0.10). This may throttle normal users too aggressively.
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 max-w-xl">
         <h2 className="text-lg font-semibold mb-2">Permission Model</h2>
         <div className="text-sm text-gray-600 space-y-2">

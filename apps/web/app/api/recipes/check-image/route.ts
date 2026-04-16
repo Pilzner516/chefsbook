@@ -1,4 +1,5 @@
 import { checkImageForWatermarks } from '@chefsbook/ai';
+import { logAiCall } from '@chefsbook/db';
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,9 @@ export async function POST(req: Request) {
     }
 
     const result = await checkImageForWatermarks(imageBase64, mimeType);
+
+    logAiCall({ userId: null, action: 'check_watermark', model: 'haiku' }).catch(() => {});
+
     return Response.json(result);
   } catch (err: any) {
     // On failure, allow the upload (safe default)

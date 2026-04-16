@@ -6,6 +6,7 @@ import {
   applyCompletenessGate,
   applyAiVerdict,
   extractDomain,
+  logAiCall,
 } from '@chefsbook/db';
 import { isActuallyARecipe } from '@chefsbook/ai';
 
@@ -50,6 +51,8 @@ export async function POST(req: NextRequest) {
       aiVerdict = result.verdict;
       aiReason = result.reason;
       await applyAiVerdict(recipeId, aiVerdict, aiReason, intendedVisibility);
+
+      logAiCall({ userId, action: 'moderate_recipe', model: 'haiku', recipeId }).catch(() => {});
     }
 
     if (url) {

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { generateMealPlan } from '@chefsbook/ai';
 import type { MealPlanPreferences } from '@chefsbook/ai';
+import { logAiCall } from '@chefsbook/db';
 
 function getServiceClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '', process.env.SUPABASE_SERVICE_ROLE_KEY ?? '');
@@ -33,5 +34,8 @@ export async function POST(req: Request) {
   }));
 
   const plan = await generateMealPlan(preferences, userRecipes);
+
+  logAiCall({ userId: user?.id, action: 'generate_meal_plan', model: 'sonnet' }).catch(() => {});
+
   return Response.json({ plan });
 }

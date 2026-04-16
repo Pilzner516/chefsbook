@@ -35,7 +35,13 @@ export async function GET(req: NextRequest) {
     // Fetch emails from auth.users
     const { data: { users: authUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 200 });
     const emailMap = new Map((authUsers ?? []).map((u: any) => [u.id, u.email]));
-    const usersWithEmail = (data ?? []).map((u: any) => ({ ...u, email: emailMap.get(u.id) ?? null }));
+    // Fetch throttle/cost data
+    const { data: throttleData } = await supabaseAdmin.from('user_throttle').select('user_id, monthly_cost_usd, throttle_level, is_throttled');
+    const throttleMap = new Map((throttleData ?? []).map((t: any) => [t.user_id, t]));
+    const usersWithEmail = (data ?? []).map((u: any) => {
+      const t = throttleMap.get(u.id);
+      return { ...u, email: emailMap.get(u.id) ?? null, monthly_cost_usd: t?.monthly_cost_usd ?? 0, throttle_level: t?.throttle_level ?? null };
+    });
     return NextResponse.json({ users: usersWithEmail, admins: admins ?? [], tags: tags ?? [], flags: flags ?? [] });
   }
 
@@ -290,12 +296,37 @@ export async function GET(req: NextRequest) {
     }
     const today = new Date().toISOString().split('T')[0];
     const { count: newToday } = await supabaseAdmin.from('user_profiles').select('*', { count: 'exact', head: true }).gte('created_at', today);
+
+    // Activity feed — last 20 events from ai_usage_log
+    const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
+    const { data: recentAi } = await supabaseAdmin.from('ai_usage_log')
+      .select('action, model, cost_usd, user_id, created_at')
+      .gte('created_at', oneDayAgo)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    // Map user_ids to usernames for feed display
+    const feedUserIds = [...new Set((recentAi ?? []).map((r: any) => r.user_id).filter(Boolean))];
+    let feedUsernames = new Map<string, string>();
+    if (feedUserIds.length > 0) {
+      const { data: feedProfiles } = await supabaseAdmin.from('user_profiles').select('id, username').in('id', feedUserIds);
+      feedUsernames = new Map((feedProfiles ?? []).map((p: any) => [p.id, p.username ?? p.id.slice(0, 8)]));
+    }
+    const activityFeed = (recentAi ?? []).map((r: any) => ({
+      action: r.action,
+      model: r.model,
+      cost: parseFloat(r.cost_usd),
+      user: feedUsernames.get(r.user_id) ?? null,
+      time: r.created_at,
+    }));
+
     return NextResponse.json({
       totalUsers: users.count ?? 0,
       planCounts,
       newToday: newToday ?? 0,
       totalRecipes: recipes.count ?? 0,
       flaggedCount: flagged.count ?? 0,
+      activityFeed,
     });
   }
 

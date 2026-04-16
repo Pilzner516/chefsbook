@@ -31,5 +31,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Monthly throttle reset — first day of the month
+  if (new Date().getDate() === 1) {
+    try {
+      await supabaseAdmin
+        .from('user_throttle')
+        .update({
+          is_throttled: false,
+          throttle_level: null,
+          throttled_at: null,
+          throttled_reason: null,
+          monthly_cost_usd: 0,
+          monthly_cost_updated_at: new Date().toISOString(),
+        })
+        .eq('admin_override', false)
+        .eq('is_throttled', true);
+      triggered.push('monthly_throttle_reset');
+    } catch { /* non-critical */ }
+  }
+
   return NextResponse.json({ ok: true, triggered });
 }

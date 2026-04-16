@@ -115,12 +115,12 @@ export interface RegenPill {
 }
 
 export const REGEN_PILLS: RegenPill[] = [
-  { id: 'wrong_dish', label: 'Dish looks wrong', modifier: 'focus more precisely on the actual dish appearance and ingredients' },
-  { id: 'update_scene', label: 'Change the scene', modifier: 'different background setting and surface material' },
-  { id: 'brighter', label: 'Make it brighter', modifier: 'brighter lighting, more vibrant colors, airy atmosphere' },
-  { id: 'moodier', label: 'Make it moodier', modifier: 'darker moodier lighting, rich deep tones, dramatic shadows' },
-  { id: 'closer', label: 'Zoom in closer', modifier: 'extreme close-up macro shot, shallow depth of field, details' },
-  { id: 'overhead', label: 'Overhead view', modifier: 'overhead flat lay aerial view, looking straight down' },
+  { id: 'wrong_dish', label: 'Dish looks wrong', modifier: 'CRITICAL: the image must clearly show the dish named in the title. Completely different angle, plating, and background. Make the dish instantly recognizable.' },
+  { id: 'update_scene', label: 'Change the scene', modifier: 'completely different background environment and surface material, different color palette' },
+  { id: 'brighter', label: 'Make it brighter', modifier: 'very bright high-key lighting, white marble surface, airy overexposed atmosphere' },
+  { id: 'moodier', label: 'Make it moodier', modifier: 'dark low-key dramatic lighting, deep shadows, candlelit atmosphere, rich dark tones' },
+  { id: 'closer', label: 'Zoom in closer', modifier: 'extreme macro close-up shot, lens inches from food, bokeh background' },
+  { id: 'overhead', label: 'Overhead view', modifier: 'perfect overhead aerial flat lay, camera pointing straight down at the dish' },
 ];
 
 // ── Creativity Levels ──
@@ -148,24 +148,41 @@ export function buildImagePrompt(
   modifier?: string,
   creativityLevel: CreativityLevel = 3,
 ): string {
+  // Clean dish name — always anchors the prompt
+  const dishName = recipe.title
+    .replace(/recipe/gi, '')
+    .replace(/how to make/gi, '')
+    .replace(/\|.*$/, '')
+    .trim();
+
   const keyIng = (recipe.ingredients ?? [])
-    .slice(0, 4)
+    .slice(0, 3)
     .map((i) => i.ingredient || i.name || '')
     .filter(Boolean)
     .join(', ');
 
   const creativity = CREATIVITY_LEVELS[creativityLevel];
 
-  // Only use source description at levels 1-2 (faithful); 3+ uses title+ingredients only
-  const visualBase = (creativity.useSourceDescription && recipe.source_image_description)
-    ? recipe.source_image_description
-    : `${recipe.title}${recipe.cuisine ? `, ${recipe.cuisine} cuisine` : ''}${keyIng ? `, featuring ${keyIng}` : ''}`;
+  // Source description: supplementary only at levels 1-2, NEVER replaces dish name
+  const sourceContext = (creativity.useSourceDescription && recipe.source_image_description)
+    ? `, presented similarly to: ${recipe.source_image_description}`
+    : '';
 
   const themePrompt = IMAGE_THEMES[theme]?.prompt ?? IMAGE_THEMES.bright_fresh.prompt;
   const modifierPrompt = modifier ? `, ${modifier}` : '';
   const creativityPrompt = creativity.promptModifier ? `, ${creativity.promptModifier}` : '';
 
-  return `Professional food photography of ${visualBase}, ${themePrompt}${creativityPrompt}${modifierPrompt}, high resolution, no text, no watermarks, no people, photorealistic`;
+  return [
+    `Professional food photography of ${dishName}`,
+    keyIng ? `featuring ${keyIng}` : '',
+    recipe.cuisine ? `${recipe.cuisine} cuisine` : '',
+    `served in a dish appropriate for ${dishName}`,
+    sourceContext,
+    creativityPrompt,
+    themePrompt,
+    modifierPrompt,
+    'high resolution, no text, no watermarks, no people, photorealistic',
+  ].filter(Boolean).join(', ');
 }
 
 // ── Model Selection ──
