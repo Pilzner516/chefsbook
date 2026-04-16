@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 153 — Fix admin site ratings from actual success rates)
+- [2026-04-16] Fixed /admin/import-sites star ratings: recalculated from actual success rates (successful_attempts / total_attempts) instead of flawed HTTP-status-based crawl ratings from session 143. Thresholds: ≥80%=5★, 60-79%=4★, 40-59%=3★, 20-39%=2★, <20%=1★. Domains with 0 attempts get NULL rating shown as "— Untested" in grey.
+- [2026-04-16] Admin UI now shows actual success rate % alongside stars (e.g. "★★★★ 75%") so admin can see both at a glance.
+- [2026-04-16] Added "Recalculate Ratings" admin button + API action (recalculateRatings) for future re-runs without needing SQL.
+- [2026-04-16] Migration 042 applied on RPi5: recalculates all ratings from tracker data. Final distribution: 148×1★, 8×2★, 13×3★, 37×4★, 16×5★, 4×untested.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit 1bd2913, pm2 restarted; https://chefsbk.app/, /dashboard, /admin/import-sites all HTTP 200.
+
 ## 2026-04-16 (session 152 — Delete crawl recipes + import-time translation)
 - [2026-04-16] Deleted all 32 ChefsBook-tagged crawl recipes: recipe_user_photos (32 rows), recipes (32 rows), storage objects (32 ai-generated/*.jpg files). Verified 0 remaining.
 - [2026-04-16] Migration 041 applied on RPi5: recipes table gains source_language TEXT and translated_from TEXT columns. PostgREST restarted.
