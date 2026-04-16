@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 155 — Fix rating overwrite: aggregate-only recalculation)
+- [2026-04-16] Added `recalculateRating(domain)` + `recalculateAllRatings()` to @chefsbook/db. Rating always derived from aggregate total_attempts/successful_attempts (≥80%=5★, 60-79%=4★, 40-59%=3★, 20-39%=2★, <20%=1★, no data=NULL). Single source of truth.
+- [2026-04-16] Fixed test-sites route: logs to import_attempts + triggers recalculateRating() instead of directly overwriting rating from a single test result. This was the root cause of ratings dropping (e.g. 3★→1★ after one failed crawl).
+- [2026-04-16] Fixed /api/import/url: replaced duplicated inline tracker update with logImportAttempt() which handles import_attempts logging, tracker increment, and rating recalculation.
+- [2026-04-16] Admin recalculateRatings action now delegates to shared recalculateAllRatings().
+- [2026-04-16] Recalculated all 228 site ratings on RPi5. Distribution: 150×1★, 8×2★, 9×3★, 39×4★, 18×5★, 4×untested. Deployed at commit 9dba897.
+
 ## 2026-04-16 (session 154 — Admin test modal with rating filter)
 - [2026-04-16] Replaced "Run all tests now" button on /admin/import-sites with a filtered test modal. 7 rating filter pills (All, Untested, 1-5 stars), multi-select with "All" exclusive toggle. Default selection: Untested + 1★ + 2★.
 - [2026-04-16] Live count ("N sites selected") and time estimate ("~N minutes" at 8s/site) update as pills are toggled. Run button disabled when 0 sites selected.
