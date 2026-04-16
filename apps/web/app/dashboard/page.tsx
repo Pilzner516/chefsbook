@@ -2,6 +2,7 @@
 // TODO(web): add recipe version sub-cards to recipe list cards
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, listRecipes, deleteRecipe, toggleFavourite, getRecipe, listShoppingLists, getPrimaryPhotos, getBatchTranslatedTitles } from '@chefsbook/db';
 import type { Recipe, ShoppingList } from '@chefsbook/db';
@@ -31,11 +32,12 @@ function getStoredSort(): SortKey {
 
 export default function DashboardPage() {
   const { i18n } = useTranslation();
+  const searchParams = useSearchParams();
   const [confirm, ConfirmDialog] = useConfirmDialog();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState(searchParams.get('filter') === 'incomplete' ? 'Incomplete' : 'All');
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<{ id: string; email: string; username: string | null } | null>(null);
   const [selectMode, setSelectMode] = useState(false);
@@ -207,6 +209,9 @@ export default function DashboardPage() {
     const pills: { label: string; test: (r: Recipe) => boolean }[] = [
       { label: 'All', test: () => true },
     ];
+    if (recipes.some((r) => (r as any).is_complete === false)) {
+      pills.push({ label: 'Incomplete', test: (r) => (r as any).is_complete === false });
+    }
     if (recipes.some((r) => r.is_favourite)) {
       pills.push({ label: 'Favourites', test: (r) => r.is_favourite });
     }
