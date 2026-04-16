@@ -104,7 +104,8 @@ export default function RecipePage() {
   const [flagComment, setFlagComment] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
-  const [regenUsed, setRegenUsed] = useState(false);
+  const [showChangeImageModal, setShowChangeImageModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const seekYouTube = useCallback((seconds: number) => {
@@ -898,18 +899,32 @@ export default function RecipePage() {
               alt={recipe.title}
               className={`w-full h-full ${recipe.cookbook_id ? 'object-contain' : 'object-cover'}`}
             />
-            {isOwner && (
-              <label className="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1.5 rounded-input text-xs font-medium cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
+            {isOwner && !regenerating && (
+              <button
+                onClick={() => setShowChangeImageModal(true)}
+                className="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1.5 rounded-input text-xs font-medium cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5"
+              >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
                 </svg>
-                {uploading ? 'Uploading...' : 'Change image'}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImageUpload(file);
-                }} />
-              </label>
+                Change image
+              </button>
+            )}
+            {/* Hidden file input for upload from modal */}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file);
+            }} />
+            {/* Regenerating overlay */}
+            {regenerating && (
+              <div className="absolute inset-0 bg-cb-bg/90 flex flex-col items-center justify-center gap-3 z-10">
+                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center animate-pulse shadow-sm">
+                  <img src="/images/chefs-hat.png" alt="" className="w-10 h-10 opacity-70" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+                <p className="text-sm font-medium text-cb-text">Regenerating your image...</p>
+                <p className="text-xs text-cb-secondary">This takes about 10-15 seconds</p>
+              </div>
             )}
           </div>
         ) : isOwner ? (
@@ -951,50 +966,141 @@ export default function RecipePage() {
         ) : null}
       </div>
 
-      {/* Regeneration pills for AI images */}
-      {isOwner && !regenerating && userPhotos.some((p) => p.is_ai_generated && (p.regen_count ?? 0) < 1) && (
-        <div className="max-w-4xl mx-auto px-6 mt-3">
-          <p className="text-xs text-cb-secondary mb-2">Not quite right?</p>
-          <div className="flex flex-wrap gap-2">
-            {REGEN_PILLS.map((pill) => (
-              <button
-                key={pill.id}
-                onClick={async () => {
-                  setRegenerating(true);
-                  try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const res = await fetch('/api/recipes/regenerate-image', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-                      body: JSON.stringify({ recipeId: recipe?.id, pillId: pill.id }),
-                    });
-                    if (!res.ok) {
-                      const body = await res.json().catch(() => ({}));
-                      alert(body.error || 'Failed to regenerate');
-                    } else {
-                      setRegenUsed(true);
-                    }
-                  } catch { /* silent */ }
+      {/* Change Image Modal */}
+      {showChangeImageModal && recipe && (() => {
+        const aiPhoto = userPhotos.find((p) => p.is_ai_generated);
+        const hasAiImage = !!aiPhoto;
+        const regenAvailable = hasAiImage && (aiPhoto.regen_count ?? 0) < 1;
+
+        const handleRegenPill = async (pillId: string) => {
+          setShowChangeImageModal(false);
+          setRegenerating(true);
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('/api/recipes/regenerate-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+              body: JSON.stringify({ recipeId: recipe.id, pillId }),
+            });
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}));
+              alert(body.error || 'Failed to regenerate');
+              setRegenerating(false);
+              return;
+            }
+            // Poll for completion
+            let attempts = 0;
+            const poll = setInterval(async () => {
+              attempts++;
+              if (attempts > 20) {
+                clearInterval(poll);
+                setRegenerating(false);
+                alert('Image generation is taking longer than expected. Refresh the page in a minute.');
+                return;
+              }
+              try {
+                const statusRes = await fetch(`/api/recipes/${recipe.id}/image-status`);
+                const { status, url } = await statusRes.json();
+                if (status === 'complete' && url) {
+                  clearInterval(poll);
                   setRegenerating(false);
+                  // Update the photo in state
+                  setUserPhotos((prev) => prev.map((p) =>
+                    p.is_ai_generated ? { ...p, url, regen_count: (p.regen_count ?? 0) + 1 } : p
+                  ));
+                } else if (status === 'failed') {
+                  clearInterval(poll);
+                  setRegenerating(false);
+                  alert('Image generation failed. Please try again.');
+                }
+              } catch { /* keep polling */ }
+            }, 1500);
+          } catch {
+            setRegenerating(false);
+          }
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowChangeImageModal(false)}>
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Change Recipe Image</h2>
+
+              <button
+                onClick={() => {
+                  setShowChangeImageModal(false);
+                  fileInputRef.current?.click();
                 }}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text hover:border-cb-primary transition-colors"
+                className="w-full text-left px-4 py-3 rounded-lg border border-cb-border hover:border-cb-primary hover:bg-cb-bg transition-colors mb-3 flex items-center gap-3"
               >
-                {pill.label}
+                <span className="text-lg">&#128247;</span>
+                <div>
+                  <p className="text-sm font-semibold text-cb-text">Upload your own photo</p>
+                  <p className="text-xs text-cb-secondary">Use your own food photo</p>
+                </div>
               </button>
-            ))}
+
+              {hasAiImage && (
+                <>
+                  <div className="border-t border-cb-border my-3" />
+                  <div className="px-1 mb-2">
+                    <p className="text-sm font-semibold text-cb-text mb-1 flex items-center gap-1.5">
+                      <span>&#127912;</span> Regenerate with AI
+                    </p>
+                    <p className="text-xs text-cb-secondary mb-3">Get a new AI-generated image</p>
+                    {regenAvailable ? (
+                      <>
+                        <p className="text-xs text-cb-muted mb-2">Why doesn&apos;t it look right?</p>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {REGEN_PILLS.map((pill) => (
+                            <button
+                              key={pill.id}
+                              onClick={() => handleRegenPill(pill.id)}
+                              className="px-3 py-1.5 rounded-full text-xs font-medium bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text hover:border-cb-primary transition-colors"
+                            >
+                              {pill.label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-cb-muted">1 regeneration available</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-cb-muted">You&apos;ve used your regeneration for this recipe</p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {!hasAiImage && (
+                <>
+                  <div className="border-t border-cb-border my-3" />
+                  <button
+                    onClick={() => {
+                      setShowChangeImageModal(false);
+                      handleGenerateImage();
+                    }}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-cb-border hover:border-cb-primary hover:bg-cb-bg transition-colors flex items-center gap-3"
+                  >
+                    <span className="text-lg">&#127912;</span>
+                    <div>
+                      <p className="text-sm font-semibold text-cb-text">Generate an AI image</p>
+                      <p className="text-xs text-cb-secondary">Let AI create a food photo</p>
+                    </div>
+                  </button>
+                </>
+              )}
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setShowChangeImageModal(false)}
+                  className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      {regenerating && (
-        <div className="max-w-4xl mx-auto px-6 mt-3">
-          <p className="text-sm text-cb-green animate-pulse">Generating new image...</p>
-        </div>
-      )}
-      {regenUsed && !regenerating && (
-        <div className="max-w-4xl mx-auto px-6 mt-3">
-          <p className="text-xs text-cb-green">New image is generating in the background. Refresh in a minute to see it.</p>
-        </div>
-      )}
+        );
+      })()}
 
       {/* User Photo Gallery */}
       {isOwner && (
