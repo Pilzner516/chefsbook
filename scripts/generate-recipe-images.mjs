@@ -254,9 +254,9 @@ async function main() {
       }
     }
 
-    // Rate limit: 5 seconds between requests
+    // Rate limit: 12 seconds between requests (Replicate limits to 6/min on low-credit accounts)
     if (i < batch.length - 1 && !DRY_RUN) {
-      await new Promise(r => setTimeout(r, 5000));
+      await new Promise(r => setTimeout(r, 12000));
     }
   }
 
