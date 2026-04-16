@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 150 — Fix flagging system + AI moderation toggle)
+- [2026-04-16] CRITICAL FIX: removed ALL auto-visibility changes triggered by user flags. /api/recipes/flag no longer sets visibility='private', copyright_review_pending=true, or copyright_locked_at on ANY flag type. User flags now only: (1) insert recipe_flags row, (2) notify admins, (3) return thank-you. Content remains completely unchanged and visible.
+- [2026-04-16] Removed client-side optimistic copyright lock: recipe/[id]/page.tsx no longer sets copyright_review_pending=true or visibility='private' in local state when user submits a copyright flag.
+- [2026-04-16] AI moderation fixed: saveWithModeration.ts now checks system_settings.ai_auto_moderation_enabled before auto-acting. Mild verdicts ALWAYS flag-only (never auto-hide, regardless of toggle). Serious verdicts auto-hide + freeze ONLY when toggle is ON.
+- [2026-04-16] Migration 040 applied on RPi5: expanded recipe_flags.flag_type CHECK to include 'impersonation' and 'adult_content'. New system_settings table (key TEXT PK, value TEXT, updated_by UUID, updated_at TIMESTAMPTZ) with ai_auto_moderation_enabled=true and ai_auto_moderation_threshold=serious. PostgREST restarted.
+- [2026-04-16] Report modal upgraded: replaced simple dropdown with proper modal — 6 pill-button reasons (copyright, inappropriate, spam, impersonation, adult content, other) + optional 500-char comment field. Submit disabled until pill selected. Brief thank-you toast after submit.
+- [2026-04-16] /admin/settings page: AI Auto-Moderation ON/OFF toggle with clear description of what each state means. Shows applies-to, threshold, and last-changed timestamp. Permission model reference displayed below.
+- [2026-04-16] /api/admin: new GET page=settings returns all system_settings; new POST action=updateSetting upserts key/value with updated_by + updated_at. Admin sidebar updated with Settings nav link.
+- [2026-04-16] CLAUDE.md updated with Moderation Permission Model section: users report only, AI serious+toggle, proctors hide/warn, admins all actions. "NEVER auto-change content visibility on user flag."
+- [2026-04-16] feature-registry.md updated: recipe flagging system row corrected (no auto-visibility); copyright visibility lock row updated (admin-only); new AI moderation toggle row.
+- [2026-04-16] Typecheck clean (web + mobile). Deployed to RPi5 at commit 3599ebe, pm2 restarted; https://chefsbk.app/, /admin/settings, /admin/copyright all HTTP 200.
+
 ## 2026-04-16 (session 149 — Diagnose step rewrite backfill failures)
 - [2026-04-16] Root cause: rewrite-imported-steps.mjs 400 errors were NOT a schema or code bug — the Anthropic API key has insufficient credit balance. Script schema access is correct (recipe_steps.instruction column, recipe queries, step updates all work). 82 recipes found, 77 attempted, all failed with "Your credit balance is too low to access the Anthropic API."
 - [2026-04-16] Script improved: added response body to Claude error messages (was just "Claude 400", now shows full error JSON). Added early-exit on credit/auth errors — aborts after first failure instead of burning through all 82 recipes at 1/second.
