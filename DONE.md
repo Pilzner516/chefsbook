@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 164 — Move theme button to header row)
+- [2026-04-16] Moved "My Image Theme" button from filter pills row to header row between Select and + Add Recipe. Styled to match existing header buttons (border, rounded-input).
+- [2026-04-16] Renamed button label from "Theme" to "My Image Theme".
+- [2026-04-16] Deployed to RPi5 at commit 9955aca. chefsbk.app/ and /dashboard HTTP 200.
+
 ## 2026-04-16 (session 163 — Fix "Review now" link on incomplete recipes banner)
 - [2026-04-16] Fixed: "Review now →" link on the amber IncompleteRecipesBanner was a dead link. It navigated to /dashboard?filter=incomplete but the dashboard never read the URL parameter.
 - [2026-04-16] Added useSearchParams() to dashboard page — reads ?filter=incomplete from URL and auto-activates the 'Incomplete' filter pill on mount.
