@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 154 — Admin test modal with rating filter)
+- [2026-04-16] Replaced "Run all tests now" button on /admin/import-sites with a filtered test modal. 7 rating filter pills (All, Untested, 1-5 stars), multi-select with "All" exclusive toggle. Default selection: Untested + 1★ + 2★.
+- [2026-04-16] Live count ("N sites selected") and time estimate ("~N minutes" at 8s/site) update as pills are toggled. Run button disabled when 0 sites selected.
+- [2026-04-16] /api/admin/test-sites now accepts `ratings` array in POST body (numbers + null for untested). Server queries import_site_tracker by rating, filters KNOWN_RECIPE_SITES to matching domains.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit 01d6ac4, pm2 restarted; https://chefsbk.app/, /dashboard, /admin/import-sites all HTTP 200.
+
 ## 2026-04-16 (session 153 — Fix admin site ratings from actual success rates)
 - [2026-04-16] Fixed /admin/import-sites star ratings: recalculated from actual success rates (successful_attempts / total_attempts) instead of flawed HTTP-status-based crawl ratings from session 143. Thresholds: ≥80%=5★, 60-79%=4★, 40-59%=3★, 20-39%=2★, <20%=1★. Domains with 0 attempts get NULL rating shown as "— Untested" in grey.
 - [2026-04-16] Admin UI now shows actual success rate % alongside stars (e.g. "★★★★ 75%") so admin can see both at a glance.
