@@ -311,6 +311,12 @@ export default function DashboardPage() {
                   Select
                 </button>
               )}
+              <button
+                onClick={() => setShowThemePicker(true)}
+                className="border border-cb-border px-4 py-2 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text hover:bg-cb-card transition-colors flex items-center gap-1.5"
+              >
+                {IMAGE_THEMES[imageTheme]?.emoji} My Image Theme
+              </button>
               <Link
                 href="/dashboard/scan"
                 className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
@@ -368,12 +374,6 @@ export default function DashboardPage() {
               {f.label}
             </button>
           ))}
-          <button
-            onClick={() => setShowThemePicker(true)}
-            className="px-3 py-1.5 rounded-full text-sm font-medium bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text hover:border-cb-primary transition-colors ml-1"
-          >
-            {IMAGE_THEMES[imageTheme]?.emoji} Theme
-          </button>
         </div>
         {/* Sort dropdown */}
         <select
