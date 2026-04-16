@@ -310,10 +310,22 @@ export default function ScanTab() {
         ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
       const extractedImageUrl = ogMatch?.[1] && /^https?:\/\//.test(ogMatch[1]) ? ogMatch[1] : null;
 
-      const [scanned] = await Promise.all([
+      const [scannedRaw] = await Promise.all([
         importFromUrl(html, target),
         pexelsPromise,
       ]);
+
+      // Translate if non-English (uses detectLanguage + translateRecipeContent from @chefsbook/ai)
+      let scanned = scannedRaw;
+      try {
+        const { detectLanguage, translateRecipeContent } = await import('@chefsbook/ai');
+        const sampleText = `${scannedRaw.title ?? ''} ${(scannedRaw.ingredients ?? []).slice(0, 3).map((i: any) => i.ingredient ?? '').join(' ')}`;
+        const srcLang = await detectLanguage(sampleText);
+        if (srcLang !== 'en') {
+          const translated = await translateRecipeContent(scannedRaw as any, 'en', srcLang);
+          scanned = { ...scannedRaw, ...translated } as typeof scannedRaw;
+        }
+      } catch { /* translation failure non-blocking */ }
 
       // Refetch Pexels with actual recipe title
       if (scanned.title) {

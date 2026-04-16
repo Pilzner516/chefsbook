@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent } from '@chefsbook/ai';
 import { ensureTitle } from '../../import/_utils';
 
 function getServiceClient() {
@@ -126,9 +126,19 @@ export async function POST(req: Request) {
       recipe = await importFromUrl(text, url);
     }
 
+    // Translate if non-English
+    let sourceLanguage = 'en';
+    try {
+      const sampleText = `${recipe.title ?? ''} ${(recipe.ingredients ?? []).slice(0, 3).map((i: any) => i.ingredient ?? '').join(' ')}`;
+      sourceLanguage = await detectLanguage(sampleText);
+      if (sourceLanguage !== 'en') {
+        recipe = await translateRecipeContent(recipe, 'en', sourceLanguage);
+      }
+    } catch { /* translation failure non-blocking */ }
+
     const { title, generated } = ensureTitle(recipe, url);
     const isIncomplete = !recipe.ingredients?.length || !recipe.steps?.length;
-    const tags: string[] = [];
+    const tags: string[] = [...(recipe.tags ?? [])];
     if (generated) tags.push('_unresolved');
     if (isIncomplete) tags.push('_incomplete');
 
@@ -148,6 +158,8 @@ export async function POST(req: Request) {
         image_url: imageUrl,
         notes: recipe.notes,
         tags,
+        source_language: sourceLanguage,
+        translated_from: sourceLanguage !== 'en' ? sourceLanguage : null,
       })
       .select()
       .single();

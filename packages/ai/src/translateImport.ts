@@ -63,6 +63,7 @@ export async function translateRecipeContent(
     ingredients?: Array<{ quantity?: number | null; unit?: string | null; ingredient: string; preparation?: string | null; optional?: boolean; group_label?: string | null }>;
     steps?: Array<{ step_number?: number; instruction: string; timer_minutes?: number | null; group_label?: string | null }>;
     cuisine?: string | null;
+    tags?: string[];
   },
   targetLanguage: string,
   sourceLanguage: string,
@@ -84,13 +85,17 @@ export async function translateRecipeContent(
     `${i.quantity ?? ''} ${i.unit ?? ''} ${i.ingredient}${i.preparation ? ` (${i.preparation})` : ''}`.trim()
   );
   const stepsList = (recipe.steps ?? []).map((s) => s.instruction);
+  // Filter out system/metadata tags (prefixed with _ or known system tags)
+  const systemTags = new Set(['ChefsBook', 'ChefsBook-v2', '_incomplete', '_unresolved']);
+  const userTags = (recipe.tags ?? []).filter((t) => !systemTags.has(t) && !t.startsWith('_') && !/\.(com|org|net|it|de|fr|es|nl|no|dk|pl)$/.test(t));
 
   const prompt = `Translate this recipe from ${from} to ${to}.
 
 Rules:
-- Translate title, description, ingredient NAMES, preparation notes, and step instructions
+- Translate title, description, ingredient NAMES, preparation notes, step instructions, and tags
 - Keep ALL quantities and units EXACTLY as-is (numbers, g, ml, cups, tsp, etc.)
 - Keep cooking temperatures, times, and measurements exact
+- Tags must be short lowercase ${to} words (e.g. "chicken", "baked", "quick", "comfort-food")
 - Preserve the recipe's style and voice
 - Return ONLY valid JSON:
 
@@ -98,7 +103,8 @@ Rules:
   "title": "translated title",
   "description": "translated description or null",
   "ingredients": ["translated ingredient line 1", "translated ingredient line 2"],
-  "steps": ["translated step 1", "translated step 2"]
+  "steps": ["translated step 1", "translated step 2"],
+  "tags": ["translated-tag-1", "translated-tag-2"]
 }
 
 Recipe:
@@ -107,7 +113,8 @@ Description: ${recipe.description ?? 'none'}
 Ingredients:
 ${ingredientsList.map((ing, i) => `${i + 1}. ${ing}`).join('\n')}
 Steps:
-${stepsList.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+${stepsList.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+Tags: ${userTags.join(', ') || 'none'}`;
 
   try {
     const raw = await callClaude({ model: SONNET, prompt, maxTokens: 4000 });
@@ -116,14 +123,13 @@ ${stepsList.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
       description: string | null;
       ingredients: string[];
       steps: string[];
+      tags?: string[];
     }>(raw);
 
     // Merge translated ingredient names back into the structured format
     const mergedIngredients = (recipe.ingredients ?? []).map((orig, i) => {
       if (i < translated.ingredients.length) {
-        // Parse the translated ingredient line — keep original structure, update name
         const translatedLine = translated.ingredients[i];
-        // Simple approach: replace the ingredient name with the translated version
         return { ...orig, ingredient: translatedLine };
       }
       return orig;
@@ -137,12 +143,18 @@ ${stepsList.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
       return orig;
     });
 
+    // Merge tags: keep system/domain tags as-is, replace user tags with translated ones
+    const keptTags = (recipe.tags ?? []).filter((t) => systemTags.has(t) || t.startsWith('_') || /\.(com|org|net|it|de|fr|es|nl|no|dk|pl)$/.test(t));
+    const translatedTags = (translated.tags ?? []).map((t) => t.toLowerCase().trim()).filter(Boolean);
+    const mergedTags = [...keptTags, ...translatedTags];
+
     return {
       ...recipe,
       title: translated.title ?? recipe.title,
       description: translated.description ?? recipe.description,
       ingredients: mergedIngredients,
       steps: mergedSteps,
+      tags: mergedTags.length > 0 ? mergedTags : recipe.tags,
       source_language: sourceLanguage,
       translated_from: sourceLanguage,
     };

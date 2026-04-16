@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from '@chefsbook/ai';
+import { callClaude, extractJSON, detectLanguage, translateRecipeContent } from '@chefsbook/ai';
 
 const EXTRACT_PROMPT = `You are a recipe extraction expert. The following text was extracted from a file.
 Find ALL recipes in this content. For each recipe found, extract:
@@ -135,6 +135,17 @@ export async function POST(req: Request) {
       if (!Array.isArray(recipes)) recipes = [recipes];
     } catch {
       recipes = [];
+    }
+
+    // Translate non-English recipes to English
+    for (let i = 0; i < recipes.length; i++) {
+      try {
+        const sample = `${recipes[i].title ?? ''} ${(recipes[i].ingredients ?? []).slice(0, 2).map((ing: any) => ing.ingredient ?? '').join(' ')}`;
+        const srcLang = await detectLanguage(sample);
+        if (srcLang !== 'en') {
+          recipes[i] = await translateRecipeContent(recipes[i], 'en', srcLang);
+        }
+      } catch { /* translation failure non-blocking */ }
     }
 
     return Response.json({ fileType, recipes, total: recipes.length });
