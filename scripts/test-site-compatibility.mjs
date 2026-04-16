@@ -35,6 +35,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const SITE_LIST_PATH = path.join(ROOT, 'packages/ai/src/siteList.ts');
 
+// Load env from .env.local if not already set
+function loadEnvFile() {
+  try {
+    const envPath = path.join(ROOT, 'apps/web/.env.local');
+    const content = fs.readFileSync(envPath, 'utf-8');
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx < 0) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim();
+      if (!process.env[key]) process.env[key] = val;
+    }
+  } catch { /* no .env.local */ }
+}
+loadEnvFile();
+
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://localhost:8000';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const IMPORT_ENDPOINT = process.env.IMPORT_ENDPOINT ?? 'http://localhost:3000/api/import/url';
