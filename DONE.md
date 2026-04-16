@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 166 — AI cost analysis report)
+- [2026-04-16] Inventoried all 35+ AI functions: 19 Haiku ($0.0001-$0.005/call), 14 Sonnet ($0.003-$0.020/call), 3 Replicate ($0.003-$0.025/call).
+- [2026-04-16] Cost per URL import: $0.007 (JSON-LD+Schnell) to $0.047 (non-English+Dev). Weighted average: $0.014 (Schnell), $0.036 (Dev).
+- [2026-04-16] Monthly cost per plan: Chef $0.20 (94% margin), Family $0.71 (93% margin), Pro $0.44 (96% margin). Free plan = $0 AI cost.
+- [2026-04-16] Lifetime cost per user (500 recipes): $9.82 (Chef/Schnell), $23.02 (Pro/Dev). Break-even: 2.0 months Chef, 1.5 months Pro.
+- [2026-04-16] No cost anomalies found — all classification/moderation already uses Haiku. JSON-LD-first pipeline (session 145) was the biggest cost optimization.
+- [2026-04-16] Report saved to docs/AI-COST-REPORT-2026-04-16.md. No code changes.
+
 ## 2026-04-16 (session 165 — Tag translation + wire translation into all import paths)
 - [2026-04-16] translateRecipeContent() now translates tags: filters system/domain tags (ChefsBook-v2, _incomplete, *.com etc.), translates remaining user tags to target language via Claude, merges back with system tags preserved.
 - [2026-04-16] Mobile import (scan.tsx): wired detectLanguage + translateRecipeContent after importFromUrl. Mobile was calling @chefsbook/ai directly without server-side translation — now translates non-English recipes to English before saving.
