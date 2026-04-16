@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 157 — Fix broken AI-generated recipe images)
+- [2026-04-16] Root cause: generate-recipe-images.mjs stored URLs as http://localhost:8000/... (the SUPABASE_URL used for API calls). This URL is only reachable from the RPi5 itself — browsers get a broken image.
+- [2026-04-16] Fixed 75 recipe_user_photos rows: UPDATE SET url = REPLACE(url, 'http://localhost:8000', 'http://100.110.47.62:8000'). Verified zero localhost URLs remain.
+- [2026-04-16] Fixed generate-recipe-images.mjs: separated SUPABASE_URL (for API calls, localhost) from SUPABASE_PUBLIC_URL (for stored URLs, Tailscale IP 100.110.47.62:8000). Future image generations will use the correct URL.
+- [2026-04-16] Fixed apps/web/lib/imageGeneration.ts: renamed SUPABASE_URL to SUPABASE_STORAGE_URL, uses EXPO_PUBLIC_SUPABASE_URL (Tailscale IP) for stored image URLs.
+- [2026-04-16] Verified: image proxy returns 200 + image/jpeg for AI-generated images. Recipe detail page loads correctly.
+- [2026-04-16] Deployed to RPi5 at commit b570cd5, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 156 — Targeted recrawl v3 + image generation for all recipes)
 - [2026-04-16] Crawl script v3: passes userLanguage:'en' for import-time translation, tags ChefsBook-v2, blocked sites get NULL rating (not 1★) with "extension required" note, --targets flag filters to 35 priority sites, saves source_language/translated_from, auto-loads .env.local, uses localhost:3000 import endpoint.
 - [2026-04-16] Crawl v3 executed on RPi5: 36 sites tested. Results: 12× 5★, 3× 4★, 1× 3★, 15× 1★, 5× extension-required (NULL). Server-side compat 44% (16/36). 16 recipes saved in English under pilzner.
