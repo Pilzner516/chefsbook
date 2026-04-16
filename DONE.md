@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 152 — Delete crawl recipes + import-time translation)
+- [2026-04-16] Deleted all 32 ChefsBook-tagged crawl recipes: recipe_user_photos (32 rows), recipes (32 rows), storage objects (32 ai-generated/*.jpg files). Verified 0 remaining.
+- [2026-04-16] Migration 041 applied on RPi5: recipes table gains source_language TEXT and translated_from TEXT columns. PostgREST restarted.
+- [2026-04-16] packages/ai/src/translateImport.ts: detectLanguage() uses heuristic word-frequency analysis for de/fr/it/es/pt (counts language-specific function words), falls back to HAIKU (~$0.0001) for ambiguous text. translateRecipeContent() uses SONNET (~$0.003/recipe) to translate title, description, ingredient names, and step instructions while preserving all quantities/units/temperatures exactly. Returns original recipe with source_language + translated_from metadata. Exported from packages/ai.
+- [2026-04-16] /api/import/url now accepts optional `userLanguage` param (default 'en'). After recipe extraction, runs detectLanguage on title+ingredients+steps sample text, then translateRecipeContent if source != user language. Sets source_language and translated_from on the recipe object before returning.
+- [2026-04-16] apps/web/app/dashboard/scan/page.tsx: passes `userLanguage` from localStorage ('chefsbook-language') to the import URL API.
+- [2026-04-16] Live test: imported marmiton.org/recettes/recette_crepes_12372.aspx (French crepe recipe). Detected as `fr`, translated to English: title "The Best Crepe Batter Recipe", 7 ingredients, 5 steps — all in English with quantities preserved.
+- [2026-04-16] CLAUDE.md updated: detectLanguage + translateRecipeContent added to AI cost reference. feature-registry.md updated with import-time translation note on URL import row.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit 80cd9d6, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 151 — Batch AI image generation for ChefsBook recipes)
 - [2026-04-16] scripts/generate-recipe-images.mjs created: standalone batch image generator. Queries recipes without photos (ChefsBook-tagged first), generates via Replicate Flux Dev, adds CBHat visible watermark via sharp, uploads to Supabase storage, inserts recipe_user_photos row with is_ai_generated=true. Supports --cb-only, --limit N, --dry-run flags. Reads env from apps/web/.env.local. Uses localhost:8000 for direct Supabase access on RPi5.
 - [2026-04-16] Fixed Replicate API output_format: 'jpeg' → 'jpg' (Replicate only accepts webp/jpg/png). Fixed in both scripts/generate-recipe-images.mjs and apps/web/lib/imageGeneration.ts.
