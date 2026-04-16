@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 158 — ChefsBook branded watermark badge on all AI images)
+- [2026-04-16] scripts/create-watermark-badge.mjs: generates 160x36px badge PNG via SVG+sharp. "Chefs" in red (#ce2b37) + "book" in near-black (#1a1a1a) + chef hat icon on white pill background with rounded corners and drop shadow.
+- [2026-04-16] scripts/apply-watermarks.mjs: downloads AI images from Supabase storage, composites badge bottom-right (12px padding), applies invisible LSB watermark, re-uploads. Zero Replicate cost.
+- [2026-04-16] Applied watermark to all 75 AI-generated recipe images — 75/75 succeeded, 0 failed.
+- [2026-04-16] Updated generate-recipe-images.mjs to use new badge for future generations (falls back to old CBHat.png).
+- [2026-04-16] Deployed to RPi5 at commit d5160e9. Build exit 0, pm2 restarted. chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 157 — Fix broken AI-generated recipe images)
 - [2026-04-16] Root cause: generate-recipe-images.mjs stored URLs as http://localhost:8000/... (the SUPABASE_URL used for API calls). This URL is only reachable from the RPi5 itself — browsers get a broken image.
 - [2026-04-16] Fixed 75 recipe_user_photos rows: UPDATE SET url = REPLACE(url, 'http://localhost:8000', 'http://100.110.47.62:8000'). Verified zero localhost URLs remain.
