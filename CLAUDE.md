@@ -52,16 +52,17 @@ read them yourself before starting.
 
 Every Claude Code session MUST begin with these steps in order:
 
-1. Read CLAUDE.md (this file) fully
-2. Read DONE.md to understand what was last built
-3. Read .claude/agents/testing.md — MANDATORY EVERY SESSION
-4. Read .claude/agents/feature-registry.md — check status of any feature your session will touch before writing a single line of code
-5. If session touches web: read .claude/agents/deployment.md — MANDATORY
-6. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
-7. Read all other applicable agents based on the lookup table above
-8. Run ALL pre-flight checklists from every agent loaded
-9. For any table you will query: run `\d tablename` on RPi5 to verify columns
-10. Only then begin writing code
+1. Read .claude/agents/wrapup.md NOW so you understand what will be required at the end of this session
+2. Read CLAUDE.md (this file) fully
+3. Read DONE.md to understand what was last built
+4. Read .claude/agents/testing.md — MANDATORY EVERY SESSION
+5. Read .claude/agents/feature-registry.md — check status of any feature your session will touch before writing a single line of code
+6. If session touches web: read .claude/agents/deployment.md — MANDATORY
+7. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
+8. Read all other applicable agents based on the lookup table above
+9. Run ALL pre-flight checklists from every agent loaded
+10. For any table you will query: run `\d tablename` on RPi5 to verify columns
+11. Only then begin writing code
 
 Do not skip any step. Agents exist because the same bugs have been introduced
 and fixed 3-5 times each. Reading the agents prevents repeating known mistakes.

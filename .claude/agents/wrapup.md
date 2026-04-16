@@ -1,86 +1,172 @@
-# ChefsBook Wrapup Agent
-# Run this at the end of every Claude Code session.
+# ChefsBook — Wrapup Agent (MANDATORY)
+# This agent runs at the END of every session
+# File: .claude/agents/wrapup.md
+# REPLACE the existing wrapup.md with this content
 
-## MANDATORY — Update Feature Registry
+---
 
-Before committing anything:
-1. Open .claude/agents/feature-registry.md
-2. For every feature you touched this session: update its Status
-3. For every new feature: add a row in the correct section
-4. For every regression introduced: mark BROKEN (never hide this)
-5. Save the file — it must be committed as part of this session
+## PURPOSE
 
-## MANDATORY PRE-WRAPUP TESTING
+You are the session accountability agent. Your job is to ensure
+nothing gets silently skipped and every incomplete item is documented
+so the next agent can pick it up.
 
-You MUST complete all of the following before updating DONE.md.
-"Verified in source" does NOT count. Only actual test execution counts.
+You run AFTER all work is done, BEFORE /wrapup.
 
-### DB verification (any session with DB writes)
-Run for EVERY table written to this session:
-```bash
-ssh rasp@rpi5-eth
-cd /mnt/chefsbook/supabase
-docker compose exec db psql -U postgres -d postgres -c \
-  "SELECT * FROM [table] ORDER BY created_at DESC LIMIT 3;"
+---
+
+## MANDATORY PRE-WRAPUP SEQUENCE
+
+### Step 1 — Read the prompt file that was executed this session
+Find the prompt file in docs/prompts/ for this session number.
+Read it completely. Extract every item from the COMPLETION CHECKLIST.
+
+### Step 2 — Audit every checklist item
+
+For EACH item in the checklist, determine its true status:
+
+**DONE** = you can prove it works:
+- Run a psql query and show the result
+- Run a curl test and show the HTTP response
+- Run tsc --noEmit and show 0 errors
+- Describe what you saw in the browser/ADB
+
+**SKIPPED** = you didn't attempt it (be honest — say why)
+
+**FAILED** = you attempted it but it didn't work (show the error)
+
+**DEFERRED** = intentionally left for a future session (say which one)
+
+### Step 3 — Write the DONE.md entry
+
+Format EVERY entry as:
+[SESSION XXX] Description of what was done
+
+Never write a DONE.md entry without the session number prefix.
+
+### Step 4 — Write the wrapup recap
+
+Follow this format EXACTLY:
+
 ```
-Confirm rows exist. If not, the feature is broken — fix before /wrapup.
+✓ Session [NUMBER] wrapped — [ONE LINE WHAT THIS SESSION DID]
 
-### Cross-platform verification
-If the session was cross-platform (mobile + web):
-- Web: curl -I https://chefsbk.app/[affected-page] returns 200
-- Mobile: ADB screenshot confirms UI renders correctly
-- BOTH must pass. If only one platform tested, the session is NOT done.
+COMPLETED (N items):
+- item — verified by: [method]
 
-### Entry point verification
-If a new component was built, verify it is used in ALL required locations:
-```bash
-grep -rn "NewComponentName" apps/ --include="*.tsx"
+INCOMPLETE (N items — be honest, do not hide anything):
+- item — SKIPPED: reason
+- item — FAILED: error description
+- item — DEFERRED: why, suggested follow-up session number
+
+FULL CHECKLIST AUDIT:
+- [✓] checklist item — DONE (verified by X)
+- [✗] checklist item — SKIPPED (reason)
+- [✗] checklist item — FAILED (error)
+
+COST THIS SESSION:
+- Estimated: $X.XX
+- Models: Haiku N×, Sonnet N×, Flux N×
 ```
-Count the usages. If fewer than expected, wire the missing entry points first.
 
-### Schema verification
-For any new query written: confirm column names match actual DB schema.
+### Step 5 — Update DONE.md
+
+Add all completed items with [SESSION XXX] prefix.
+
+### Step 6 — Update CLAUDE.md if needed
+
+Update Last session / Next session fields.
+Add any new known issues discovered.
+
+### Step 7 — Update STATUS.md in bob-hq
+
+### Step 8 — Commit and push
+
 ```bash
-docker compose exec db psql -U postgres -d postgres -c "\d [tablename]"
+git add -A
+git commit -m "session XXX: [description]"
+git push
 ```
 
-### Deployment (web sessions)
-Follow .claude/agents/deployment.md fully before /wrapup.
-Do not update DONE.md until chefsbk.app is serving the new code.
+### Step 9 — Run /wrapup
 
-## Navigator update check
+---
 
-After committing all changes:
-- Check if any screens were added, removed, or significantly changed
-- If yes: update .claude/agents/navigator.md
-  - Update the relevant screen entries
-  - Add a changelog entry with today's date
-  - Commit the updated navigator: git add .claude/agents/navigator.md
+## RULES YOU MUST NEVER BREAK
 
-## POST-FLIGHT AGENT CHECKS (run before updating DONE.md)
+1. **Never mark an item DONE without proof.** Reading code is not proof.
+   Proof = a test result, a query result, a curl response, a screenshot.
 
-Before declaring a session complete, confirm:
+2. **Never omit incomplete items.** If you ran out of context and
+   skipped Part 4, you MUST list every Part 4 item as SKIPPED.
 
-UI checks:
-- Every new bottom-positioned element uses useSafeAreaInsets()
-- Every new screen with text input has KeyboardAvoidingView
-- Every new button row fits at 360px minimum width
-- Every new user-visible string has i18n keys in all 5 locale files
+3. **Never write a DONE.md entry without [SESSION XXX].**
 
-Import checks (if any import path was touched):
-- URL routing: Instagram URLs → IG handler, recipe URLs → URL handler, never to search
-- Every import path shows PostImportImageSheet if an image could be available
-- Every imported recipe has title, description, ingredients, steps populated
+4. **The FULL CHECKLIST AUDIT is mandatory.** Every single item
+   from the prompt's completion checklist must appear with ✓ or ✗.
 
-Image checks (if any image code was touched):
-- All uploads use FileSystem.uploadAsync with Authorization + apikey headers
-- All Image components for Supabase URLs have apikey header
-- Recipe card reflects image changes without app restart
+5. **If you are out of context and cannot complete the audit,**
+   write: "CONTEXT LIMIT REACHED — remaining items not audited"
+   and list every remaining checklist item as DEFERRED.
 
-Data checks (if any store or DB query was touched):
-- After any write: the displaying screen reflects the change without navigation
-- List screens use useFocusEffect to refresh on focus
+---
 
-General:
-- No console.log or console.warn left in production code
-- TypeScript: tsc --noEmit passes with no errors
+## WHAT TO DO IF AN ITEM IS INCOMPLETE
+
+Do NOT silently skip it.
+Do NOT mark it done anyway.
+Do NOT leave it out of the recap.
+
+Instead:
+1. Add it to DONE.md as:
+   [SESSION XXX] INCOMPLETE: [item] — SKIPPED/FAILED/DEFERRED — [reason]
+
+2. Add it to the INCOMPLETE section of the recap
+
+3. If it's important: suggest it be added to the next session's prompt
+
+---
+
+## EXAMPLE OF A CORRECT WRAPUP
+
+```
+✓ Session 162 wrapped — AI cost dashboard + throttle system
+
+COMPLETED (8 items):
+- Migration 045 applied — verified: psql shows tables exist
+- logAiCall() created — verified: tsc passes, function exported
+- /admin/costs page — verified: curl chefsbk.app/admin/costs returns 200
+- Admin overview KPIs — verified: page loads in browser
+- Cost by action chart — verified: page loads in browser
+- System settings seeded — verified: psql SELECT shows 9 rows
+- feature-registry.md updated — verified: git diff shows new rows
+- Deployed — verified: pm2 status online, curl HTTP 200
+
+INCOMPLETE (7 items):
+- Part 0 image fixes — SKIPPED: not attempted, ran out of time
+- logAiCall() in 15 AI functions — SKIPPED: only 3 wired
+- checkAndUpdateThrottle() — SKIPPED: table created, logic not written
+- isUserThrottled() — SKIPPED: not written
+- Throttle settings UI — SKIPPED: not built
+- Cost/revenue columns on /admin/users — SKIPPED: not built
+- Activity feed on overview — SKIPPED: not built
+
+FULL CHECKLIST AUDIT:
+- [✓] Migration 045 applied
+- [✓] logAiCall() created
+- [✗] logAiCall() wired into 15+ AI functions — SKIPPED
+- [✗] checkAndUpdateThrottle() — SKIPPED
+- [✗] isUserThrottled() — SKIPPED
+- [✓] /admin/costs page created
+- [✗] Throttle settings UI — SKIPPED
+- [✗] Per-user cost columns on /admin/users — SKIPPED
+- [✗] Activity feed — SKIPPED
+- [✓] Deployed
+
+COST THIS SESSION:
+- Estimated: $0.02 (Haiku calls only)
+- Models: Haiku 8×
+```
+
+This is an honest wrapup. The next agent can immediately see what
+needs to be done in session 163 without any detective work.
