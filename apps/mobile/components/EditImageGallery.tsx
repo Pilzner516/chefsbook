@@ -118,6 +118,17 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
 
   const uploading = uploadState !== 'idle';
 
+  const confirmCopyrightThenUpload = (uploadFn: () => void) => {
+    Alert.alert(
+      'Image Upload Confirmation',
+      'By uploading you confirm this image is yours, you have permission to use it, or it is free to use (Creative Commons / public domain).\n\nPlease do NOT upload images taken from recipe websites, copyrighted photos, or screenshots of other apps.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Confirm & Upload', onPress: uploadFn },
+      ],
+    );
+  };
+
   const showImagePicker = () => {
     // Plan gate: check photo limit
     if (photos.length >= photoLimit) {
@@ -136,15 +147,15 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       ActionSheetIOS.showActionSheetWithOptions(
         { options, cancelButtonIndex: cancelIndex },
         async (idx) => {
-          if (idx === 0) { const uri = await takePhoto(); if (uri) uploadPhoto(uri); }
-          if (idx === 1) { const uri = await pickImage(); if (uri) uploadPhoto(uri); }
+          if (idx === 0) { const uri = await takePhoto(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); }
+          if (idx === 1) { const uri = await pickImage(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); }
           if (idx === 2) setShowPexels(true);
         },
       );
     } else {
       Alert.alert(t('gallery.addPhoto'), t('gallery.chooseSource'), [
-        { text: t('gallery.takePhoto'), onPress: async () => { const uri = await takePhoto(); if (uri) uploadPhoto(uri); } },
-        { text: t('gallery.chooseLibrary'), onPress: async () => { const uri = await pickImage(); if (uri) uploadPhoto(uri); } },
+        { text: t('gallery.takePhoto'), onPress: async () => { const uri = await takePhoto(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); } },
+        { text: t('gallery.chooseLibrary'), onPress: async () => { const uri = await pickImage(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); } },
         { text: t('gallery.findPhoto'), onPress: () => setShowPexels(true) },
         { text: t('common.cancel'), style: 'cancel' },
       ]);

@@ -11,6 +11,7 @@ import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { RefreshFromSourceBanner } from '@/components/RefreshFromSourceBanner';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
@@ -94,6 +95,11 @@ export default function RecipePage() {
   const [isGuest, setIsGuest] = useState(false);
   const [guestEmail, setGuestEmail] = useState('');
   const [guestSubmitting, setGuestSubmitting] = useState(false);
+  const [copyrightConfirm, CopyrightDialog] = useConfirmDialog();
+  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  const [flagSubmitting, setFlagSubmitting] = useState(false);
+  const [flagSubmitted, setFlagSubmitted] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const seekYouTube = useCallback((seconds: number) => {
@@ -438,10 +444,63 @@ export default function RecipePage() {
 
   const handleImageUpload = async (file: File) => {
     if (!recipe) return;
+
+    // Copyright confirmation dialog
+    const confirmed = await copyrightConfirm({
+      title: 'Image Upload Confirmation',
+      body: (
+        <div className="text-sm text-gray-600 space-y-3">
+          <p>By uploading this image you confirm:</p>
+          <ul className="space-y-1 ml-1">
+            <li className="flex items-start gap-2"><span className="text-green-600">&#10003;</span> I took this photo myself, OR</li>
+            <li className="flex items-start gap-2"><span className="text-green-600">&#10003;</span> I have permission to use this image, OR</li>
+            <li className="flex items-start gap-2"><span className="text-green-600">&#10003;</span> This image is free to use (Creative Commons / public domain)</li>
+          </ul>
+          <p className="mt-2">I confirm this image is NOT:</p>
+          <ul className="space-y-1 ml-1">
+            <li className="flex items-start gap-2"><span className="text-red-500">&#10007;</span> Taken from the recipe website</li>
+            <li className="flex items-start gap-2"><span className="text-red-500">&#10007;</span> Someone else&apos;s copyrighted photo</li>
+            <li className="flex items-start gap-2"><span className="text-red-500">&#10007;</span> A screenshot of another app</li>
+          </ul>
+        </div>
+      ),
+      confirmLabel: 'Confirm & Upload',
+      cancelLabel: 'Cancel',
+      variant: 'positive',
+    });
+
+    if (!confirmed) return;
+
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
+
+      // Check for watermarks via Claude Vision (fire-and-forget on low risk)
+      let watermarkRisk = 'low';
+      try {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve((reader.result as string).split(',')[1]);
+          reader.readAsDataURL(file);
+        });
+        const checkRes = await fetch('/api/recipes/check-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+        });
+        if (checkRes.ok) {
+          const result = await checkRes.json();
+          watermarkRisk = result.risk_level;
+          if (result.risk_level === 'high') {
+            alert('This image appears to be from another site and may be copyrighted. Please upload your own photo or use "Generate image" to create a unique AI image for this recipe.');
+            setUploading(false);
+            return;
+          }
+        }
+      } catch {
+        // Watermark check failure is non-blocking
+      }
 
       const ext = file.name.split('.').pop() ?? 'jpg';
       const path = `${user.id}/${id}.${ext}`;
@@ -461,6 +520,57 @@ export default function RecipePage() {
       alert(e.message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!recipe) return;
+    setGeneratingImage(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/recipes/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ recipeId: recipe.id }),
+      });
+      if (!res.ok) throw new Error('Failed to start image generation');
+      // The image will be generated in the background
+      setRecipe({ ...recipe, image_generation_status: 'generating' } as any);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const handleFlagRecipe = async (flagType: string, reason?: string) => {
+    if (!recipe) return;
+    setFlagSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      const res = await fetch('/api/recipes/flag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipeId: recipe.id, flaggedBy: user.id, flagType, reason }),
+      });
+
+      if (res.status === 409) {
+        alert('You have already flagged this recipe for this reason.');
+      } else if (!res.ok) {
+        throw new Error('Failed to submit flag');
+      } else {
+        setFlagSubmitted(true);
+        setShowFlagMenu(false);
+        if (flagType === 'copyright') {
+          setRecipe({ ...recipe, copyright_review_pending: true, visibility: 'private' } as any);
+        }
+      }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setFlagSubmitting(false);
     }
   };
 
@@ -697,6 +807,40 @@ export default function RecipePage() {
               Delete
             </button>
           )}
+          {/* Flag button (non-owners only) */}
+          {isLoggedIn && !isOwner && !flagSubmitted && (
+            <div className="relative">
+              <button
+                onClick={() => setShowFlagMenu(!showFlagMenu)}
+                className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors text-cb-muted"
+                title="Report this recipe"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+                </svg>
+                <span className="hidden sm:inline">Report</span>
+              </button>
+              {showFlagMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-cb-card border border-cb-border rounded-card shadow-lg z-50 py-1">
+                  {[
+                    { type: 'copyright', label: 'Potentially copyrighted', icon: '\u00A9\uFE0F' },
+                    { type: 'inappropriate', label: 'Inappropriate content', icon: '\u26A0\uFE0F' },
+                    { type: 'spam', label: 'Spam or misleading', icon: '\uD83D\uDEAB' },
+                    { type: 'other', label: 'Other', icon: '\uD83D\uDCCB' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.type}
+                      onClick={() => handleFlagRecipe(opt.type)}
+                      disabled={flagSubmitting}
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2"
+                    >
+                      {opt.icon} {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </nav>
 
@@ -734,17 +878,41 @@ export default function RecipePage() {
             )}
           </div>
         ) : isOwner ? (
-          <label className="h-48 rounded-card border-2 border-dashed border-cb-border bg-cb-card flex flex-col items-center justify-center cursor-pointer hover:border-cb-primary transition-colors">
-            <svg className="w-10 h-10 text-cb-secondary mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
-            </svg>
-            <span className="text-cb-secondary text-sm">{uploading ? 'Uploading...' : 'Add a photo'}</span>
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleImageUpload(file);
-            }} />
-          </label>
+          <div className="h-48 rounded-card border-2 border-dashed border-cb-border bg-cb-card flex flex-col items-center justify-center gap-3">
+            {(recipe as any).image_generation_status === 'generating' || (recipe as any).image_generation_status === 'pending' ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-cb-bg flex items-center justify-center animate-pulse">
+                  <img src="/images/chefs-hat.png" alt="" className="w-10 h-10 opacity-60" />
+                </div>
+                <span className="text-cb-secondary text-sm">Generating recipe image...</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-3">
+                  <label className="flex items-center gap-2 px-4 py-2 rounded-input text-sm font-medium border border-cb-border hover:bg-cb-bg cursor-pointer transition-colors text-cb-secondary">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                    </svg>
+                    {uploading ? 'Uploading...' : 'Upload photo'}
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }} />
+                  </label>
+                  <button
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="flex items-center gap-2 px-4 py-2 rounded-input text-sm font-medium bg-cb-primary text-white hover:bg-cb-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    <span>&#127912;</span>
+                    {generatingImage ? 'Starting...' : 'Generate image'}
+                  </button>
+                </div>
+                <span className="text-cb-muted text-xs">Upload your own photo or let AI create one</span>
+              </>
+            )}
+          </div>
         ) : null}
       </div>
 
@@ -809,6 +977,41 @@ export default function RecipePage() {
       )}
 
       <article className="max-w-4xl mx-auto py-10 px-6">
+        <CopyrightDialog />
+        {/* Copyright review banner (owner only) */}
+        {isOwner && (recipe as any).copyright_review_pending && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-card">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">&#9878;</span>
+              <div>
+                <h3 className="font-semibold text-amber-900">Under copyright review</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  This recipe has been flagged for potential copyright issues and is temporarily private. ChefsBook will review it shortly. You&apos;ll receive a message with our decision.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Copyright removed banner */}
+        {isOwner && (recipe as any).copyright_removed && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-300 rounded-card">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">&#169;</span>
+              <div>
+                <h3 className="font-semibold text-red-900">Removed for copyright</h3>
+                <p className="text-sm text-red-700 mt-1">
+                  This recipe was removed from public view due to copyright concerns. You may keep it as a private reference or delete it.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Flag submitted thank-you */}
+        {flagSubmitted && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-300 rounded-card text-sm text-green-800">
+            Thank you for helping keep ChefsBook fair and legal! We&apos;ve received your report and will review it promptly.
+          </div>
+        )}
         {/* Refresh-from-source banner on incomplete imports */}
         {isLoggedIn && recipe && (recipe as any).is_complete === false && (
           <RefreshFromSourceBanner
@@ -851,7 +1054,7 @@ export default function RecipePage() {
                 )}
               </div>
             </div>
-            {isOwner && (
+            {isOwner && !((recipe as any).copyright_review_pending || (recipe as any).copyright_removed) && (
               <button
                 onClick={async () => {
                   const next = recipe.visibility === 'private' ? 'public' : 'private';

@@ -226,6 +226,57 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ users: data ?? [] });
   }
 
+  if (page === 'copyright') {
+    const { data, error } = await supabaseAdmin
+      .from('recipe_flags')
+      .select('*')
+      .eq('flag_type', 'copyright')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Enrich with recipe info, submitter info, and flagger info
+    const recipeIds = [...new Set((data ?? []).map((f: any) => f.recipe_id))];
+    const userIds = [...new Set([
+      ...(data ?? []).map((f: any) => f.flagged_by),
+      ...(data ?? []).filter((f: any) => f.reviewed_by).map((f: any) => f.reviewed_by),
+    ])];
+    const { data: recipes } = await supabaseAdmin
+      .from('recipes')
+      .select('id, title, user_id, source_url, visibility, copyright_review_pending, copyright_previous_visibility')
+      .in('id', recipeIds.length > 0 ? recipeIds : ['00000000-0000-0000-0000-000000000000']);
+    const recipeMap = new Map((recipes ?? []).map((r: any) => [r.id, r]));
+
+    // Get all user IDs (recipe owners + flaggers)
+    const ownerIds = (recipes ?? []).map((r: any) => r.user_id);
+    const allUserIds = [...new Set([...userIds, ...ownerIds])];
+    const { data: profiles } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, username, display_name, recipes_flagged_count')
+      .in('id', allUserIds.length > 0 ? allUserIds : ['00000000-0000-0000-0000-000000000000']);
+    const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
+    const enriched = (data ?? []).map((f: any) => {
+      const recipe = recipeMap.get(f.recipe_id);
+      const flagger = profileMap.get(f.flagged_by);
+      const owner = recipe ? profileMap.get(recipe.user_id) : null;
+      return {
+        ...f,
+        recipe_title: recipe?.title ?? null,
+        recipe_source_url: recipe?.source_url ?? null,
+        recipe_owner_id: recipe?.user_id ?? null,
+        recipe_owner_username: owner?.username ?? null,
+        recipe_visibility: recipe?.visibility ?? null,
+        copyright_review_pending: recipe?.copyright_review_pending ?? false,
+        copyright_previous_visibility: recipe?.copyright_previous_visibility ?? null,
+        flagger_username: flagger?.username ?? null,
+        flagger_flag_count: flagger?.recipes_flagged_count ?? 0,
+      };
+    });
+
+    return NextResponse.json({ flags: enriched });
+  }
+
   if (page === 'overview') {
     const [users, recipes, flagged] = await Promise.all([
       supabaseAdmin.from('user_profiles').select('plan_tier', { count: 'exact' }),
@@ -496,6 +547,128 @@ export async function POST(req: NextRequest) {
     } catch (e: any) {
       return NextResponse.json({ error: e.message }, { status: 500 });
     }
+  }
+
+  // Copyright flag actions
+  if (action === 'approveCopyright') {
+    // Recipe is legitimate — unlock + restore visibility
+    const { data: flag } = await supabaseAdmin.from('recipe_flags').select('recipe_id').eq('id', body.flagId).single();
+    if (!flag) return NextResponse.json({ error: 'Flag not found' }, { status: 404 });
+
+    const { data: recipe } = await supabaseAdmin
+      .from('recipes')
+      .select('user_id, title, copyright_previous_visibility')
+      .eq('id', flag.recipe_id)
+      .single();
+
+    // Update flag status
+    await supabaseAdmin.from('recipe_flags').update({
+      status: 'approved',
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+      admin_note: body.note || null,
+    }).eq('id', body.flagId);
+
+    // Restore visibility
+    const prevVis = recipe?.copyright_previous_visibility ?? 'public';
+    await supabaseAdmin.from('recipes').update({
+      copyright_review_pending: false,
+      copyright_locked_at: null,
+      visibility: prevVis,
+      copyright_previous_visibility: null,
+    }).eq('id', flag.recipe_id);
+
+    // DM to owner
+    if (recipe?.user_id) {
+      const { sendMessage } = await import('@chefsbook/db');
+      await sendMessage(adminId, recipe.user_id, `Your recipe "${recipe.title}" has been reviewed and approved. It's now visible again.`, 'clean', supabaseAdmin).catch(() => {});
+    }
+
+    // DM to flagger
+    if (body.flaggerId) {
+      const { sendMessage } = await import('@chefsbook/db');
+      await sendMessage(adminId, body.flaggerId, `We reviewed "${recipe?.title}" and determined it doesn't violate copyright. Thank you for your report.`, 'clean', supabaseAdmin).catch(() => {});
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'removeCopyright') {
+    // Recipe infringes copyright — keep private permanently
+    const { data: flag } = await supabaseAdmin.from('recipe_flags').select('recipe_id').eq('id', body.flagId).single();
+    if (!flag) return NextResponse.json({ error: 'Flag not found' }, { status: 404 });
+
+    const { data: recipe } = await supabaseAdmin
+      .from('recipes')
+      .select('user_id, title')
+      .eq('id', flag.recipe_id)
+      .single();
+
+    await supabaseAdmin.from('recipe_flags').update({
+      status: 'removed',
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+      admin_note: body.note || null,
+    }).eq('id', body.flagId);
+
+    await supabaseAdmin.from('recipes').update({
+      copyright_review_pending: false,
+      copyright_removed: true,
+      visibility: 'private',
+    }).eq('id', flag.recipe_id);
+
+    // DM to owner
+    if (recipe?.user_id) {
+      const { sendMessage } = await import('@chefsbook/db');
+      await sendMessage(adminId, recipe.user_id,
+        `Your recipe "${recipe.title}" has been removed from public view due to copyright concerns. You may keep it as a private reference or delete it. If you believe this is an error, please contact us. You have 30 days to appeal.`,
+        'clean', supabaseAdmin,
+      ).catch(() => {});
+    }
+
+    // DM to flagger
+    if (body.flaggerId) {
+      const { sendMessage } = await import('@chefsbook/db');
+      await sendMessage(adminId, body.flaggerId, `We reviewed "${recipe?.title}" and removed it due to copyright concerns. Thank you for keeping ChefsBook legal!`, 'clean', supabaseAdmin).catch(() => {});
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'dismissCopyright') {
+    // Flag is unfounded
+    const { data: flag } = await supabaseAdmin.from('recipe_flags').select('recipe_id').eq('id', body.flagId).single();
+    if (!flag) return NextResponse.json({ error: 'Flag not found' }, { status: 404 });
+
+    const { data: recipe } = await supabaseAdmin
+      .from('recipes')
+      .select('user_id, title, copyright_previous_visibility')
+      .eq('id', flag.recipe_id)
+      .single();
+
+    await supabaseAdmin.from('recipe_flags').update({
+      status: 'dismissed',
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+      admin_note: body.note || null,
+    }).eq('id', body.flagId);
+
+    // Restore visibility
+    const prevVis = recipe?.copyright_previous_visibility ?? 'public';
+    await supabaseAdmin.from('recipes').update({
+      copyright_review_pending: false,
+      copyright_locked_at: null,
+      visibility: prevVis,
+      copyright_previous_visibility: null,
+    }).eq('id', flag.recipe_id);
+
+    // DM to flagger
+    if (body.flaggerId) {
+      const { sendMessage } = await import('@chefsbook/db');
+      await sendMessage(adminId, body.flaggerId, `We reviewed your report and determined "${recipe?.title}" doesn't raise copyright concerns. Thank you for helping keep ChefsBook fair.`, 'clean', supabaseAdmin).catch(() => {});
+    }
+
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

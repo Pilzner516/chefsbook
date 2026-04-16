@@ -1,6 +1,6 @@
-import { createRecipe, updateRecipe, freezeUserRecipes, supabase } from '@chefsbook/db';
+import { createRecipe, updateRecipe, freezeUserRecipes, supabase, supabaseAdmin } from '@chefsbook/db';
 import type { RecipeWithDetails, ScannedRecipe, Recipe } from '@chefsbook/db';
-import { moderateRecipe } from '@chefsbook/ai';
+import { moderateRecipe, rewriteRecipeSteps } from '@chefsbook/ai';
 import type { RecipeModerationResult } from '@chefsbook/ai';
 
 export type SaveResult = {
@@ -87,6 +87,42 @@ export async function createRecipeWithModeration(
     }
   } catch {
     // Moderation failure should not block recipe creation
+  }
+
+  // Fire-and-forget: rewrite imported steps to avoid verbatim copying (URL/extension imports only)
+  const isUrlImport = recipe.source_url && ['url', 'extension'].includes(recipe.source_type ?? '');
+  if (isUrlImport && recipe.steps && recipe.steps.length > 0) {
+    rewriteRecipeSteps(
+      recipe.steps.map((s, i) => ({ step_number: i + 1, instruction: s.instruction })),
+      recipe.title,
+      recipe.cuisine,
+    )
+      .then(async (rewritten) => {
+        // Update steps in DB using admin client (bypasses RLS)
+        await supabaseAdmin.from('recipe_steps').delete().eq('recipe_id', created.id);
+        if (rewritten.length > 0) {
+          await supabaseAdmin.from('recipe_steps').insert(
+            rewritten.map((s) => ({
+              recipe_id: created.id,
+              user_id: userId,
+              step_number: s.step_number,
+              instruction: s.instruction,
+              timer_minutes: s.timer_minutes ?? null,
+              group_label: s.group_label ?? null,
+            })),
+          );
+        }
+        await supabaseAdmin
+          .from('recipes')
+          .update({
+            steps_rewritten: true,
+            steps_rewritten_at: new Date().toISOString(),
+          })
+          .eq('id', created.id);
+      })
+      .catch(() => {
+        // Silent fail — original steps kept if rewrite fails
+      });
   }
 
   const completeness = await finalizeRecipe(

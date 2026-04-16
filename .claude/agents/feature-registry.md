@@ -207,6 +207,13 @@
 | Incomplete recipes banner | LIVE | /dashboard, IncompleteRecipesBanner.tsx | 141 | Amber banner, dismissible via localStorage |
 | Flagged comments (admin) | LIVE | /admin/flags, /api/admin (flagged-comments) | 116 | Queries comment_flags; shows comment + commenter + recipe; approve/remove |
 | Flagged messages (admin) | LIVE | /admin/messages, /api/admin (messages) | 116 | Includes user-flagged messages via message_flags; shows flag count + reasons |
+| Step rewriting on import | LIVE | packages/ai (rewriteRecipeSteps), apps/web/lib/saveWithModeration.ts | 147 | HAIKU ~$0.0003/recipe; fire-and-forget on URL/extension imports; backfill script at scripts/rewrite-imported-steps.mjs |
+| AI image generation | LIVE | apps/web/lib/imageGeneration.ts, /api/recipes/generate-image | 147 | Replicate Flux Dev ~$0.025/image; visible CBHat watermark + invisible LSB steganographic watermark; background generation; "Generate image" button on empty recipes |
+| Image watermark check | LIVE | packages/ai (checkImageForWatermarks), /api/recipes/check-image | 147 | HAIKU Vision ~$0.005/check; blocks high-risk uploads, warns on medium; runs before every user image upload |
+| Copyright confirmation modal | LIVE | apps/web/app/recipe/[id]/page.tsx, apps/mobile/components/EditImageGallery.tsx | 147 | ChefsDialog (web) / Alert (mobile) before every image upload; confirms user owns the image |
+| Recipe flagging system | LIVE | recipe_flags table, /api/recipes/flag, apps/web/app/recipe/[id]/page.tsx | 147 | Flag pills: copyright/inappropriate/spam/other; copyright flag → immediate private + locked |
+| Copyright review admin | LIVE | /admin/copyright, /api/admin (copyright actions) | 147 | Approve (auto-restore previous visibility) / Remove (permanent private + DM) / Dismiss; flagger reputation shown |
+| Copyright visibility lock | LIVE | apps/web/app/recipe/[id]/page.tsx | 147 | Visibility toggle disabled while copyright_review_pending=true; amber banner for owner |
 
 ---
 

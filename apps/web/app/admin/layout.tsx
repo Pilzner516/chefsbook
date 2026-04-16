@@ -17,6 +17,7 @@ const NAV = [
   { href: '/admin/reserved-usernames', label: 'Reserved Usernames' },
   { href: '/admin/import-sites', label: 'Import Sites' },
   { href: '/admin/incomplete-recipes', label: 'Incomplete Recipes' },
+  { href: '/admin/copyright', label: 'Copyright' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

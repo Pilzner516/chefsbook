@@ -134,6 +134,7 @@ YOUTUBE_API_KEY=<key>                       # YouTube Data API v3 (optional — 
 SCRAPINGBEE_API_KEY=<key>                   # ScrapingBee (optional — fallback for 403 sites)
 CHROME_PATH=<path>                          # Chrome executable (optional — auto-detected on Windows/Mac/Linux)
 GOOGLE_BOOKS_API_KEY=<key>                  # Google Books API (optional — works without key at lower rate limit)
+REPLICATE_API_TOKEN=<key>                   # Replicate Flux Dev (AI image generation — ~$0.025/image)
 PEXELS_API_KEY=<key>                        # Pexels API (recipe image search picker; EXPO_PUBLIC_ prefix for mobile)
 UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
 ```
@@ -407,6 +408,8 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 | suggestPurchaseUnit() | haiku | ~$0.00040 | No (one-time per cart add) |
 | analyseScannedImage() (dishIdentify) | haiku | ~$0.00030 | No (each scan is new) |
 | reanalyseDish() (dishIdentify) | haiku | ~$0.00030 | No (user-initiated clarification) |
+| rewriteRecipeSteps() | haiku | ~$0.0003 | No (one-time per URL import, fire-and-forget) |
+| checkImageForWatermarks() | haiku (vision) | ~$0.005 | No (one-time per user image upload) |
 | socialShareText / socialShareHashtags | haiku | ~$0.00020 | No (user-initiated) |
 | matchFolderToCategory() | haiku | ~$0.00016 | No (one-time per import) |
 | matchFoldersToCategories() (batch) | haiku | ~$0.0005 | No (one-time per bookmark import) |
