@@ -346,7 +346,8 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - **Step rewrite backfill blocked on API credits** — scripts/rewrite-imported-steps.mjs works correctly (schema, queries, logic all verified) but the Anthropic API key has insufficient credit balance. 82 recipes need rewriting. Script now has early-exit on credit/auth errors. Top up credits at console.anthropic.com then re-run.
 - **4 recipes without images (Replicate credits exhausted)** — Best Chocolate Chip Cookies, Slow-Roasted Lamb Shoulder, Sous Vide Pulled Pork, Thai Chicken Satay. Top up Replicate credits at replicate.com/account/billing then run `node scripts/generate-recipe-images.mjs --limit 4`.
 - **External image URLs blocked at code level** — addRecipePhoto() throws on external URLs, createRecipe() filters out non-internal image_url. 52 legacy external URLs already nulled from DB.
-- **Invisible watermark survives JPEG compression poorly** — LSB steganography is fragile under heavy JPEG recompression or screenshots. The visible CBHat watermark is the primary deterrent; the invisible watermark is supplementary forensic evidence for high-quality copies.
+- **LSB steganographic watermark REMOVED** — session 170 discovered it corrupted JPEG headers on 73/74 images (sharp couldn't re-read them). The visible "Chefsbook" badge (240x54, bottom-right) is the sole watermark now. Do NOT re-add LSB watermarking without thorough testing.
+- **5 recipes without AI images** — Replicate credit exhaustion during session 170 regeneration. Top up credits and re-run `node scripts/generate-recipe-images.mjs --limit 5`.
 - **Mobile copyright flag not yet wired** — Web recipe detail has Report button with flag types; mobile recipe/[id].tsx does not yet have a flag/report button.
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)

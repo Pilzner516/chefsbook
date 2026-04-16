@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 170 — Fix watermark visibility + creativity slider + regenerate images)
+- [2026-04-16] Watermark diagnosis: badge was present on stored images (160x36 on 1152x896 — visible but tiny). Red square test confirmed sharp compositing works. Real issue: session 158 LSB steganographic watermark corrupted JPEG headers on 73/74 images (VipsJpeg: Corrupt JPEG data). Browsers tolerated it but sharp couldn't re-read them.
+- [2026-04-16] Fix: deleted all 74 corrupt AI photo rows + 75 corrupt storage objects. Reset has_ai_image/image_generation_status on all recipes. Regenerated 70/75 images fresh (19+51 batches, 5 failed on Replicate credit exhaustion). New images have enlarged 240x54 badge (was 160x36), fully opaque white background.
+- [2026-04-16] Badge enlarged: create-watermark-badge.mjs updated to 240x54px, text 21px (was 14px), hat icon scaled 1.5x, opaque white pill (was 88% transparent). Cap in apply-watermarks.mjs and generate-recipe-images.mjs raised from 160→240.
+- [2026-04-16] LSB steganographic watermark removed from apply-watermarks.mjs — it was the root cause of JPEG corruption. Visible badge is the primary deterrent.
+- [2026-04-16] Creativity slider: 5 levels defined in imageThemes.ts (Very Faithful → Very Creative). Levels 1-2 use source_image_description in prompt (faithful to source). Levels 3-5 skip it (uses only title+ingredients for copyright distance). Default: 3 (Balanced). image_creativity_level added to system_settings table.
+- [2026-04-16] Admin settings page: radio button selector for creativity levels with descriptions. Amber warning for levels 1-2. Saves to system_settings via updateSetting action.
+- [2026-04-16] buildImagePrompt() now accepts optional creativityLevel parameter (default 3). Wired into CREATIVITY_LEVELS config. Exported from packages/ai.
+- [2026-04-16] Soufflé image regenerated at creativity level 3 (no source description). Shows cheese soufflé with watercress sauce — correct dish, clearly different from any source photo, 240px watermark badge visible bottom-right.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit 5889c33, pm2 restarted; chefsbk.app/, /admin/settings both HTTP 200.
+
 ## 2026-04-16 (session 169 — Fix stolen images: audit + delete external URLs + safety checks)
 - [2026-04-16] Audited recipes.image_url: found 52 rows with external URLs (og:image from source sites like halfbakedharvest, alexandracooks, seriouseats, etc). All 52 nulled out. 48 already had AI photos; display unaffected.
 - [2026-04-16] Generated AI replacement images for 2 of 4 recipes with no photos. 2 remaining blocked by Replicate credit exhaustion (402 insufficient credit).
