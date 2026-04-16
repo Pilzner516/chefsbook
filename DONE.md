@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 160 — Expand PDF fallback to incomplete extractions)
+- [2026-04-16] /api/import/url now returns needsBrowserExtraction:true + reason:'incomplete_extraction' when recipe extraction succeeds but is critically incomplete (has title but missing ingredients OR steps). Previously this signal only fired on hard fetch failures (403/460) or too-little-text (<500 chars).
+- [2026-04-16] Scan page handles the new signal: if extension is installed and no recipe returned, hands off to extension via postMessage. If partial recipe exists, continues with warning. If no extension and hard block, shows error.
+- [2026-04-16] Tested: smittenkitchen.com homepage returns title-only → needsBrowserExtraction:true correctly fires. alexandracooks.com homepage same. pinchofyum.com complete recipe → no fallback (correct). saveur.com/recipes/ returns full 20-ingredient recipe (was 404 in crawl due to stale URL). jamieoliver.com returns full 25-ingredient recipe.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit ce23fa2, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 159 — Audit: non-English + old ChefsBook recipes)
 - [2026-04-16] Audit: queried for non-English untranslated recipes (source_language != 'en' AND translated_from IS NULL) — 0 found. All non-English imports already went through the translation pipeline.
 - [2026-04-16] Audit: queried for old "ChefsBook" tagged recipes (not "ChefsBook-v2") — 0 found. Session 152 already deleted all 32.
