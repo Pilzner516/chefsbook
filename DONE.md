@@ -1,6 +1,10 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 149 — Diagnose step rewrite backfill failures)
+- [2026-04-16] Root cause: rewrite-imported-steps.mjs 400 errors were NOT a schema or code bug — the Anthropic API key has insufficient credit balance. Script schema access is correct (recipe_steps.instruction column, recipe queries, step updates all work). 82 recipes found, 77 attempted, all failed with "Your credit balance is too low to access the Anthropic API."
+- [2026-04-16] Script improved: added response body to Claude error messages (was just "Claude 400", now shows full error JSON). Added early-exit on credit/auth errors — aborts after first failure instead of burning through all 82 recipes at 1/second.
+
 ## 2026-04-16 (session 148 — Fix bulk refresh Cloudflare loopback)
 - [2026-04-16] Root cause identified: /api/admin/refresh-incomplete used `new URL(req.url).origin` to build internal fetch URLs to /api/recipes/refresh. On RPi5 behind Cloudflare Tunnel, the origin resolves to `https://chefsbk.app`, causing each internal fetch to loop out through the tunnel and back. On timeout or Cloudflare error, the response is an HTML error page (<!DOCTYPE...) instead of JSON, triggering "Unexpected token '<'" parse error on the admin page client.
 - [2026-04-16] Fix: replaced `origin` with hardcoded `http://localhost:3000` for internal server-to-server calls. Added content-type guard (`res.headers.get('content-type').includes('application/json')`) so HTML responses are treated as failures gracefully instead of crashing `res.json()`.
