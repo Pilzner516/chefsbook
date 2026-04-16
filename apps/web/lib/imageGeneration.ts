@@ -1,55 +1,38 @@
 import sharp from 'sharp';
 import path from 'path';
 import { supabaseAdmin } from '@chefsbook/db';
+import { buildImagePrompt as aiBuildPrompt, getImageModel } from '@chefsbook/ai';
+import type { ImageTheme } from '@chefsbook/ai';
 
 // Use the Tailscale IP for storage URLs stored in DB — reachable from all devices
-// (NOT api.chefsbk.app which needs apikey header, NOT localhost which is unreachable from browsers)
 const SUPABASE_STORAGE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'http://100.110.47.62:8000';
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
-// Path to the CBHat watermark image
-const CHEFS_HAT_PATH = path.join(process.cwd(), '..', '..', 'docs', 'pics', 'CBHat.png');
-
 /**
- * Generate a food photography prompt from recipe data.
+ * Call Replicate to generate an image.
+ * Model is selected based on plan tier: Pro gets Flux Dev (~$0.025), others get Schnell (~$0.003).
  */
-function buildImagePrompt(recipe: {
-  title: string;
-  cuisine?: string | null;
-  ingredients?: Array<{ ingredient?: string; name?: string }>;
-  tags?: string[];
-}): string {
-  const keyIngredients = (recipe.ingredients ?? [])
-    .slice(0, 4)
-    .map((i) => i.ingredient || i.name || '')
-    .filter(Boolean)
-    .join(', ');
-
-  return `Professional food photography of ${recipe.title}, ${
-    recipe.cuisine ? recipe.cuisine + ' cuisine, ' : ''
-  }${keyIngredients ? `featuring ${keyIngredients}. ` : ''}Editorial style, natural window light, shallow depth of field, styled on a beautiful plate or bowl, warm tones, appetizing presentation, high resolution, no text, no watermarks, no people, photorealistic.`;
-}
-
-/**
- * Call Replicate Flux Dev to generate an image.
- * Returns the image URL from Replicate or null on failure.
- * ~$0.025 per image.
- */
-export async function generateRecipeImage(recipe: {
-  title: string;
-  cuisine?: string | null;
-  ingredients?: Array<{ ingredient?: string; name?: string }>;
-  tags?: string[];
-}): Promise<string | null> {
+export async function generateRecipeImage(
+  recipe: {
+    title: string;
+    cuisine?: string | null;
+    ingredients?: Array<{ ingredient?: string; name?: string }>;
+    tags?: string[];
+    source_image_description?: string | null;
+  },
+  options?: { theme?: ImageTheme; model?: string; modifier?: string },
+): Promise<{ url: string; prompt: string } | null> {
   if (!REPLICATE_API_TOKEN) {
     console.warn('REPLICATE_API_TOKEN not set — skipping image generation');
     return null;
   }
 
-  const prompt = buildImagePrompt(recipe);
+  const theme = options?.theme ?? 'bright_fresh';
+  const model = options?.model ?? 'black-forest-labs/flux-schnell';
+  const prompt = aiBuildPrompt(recipe, theme, options?.modifier);
 
   const response = await fetch(
-    'https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions',
+    `https://api.replicate.com/v1/models/${model}/predictions`,
     {
       method: 'POST',
       headers: {
@@ -64,7 +47,7 @@ export async function generateRecipeImage(recipe: {
           num_outputs: 1,
           output_format: 'jpg',
           output_quality: 85,
-          safety_tolerance: 5,
+          ...(model.includes('flux-dev') ? { safety_tolerance: 5 } : {}),
         },
       }),
     },
@@ -79,7 +62,7 @@ export async function generateRecipeImage(recipe: {
   const outputUrl = data.output?.[0] ?? data.output;
   if (!outputUrl || typeof outputUrl !== 'string') return null;
 
-  return outputUrl;
+  return { url: outputUrl, prompt };
 }
 
 /**
@@ -93,37 +76,32 @@ async function downloadImage(url: string): Promise<Buffer> {
 }
 
 /**
- * Add the ChefsBook hat watermark (visible) to the bottom-right corner.
- * 60x60px, semi-transparent.
+ * Add the ChefsBook branded badge watermark to the bottom-right corner.
  */
 async function addVisibleWatermark(imageBuffer: Buffer): Promise<Buffer> {
+  // Try new badge first, then old hat as fallback
+  const badgePath = path.join(process.cwd(), 'public', 'images', 'watermark-chefsbook.png');
+  const hatPath = path.join(process.cwd(), '..', '..', 'docs', 'pics', 'CBHat.png');
+
   let watermark: Buffer;
   try {
-    watermark = await sharp(CHEFS_HAT_PATH)
-      .resize(60, 60)
-      .ensureAlpha()
-      .modulate({ brightness: 1 })
-      .png()
-      .toBuffer();
+    watermark = await sharp(badgePath).resize(160, null, { fit: 'inside' }).png().toBuffer();
   } catch {
-    // Fallback: try alternate path (when running from apps/web)
-    const altPath = path.join(process.cwd(), 'public', 'images', 'chefs-hat.png');
-    watermark = await sharp(altPath)
-      .resize(60, 60)
-      .ensureAlpha()
-      .png()
-      .toBuffer();
+    try {
+      watermark = await sharp(hatPath).resize(60, 60).ensureAlpha().png().toBuffer();
+    } catch {
+      return imageBuffer; // No watermark available
+    }
   }
 
+  const imgMeta = await sharp(imageBuffer).metadata();
+  const wmMeta = await sharp(watermark).metadata();
+  const left = (imgMeta.width ?? 512) - (wmMeta.width ?? 160) - 12;
+  const top = (imgMeta.height ?? 512) - (wmMeta.height ?? 36) - 12;
+
   return sharp(imageBuffer)
-    .composite([
-      {
-        input: watermark,
-        gravity: 'southeast',
-        blend: 'over',
-      },
-    ])
-    .jpeg({ quality: 85 })
+    .composite([{ input: watermark, left, top, blend: 'over' }])
+    .jpeg({ quality: 88 })
     .toBuffer();
 }
 
@@ -198,7 +176,9 @@ export async function generateAndSaveRecipeImage(
     ingredients?: Array<{ ingredient?: string; name?: string }>;
     tags?: string[];
     user_id: string;
+    source_image_description?: string | null;
   },
+  options?: { theme?: ImageTheme; model?: string; modifier?: string; replaceExisting?: boolean },
 ): Promise<void> {
   // Mark as generating
   await supabaseAdmin
@@ -206,13 +186,13 @@ export async function generateAndSaveRecipeImage(
     .update({ image_generation_status: 'generating' })
     .eq('id', recipeId);
 
-  const imageUrl = await generateRecipeImage(recipe);
-  if (!imageUrl) throw new Error('Image generation returned null');
+  const result = await generateRecipeImage(recipe, options);
+  if (!result) throw new Error('Image generation returned null');
 
   // Download the generated image
-  let imageBuffer = await downloadImage(imageUrl);
+  let imageBuffer = await downloadImage(result.url);
 
-  // Add visible ChefsBook hat watermark
+  // Add visible ChefsBook badge watermark
   imageBuffer = await addVisibleWatermark(imageBuffer);
 
   // Embed invisible steganographic watermark
@@ -231,16 +211,24 @@ export async function generateAndSaveRecipeImage(
 
   const publicUrl = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
 
-  // Insert as primary photo
-  await supabaseAdmin.from('recipe_user_photos').insert({
-    recipe_id: recipeId,
-    user_id: recipe.user_id,
-    storage_path: fileName,
-    url: publicUrl,
-    is_primary: true,
-    is_ai_generated: true,
-    sort_order: 0,
-  });
+  if (options?.replaceExisting) {
+    // Update existing AI photo row
+    await supabaseAdmin.from('recipe_user_photos')
+      .update({ url: publicUrl, storage_path: fileName })
+      .eq('recipe_id', recipeId)
+      .eq('is_ai_generated', true);
+  } else {
+    // Insert as primary photo
+    await supabaseAdmin.from('recipe_user_photos').insert({
+      recipe_id: recipeId,
+      user_id: recipe.user_id,
+      storage_path: fileName,
+      url: publicUrl,
+      is_primary: true,
+      is_ai_generated: true,
+      sort_order: 0,
+    });
+  }
 
   // Update recipe metadata
   await supabaseAdmin
@@ -248,13 +236,14 @@ export async function generateAndSaveRecipeImage(
     .update({
       image_generation_status: 'complete',
       has_ai_image: true,
-      ai_image_prompt: buildImagePrompt(recipe),
+      ai_image_prompt: result.prompt,
     })
     .eq('id', recipeId);
 }
 
 /**
  * Trigger image generation as a background task (non-blocking).
+ * Reads user's theme + plan tier to select model and style.
  */
 export function triggerImageGeneration(
   recipeId: string,
@@ -264,7 +253,9 @@ export function triggerImageGeneration(
     ingredients?: Array<{ ingredient?: string; name?: string }>;
     tags?: string[];
     user_id: string;
+    source_image_description?: string | null;
   },
+  options?: { modifier?: string; replaceExisting?: boolean },
 ): void {
   // Fire-and-forget background generation
   (async () => {
@@ -274,7 +265,22 @@ export function triggerImageGeneration(
         .update({ image_generation_status: 'pending' })
         .eq('id', recipeId);
 
-      await generateAndSaveRecipeImage(recipeId, recipe);
+      // Fetch user's theme + plan + quality override
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('image_theme, plan_tier, image_quality_override')
+        .eq('id', recipe.user_id)
+        .single();
+
+      const theme = (profile?.image_theme ?? 'bright_fresh') as ImageTheme;
+      const model = getImageModel(profile?.plan_tier ?? 'free', profile?.image_quality_override);
+
+      await generateAndSaveRecipeImage(recipeId, recipe, {
+        theme,
+        model,
+        modifier: options?.modifier,
+        replaceExisting: options?.replaceExisting,
+      });
     } catch (err) {
       console.error(`Image generation failed for recipe ${recipeId}:`, err);
       try {

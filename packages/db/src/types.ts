@@ -230,6 +230,8 @@ export interface RecipeUserPhoto {
   caption: string | null;
   is_primary: boolean;
   sort_order: number;
+  is_ai_generated?: boolean;
+  regen_count?: number;
   created_at: string;
 }
 

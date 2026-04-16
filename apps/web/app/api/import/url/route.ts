@@ -1,6 +1,6 @@
 // TODO(web): replicate multi-page scan support (mobile sends up to 5 page images in single Claude Vision call)
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
 import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
@@ -133,6 +133,15 @@ export async function POST(req: Request) {
     } catch { /* translation failure is non-blocking — keep original */ }
     recipe.source_language = sourceLanguage;
     if (sourceLanguage !== userLanguage) recipe.translated_from = sourceLanguage;
+
+    // ── Describe source image for better AI generation later ──
+    if (imageUrl && recipe.title) {
+      try {
+        const desc = await describeSourceImage(imageUrl, recipe.title);
+        if (desc) recipe.source_image_description = desc;
+        recipe.source_image_url = imageUrl;
+      } catch { /* non-blocking */ }
+    }
 
     const { title, generated } = ensureTitle(recipe, url);
     recipe.title = title;

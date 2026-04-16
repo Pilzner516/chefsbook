@@ -126,13 +126,13 @@ export const REGEN_PILLS: RegenPill[] = [
 // ── Prompt Builder ──
 
 export function buildImagePrompt(
-  recipe: { title: string; cuisine?: string | null; ingredients?: { ingredient: string }[]; source_image_description?: string | null },
+  recipe: { title: string; cuisine?: string | null; ingredients?: { ingredient?: string; name?: string }[]; source_image_description?: string | null },
   theme: ImageTheme = 'bright_fresh',
   modifier?: string,
 ): string {
   const keyIng = (recipe.ingredients ?? [])
     .slice(0, 4)
-    .map((i) => i.ingredient ?? '')
+    .map((i) => i.ingredient || i.name || '')
     .filter(Boolean)
     .join(', ');
 

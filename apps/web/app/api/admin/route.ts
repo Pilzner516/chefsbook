@@ -337,6 +337,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  if (action === 'setImageQuality') {
+    const override = body.override === 'dev' || body.override === 'schnell' ? body.override : null;
+    const { error } = await supabaseAdmin.from('user_profiles').update({ image_quality_override: override }).eq('id', body.userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
   if (action === 'addAdminRole') {
     const { error } = await supabaseAdmin.from('admin_users').upsert({ user_id: body.userId, role: body.role, added_by: adminId }, { onConflict: 'user_id' });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

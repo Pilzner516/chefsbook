@@ -16,6 +16,7 @@ import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import type { TranslatedRecipe } from '@chefsbook/ai';
+import { REGEN_PILLS } from '@chefsbook/ai';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
 import type { CookingNote } from '@chefsbook/db';
@@ -102,6 +103,8 @@ export default function RecipePage() {
   const [selectedFlagType, setSelectedFlagType] = useState<string | null>(null);
   const [flagComment, setFlagComment] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenUsed, setRegenUsed] = useState(false);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const seekYouTube = useCallback((seconds: number) => {
@@ -947,6 +950,51 @@ export default function RecipePage() {
           </div>
         ) : null}
       </div>
+
+      {/* Regeneration pills for AI images */}
+      {isOwner && !regenerating && userPhotos.some((p) => p.is_ai_generated && (p.regen_count ?? 0) < 1) && (
+        <div className="max-w-4xl mx-auto px-6 mt-3">
+          <p className="text-xs text-cb-secondary mb-2">Not quite right?</p>
+          <div className="flex flex-wrap gap-2">
+            {REGEN_PILLS.map((pill) => (
+              <button
+                key={pill.id}
+                onClick={async () => {
+                  setRegenerating(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const res = await fetch('/api/recipes/regenerate-image', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+                      body: JSON.stringify({ recipeId: recipe?.id, pillId: pill.id }),
+                    });
+                    if (!res.ok) {
+                      const body = await res.json().catch(() => ({}));
+                      alert(body.error || 'Failed to regenerate');
+                    } else {
+                      setRegenUsed(true);
+                    }
+                  } catch { /* silent */ }
+                  setRegenerating(false);
+                }}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text hover:border-cb-primary transition-colors"
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {regenerating && (
+        <div className="max-w-4xl mx-auto px-6 mt-3">
+          <p className="text-sm text-cb-green animate-pulse">Generating new image...</p>
+        </div>
+      )}
+      {regenUsed && !regenerating && (
+        <div className="max-w-4xl mx-auto px-6 mt-3">
+          <p className="text-xs text-cb-green">New image is generating in the background. Refresh in a minute to see it.</p>
+        </div>
+      )}
 
       {/* User Photo Gallery */}
       {isOwner && (

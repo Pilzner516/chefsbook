@@ -13,6 +13,9 @@ import FeedbackCard from '@/components/FeedbackCard';
 import NotificationBell from '@/components/NotificationBell';
 import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
+import ThemePickerModal from '@/components/ThemePickerModal';
+import { IMAGE_THEMES } from '@chefsbook/ai';
+import type { ImageTheme } from '@chefsbook/ai';
 
 type ViewMode = 'grid' | 'list' | 'table';
 type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
@@ -43,6 +46,8 @@ export default function DashboardPage() {
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [tableSortCol, setTableSortCol] = useState<string>('date');
   const [tableSortAsc, setTableSortAsc] = useState(false);
+  const [imageTheme, setImageTheme] = useState<ImageTheme>('bright_fresh');
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   useEffect(() => {
     setViewMode(getStoredView());
@@ -74,8 +79,9 @@ export default function DashboardPage() {
         }
       }
       if (!userInfo) {
-        const { data: profile } = await supabase.from('user_profiles').select('username').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('user_profiles').select('username, image_theme').eq('id', user.id).single();
         setUserInfo({ id: user.id, email: user.email ?? '', username: profile?.username ?? null });
+        if (profile?.image_theme) setImageTheme(profile.image_theme as ImageTheme);
       }
     }
     setLoading(false);
@@ -357,6 +363,12 @@ export default function DashboardPage() {
               {f.label}
             </button>
           ))}
+          <button
+            onClick={() => setShowThemePicker(true)}
+            className="px-3 py-1.5 rounded-full text-sm font-medium bg-cb-card border border-cb-border text-cb-secondary hover:text-cb-text hover:border-cb-primary transition-colors ml-1"
+          >
+            {IMAGE_THEMES[imageTheme]?.emoji} Theme
+          </button>
         </div>
         {/* Sort dropdown */}
         <select
@@ -585,6 +597,24 @@ export default function DashboardPage() {
         </div>
       )}
       <ConfirmDialog />
+      {showThemePicker && (
+        <ThemePickerModal
+          currentTheme={imageTheme}
+          onClose={() => setShowThemePicker(false)}
+          onSave={async (theme) => {
+            setImageTheme(theme);
+            setShowThemePicker(false);
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              await fetch('/api/user/theme', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+                body: JSON.stringify({ theme }),
+              });
+            } catch { /* silent */ }
+          }}
+        />
+      )}
     </div>
   );
 }
