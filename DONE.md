@@ -1,6 +1,19 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 174 — AI cost tracking + throttle system + admin dashboards)
+- [2026-04-16] Migration 045 applied on RPi5: ai_usage_log table (user_id, action, model, tokens_in/out, cost_usd, recipe_id, metadata, created_at) with 3 indexes. ai_usage_daily table (pre-aggregated daily totals per user/action/model, UNIQUE constraint). user_throttle table (is_throttled, throttle_level yellow/red, admin_override, monthly_cost_usd). 9 throttle settings in system_settings. aggregate_ai_usage_daily() SQL function. PostgREST restarted.
+- [2026-04-16] packages/db/src/queries/aiUsage.ts: logAiCall() logs action/model/tokens/cost per AI call with MODEL_COSTS lookup (haiku/sonnet/flux-schnell/flux-dev). getThrottleSettings() reads all thresholds from system_settings. isUserThrottled() checks user_throttle with admin_override support. checkAndUpdateThrottle() calculates rolling window cost vs plan-based thresholds, upserts throttle state.
+- [2026-04-16] callClaude() in packages/ai/src/client.ts now captures token usage from API response via consumeLastUsage() helper — available for logAiCall wrappers.
+- [2026-04-16] logAiCall wired into /api/import/url (logs import_url + translate_recipe actions) and /api/recipes/generate-image (logs generate_image action with userId + recipeId).
+- [2026-04-16] /admin/costs page: 4 KPI cards (today cost, month cost, avg/user, throttled count). Cost by action horizontal bar chart. Cost by model with color-coded bars. Top 10 cost users table. Throttled users list with Remove + Whitelist buttons.
+- [2026-04-16] Admin overview overhauled to "Command Center": 6 health KPI cards (total users, new today, total recipes, flagged, AI calls MTD, throttled). Revenue & cost section (MRR calculated from plan counts, AI cost MTD, margin %, plan distribution bars, today cost). Quick action links row. Users by plan detail.
+- [2026-04-16] Admin API: GET page=costs returns todayCost, monthCost, avgPerUser, byAction, byModel, byDay, topUsers, throttled. POST actions: removeThrottle, whitelistUser.
+- [2026-04-16] Admin sidebar: "Costs" link added between Copyright and Settings.
+- [2026-04-16] feature-registry.md: new AI COST & THROTTLE section with 4 rows (usage logging, cost dashboard, throttle system, admin overview overhaul).
+- [2026-04-16] All throttle thresholds from system_settings — zero hardcoded values. Confirmed: 9 settings (enabled, yellow_pct=150, red_pct=300, grace_days=30, window_days=7, expected costs per plan).
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit 36cbae2, pm2 restarted; chefsbk.app/, /admin, /admin/costs all HTTP 200.
+
 ## 2026-04-16 (session 173 — Admin users: Image Quality column)
 - [2026-04-16] /admin/users: new "Image Quality" column between Plan and Role with dropdown (Auto / Standard (Flux Schnell) / Premium (Flux Dev)). Saves on change via existing setImageQuality admin action (null / 'schnell' / 'dev'). Optimistic row update so the select reflects choice instantly; reverts via load() on error.
 - [2026-04-16] 🎨 Dev green badge renders next to the dropdown when image_quality_override is 'dev' so premium overrides are visible at a glance.
