@@ -194,7 +194,7 @@
 | Import completeness gate | LIVE | packages/db (checkRecipeCompleteness, applyCompletenessGate, applyAiVerdict), /api/recipes/finalize | 141 | Runs after every recipe save; visibility locked to private until title+description+≥2 ingredients w/qty+≥1 step+≥1 tag + AI approved |
 | isActuallyARecipe (HAIKU AI check) | LIVE | packages/ai (isActuallyARecipe) | 141 | Runs after completeness passes; verdicts: approved/flagged/not_a_recipe |
 | Import attempts log | LIVE | import_attempts table, logImportAttempt() | 141 | Per-attempt row; auto-updates import_site_tracker aggregates |
-| Site compatibility testing | LIVE | /api/admin/test-sites, KNOWN_RECIPE_SITES (60 sites), /api/cron | 141 | Manual trigger + weekly cron; rates each site 1-5; rate-limited 1/3s |
+| Site compatibility testing | LIVE | /api/admin/test-sites, KNOWN_RECIPE_SITES, site_test_runs table | 141, 161 | Full import pipeline per site (not just JSON-LD check); logs to site_test_runs; results summary modal with CSV export; detects needsExtension; NULL rating for blocked sites |
 | Blocked site handling | LIVE | getSiteBlockStatus, /api/import/url | 141 | Domain pre-check returns friendly error with alternative; rating ≤2 shows warning |
 | Incomplete recipes admin | LIVE | /admin/incomplete-recipes, /api/admin?page=incomplete-recipes | 141 | Lists all is_complete=false + flagged recipes; force approve / remove |
 | User import stats card | LIVE | /dashboard/settings, ImportActivityCard.tsx, /api/user/import-stats | 141, 144 | Shows imported/with issues/flagged + "N sites you helped discover" (session 144) + "View" modal |

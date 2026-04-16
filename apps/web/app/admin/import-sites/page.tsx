@@ -88,6 +88,7 @@ export default function ImportSitesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [testResults, setTestResults] = useState<any>(null);
   const [showTestModal, setShowTestModal] = useState(false);
   const [testFilters, setTestFilters] = useState<Set<number | null>>(new Set([null, 1, 2]));
 
@@ -161,6 +162,7 @@ export default function ImportSitesPage() {
   const runTests = async (domain?: string, ratings?: (number | null)[]) => {
     setTesting(true);
     setShowTestModal(false);
+    setTestResults(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const payload: any = {};
@@ -175,6 +177,8 @@ export default function ImportSitesPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Test run failed');
+      const data = await res.json();
+      setTestResults(data);
       await load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : 'failed'); }
     setTesting(false);
@@ -464,6 +468,70 @@ export default function ImportSitesPage() {
             </tbody>
           </table>
           {filtered.length === 0 && <p className="p-8 text-center text-gray-500">No import sites tracked yet.</p>}
+        </div>
+      )}
+
+      {/* Test results summary modal */}
+      {testResults && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setTestResults(null)}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4">Test Run Complete — {testResults.tested} sites tested</h3>
+            <div className="space-y-2 mb-4">
+              {[
+                { label: 'Full import', count: testResults.categories?.full ?? 0, stars: 5, color: 'text-green-700 bg-green-50' },
+                { label: 'Good import', count: testResults.categories?.good ?? 0, stars: 4, color: 'text-emerald-700 bg-emerald-50' },
+                { label: 'Partial import', count: testResults.categories?.partial ?? 0, stars: 3, color: 'text-amber-700 bg-amber-50' },
+                { label: 'Title only', count: testResults.categories?.titleOnly ?? 0, stars: 2, color: 'text-orange-700 bg-orange-50' },
+                { label: 'Needs extension', count: testResults.categories?.needsExtension ?? testResults.needsExtension ?? 0, stars: null, color: 'text-blue-700 bg-blue-50' },
+                { label: 'Failed', count: testResults.categories?.failed ?? 0, stars: null, color: 'text-red-700 bg-red-50' },
+              ].map((row) => (
+                <div key={row.label} className={`flex items-center justify-between px-3 py-2 rounded-lg ${row.color}`}>
+                  <span className="text-sm font-medium">
+                    {row.stars ? '⭐'.repeat(row.stars) + ' ' : row.label === 'Needs extension' ? '🔌 ' : '✗ '}
+                    {row.label}
+                  </span>
+                  <span className="text-sm font-bold">{row.count}</span>
+                </div>
+              ))}
+            </div>
+            {testResults.results && (
+              <details className="mb-4">
+                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">Show {testResults.results.length} individual results</summary>
+                <div className="mt-2 max-h-48 overflow-y-auto text-xs space-y-1">
+                  {(testResults.results as any[]).map((r: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2 py-0.5">
+                      <span className="w-5 text-center">{r.rating === null ? '🔌' : r.rating >= 4 ? '✓' : r.rating >= 3 ? '~' : '✗'}</span>
+                      <span className="flex-1 truncate">{r.domain}</span>
+                      <span className="text-gray-400">ing={r.ingredientCount} st={r.stepCount}</span>
+                      <span className="text-gray-400">{r.durationMs}ms</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+            <div className="flex justify-between">
+              <button
+                onClick={() => {
+                  if (!testResults.results) return;
+                  const rows = testResults.results.map((r: any) =>
+                    [r.domain, r.testUrl, r.rating, r.needsExtension, r.fetchMethod, r.ingredientCount, r.stepCount, r.hasQuantities, r.failureReason, r.durationMs].join(',')
+                  );
+                  const csv = 'domain,testUrl,rating,needsExtension,fetchMethod,ingredients,steps,hasQty,error,ms\n' + rows.join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const a = document.createElement('a');
+                  a.href = URL.createObjectURL(blob);
+                  a.download = `test-run-${new Date().toISOString().slice(0, 10)}.csv`;
+                  a.click();
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Download CSV
+              </button>
+              <button onClick={() => setTestResults(null)} className="px-4 py-2 text-sm font-medium bg-cb-primary text-white rounded-lg hover:bg-cb-primary/90">
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
