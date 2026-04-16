@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 167 — AI ingredient generation + fix Katsu recipe)
+- [2026-04-16] Confirmed PDF fallback is already universal (session 160): needsBrowserExtraction triggers for ANY site with title but no ingredients/steps, no domain whitelist. Tested halfbakedharvest.com homepage → correctly fires. halfbakedharvest.com recipe URL now returns 14 ingredients server-side (original import was from buggier era).
+- [2026-04-16] packages/ai/src/generateMissingIngredients.ts: Sonnet-powered (~$0.003/call) ingredient generation from title+description+steps+servings+cuisine+tags. Returns structured array with amount/unit/name. Exported from packages/ai.
+- [2026-04-16] /api/recipes/[id]/generate-ingredients (POST, auth-gated): fetches recipe+steps, calls generateMissingIngredients(), returns preview for user confirmation (does NOT auto-save). Owner or admin only.
+- [2026-04-16] Fixed "Crispy Chicken Katsu Noodle Bowls" recipe: re-imported 14 ingredients from source URL (now works server-side). Fraction parsing added for quantities like "2/3" → 0.667. Recipe marked is_complete=true with 14 ingredients + 7 steps.
+- [2026-04-16] feature-registry.md updated: new AI ingredient generation row.
+- [2026-04-16] CLAUDE.md updated: generateMissingIngredients added to AI cost reference.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit b7136ca, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 166 — AI cost analysis report)
 - [2026-04-16] Inventoried all 35+ AI functions: 19 Haiku ($0.0001-$0.005/call), 14 Sonnet ($0.003-$0.020/call), 3 Replicate ($0.003-$0.025/call).
 - [2026-04-16] Cost per URL import: $0.007 (JSON-LD+Schnell) to $0.047 (non-English+Dev). Weighted average: $0.014 (Schnell), $0.036 (Dev).
