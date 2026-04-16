@@ -374,6 +374,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - PostgREST schema cache: after any new table migration, run `docker restart supabase-rest` on RPi5 or queries return "table not found in schema cache"
 - Supabase joins with multiple FKs: when a table has 2+ FKs to the same target (e.g. `recipe_comments.user_id` + `reviewed_by` both → `user_profiles`), MUST use explicit FK name: `user_profiles!recipe_comments_user_id_fkey` — `!inner` alone causes PGRST201
 - Web Supabase URL: MUST be `https://api.chefsbk.app` (NOT `http://100.110.47.62:8000`) — mixed content blocks ws:// on HTTPS pages; Cloudflare Tunnel handles WebSocket upgrades automatically; mobile still uses direct IP
+- Server-to-server internal fetches: MUST use `http://localhost:3000` (NOT `req.url` origin which resolves to `https://chefsbk.app` behind Cloudflare Tunnel). Looping through the tunnel causes HTML error pages instead of JSON on timeout/failure. Fixed in /api/admin/refresh-incomplete (session 148).
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
 - Metro blockList excludes root node_modules react/react-native to prevent duplicate bundles
 - Expo file-system v19: use `expo-file-system/legacy` import for `documentDirectory` / `readAsStringAsync` / `writeAsStringAsync`

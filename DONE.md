@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 148 — Fix bulk refresh Cloudflare loopback)
+- [2026-04-16] Root cause identified: /api/admin/refresh-incomplete used `new URL(req.url).origin` to build internal fetch URLs to /api/recipes/refresh. On RPi5 behind Cloudflare Tunnel, the origin resolves to `https://chefsbk.app`, causing each internal fetch to loop out through the tunnel and back. On timeout or Cloudflare error, the response is an HTML error page (<!DOCTYPE...) instead of JSON, triggering "Unexpected token '<'" parse error on the admin page client.
+- [2026-04-16] Fix: replaced `origin` with hardcoded `http://localhost:3000` for internal server-to-server calls. Added content-type guard (`res.headers.get('content-type').includes('application/json')`) so HTML responses are treated as failures gracefully instead of crashing `res.json()`.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit 9e15e13, pm2 restarted; https://chefsbk.app/, /admin/incomplete-recipes both HTTP 200. Verified /api/admin/refresh-incomplete returns JSON (401 with fake token) both via Cloudflare and localhost.
+
 ## 2026-04-16 (session 147 — Copyright protection suite)
 - [2026-04-16] Migration 039 applied on RPi5: recipes table gains steps_rewritten, steps_rewritten_at, has_ai_image, ai_image_prompt, image_generation_status (CHECK: pending/generating/complete/failed), copyright_review_pending, copyright_locked_at, copyright_removed, copyright_previous_visibility. recipe_user_photos gains is_ai_generated, upload_confirmed_copyright, upload_confirmed_at, watermark_risk_level. user_profiles gains recipes_flagged_count. New recipe_flags table (id, recipe_id, flagged_by, flag_type CHECK copyright/inappropriate/spam/misinformation/other, reason, status CHECK pending/approved/removed/dismissed, reviewed_by, reviewed_at, admin_note, UNIQUE recipe+flagger+type) with 3 indexes and RLS. PostgREST restarted.
 - [2026-04-16] packages/ai/src/rewriteRecipeSteps.ts: HAIKU-powered step rewriting (~$0.0003/recipe). Takes original steps + recipe name + cuisine, returns same count of steps reworded in fresh language while preserving all quantities, temperatures, times, and techniques exactly. Exported from packages/ai index.
