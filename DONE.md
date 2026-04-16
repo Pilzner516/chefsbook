@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 169 — Fix stolen images: audit + delete external URLs + safety checks)
+- [2026-04-16] Audited recipes.image_url: found 52 rows with external URLs (og:image from source sites like halfbakedharvest, alexandracooks, seriouseats, etc). All 52 nulled out. 48 already had AI photos; display unaffected.
+- [2026-04-16] Generated AI replacement images for 2 of 4 recipes with no photos. 2 remaining blocked by Replicate credit exhaustion (402 insufficient credit).
+- [2026-04-16] Safety check: addRecipePhoto() now throws on external URLs. createRecipe() filters out non-internal image_url. isInternalPhotoUrl() helper exported from @chefsbook/db.
+- [2026-04-16] Verified: Crispy Chicken Katsu shows AI image (Supabase URL), no external reference. Zero external URLs remain in entire DB (confirmed via COUNT query).
+- [2026-04-16] Deployed to RPi5 at commit 6d98ef5. Build exit 0, pm2 restarted. chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 168 — Change Image modal + regen loading + polling)
 - [2026-04-16] Moved regen pills from permanently below image into "Change Image" modal with two sections: Upload photo / Regenerate with AI.
 - [2026-04-16] Regeneration loading state: pulsing chef hat overlay inside image container with "Regenerating your image... This takes about 10-15 seconds".
