@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin, recalculateAllRatings } from '@chefsbook/db';
 
 /** Verify the request is from an admin user. Returns userId or null. */
 async function verifyAdmin(req: NextRequest): Promise<string | null> {
@@ -524,24 +524,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'recalculateRatings') {
-    // Recalculate ratings from tracker's own total_attempts/successful_attempts
-    const { data: allSites, error: siteErr } = await supabaseAdmin
-      .from('import_site_tracker')
-      .select('id, total_attempts, successful_attempts');
-    if (siteErr) return NextResponse.json({ error: siteErr.message }, { status: 500 });
-
-    let updated = 0;
-    for (const site of allSites ?? []) {
-      let newRating: number | null = null;
-      if (site.total_attempts > 0) {
-        const rate = site.successful_attempts / site.total_attempts;
-        newRating = rate >= 0.8 ? 5 : rate >= 0.6 ? 4 : rate >= 0.4 ? 3 : rate >= 0.2 ? 2 : 1;
-      }
-      await supabaseAdmin.from('import_site_tracker')
-        .update({ rating: newRating, updated_at: new Date().toISOString() })
-        .eq('id', site.id);
-      updated++;
-    }
+    const updated = await recalculateAllRatings();
     return NextResponse.json({ ok: true, updated });
   }
 

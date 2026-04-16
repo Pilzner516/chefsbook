@@ -182,6 +182,55 @@ async function updateSiteTrackerFromAttempt(
       last_attempt_at: new Date().toISOString(),
     });
   }
+
+  // Always recalculate rating from aggregate data
+  await recalculateRating(domain);
+}
+
+/** Recalculate a site's star rating from its aggregate success data.
+ *  ≥80% = 5★, 60-79% = 4★, 40-59% = 3★, 20-39% = 2★, <20% = 1★, no data = NULL */
+export async function recalculateRating(domain: string): Promise<number | null> {
+  const { data } = await supabaseAdmin
+    .from('import_site_tracker')
+    .select('id, total_attempts, successful_attempts')
+    .eq('domain', domain)
+    .maybeSingle();
+  if (!data) return null;
+
+  let rating: number | null = null;
+  if (data.total_attempts > 0) {
+    const rate = data.successful_attempts / data.total_attempts;
+    rating = rate >= 0.8 ? 5 : rate >= 0.6 ? 4 : rate >= 0.4 ? 3 : rate >= 0.2 ? 2 : 1;
+  }
+
+  await supabaseAdmin
+    .from('import_site_tracker')
+    .update({ rating, updated_at: new Date().toISOString() })
+    .eq('id', data.id);
+
+  return rating;
+}
+
+/** Recalculate ratings for ALL tracked domains. Returns count updated. */
+export async function recalculateAllRatings(): Promise<number> {
+  const { data: allSites } = await supabaseAdmin
+    .from('import_site_tracker')
+    .select('id, domain, total_attempts, successful_attempts');
+
+  let updated = 0;
+  for (const site of allSites ?? []) {
+    let rating: number | null = null;
+    if (site.total_attempts > 0) {
+      const rate = site.successful_attempts / site.total_attempts;
+      rating = rate >= 0.8 ? 5 : rate >= 0.6 ? 4 : rate >= 0.4 ? 3 : rate >= 0.2 ? 2 : 1;
+    }
+    await supabaseAdmin
+      .from('import_site_tracker')
+      .update({ rating, updated_at: new Date().toISOString() })
+      .eq('id', site.id);
+    updated++;
+  }
+  return updated;
 }
 
 export async function applyCompletenessGate(

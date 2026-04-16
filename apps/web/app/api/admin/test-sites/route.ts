@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin, checkRecipeCompleteness } from '@chefsbook/db';
+import { supabase, supabaseAdmin, checkRecipeCompleteness, logImportAttempt, recalculateRating } from '@chefsbook/db';
 import { KNOWN_RECIPE_SITES } from '@chefsbook/ai';
 import { preflightUrl, fetchWithFallback } from '../../import/_utils';
 import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
@@ -115,22 +115,20 @@ export async function POST(req: NextRequest) {
   for (const site of sites) {
     const result = await testOneSite(site.domain, site.testUrl);
     results.push(result);
-    // Update tracker
-    const { data: existing } = await supabaseAdmin
-      .from('import_site_tracker')
-      .select('id')
-      .eq('domain', site.domain)
-      .maybeSingle();
-    const update: any = {
-      rating: result.rating,
-      last_auto_tested_at: new Date().toISOString(),
-      status: result.rating >= 4 ? 'working' : result.rating >= 3 ? 'partial' : 'broken',
-    };
-    if (existing) {
-      await supabaseAdmin.from('import_site_tracker').update(update).eq('id', existing.id);
-    } else {
-      await supabaseAdmin.from('import_site_tracker').insert({ domain: site.domain, ...update });
-    }
+    // Log attempt + recalculate rating from aggregate data (never set rating directly)
+    try {
+      await logImportAttempt({
+        userId: adminId,
+        url: site.testUrl,
+        domain: site.domain,
+        success: result.success,
+        failureReason: result.failureReason,
+      });
+    } catch { /* non-critical */ }
+    // Update last_auto_tested_at (logImportAttempt handles total_attempts/successful_attempts/rating)
+    await supabaseAdmin.from('import_site_tracker')
+      .update({ last_auto_tested_at: new Date().toISOString() })
+      .eq('domain', site.domain);
     await new Promise((r) => setTimeout(r, 3000)); // rate-limit 1/3s
   }
 
