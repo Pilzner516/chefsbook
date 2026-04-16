@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 172 — Fix stuck "Generating recipe image" state)
+- [2026-04-16] DB audit: 0 stuck recipes (status in pending/generating with no AI photo). Distribution: 69 complete, 18 NULL, 3 failed (incl. Thai Chicken Satay, Slow-Roasted Lamb Shoulder, Sous Vide Pulled Pork). No DB reset needed — already failed from prior Replicate credit exhaustion.
+- [2026-04-16] Migration 044 applied on RPi5: image_generation_started_at TIMESTAMPTZ on recipes + partial index on pending/generating rows. PostgREST restarted.
+- [2026-04-16] apps/web/lib/imageGeneration.ts records image_generation_started_at when transitioning a recipe to pending or generating, so staleness can be measured server-side.
+- [2026-04-16] /api/recipes/[id]/image-status: returns 'failed' when status is pending/generating but no primary AI photo and started_at > 60s ago. Belt-and-suspenders with client-side timeout.
+- [2026-04-16] Recipe detail page (web) adds a polling useEffect: when image_generation_status is pending/generating on mount, polls image-status every 1.5s for up to 30s. On 'complete' pulls fresh photos; on 'failed' or timeout, flips to new generationFailed UI.
+- [2026-04-16] Failed-state UI on recipe detail: pulsing-off chef hat + "Image generation is temporarily unavailable." + red "Try again" button that re-triggers handleGenerateImage. Generating-state now also shows "This takes about 10-15 seconds" subtext.
+- [2026-04-16] Mobile: audit found no image-generation state in mobile app (HeroGallery only renders photos or chef's-hat fallback; no polling, no Generate button). Nothing stuck on mobile — no code change needed.
+- [2026-04-16] Verified: curl https://chefsbk.app/api/recipes/[thai-chicken-satay-id]/image-status returns {"status":"failed","url":null,...}. Build exit 0, pm2 restarted, chefsbk.app/ HTTP 200. Deployed at commit 13d08f7.
+
 ## 2026-04-16 (session 171 — Fix watermark badge text + hat icon + position)
 - [2026-04-16] Badge text fixed: "ChefsBook" (no space, capital B) using tspan elements in SVG. Was "Chefs book" (space, lowercase b) rendered as two separate text elements.
 - [2026-04-16] Hat icon replaced: clean toque style (dome + body rectangle + red band) replacing the old multi-ellipse mess.
