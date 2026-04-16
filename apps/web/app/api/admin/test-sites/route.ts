@@ -70,9 +70,46 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const domains: string[] | undefined = body.domains;
-  const sites = domains
-    ? KNOWN_RECIPE_SITES.filter((s) => domains.includes(s.domain))
-    : KNOWN_RECIPE_SITES;
+  const ratings: (number | null)[] | undefined = body.ratings;
+
+  let sites: typeof KNOWN_RECIPE_SITES;
+  if (domains) {
+    sites = KNOWN_RECIPE_SITES.filter((s) => domains.includes(s.domain));
+  } else if (ratings && ratings.length > 0) {
+    // Filter by rating tiers from import_site_tracker
+    const numericRatings = ratings.filter((r): r is number => r !== null);
+    const includeNull = ratings.includes(null);
+    let matchedDomains: string[] = [];
+
+    if (numericRatings.length > 0 && includeNull) {
+      const { data: byRating } = await supabaseAdmin
+        .from('import_site_tracker')
+        .select('domain')
+        .in('rating', numericRatings);
+      const { data: byNull } = await supabaseAdmin
+        .from('import_site_tracker')
+        .select('domain')
+        .is('rating', null);
+      matchedDomains = [...(byRating ?? []), ...(byNull ?? [])].map((r) => r.domain);
+    } else if (numericRatings.length > 0) {
+      const { data } = await supabaseAdmin
+        .from('import_site_tracker')
+        .select('domain')
+        .in('rating', numericRatings);
+      matchedDomains = (data ?? []).map((r) => r.domain);
+    } else if (includeNull) {
+      const { data } = await supabaseAdmin
+        .from('import_site_tracker')
+        .select('domain')
+        .is('rating', null);
+      matchedDomains = (data ?? []).map((r) => r.domain);
+    }
+
+    const domainSet = new Set(matchedDomains);
+    sites = KNOWN_RECIPE_SITES.filter((s) => domainSet.has(s.domain));
+  } else {
+    sites = KNOWN_RECIPE_SITES;
+  }
 
   const results: SiteTestResult[] = [];
   for (const site of sites) {

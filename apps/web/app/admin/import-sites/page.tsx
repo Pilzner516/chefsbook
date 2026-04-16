@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
 import { supabase } from '@chefsbook/db';
 
@@ -88,6 +88,8 @@ export default function ImportSitesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testFilters, setTestFilters] = useState<Set<number | null>>(new Set([null, 1, 2]));
 
   const load = async () => {
     setLoading(true);
@@ -156,22 +158,45 @@ export default function ImportSitesPage() {
     a.click();
   };
 
-  const runTests = async (domain?: string) => {
+  const runTests = async (domain?: string, ratings?: (number | null)[]) => {
     setTesting(true);
+    setShowTestModal(false);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      const payload: any = {};
+      if (domain) payload.domains = [domain];
+      else if (ratings) payload.ratings = ratings;
       const res = await fetch('/api/admin/test-sites', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify(domain ? { domains: [domain] } : {}),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Test run failed');
       await load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : 'failed'); }
     setTesting(false);
+  };
+
+  const selectedTestCount = useMemo(() => {
+    if (testFilters.has(-1)) return sites.length; // -1 = "All"
+    return sites.filter((s) => testFilters.has(s.rating)).length;
+  }, [sites, testFilters]);
+
+  const toggleTestFilter = (value: number | null) => {
+    setTestFilters((prev) => {
+      const next = new Set(prev);
+      if (value === -1) {
+        // "All" — exclusive toggle
+        return new Set([-1]);
+      }
+      next.delete(-1); // deselect "All" when picking specific
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
   };
 
   const toggleSchedule = async (enabled: boolean) => {
@@ -219,11 +244,11 @@ export default function ImportSitesPage() {
               Weekly auto-test
             </label>
             <button
-              onClick={() => runTests()}
+              onClick={() => { setTestFilters(new Set([null, 1, 2])); setShowTestModal(true); }}
               disabled={testing}
               className="bg-cb-primary text-white text-sm font-semibold px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50"
             >
-              {testing ? 'Testing...' : 'Run all tests now'}
+              {testing ? 'Testing...' : 'Run tests...'}
             </button>
             <button onClick={recalculateRatings} disabled={recalculating} className="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">{recalculating ? 'Recalculating...' : 'Recalculate Ratings'}</button>
             <button onClick={exportCsv} className="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">Export CSV</button>
@@ -256,6 +281,71 @@ export default function ImportSitesPage() {
           );
         })}
       </div>
+
+      {showTestModal && (() => {
+        const timeSeconds = selectedTestCount * 8;
+        const timeMin = Math.ceil(timeSeconds / 60);
+        const PILLS: { label: string; value: number | null }[] = [
+          { label: 'All sites', value: -1 },
+          { label: 'Untested', value: null },
+          { label: '★ 1 star', value: 1 },
+          { label: '★★ 2 star', value: 2 },
+          { label: '★★★ 3 star', value: 3 },
+          { label: '★★★★ 4 star', value: 4 },
+          { label: '★★★★★ 5 star', value: 5 },
+        ];
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowTestModal(false)}>
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Run Site Compatibility Tests</h2>
+              <p className="text-sm text-gray-600 mb-3">Select which sites to test:</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {PILLS.map((pill) => {
+                  const active = testFilters.has(pill.value as any);
+                  const count = pill.value === -1
+                    ? sites.length
+                    : sites.filter((s) => s.rating === pill.value).length;
+                  return (
+                    <button
+                      key={String(pill.value)}
+                      onClick={() => toggleTestFilter(pill.value)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                        active
+                          ? 'bg-cb-primary text-white'
+                          : 'bg-cb-base text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pill.label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-sm font-medium text-gray-900 mb-1">{selectedTestCount} site{selectedTestCount !== 1 ? 's' : ''} selected</p>
+              <p className="text-xs text-cb-green mb-5">
+                Tests run at 1 per 8 seconds. {selectedTestCount} site{selectedTestCount !== 1 ? 's' : ''} will take ~{timeMin} minute{timeMin !== 1 ? 's' : ''}.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowTestModal(false)}
+                  className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (testFilters.has(-1)) runTests();
+                    else runTests(undefined, [...testFilters] as (number | null)[]);
+                  }}
+                  disabled={selectedTestCount === 0}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-cb-primary rounded-md hover:opacity-90 disabled:opacity-50"
+                >
+                  Run tests on {selectedTestCount} site{selectedTestCount !== 1 ? 's' : ''} &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {loading ? <p className="text-gray-500">Loading...</p> : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
