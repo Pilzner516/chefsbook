@@ -55,10 +55,10 @@ const MAX = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : 999;
 const CB_ONLY = args.includes('--cb-only');
 const DRY_RUN = args.includes('--dry-run');
 
-// ── Watermark paths ──
-const CHEFS_HAT_PATHS = [
+// ── Watermark paths (new badge first, old hat as fallback) ──
+const WATERMARK_PATHS = [
+  join(process.cwd(), 'apps', 'web', 'public', 'images', 'watermark-chefsbook.png'),
   join(process.cwd(), 'docs', 'pics', 'CBHat.png'),
-  join(process.cwd(), 'apps', 'web', 'public', 'images', 'chefs-hat.png'),
 ];
 
 // ── Image generation ──
@@ -111,24 +111,36 @@ async function downloadImage(url) {
 }
 
 async function addWatermark(imageBuffer) {
-  // Dynamic import sharp (ESM)
   const sharp = (await import('sharp')).default;
 
   let watermarkBuf;
-  for (const p of CHEFS_HAT_PATHS) {
+  for (const p of WATERMARK_PATHS) {
     try {
-      watermarkBuf = await sharp(p).resize(60, 60).ensureAlpha().png().toBuffer();
+      const meta = await sharp(p).metadata();
+      // New badge: resize proportionally, position bottom-right with padding
+      if (meta.width > 100) {
+        // Badge format — resize to 160px wide
+        watermarkBuf = await sharp(p).resize(160, null, { fit: 'inside' }).png().toBuffer();
+      } else {
+        // Old hat fallback — 60x60
+        watermarkBuf = await sharp(p).resize(60, 60).ensureAlpha().png().toBuffer();
+      }
       break;
     } catch { continue; }
   }
   if (!watermarkBuf) {
-    console.warn('  [warn] CBHat watermark not found — skipping visible watermark');
+    console.warn('  [warn] Watermark badge not found — skipping visible watermark');
     return imageBuffer;
   }
 
+  const imgMeta = await sharp(imageBuffer).metadata();
+  const wmMeta = await sharp(watermarkBuf).metadata();
+  const left = imgMeta.width - wmMeta.width - 12;
+  const top = imgMeta.height - wmMeta.height - 12;
+
   return sharp(imageBuffer)
-    .composite([{ input: watermarkBuf, gravity: 'southeast', blend: 'over' }])
-    .jpeg({ quality: 85 })
+    .composite([{ input: watermarkBuf, left, top, blend: 'over' }])
+    .jpeg({ quality: 88 })
     .toBuffer();
 }
 
