@@ -11,6 +11,7 @@ interface UserRow {
   avatar_url: string | null;
   email: string | null;
   plan_tier: string;
+  image_quality_override: 'schnell' | 'dev' | null;
   is_suspended: boolean;
   is_searchable: boolean;
   follower_count: number;
@@ -109,6 +110,19 @@ export default function UsersPage() {
       await adminPost({ action: 'changePlan', userId, plan });
     } catch (e: any) { setError(e.message); }
     load();
+  };
+
+  const changeImageQuality = async (userId: string, value: string) => {
+    setError(null);
+    const override = value === 'dev' || value === 'schnell' ? value : null;
+    // Optimistic update so the select reflects the choice immediately
+    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, image_quality_override: override } : u));
+    try {
+      await adminPost({ action: 'setImageQuality', userId, override });
+    } catch (e: any) {
+      setError(e.message);
+      load();
+    }
   };
 
   const addAdminRole = async (userId: string, role: string) => {
@@ -281,6 +295,7 @@ export default function UsersPage() {
                 <SortHeader label="User" sortKeyName="username" />
                 <SortHeader label="Email" sortKeyName="email" />
                 <SortHeader label="Plan" sortKeyName="plan_tier" />
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Image Quality</th>
                 <SortHeader label="Role" sortKeyName="role" />
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Tags</th>
                 <th className="px-2 py-3 text-left font-medium text-gray-500 w-6">⚑</th>
@@ -321,6 +336,23 @@ export default function UsersPage() {
                       <select value={u.plan_tier} onChange={(e) => changePlan(u.id, e.target.value as PlanTier)} className="text-xs border border-gray-300 rounded px-2 py-1">
                         {['free', 'chef', 'family', 'pro'].map((p) => <option key={p} value={p}>{p}</option>)}
                       </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <select
+                          value={u.image_quality_override ?? 'auto'}
+                          onChange={(e) => changeImageQuality(u.id, e.target.value)}
+                          className="text-xs border border-gray-300 rounded px-2 py-1"
+                          title="AI image model override"
+                        >
+                          <option value="auto">Auto (plan default)</option>
+                          <option value="schnell">Standard (Flux Schnell)</option>
+                          <option value="dev">Premium (Flux Dev)</option>
+                        </select>
+                        {u.image_quality_override === 'dev' && (
+                          <span className="inline-flex items-center gap-0.5 bg-green-100 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded">🎨 Dev</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3"><span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleStyle.bg} ${roleStyle.text}`}>{roleStyle.label}</span></td>
                     <td className="px-4 py-3">
