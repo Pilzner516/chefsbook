@@ -42,7 +42,26 @@ export async function callClaude(params: {
 
   if (!response.ok) throw new Error(`Claude API error: ${response.status}`);
   const data = await response.json();
+
+  // Store usage for AI logging (fire-and-forget)
+  const usage = data.usage;
+  if (usage) {
+    _lastUsage = {
+      inputTokens: usage.input_tokens ?? 0,
+      outputTokens: usage.output_tokens ?? 0,
+      model: model === HAIKU ? 'haiku' : 'sonnet',
+    };
+  }
+
   return data.content?.[0]?.text ?? '';
+}
+
+// Token usage from the last callClaude — consumed once by logAiCall wrappers
+let _lastUsage: { inputTokens: number; outputTokens: number; model: string } | null = null;
+export function consumeLastUsage() {
+  const u = _lastUsage;
+  _lastUsage = null;
+  return u;
 }
 
 export function extractJSON<T>(text: string): T {

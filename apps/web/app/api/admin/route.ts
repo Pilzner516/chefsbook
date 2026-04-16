@@ -305,6 +305,61 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ limits: limits ?? [] });
   }
 
+  if (page === 'costs') {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+    // Today's cost
+    const { data: todayRows } = await supabaseAdmin.from('ai_usage_log').select('cost_usd').gte('created_at', todayStart);
+    const todayCost = (todayRows ?? []).reduce((s, r) => s + parseFloat(String(r.cost_usd)), 0);
+
+    // Month cost
+    const { data: monthRows } = await supabaseAdmin.from('ai_usage_log').select('cost_usd, action, model, user_id, created_at').gte('created_at', monthStart);
+    const monthCost = (monthRows ?? []).reduce((s, r) => s + parseFloat(String(r.cost_usd)), 0);
+
+    // Cost by action
+    const byAction: Record<string, number> = {};
+    const byModel: Record<string, number> = {};
+    const byUser: Record<string, number> = {};
+    const byDay: Record<string, number> = {};
+    for (const r of monthRows ?? []) {
+      const cost = parseFloat(String(r.cost_usd));
+      byAction[r.action] = (byAction[r.action] ?? 0) + cost;
+      byModel[r.model] = (byModel[r.model] ?? 0) + cost;
+      if (r.user_id) byUser[r.user_id] = (byUser[r.user_id] ?? 0) + cost;
+      const day = new Date(r.created_at).toISOString().slice(0, 10);
+      byDay[day] = (byDay[day] ?? 0) + cost;
+    }
+
+    // Top users
+    const topUserIds = Object.entries(byUser).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => id);
+    let topUsers: any[] = [];
+    if (topUserIds.length > 0) {
+      const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username, plan_tier').in('id', topUserIds);
+      const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+      topUsers = topUserIds.map((id) => ({ ...pMap.get(id), cost: byUser[id] }));
+    }
+
+    // Throttled users
+    const { data: throttled } = await supabaseAdmin.from('user_throttle').select('*').eq('is_throttled', true);
+
+    // User count for avg
+    const { count: userCount } = await supabaseAdmin.from('user_profiles').select('id', { count: 'exact', head: true });
+
+    return NextResponse.json({
+      todayCost,
+      monthCost,
+      avgPerUser: userCount ? monthCost / userCount : 0,
+      byAction: Object.entries(byAction).sort((a, b) => b[1] - a[1]),
+      byModel: Object.entries(byModel).sort((a, b) => b[1] - a[1]),
+      byDay: Object.entries(byDay).sort((a, b) => a[0].localeCompare(b[0])),
+      topUsers,
+      throttled: throttled ?? [],
+      totalCalls: (monthRows ?? []).length,
+    });
+  }
+
   if (page === 'settings') {
     const { data, error } = await supabaseAdmin.from('system_settings').select('*');
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -700,6 +755,25 @@ export async function POST(req: NextRequest) {
       .from('system_settings')
       .upsert({ key, value: String(value), updated_by: adminId, updated_at: new Date().toISOString() }, { onConflict: 'key' });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'removeThrottle') {
+    await supabaseAdmin.from('user_throttle').update({
+      is_throttled: false, throttle_level: null, throttled_at: null, throttled_reason: null,
+    }).eq('user_id', body.userId);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'whitelistUser') {
+    await supabaseAdmin.from('user_throttle').upsert({
+      user_id: body.userId,
+      admin_override: true,
+      override_by: adminId,
+      override_note: body.note ?? 'Admin whitelist',
+      is_throttled: false,
+      throttle_level: null,
+    }, { onConflict: 'user_id' });
     return NextResponse.json({ ok: true });
   }
 

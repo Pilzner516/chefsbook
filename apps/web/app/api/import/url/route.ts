@@ -2,7 +2,7 @@
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
-import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt } from '@chefsbook/db';
+import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt, logAiCall } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
@@ -161,6 +161,15 @@ export async function POST(req: Request) {
         failureReason: completeness.complete ? null : completeness.missing_fields.join(', '),
       });
     } catch { /* non-critical — don't block import */ }
+
+    // Log AI cost (fire and forget)
+    const aiModel = completeness.source === 'json-ld' ? null : (completeness.source === 'claude' ? 'sonnet' : 'haiku');
+    if (aiModel) {
+      logAiCall({ userId: null, action: 'import_url', model: aiModel }).catch(() => {});
+    }
+    if (sourceLanguage !== (reqLang ?? 'en')) {
+      logAiCall({ userId: null, action: 'translate_recipe', model: 'sonnet' }).catch(() => {});
+    }
 
     // ── PDF fallback signal for incomplete results ──
     // If extraction succeeded but the recipe is critically incomplete

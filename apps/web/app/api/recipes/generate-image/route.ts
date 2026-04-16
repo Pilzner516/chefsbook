@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '@chefsbook/db';
+import { supabaseAdmin, logAiCall } from '@chefsbook/db';
 import { triggerImageGeneration } from '../../../../lib/imageGeneration';
 
 export async function POST(req: Request) {
@@ -37,6 +37,9 @@ export async function POST(req: Request) {
       ingredients: ingredients ?? [],
       user_id: recipe.user_id,
     });
+
+    // Log AI cost (fire and forget — model determined by plan)
+    logAiCall({ userId: recipe.user_id, action: 'generate_image', model: 'flux-schnell', recipeId }).catch(() => {});
 
     return Response.json({ status: 'generating' });
   } catch (err: any) {

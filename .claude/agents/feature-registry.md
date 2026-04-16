@@ -240,6 +240,16 @@
 
 ---
 
+## AI COST & THROTTLE
+| Feature | Status | Owner Files | Session | Notes |
+|---------|--------|-------------|---------|-------|
+| AI usage logging | LIVE | packages/db (logAiCall), ai_usage_log table | 174 | Logs action, model, tokens, cost per call; wired into /api/import/url + /api/recipes/generate-image |
+| AI cost dashboard | LIVE | /admin/costs, /api/admin?page=costs | 174 | KPI cards (today/month/avg/throttled), cost by action bars, cost by model, top users, throttled users list with remove/whitelist |
+| Throttle system | LIVE | packages/db (checkAndUpdateThrottle, isUserThrottled), user_throttle table | 174 | Yellow/red levels from system_settings; grace period for new users; admin override; auto-restore at billing cycle |
+| Admin overview overhaul | LIVE | /admin page.tsx | 174 | Command center: 6 health KPIs, MRR/AI cost/margin, plan distribution, quick action links |
+
+---
+
 ## INFRASTRUCTURE
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|

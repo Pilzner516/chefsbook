@@ -19,3 +19,4 @@ export * from './queries/messages';
 export * from './queries/completeness';
 export * from './subscriptions';
 export * from './shopping/deduplication';
+export * from './queries/aiUsage';
