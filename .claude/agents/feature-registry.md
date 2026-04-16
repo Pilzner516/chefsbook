@@ -211,9 +211,10 @@
 | AI image generation | LIVE | apps/web/lib/imageGeneration.ts, /api/recipes/generate-image | 147 | Replicate Flux Dev ~$0.025/image; visible CBHat watermark + invisible LSB steganographic watermark; background generation; "Generate image" button on empty recipes |
 | Image watermark check | LIVE | packages/ai (checkImageForWatermarks), /api/recipes/check-image | 147 | HAIKU Vision ~$0.005/check; blocks high-risk uploads, warns on medium; runs before every user image upload |
 | Copyright confirmation modal | LIVE | apps/web/app/recipe/[id]/page.tsx, apps/mobile/components/EditImageGallery.tsx | 147 | ChefsDialog (web) / Alert (mobile) before every image upload; confirms user owns the image |
-| Recipe flagging system | LIVE | recipe_flags table, /api/recipes/flag, apps/web/app/recipe/[id]/page.tsx | 147 | Flag pills: copyright/inappropriate/spam/other; copyright flag → immediate private + locked |
+| Recipe flagging system | LIVE | recipe_flags table, /api/recipes/flag, apps/web/app/recipe/[id]/page.tsx | 147, 148 | Report modal with 6 pill reasons + optional comment; users report only — NO auto-visibility changes; admins act via /admin/copyright |
 | Copyright review admin | LIVE | /admin/copyright, /api/admin (copyright actions) | 147 | Approve (auto-restore previous visibility) / Remove (permanent private + DM) / Dismiss; flagger reputation shown |
-| Copyright visibility lock | LIVE | apps/web/app/recipe/[id]/page.tsx | 147 | Visibility toggle disabled while copyright_review_pending=true; amber banner for owner |
+| Copyright visibility lock | LIVE | apps/web/app/recipe/[id]/page.tsx | 147, 148 | Visibility toggle disabled while copyright_review_pending=true; amber banner for owner; ONLY set by admin action, never by user flag |
+| AI moderation toggle | LIVE | system_settings table, /admin/settings, saveWithModeration.ts | 148 | ON/OFF toggle; serious+ON=auto-hide; serious+OFF=flag-only; mild=always flag-only |
 
 ---
 

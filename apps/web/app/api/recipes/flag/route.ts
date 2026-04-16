@@ -8,7 +8,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'recipeId, flaggedBy, flagType required' }, { status: 400 });
     }
 
-    const validTypes = ['copyright', 'inappropriate', 'spam', 'misinformation', 'other'];
+    const validTypes = ['copyright', 'inappropriate', 'spam', 'misinformation', 'impersonation', 'adult_content', 'other'];
     if (!validTypes.includes(flagType)) {
       return Response.json({ error: 'Invalid flag type' }, { status: 400 });
     }
@@ -45,41 +45,21 @@ export async function POST(req: Request) {
         .eq('id', flaggedBy);
     } catch { /* non-critical */ }
 
-    // For copyright flags: immediately lock the recipe
-    if (flagType === 'copyright') {
-      // Get current visibility to store for restore
-      const { data: recipe } = await supabaseAdmin
-        .from('recipes')
-        .select('visibility')
-        .eq('id', recipeId)
-        .single();
+    // Notify admins — NO content changes. Users report, admins act.
+    const { data: admins } = await supabaseAdmin
+      .from('admin_users')
+      .select('user_id');
 
-      await supabaseAdmin
-        .from('recipes')
-        .update({
-          copyright_review_pending: true,
-          copyright_locked_at: new Date().toISOString(),
-          copyright_previous_visibility: recipe?.visibility ?? 'public',
-          visibility: 'private',
-        })
-        .eq('id', recipeId);
-
-      // Create notification for admins
-      const { data: admins } = await supabaseAdmin
-        .from('admin_users')
-        .select('user_id');
-
-      if (admins) {
-        for (const admin of admins) {
-          try {
-            await supabaseAdmin.from('notifications').insert({
-              user_id: admin.user_id,
-              type: 'copyright_flag',
-              recipe_id: recipeId,
-              message: 'A recipe has been flagged for copyright concerns',
-            });
-          } catch { /* non-critical */ }
-        }
+    if (admins) {
+      for (const admin of admins) {
+        try {
+          await supabaseAdmin.from('notifications').insert({
+            user_id: admin.user_id,
+            type: 'recipe_flag',
+            recipe_id: recipeId,
+            message: `A recipe has been flagged as ${flagType}`,
+          });
+        } catch { /* non-critical */ }
       }
     }
 

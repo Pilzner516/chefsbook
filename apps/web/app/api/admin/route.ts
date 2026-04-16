@@ -305,6 +305,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ limits: limits ?? [] });
   }
 
+  if (page === 'settings') {
+    const { data, error } = await supabaseAdmin.from('system_settings').select('*');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const settingsMap: Record<string, any> = {};
+    for (const row of data ?? []) {
+      settingsMap[row.key] = row;
+    }
+    return NextResponse.json({ settings: settingsMap });
+  }
+
   return NextResponse.json({ error: 'Unknown page' }, { status: 400 });
 }
 
@@ -668,6 +678,16 @@ export async function POST(req: NextRequest) {
       await sendMessage(adminId, body.flaggerId, `We reviewed your report and determined "${recipe?.title}" doesn't raise copyright concerns. Thank you for helping keep ChefsBook fair.`, 'clean', supabaseAdmin).catch(() => {});
     }
 
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'updateSetting') {
+    const { key, value } = body;
+    if (!key || value === undefined) return NextResponse.json({ error: 'key and value required' }, { status: 400 });
+    const { error } = await supabaseAdmin
+      .from('system_settings')
+      .upsert({ key, value: String(value), updated_by: adminId, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
   }
 

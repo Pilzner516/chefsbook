@@ -96,9 +96,11 @@ export default function RecipePage() {
   const [guestEmail, setGuestEmail] = useState('');
   const [guestSubmitting, setGuestSubmitting] = useState(false);
   const [copyrightConfirm, CopyrightDialog] = useConfirmDialog();
-  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagSubmitting, setFlagSubmitting] = useState(false);
   const [flagSubmitted, setFlagSubmitted] = useState(false);
+  const [selectedFlagType, setSelectedFlagType] = useState<string | null>(null);
+  const [flagComment, setFlagComment] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -562,10 +564,8 @@ export default function RecipePage() {
         throw new Error('Failed to submit flag');
       } else {
         setFlagSubmitted(true);
-        setShowFlagMenu(false);
-        if (flagType === 'copyright') {
-          setRecipe({ ...recipe, copyright_review_pending: true, visibility: 'private' } as any);
-        }
+        setShowFlagModal(false);
+        // No content changes — users report only, admins act
       }
     } catch (e: any) {
       alert(e.message);
@@ -807,38 +807,70 @@ export default function RecipePage() {
               Delete
             </button>
           )}
-          {/* Flag button (non-owners only) */}
+          {/* Report button (non-owners only) */}
           {isLoggedIn && !isOwner && !flagSubmitted && (
-            <div className="relative">
-              <button
-                onClick={() => setShowFlagMenu(!showFlagMenu)}
-                className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors text-cb-muted"
-                title="Report this recipe"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
-                </svg>
-                <span className="hidden sm:inline">Report</span>
-              </button>
-              {showFlagMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-cb-card border border-cb-border rounded-card shadow-lg z-50 py-1">
+            <button
+              onClick={() => { setShowFlagModal(true); setSelectedFlagType(null); setFlagComment(''); }}
+              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors text-cb-muted"
+              title="Report this recipe"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+              </svg>
+              <span className="hidden sm:inline">Report</span>
+            </button>
+          )}
+          {/* Report modal */}
+          {showFlagModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowFlagModal(false)}>
+              <div className="bg-cb-card rounded-card p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold mb-1">Report this recipe</h3>
+                <p className="text-sm text-cb-secondary mb-4">Why are you reporting this?</p>
+                <div className="flex flex-wrap gap-2 mb-4">
                   {[
-                    { type: 'copyright', label: 'Potentially copyrighted', icon: '\u00A9\uFE0F' },
-                    { type: 'inappropriate', label: 'Inappropriate content', icon: '\u26A0\uFE0F' },
-                    { type: 'spam', label: 'Spam or misleading', icon: '\uD83D\uDEAB' },
-                    { type: 'other', label: 'Other', icon: '\uD83D\uDCCB' },
+                    { type: 'copyright', label: 'Potentially copyrighted' },
+                    { type: 'inappropriate', label: 'Inappropriate' },
+                    { type: 'spam', label: 'Spam or misleading' },
+                    { type: 'impersonation', label: 'Impersonation' },
+                    { type: 'adult_content', label: 'Adult content' },
+                    { type: 'other', label: 'Other' },
                   ].map((opt) => (
                     <button
                       key={opt.type}
-                      onClick={() => handleFlagRecipe(opt.type)}
-                      disabled={flagSubmitting}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2"
+                      onClick={() => setSelectedFlagType(selectedFlagType === opt.type ? null : opt.type)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                        selectedFlagType === opt.type
+                          ? 'bg-cb-primary text-white border-cb-primary'
+                          : 'bg-cb-bg text-cb-text border-cb-border hover:border-cb-primary'
+                      }`}
                     >
-                      {opt.icon} {opt.label}
+                      {opt.label}
                     </button>
                   ))}
                 </div>
-              )}
+                <textarea
+                  value={flagComment}
+                  onChange={(e) => setFlagComment(e.target.value.slice(0, 500))}
+                  placeholder="Add more details (optional)"
+                  className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none h-20 mb-1 bg-cb-bg outline-none focus:border-cb-primary"
+                />
+                <p className="text-xs text-cb-muted mb-4 text-right">{flagComment.length}/500</p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowFlagModal(false)}
+                    className="px-4 py-2 text-sm text-cb-secondary hover:text-cb-text"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { if (selectedFlagType) handleFlagRecipe(selectedFlagType, flagComment || undefined); }}
+                    disabled={!selectedFlagType || flagSubmitting}
+                    className="px-4 py-2 text-sm font-medium bg-cb-primary text-white rounded-input disabled:opacity-40 hover:bg-cb-primary/90 transition-colors"
+                  >
+                    {flagSubmitting ? 'Submitting...' : 'Submit Report'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1009,7 +1041,7 @@ export default function RecipePage() {
         {/* Flag submitted thank-you */}
         {flagSubmitted && (
           <div className="mb-4 p-3 bg-green-50 border border-green-300 rounded-card text-sm text-green-800">
-            Thank you for helping keep ChefsBook fair and legal! We&apos;ve received your report and will review it promptly.
+            Thanks for your report. We&apos;ll review it shortly. &#10003;
           </div>
         )}
         {/* Refresh-from-source banner on incomplete imports */}

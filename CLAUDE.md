@@ -139,6 +139,17 @@ PEXELS_API_KEY=<key>                        # Pexels API (recipe image search pi
 UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
 ```
 
+## Moderation Permission Model
+- Users: report only (flag) — no content changes, no visibility changes, no suspensions
+- AI: flag + auto-act on serious ONLY when AI Auto-Moderation toggle is ON (system_settings table)
+- AI mild: always flag-only, never auto-act regardless of toggle
+- Proctors: hide, warn, resolve flags
+- Admins: all actions including permanent removal, toggle AI moderation
+- Super Admins: all actions + system settings
+
+NEVER auto-change content visibility on user flag.
+ONLY admins/proctors/AI(serious+toggle ON) can change content state.
+
 ## Non-Negotiable UI Rules
 
 ANDROID SAFE AREA — MANDATORY ON EVERY SCREEN

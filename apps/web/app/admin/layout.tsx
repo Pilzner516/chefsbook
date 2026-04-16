@@ -18,6 +18,7 @@ const NAV = [
   { href: '/admin/import-sites', label: 'Import Sites' },
   { href: '/admin/incomplete-recipes', label: 'Incomplete Recipes' },
   { href: '/admin/copyright', label: 'Copyright' },
+  { href: '/admin/settings', label: 'Settings' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

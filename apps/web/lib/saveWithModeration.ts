@@ -73,16 +73,32 @@ export async function createRecipeWithModeration(
     });
 
     if (moderation.verdict !== 'clean') {
+      // Check if AI auto-moderation is enabled
+      let aiAutoEnabled = true;
+      try {
+        const { data: setting } = await supabaseAdmin
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'ai_auto_moderation_enabled')
+          .single();
+        aiAutoEnabled = setting?.value === 'true';
+      } catch { /* default to enabled if setting missing */ }
+
+      // Always record the moderation status
       const updates: Partial<Recipe> = {
         moderation_status: moderation.verdict === 'mild' ? 'flagged_mild' : 'flagged_serious',
         moderation_flag_reason: moderation.reason ?? null,
         moderation_flagged_at: new Date().toISOString(),
-        visibility: 'private',
       };
-      await updateRecipe(created.id, updates);
 
-      if (moderation.verdict === 'serious') {
+      // Auto-act ONLY on serious + toggle ON. Mild = flag only, never auto-hide.
+      if (moderation.verdict === 'serious' && aiAutoEnabled) {
+        updates.visibility = 'private';
+        await updateRecipe(created.id, updates);
         await freezeUserRecipes(userId, moderation.reason ?? 'Serious recipe violation');
+      } else {
+        // Flag only — no visibility change, no freeze
+        await updateRecipe(created.id, updates);
       }
     }
   } catch {
