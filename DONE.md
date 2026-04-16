@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 151 — Batch AI image generation for ChefsBook recipes)
+- [2026-04-16] scripts/generate-recipe-images.mjs created: standalone batch image generator. Queries recipes without photos (ChefsBook-tagged first), generates via Replicate Flux Dev, adds CBHat visible watermark via sharp, uploads to Supabase storage, inserts recipe_user_photos row with is_ai_generated=true. Supports --cb-only, --limit N, --dry-run flags. Reads env from apps/web/.env.local. Uses localhost:8000 for direct Supabase access on RPi5.
+- [2026-04-16] Fixed Replicate API output_format: 'jpeg' → 'jpg' (Replicate only accepts webp/jpg/png). Fixed in both scripts/generate-recipe-images.mjs and apps/web/lib/imageGeneration.ts.
+- [2026-04-16] Fixed .catch() on Supabase PostgREST builder (not a thenable with .catch — wrapped in try/catch instead).
+- [2026-04-16] Increased rate limit delay from 5s to 12s to respect Replicate's 6 req/min limit on accounts with <$5 credit.
+- [2026-04-16] Batch optimized: replaced N+1 photo-count query loop with single batch query using .in('recipe_id', ids) then Set exclusion.
+- [2026-04-16] Run 1: 16/32 ChefsBook recipes generated successfully ($0.40), 16 failed with 429 rate limit (5s delay too fast).
+- [2026-04-16] Run 2: remaining 16/16 generated successfully ($0.40) with 12s delay. Total: 32/32 ChefsBook-tagged recipes now have AI-generated watermarked images. Total cost: ~$0.80.
+- [2026-04-16] Verified: 32 rows in recipe_user_photos with is_ai_generated=true and storage_path like 'ai-generated/%'. All 32 ChefsBook recipes have has_ai_image=true and image_generation_status='complete'.
+
 ## 2026-04-16 (session 150 — Fix flagging system + AI moderation toggle)
 - [2026-04-16] CRITICAL FIX: removed ALL auto-visibility changes triggered by user flags. /api/recipes/flag no longer sets visibility='private', copyright_review_pending=true, or copyright_locked_at on ANY flag type. User flags now only: (1) insert recipe_flags row, (2) notify admins, (3) return thank-you. Content remains completely unchanged and visible.
 - [2026-04-16] Removed client-side optimistic copyright lock: recipe/[id]/page.tsx no longer sets copyright_review_pending=true or visibility='private' in local state when user submits a copyright flag.

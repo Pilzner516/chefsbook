@@ -342,7 +342,7 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
 - Multilingual support: fully implemented with react-i18next; 5 locales (en/fr/es/it/de); all UI strings use t() calls; language change triggers immediate UI translation via activateLanguage()
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
-- **AI image generation requires REPLICATE_API_TOKEN** — env var not yet set on RPi5. Set in apps/web/.env.local before using "Generate image" button. ~$0.025/image.
+- **AI image generation working** — REPLICATE_API_TOKEN set on RPi5. 32 ChefsBook-tagged recipes have AI images. Replicate rate limit: 6 req/min on <$5 accounts, script uses 12s delay. ~59 recipes remain without images (non-CB-tagged).
 - **Step rewrite backfill blocked on API credits** — scripts/rewrite-imported-steps.mjs works correctly (schema, queries, logic all verified) but the Anthropic API key has insufficient credit balance. 82 recipes need rewriting. Script now has early-exit on credit/auth errors. Top up credits at console.anthropic.com then re-run.
 - **Invisible watermark survives JPEG compression poorly** — LSB steganography is fragile under heavy JPEG recompression or screenshots. The visible CBHat watermark is the primary deterrent; the invisible watermark is supplementary forensic evidence for high-quality copies.
 - **Mobile copyright flag not yet wired** — Web recipe detail has Report button with flag types; mobile recipe/[id].tsx does not yet have a flag/report button.
