@@ -52,20 +52,28 @@ const STATUS_STYLE: Record<string, string> = {
   unknown: 'bg-gray-100 text-gray-600',
 };
 
-function Stars({ value, onChange }: { value: number | null; onChange?: (v: number) => void }) {
+function Stars({ value, onChange, successRate }: { value: number | null; onChange?: (v: number) => void; successRate?: number | null }) {
+  if (value === null || value === undefined) {
+    return <span className="text-xs text-gray-400">— Untested</span>;
+  }
   return (
-    <span className="inline-flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange?.(n)}
-          className={`text-base ${n <= (value ?? 0) ? 'text-amber-500' : 'text-gray-300'} ${onChange ? 'cursor-pointer hover:text-amber-600' : 'cursor-default'}`}
-          aria-label={`${n} stars`}
-        >
-          ★
-        </button>
-      ))}
+    <span className="inline-flex items-center gap-1">
+      <span className="inline-flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange?.(n)}
+            className={`text-base ${n <= value ? 'text-amber-500' : 'text-gray-300'} ${onChange ? 'cursor-pointer hover:text-amber-600' : 'cursor-default'}`}
+            aria-label={`${n} stars`}
+          >
+            ★
+          </button>
+        ))}
+      </span>
+      {successRate !== null && successRate !== undefined && (
+        <span className="text-xs text-gray-500 ml-0.5">{successRate}%</span>
+      )}
     </span>
   );
 }
@@ -79,6 +87,7 @@ export default function ImportSitesPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -170,6 +179,15 @@ export default function ImportSitesPage() {
     load();
   };
 
+  const recalculateRatings = async () => {
+    setRecalculating(true);
+    try {
+      await adminPost({ action: 'recalculateRatings' });
+      await load();
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : 'failed'); }
+    setRecalculating(false);
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Import Site Tracker</h1>
@@ -207,6 +225,7 @@ export default function ImportSitesPage() {
             >
               {testing ? 'Testing...' : 'Run all tests now'}
             </button>
+            <button onClick={recalculateRatings} disabled={recalculating} className="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">{recalculating ? 'Recalculating...' : 'Recalculate Ratings'}</button>
             <button onClick={exportCsv} className="text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-1.5 hover:bg-gray-50">Export CSV</button>
           </div>
         </div>
@@ -268,7 +287,7 @@ export default function ImportSitesPage() {
                       <td className="px-3 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLE[s.status] ?? STATUS_STYLE.unknown}`}>{s.status}</span>
                       </td>
-                      <td className="px-3 py-3"><Stars value={s.rating} onChange={(v) => update(s.id, { rating: v })} /></td>
+                      <td className="px-3 py-3"><Stars value={s.rating} onChange={(v) => update(s.id, { rating: v })} successRate={s.total_attempts > 0 ? Math.round((s.successful_attempts / s.total_attempts) * 100) : null} /></td>
                       <td className="px-3 py-3 text-gray-600 text-xs">{rate}% ({s.successful_attempts}/{s.total_attempts})</td>
                       <td className="px-3 py-3 text-gray-500 text-xs">{s.last_auto_tested_at ? new Date(s.last_auto_tested_at).toLocaleDateString() : '—'}</td>
                       <td className="px-3 py-3">
