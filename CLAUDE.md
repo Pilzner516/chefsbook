@@ -429,6 +429,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 | describeSourceImage() | haiku (vision) | ~$0.005 | No (one-time per import when og:image available) |
 | detectLanguage() | haiku | ~$0.0001 | No (often free via heuristic; haiku fallback for ambiguous) |
 | translateRecipeContent() | sonnet | ~$0.003 | No (one-time at import when source != user language) |
+| generateMissingIngredients() | sonnet | ~$0.003 | No (user-initiated when recipe missing ingredients) |
 | socialShareText / socialShareHashtags | haiku | ~$0.00020 | No (user-initiated) |
 | matchFolderToCategory() | haiku | ~$0.00016 | No (one-time per import) |
 | matchFoldersToCategories() (batch) | haiku | ~$0.0005 | No (one-time per bookmark import) |

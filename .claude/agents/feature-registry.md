@@ -87,6 +87,7 @@
 | aiChef completion (missing sections) | LIVE | packages/ai | 02 | |
 | Reimport (re-fetch URL, update AI fields) | LIVE | apps/web/app/api/import/reimport | 35 | Preserves user edits |
 | Auto-tag recipes button | LIVE | apps/web/dashboard/search/, /api/recipes/auto-tag | 35 | Retroactive tagging |
+| AI ingredient generation | LIVE | packages/ai (generateMissingIngredients), /api/recipes/[id]/generate-ingredients | 166 | Sonnet ~$0.003/call; generates ingredients from title+description+steps when extraction missed them; user preview before save |
 
 ---
 
