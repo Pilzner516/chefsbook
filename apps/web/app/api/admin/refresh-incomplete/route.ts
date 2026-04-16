@@ -35,18 +35,26 @@ export async function POST(req: NextRequest) {
   const { data: rows } = await query;
   const ids = (rows ?? []).map((r) => r.id);
 
-  const origin = new URL(req.url).origin;
+  // Use localhost for internal server-to-server calls to avoid looping through
+  // Cloudflare Tunnel (which can return HTML error pages instead of JSON).
+  const internalOrigin = 'http://localhost:3000';
   let refreshed = 0;
   let needsExtension = 0;
   let failed = 0;
 
   for (const recipeId of ids) {
     try {
-      const res = await fetch(`${origin}/api/recipes/refresh`, {
+      const res = await fetch(`${internalOrigin}/api/recipes/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ recipeId }),
       });
+      const contentType = res.headers.get('content-type') ?? '';
+      if (!contentType.includes('application/json')) {
+        // Got an HTML error page instead of JSON — treat as failure
+        failed += 1;
+        continue;
+      }
       const b = await res.json();
       if (res.ok && b.ok) refreshed += 1;
       else if (res.status === 206) needsExtension += 1;
