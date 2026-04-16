@@ -426,6 +426,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 | reanalyseDish() (dishIdentify) | haiku | ~$0.00030 | No (user-initiated clarification) |
 | rewriteRecipeSteps() | haiku | ~$0.0003 | No (one-time per URL import, fire-and-forget) |
 | checkImageForWatermarks() | haiku (vision) | ~$0.005 | No (one-time per user image upload) |
+| describeSourceImage() | haiku (vision) | ~$0.005 | No (one-time per import when og:image available) |
 | detectLanguage() | haiku | ~$0.0001 | No (often free via heuristic; haiku fallback for ambiguous) |
 | translateRecipeContent() | sonnet | ~$0.003 | No (one-time at import when source != user language) |
 | socialShareText / socialShareHashtags | haiku | ~$0.00020 | No (user-initiated) |

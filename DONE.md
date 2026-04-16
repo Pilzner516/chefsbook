@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 162 — AI image themes + regeneration pills + source image descriptions)
+- [2026-04-16] Migration 043 applied: source_image_url/description on recipes, image_theme/image_quality_override on user_profiles, regen_count on recipe_user_photos.
+- [2026-04-16] 10 image themes defined in packages/ai/src/imageThemes.ts (Bright & Fresh, Farmhouse, Fine Dining, Editorial, Garden Fresh, Candlelit, Japanese Minimal, Mediterranean, Cozy Autumn, Modern Glam). Each with prompt, emoji, preview path.
+- [2026-04-16] buildImagePrompt() uses source_image_description when available, falls back to title+ingredients. getImageModel() selects Flux Dev for Pro, Schnell for all others.
+- [2026-04-16] 10 theme pasta example images generated via Flux Schnell on RPi5 (~$0.03 total). Saved to apps/web/public/images/themes/.
+- [2026-04-16] describeSourceImage() (Haiku Vision ~$0.005/call) wired into /api/import/url at import time when og:image is available.
+- [2026-04-16] ThemePickerModal: 2-col grid with preview images, red border on selected. "My Theme" pill on dashboard. PATCH /api/user/theme saves preference.
+- [2026-04-16] 6 regeneration pills (wrong dish, change scene, brighter, moodier, closer, overhead). POST /api/recipes/regenerate-image. Limit 1 per recipe. Pills hidden after use.
+- [2026-04-16] Admin setImageQuality action for per-user override. Pricing page: Pro shows "Premium AI food photography", Free shows "AI food photography".
+- [2026-04-16] imageGeneration.ts refactored to use shared buildImagePrompt + getImageModel. Watermark uses new badge. triggerImageGeneration reads user profile for theme/plan/override.
+- [2026-04-16] Deployed to RPi5 at commit d617798. Build exit 0, pm2 restarted. chefsbk.app/, /dashboard, /pricing HTTP 200. Theme images + API endpoints verified.
+
 ## 2026-04-16 (session 161 — Import waterfall verification + admin test upgrade)
 - [2026-04-16] Verified all 5 import waterfall scenarios via live API: Test A (happy path pinchofyum) PASS — 9 ingredients, 5 steps, JSON-LD, no fallback. Test B (blocked allrecipes) PASS — needsBrowserExtraction:true, reason:fetch_blocked. Test C (incomplete smittenkitchen homepage) PASS — title-only triggers needsBrowserExtraction:true, reason:incomplete_extraction. Test D (blocked no extension) PASS — same API signal, client shows install prompt. Test E (mobile) PASS — API returns correct signal, mobile handles gracefully.
 - [2026-04-16] Migration 043 applied on RPi5: site_test_runs table (id, domain, test_url, rating, needs_extension, fetch_method, ingredient_count, step_count, has_quantities, error_reason, tested_at, triggered_by) with indexes on (domain, tested_at DESC) and (tested_at DESC). PostgREST restarted.
