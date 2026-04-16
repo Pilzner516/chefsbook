@@ -27,6 +27,14 @@ export async function getPrimaryPhotos(recipeIds: string[]): Promise<Record<stri
   return map;
 }
 
+/** Check if a URL points to internal storage (safe to save as recipe photo). */
+export function isInternalPhotoUrl(url: string): boolean {
+  return url.includes('100.110.47.62')
+    || url.includes('chefsbk.app')
+    || url.includes('supabase')
+    || url.includes('localhost');
+}
+
 export async function addRecipePhoto(
   recipeId: string,
   userId: string,
@@ -34,6 +42,12 @@ export async function addRecipePhoto(
   url: string,
   caption?: string,
 ): Promise<RecipeUserPhoto> {
+  // Safety check: never save external URLs as recipe photos (copyright violation)
+  if (!isInternalPhotoUrl(url)) {
+    console.error(`[SAFETY] Blocked external URL as recipe photo: ${url}`);
+    throw new Error('External URLs cannot be saved as recipe photos');
+  }
+
   const { count } = await supabase
     .from('recipe_user_photos')
     .select('*', { count: 'exact', head: true })

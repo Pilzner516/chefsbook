@@ -175,7 +175,13 @@ export async function createRecipe(
       course: recipe.course,
       source_type: recipe.source_type,
       source_url: recipe.source_url,
-      image_url: recipe.image_url,
+      // Never store external image URLs (copyright risk) — only Supabase storage URLs
+      image_url: recipe.image_url && (
+        recipe.image_url.includes('100.110.47.62') ||
+        recipe.image_url.includes('chefsbk.app') ||
+        recipe.image_url.includes('supabase') ||
+        recipe.image_url.includes('localhost')
+      ) ? recipe.image_url : null,
       cookbook_id: recipe.cookbook_id,
       page_number: recipe.page_number,
       notes: recipe.notes,
