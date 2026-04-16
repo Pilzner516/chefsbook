@@ -21,12 +21,16 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 const HAIKU = 'claude-haiku-4-5-20251001';
 
 async function callClaude(prompt) {
+  const body = { model: HAIKU, max_tokens: 2000, messages: [{ role: 'user', content: prompt }] };
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: HAIKU, max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`Claude ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    throw new Error(`Claude ${res.status}: ${errBody.slice(0, 300)}`);
+  }
   const data = await res.json();
   return data.content?.[0]?.text ?? '';
 }
@@ -116,6 +120,12 @@ async function main() {
       } catch (err) {
         failed++;
         console.error(`  [fail] ${recipe.title}: ${err.message}`);
+        // Abort early on credit/auth errors — no point retrying
+        if (err.message?.includes('credit balance') || err.message?.includes('401')) {
+          console.error('\nAborting: API key issue (credits or auth). Fix and re-run.');
+          console.log(`\nDone: ${total} processed, ${success} rewritten, ${failed} failed`);
+          process.exit(1);
+        }
       }
 
       // Rate limit: 1 per second
