@@ -153,6 +153,16 @@ export async function POST(req: Request) {
       });
     } catch { /* non-critical — don't block import */ }
 
+    // ── PDF fallback signal for incomplete results ──
+    // If extraction succeeded but the recipe is critically incomplete
+    // (missing ingredients OR steps), signal that the extension could do
+    // better with browser-rendered HTML. Return the partial recipe AND
+    // the fallback signal so the client can hand off to the extension.
+    const hasIngredients = (recipe.ingredients?.length ?? 0) >= 1;
+    const hasSteps = (recipe.steps?.length ?? 0) >= 1;
+    const criticallyIncomplete = !hasIngredients || !hasSteps;
+    const needsBrowserFallback = criticallyIncomplete && !!recipe.title;
+
     return Response.json({
       contentType: 'recipe',
       recipe,
@@ -160,6 +170,12 @@ export async function POST(req: Request) {
       titleGenerated: generated,
       completeness,
       siteWarning,
+      // Signal extension fallback when extraction is critically incomplete
+      ...(needsBrowserFallback ? {
+        needsBrowserExtraction: true,
+        reason: 'incomplete_extraction',
+        incompleteMessage: `We found the recipe title but couldn't extract the full ${!hasIngredients && !hasSteps ? 'ingredients and steps' : !hasIngredients ? 'ingredients' : 'steps'}. The browser extension can get the complete recipe.`,
+      } : {}),
       discovery: discovery.isNewDiscovery
         ? {
             isNew: true,

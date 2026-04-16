@@ -178,7 +178,28 @@ export default function ScanPage() {
         body: JSON.stringify({ url, userLanguage: storedLang || 'en' }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Import failed');
+      if (!res.ok && res.status !== 206) throw new Error(data.error || 'Import failed');
+
+      // Handle extension fallback signal — for both 206 hard blocks and incomplete extractions
+      if (data.needsBrowserExtraction) {
+        // Check if extension is installed (content script sets a data attribute on <html>)
+        const hasExtension = typeof document !== 'undefined' && document.documentElement.hasAttribute('data-chefsbook-extension');
+        if (hasExtension && !data.recipe) {
+          // Hard block (no recipe at all) — hand off to extension silently
+          window.postMessage({ type: 'CHEFSBOOK_PDF_IMPORT', url }, '*');
+          setLoading(null);
+          return;
+        }
+        // If we have a partial recipe but extension could do better, show a hint
+        if (data.incompleteMessage) {
+          console.log('Import incomplete — extension could improve:', data.incompleteMessage);
+          // Continue with partial recipe if we have one, but show the warning
+        }
+        // If no extension and hard block, show error
+        if (!data.recipe) {
+          throw new Error(data.incompleteMessage || data.message || 'This site requires the ChefsBook browser extension for full import.');
+        }
+      }
 
       // Warm-discovery signal: store the message for the next page to show.
       if (data.discovery?.isNew && typeof window !== 'undefined') {
