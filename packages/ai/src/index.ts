@@ -49,5 +49,6 @@ export { rewriteRecipeSteps } from './rewriteRecipeSteps';
 export type { RecipeStep as RewriteStep } from './rewriteRecipeSteps';
 export { checkImageForWatermarks } from './checkImageForWatermarks';
 export type { WatermarkCheckResult } from './checkImageForWatermarks';
+export { detectLanguage, translateRecipeContent } from './translateImport';
 export { KNOWN_RECIPE_SITES } from './siteList';
 export type { KnownSite } from './siteList';

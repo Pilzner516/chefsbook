@@ -1,6 +1,6 @@
 // TODO(web): replicate multi-page scan support (mobile sends up to 5 page images in single Claude Vision call)
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
 import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
@@ -21,7 +21,7 @@ function resolveUrl(src: string, base: string): string {
 }
 
 export async function POST(req: Request) {
-  const { url, forceType } = await req.json();
+  const { url, forceType, userLanguage: reqLang } = await req.json();
 
   if (!url || typeof url !== 'string') {
     return Response.json({ error: 'URL is required' }, { status: 400 });
@@ -120,6 +120,19 @@ export async function POST(req: Request) {
         ],
       };
     }
+
+    // ── Detect language + translate if needed ──
+    const userLanguage = reqLang ?? 'en';
+    let sourceLanguage = 'en';
+    try {
+      const sampleText = `${recipe.title ?? ''} ${(recipe.ingredients ?? []).slice(0, 3).map((i: any) => i.ingredient ?? '').join(' ')} ${(recipe.steps ?? []).slice(0, 1).map((s: any) => s.instruction ?? '').join(' ')}`;
+      sourceLanguage = await detectLanguage(sampleText);
+      if (sourceLanguage !== userLanguage) {
+        recipe = await translateRecipeContent(recipe, userLanguage, sourceLanguage);
+      }
+    } catch { /* translation failure is non-blocking — keep original */ }
+    recipe.source_language = sourceLanguage;
+    if (sourceLanguage !== userLanguage) recipe.translated_from = sourceLanguage;
 
     const { title, generated } = ensureTitle(recipe, url);
     recipe.title = title;

@@ -170,10 +170,12 @@ export default function ScanPage() {
       }
 
       const endpoint = isYouTubeUrl(url) ? '/api/import/youtube' : '/api/import/url';
+      // Pass user's preferred language for import-time translation
+      const storedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('chefsbook-language') : null;
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, userLanguage: storedLang || 'en' }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Import failed');
