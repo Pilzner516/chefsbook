@@ -36,7 +36,8 @@ function loadEnvFile() {
 }
 loadEnvFile();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://100.110.47.62:8000';
+// Prefer localhost for scripts running on RPi5 (avoids Cloudflare tunnel overhead)
+const SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost:8000';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const REPLICATE_TOKEN = process.env.REPLICATE_API_TOKEN;
 
@@ -148,15 +149,14 @@ async function main() {
 
   if (error) { console.error('Query error:', error.message); process.exit(1); }
 
-  // Filter to recipes with no user photos
-  const candidates = [];
-  for (const r of allRecipes || []) {
-    const { count } = await supabase
-      .from('recipe_user_photos')
-      .select('id', { count: 'exact', head: true })
-      .eq('recipe_id', r.id);
-    if ((count ?? 0) === 0) candidates.push(r);
-  }
+  // Batch-fetch recipe IDs that already have photos, then exclude
+  const recipeIds = (allRecipes || []).map(r => r.id);
+  const { data: photosExist } = await supabase
+    .from('recipe_user_photos')
+    .select('recipe_id')
+    .in('recipe_id', recipeIds.length > 0 ? recipeIds : ['00000000-0000-0000-0000-000000000000']);
+  const hasPhotoSet = new Set((photosExist || []).map(p => p.recipe_id));
+  const candidates = (allRecipes || []).filter(r => !hasPhotoSet.has(r.id));
 
   // Sort: ChefsBook-tagged first
   candidates.sort((a, b) => {
