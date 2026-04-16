@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 171 — Fix watermark badge text + hat icon + position)
+- [2026-04-16] Badge text fixed: "ChefsBook" (no space, capital B) using tspan elements in SVG. Was "Chefs book" (space, lowercase b) rendered as two separate text elements.
+- [2026-04-16] Hat icon replaced: clean toque style (dome + body rectangle + red band) replacing the old multi-ellipse mess.
+- [2026-04-16] Badge resized to 200x46px (was 240x54). Text 18px bold, letter-spacing -0.3. Opaque white pill with drop shadow + subtle border.
+- [2026-04-16] Badge position moved to bottom-LEFT (was bottom-right) in both apply-watermarks.mjs and generate-recipe-images.mjs — avoids CSS object-fit:cover cropping on recipe detail page.
+- [2026-04-16] apply-watermarks.mjs re-run on RPi5: 72/72 images watermarked, 0 failures. New badge composited over existing images (old bottom-right badge baked in from generation; new bottom-left badge applied on top).
+- [2026-04-16] Verified: soufflé image has "ChefsBook" badge bottom-left, one word, no space, "Chefs" red + "Book" black, toque hat icon.
+
 ## 2026-04-16 (session 170 — Fix watermark visibility + creativity slider + regenerate images)
 - [2026-04-16] Watermark diagnosis: badge was present on stored images (160x36 on 1152x896 — visible but tiny). Red square test confirmed sharp compositing works. Real issue: session 158 LSB steganographic watermark corrupted JPEG headers on 73/74 images (VipsJpeg: Corrupt JPEG data). Browsers tolerated it but sharp couldn't re-read them.
 - [2026-04-16] Fix: deleted all 74 corrupt AI photo rows + 75 corrupt storage objects. Reset has_ai_image/image_generation_status on all recipes. Regenerated 70/75 images fresh (19+51 batches, 5 failed on Replicate credit exhaustion). New images have enlarged 240x54 badge (was 160x36), fully opaque white background.
