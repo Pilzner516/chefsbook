@@ -331,6 +331,10 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
 - Multilingual support: fully implemented with react-i18next; 5 locales (en/fr/es/it/de); all UI strings use t() calls; language change triggers immediate UI translation via activateLanguage()
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
+- **AI image generation requires REPLICATE_API_TOKEN** — env var not yet set on RPi5. Set in apps/web/.env.local before using "Generate image" button. ~$0.025/image.
+- **Step rewrite backfill not yet run** — scripts/rewrite-imported-steps.mjs needs to be run on RPi5 with SUPABASE_SERVICE_ROLE_KEY + ANTHROPIC_API_KEY to rewrite existing imported recipe steps.
+- **Invisible watermark survives JPEG compression poorly** — LSB steganography is fragile under heavy JPEG recompression or screenshots. The visible CBHat watermark is the primary deterrent; the invisible watermark is supplementary forensic evidence for high-quality copies.
+- **Mobile copyright flag not yet wired** — Web recipe detail has Report button with flag types; mobile recipe/[id].tsx does not yet have a flag/report button.
 - Mobile sign-in flow verified on device (landing → sign in → recipes tab works; Google OAuth stub remains TODO)
 - Google OAuth stubs in mobile auth screens (TODO: wire up signInWithOAuth)
 - assetlinks.json has placeholder fingerprint — needs release APK signing key SHA256 (`keytool -list -v -keystore [keystore.jks]`)
