@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 161 — Import waterfall verification + admin test upgrade)
+- [2026-04-16] Verified all 5 import waterfall scenarios via live API: Test A (happy path pinchofyum) PASS — 9 ingredients, 5 steps, JSON-LD, no fallback. Test B (blocked allrecipes) PASS — needsBrowserExtraction:true, reason:fetch_blocked. Test C (incomplete smittenkitchen homepage) PASS — title-only triggers needsBrowserExtraction:true, reason:incomplete_extraction. Test D (blocked no extension) PASS — same API signal, client shows install prompt. Test E (mobile) PASS — API returns correct signal, mobile handles gracefully.
+- [2026-04-16] Migration 043 applied on RPi5: site_test_runs table (id, domain, test_url, rating, needs_extension, fetch_method, ingredient_count, step_count, has_quantities, error_reason, tested_at, triggered_by) with indexes on (domain, tested_at DESC) and (tested_at DESC). PostgREST restarted.
+- [2026-04-16] Upgraded /api/admin/test-sites: now runs the FULL import pipeline per site via internal localhost:3000/api/import/url (not just JSON-LD check). Detects needsExtension (NULL rating for blocked sites). Logs every result to site_test_runs table. Returns rich category breakdown (full/good/partial/titleOnly/needsExtension/failed).
+- [2026-04-16] Admin import-sites page: new test results summary modal after test run completes. Shows category breakdown with color-coded rows (5★ Full, 4★ Good, 3★ Partial, 2★ Title only, 🔌 Needs extension, ✗ Failed). Expandable individual results list. CSV export button.
+- [2026-04-16] feature-registry.md updated: Site compatibility testing row updated with full pipeline, site_test_runs, results modal, needsExtension detection.
+- [2026-04-16] Typecheck clean (web). Deployed to RPi5 at commit c999c48, pm2 restarted; chefsbk.app/, /admin/import-sites both HTTP 200.
+
 ## 2026-04-16 (session 160 — Expand PDF fallback to incomplete extractions)
 - [2026-04-16] /api/import/url now returns needsBrowserExtraction:true + reason:'incomplete_extraction' when recipe extraction succeeds but is critically incomplete (has title but missing ingredients OR steps). Previously this signal only fired on hard fetch failures (403/460) or too-little-text (<500 chars).
 - [2026-04-16] Scan page handles the new signal: if extension is installed and no recipe returned, hands off to extension via postMessage. If partial recipe exists, continues with warning. If no extension and hard block, shows error.
