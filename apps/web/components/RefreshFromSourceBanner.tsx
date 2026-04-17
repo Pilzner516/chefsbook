@@ -18,6 +18,9 @@ interface Props {
 export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, onRefreshed }: Props) {
   const [status, setStatus] = useState<'idle' | 'refreshing' | 'ok' | 'error' | 'needs-ext'>('idle');
   const [msg, setMsg] = useState<string>('');
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [pasting, setPasting] = useState(false);
 
   if (!sourceUrl || missingFields.length === 0) return null;
 
@@ -112,7 +115,66 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
                 Install extension
               </a>
             )}
+            <button
+              type="button"
+              onClick={() => setShowPaste(!showPaste)}
+              className="inline-flex items-center gap-1.5 text-sm border border-amber-300 text-amber-900 rounded-full px-3 py-1 hover:bg-amber-100"
+            >
+              📋 Paste {missingFields[0] ?? 'text'}
+            </button>
           </div>
+          {showPaste && (
+            <div className="mt-3">
+              <textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder={`Paste the ${missingFields.join(' and ')} here...`}
+                rows={4}
+                className="w-full bg-white border border-amber-300 rounded-input px-3 py-2 text-sm resize-none outline-none focus:border-cb-primary"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!pasteText.trim()) return;
+                  setPasting(true);
+                  try {
+                    const res = await fetch('/api/import/text', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ text: pasteText }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error);
+                    const recipe = data.recipe;
+                    // Merge pasted content into existing recipe via supabaseAdmin
+                    const { data: session } = await supabase.auth.getSession();
+                    if (recipe.ingredients?.length) {
+                      const token = session.session?.access_token;
+                      // Use the refresh endpoint logic — save ingredients to the existing recipe
+                      await fetch('/api/recipes/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ recipeId, pastedIngredients: recipe.ingredients }),
+                      });
+                    }
+                    setStatus('ok');
+                    setMsg(`Parsed ${recipe.ingredients?.length ?? 0} ingredients from pasted text.`);
+                    setShowPaste(false);
+                    onRefreshed?.();
+                  } catch (e: any) {
+                    setStatus('error');
+                    setMsg(e.message);
+                  } finally {
+                    setPasting(false);
+                  }
+                }}
+                disabled={!pasteText.trim() || pasting}
+                className="mt-2 inline-flex items-center gap-1.5 text-sm bg-cb-green text-white rounded-full px-4 py-1.5 disabled:opacity-50"
+              >
+                {pasting ? 'Parsing...' : 'Save'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

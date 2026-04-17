@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Alert, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, Alert, ScrollView, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -67,6 +67,8 @@ export default function ScanTab() {
   const [dishFlowAnalysis, setDishFlowAnalysis] = useState<ScanImageAnalysis | null>(null);
   // Social-media tip card (dismissible)
   const [showSocialTip, setShowSocialTip] = useState(true);
+  const [showPasteInput, setShowPasteInput] = useState(false);
+  const [pasteText, setPasteText] = useState('');
   // Discovery toast — shown when the imported URL is from a site we hadn't seen
   const [discoveryDomain, setDiscoveryDomain] = useState<string | null>(null);
 
@@ -429,6 +431,12 @@ export default function ScanTab() {
       onPress: () => { setShowUrlInput(!showUrlInput); },
     },
     {
+      iconName: 'clipboard' as const,
+      label: 'Paste text',
+      subtitle: 'Paste recipe text for AI parsing',
+      onPress: () => setShowPasteInput(!showPasteInput),
+    },
+    {
       iconName: 'create' as const,
       label: t('scan.manualEntry'),
       subtitle: t('scan.manualSubtitle'),
@@ -679,6 +687,44 @@ export default function ScanTab() {
             </View>
           </View>
         </Animated.View>
+
+        {/* Collapsible paste text input */}
+        {showPasteInput && (
+          <View style={{ backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.borderDefault, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Paste recipe text</Text>
+            <TextInput
+              value={pasteText}
+              onChangeText={setPasteText}
+              placeholder="Paste ingredients, steps, or the full recipe..."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              numberOfLines={6}
+              style={{ backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, minHeight: 120, textAlignVertical: 'top' }}
+            />
+            <TouchableOpacity
+              onPress={async () => {
+                if (!pasteText.trim()) return;
+                setImportStatus('importing');
+                setShowPasteInput(false);
+                try {
+                  const { importFromText } = await import('@chefsbook/ai');
+                  const recipe = await importFromText(pasteText);
+                  const saved = await addRecipe(session!.user.id, { ...recipe, source_type: 'text' } as any);
+                  setImportedRecipeId(saved.id);
+                  setImportStatus('success');
+                  setPasteText('');
+                } catch (e: any) {
+                  setImportStatus('error');
+                  Alert.alert('Import failed', e.message);
+                }
+              }}
+              disabled={!pasteText.trim() || importStatus === 'importing'}
+              style={{ marginTop: 12, backgroundColor: pasteText.trim() ? colors.accent : colors.bgBase, borderRadius: 10, paddingVertical: 10, alignItems: 'center', opacity: pasteText.trim() ? 1 : 0.5 }}
+            >
+              <Text style={{ color: pasteText.trim() ? '#ffffff' : colors.textSecondary, fontSize: 14, fontWeight: '600' }}>Parse Recipe</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Social-media screenshot tip (dismissible) — replaces the removed Instagram import card */}
         {showSocialTip && (

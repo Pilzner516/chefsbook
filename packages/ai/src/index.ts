@@ -59,3 +59,4 @@ export type { CreativityLevel } from './imageThemes';
 export type { ImageTheme, ThemeDefinition, RegenPill } from './imageThemes';
 export { suggestTagsForRecipe } from './suggestTagsForRecipe';
 export type { TagSuggestion } from './suggestTagsForRecipe';
+export { importFromText } from './importFromText';
