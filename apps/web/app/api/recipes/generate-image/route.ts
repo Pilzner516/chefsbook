@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     });
 
     // Log AI cost (fire and forget — model determined by plan)
-    logAiCall({ userId: recipe.user_id, action: 'generate_image', model: 'flux-schnell', recipeId }).catch(() => {});
+    logAiCall({ userId: recipe.user_id, action: 'generate_image', model: 'flux-schnell', recipeId, durationMs: 0, success: true }).catch(() => {});
 
     return Response.json({ status: 'generating' });
   } catch (err: any) {

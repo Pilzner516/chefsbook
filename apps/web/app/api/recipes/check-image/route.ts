@@ -8,9 +8,10 @@ export async function POST(req: Request) {
       return Response.json({ error: 'imageBase64 required' }, { status: 400 });
     }
 
+    const t0 = Date.now();
     const result = await checkImageForWatermarks(imageBase64, mimeType);
 
-    logAiCall({ userId: null, action: 'check_watermark', model: 'haiku' }).catch(() => {});
+    logAiCall({ userId: null, action: 'check_watermark', model: 'haiku', durationMs: Date.now() - t0, success: true }).catch(() => {});
 
     return Response.json(result);
   } catch (err: any) {

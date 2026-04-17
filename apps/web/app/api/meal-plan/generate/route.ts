@@ -33,9 +33,10 @@ export async function POST(req: Request) {
     total_minutes: r.total_minutes,
   }));
 
+  const t0 = Date.now();
   const plan = await generateMealPlan(preferences, userRecipes);
 
-  logAiCall({ userId: user?.id, action: 'generate_meal_plan', model: 'sonnet' }).catch(() => {});
+  logAiCall({ userId: user?.id, action: 'generate_meal_plan', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
 
   return Response.json({ plan });
 }

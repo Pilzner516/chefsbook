@@ -41,6 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   try {
+    const t0 = Date.now();
     const generated = await generateMissingIngredients({
       title: recipe.title,
       description: recipe.description,
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       tags: recipe.tags,
     });
 
-    logAiCall({ userId: user.id, action: 'generate_ingredients', model: 'sonnet', recipeId }).catch(() => {});
+    logAiCall({ userId: user.id, action: 'generate_ingredients', model: 'sonnet', recipeId, durationMs: Date.now() - t0, success: true }).catch(() => {});
 
     return Response.json({
       ingredients: generated,

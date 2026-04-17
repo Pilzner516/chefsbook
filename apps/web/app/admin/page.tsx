@@ -22,11 +22,24 @@ interface CostData {
 export default function AdminOverview() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [costs, setCosts] = useState<CostData | null>(null);
+  const [health, setHealth] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadAll = () => {
     adminFetch({ page: 'overview' }).then(setStats).catch((e) => setError(e.message));
     adminFetch({ page: 'costs' }).then(setCosts).catch(() => {});
+    // Fetch real system health from dedicated endpoint
+    (async () => {
+      try {
+        const { supabase } = await import('@chefsbook/db');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/admin/system-health', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) setHealth(await res.json());
+      } catch { /* non-critical */ }
+    })();
   };
 
   useEffect(() => {
@@ -47,15 +60,30 @@ export default function AdminOverview() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Command Center</h1>
 
-      {/* System status row */}
-      {(stats as any).systemStatus && (
-        <div className="flex items-center gap-4 mb-4 text-xs text-gray-500">
-          {Object.entries((stats as any).systemStatus as Record<string, string>).map(([name, status]) => (
-            <span key={name} className="flex items-center gap-1">
-              {status === 'online' ? '🟢' : status === 'error' ? '🔴' : '🟡'}
-              <span className="capitalize">{name}</span>
-            </span>
-          ))}
+      {/* System status row — real health data */}
+      {health && (
+        <div className="flex flex-wrap items-center gap-3 mb-4 text-xs text-gray-500">
+          {(['database', 'anthropic', 'replicate'] as const).map((k) => {
+            const s = health[k];
+            const dot = s?.status === 'online' ? '🟢' : '🔴';
+            return <span key={k}>{dot} {k} {s?.latencyMs != null ? `${s.latencyMs}ms` : ''}</span>;
+          })}
+          {health.disk && (() => {
+            const d = health.disk;
+            const dot = d.status === 'ok' ? '🟢' : d.status === 'warning' ? '🟡' : '🔴';
+            return <span>{dot} disk {d.usedPercent}% ({d.availGb} free)</span>;
+          })()}
+          {health.memory && (() => {
+            const m = health.memory;
+            const dot = m.status === 'ok' ? '🟢' : m.status === 'warning' ? '🟡' : '🔴';
+            return <span>{dot} mem {m.usedPercent}% ({m.availMb}MB free)</span>;
+          })()}
+          {health.pm2 && (() => {
+            const p = health.pm2;
+            const dot = p.status === 'online' ? '🟢' : '🔴';
+            const hours = Math.floor((p.uptimeMs ?? 0) / 3600000);
+            return <span>{dot} pm2 {hours}h {p.restarts ?? 0} restarts</span>;
+          })()}
         </div>
       )}
 

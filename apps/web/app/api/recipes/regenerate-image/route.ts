@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin, logAiCall } from '@chefsbook/db';
 import { REGEN_PILLS } from '@chefsbook/ai';
 import { triggerImageGeneration } from '@/lib/imageGeneration';
 
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
     .limit(6);
 
   // Trigger regeneration with pill modifier
+  const t0 = Date.now();
   triggerImageGeneration(
     recipeId,
     {
@@ -70,6 +71,16 @@ export async function POST(req: Request) {
     },
     { modifier: pill.modifier, replaceExisting: true },
   );
+
+  // Log regen cost (fire-and-forget — generation is async)
+  logAiCall({
+    userId: user.id,
+    action: 'regenerate_image',
+    model: 'flux-schnell',
+    recipeId,
+    durationMs: Date.now() - t0,
+    success: true,
+  }).catch(() => {});
 
   return Response.json({ status: 'generating', pill: pill.label });
 }

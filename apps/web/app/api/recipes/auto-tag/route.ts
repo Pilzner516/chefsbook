@@ -59,6 +59,7 @@ export async function POST(req: Request) {
   // Get ingredients for each recipe
   let updated = 0;
   const batchSize = 5;
+  const t0 = Date.now();
 
   for (let i = 0; i < allNeedingWork.length; i += batchSize) {
     const batch = allNeedingWork.slice(i, i + batchSize);
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
     }
   }
 
-  logAiCall({ userId: null, action: 'suggest_tags', model: 'haiku' }).catch(() => {});
+  logAiCall({ userId: user?.id ?? null, action: 'suggest_tags', model: 'haiku', durationMs: Date.now() - t0, success: true }).catch(() => {});
 
   return Response.json({ total, updated });
 }

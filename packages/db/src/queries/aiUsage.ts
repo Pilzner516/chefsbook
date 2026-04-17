@@ -16,6 +16,8 @@ export interface AiCallLog {
   tokensOut?: number;
   recipeId?: string | null;
   metadata?: Record<string, unknown>;
+  success?: boolean;
+  durationMs?: number | null;
 }
 
 /**
@@ -23,7 +25,7 @@ export interface AiCallLog {
  * Fire-and-forget — never blocks the caller.
  */
 export async function logAiCall(params: AiCallLog): Promise<number> {
-  const { userId, action, model, tokensIn = 0, tokensOut = 0, recipeId, metadata = {} } = params;
+  const { userId, action, model, tokensIn = 0, tokensOut = 0, recipeId, metadata = {}, success = true, durationMs } = params;
 
   const costs = MODEL_COSTS[model] ?? MODEL_COSTS.haiku;
   const costUsd = costs.fixed ?? (tokensIn * (costs.input ?? 0) + tokensOut * (costs.output ?? 0));
@@ -38,6 +40,8 @@ export async function logAiCall(params: AiCallLog): Promise<number> {
       cost_usd: costUsd,
       recipe_id: recipeId ?? null,
       metadata,
+      success,
+      duration_ms: durationMs ?? null,
     });
   } catch { /* logging failure must never block AI calls */ }
 

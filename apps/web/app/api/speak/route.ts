@@ -9,12 +9,13 @@ export async function POST(req: Request) {
   }
 
   try {
+    const t0 = Date.now();
     const recipe = await formatVoiceRecipe(transcript);
     if (!recipe) {
       return Response.json({ error: 'Could not extract a recipe from the transcript. Try speaking with more detail.' }, { status: 422 });
     }
 
-    logAiCall({ userId: null, action: 'import_speak', model: 'sonnet' }).catch(() => {});
+    logAiCall({ userId: null, action: 'import_speak', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
 
     return Response.json({ recipe });
   } catch (e: any) {

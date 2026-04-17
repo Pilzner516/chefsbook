@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
         .eq('recipe_id', recipeId)
         .order('step_number')
         .limit(1);
+      const t0 = Date.now();
       const result = await isActuallyARecipe({
         title: recipe.title,
         description: recipe.description ?? '',
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       aiReason = result.reason;
       await applyAiVerdict(recipeId, aiVerdict, aiReason, intendedVisibility);
 
-      logAiCall({ userId, action: 'moderate_recipe', model: 'haiku', recipeId }).catch(() => {});
+      logAiCall({ userId, action: 'moderate_recipe', model: 'haiku', recipeId, durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
 
     if (url) {

@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const t0 = Date.now();
     const result = await translateRecipe(recipe, targetLanguage);
 
-    logAiCall({ userId: user?.id, action: 'translate_recipe', model: 'sonnet' }).catch(() => {});
+    logAiCall({ userId: user?.id, action: 'translate_recipe', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
 
     // Save full translation to DB (overwrites title-only)
     if (recipeId) {

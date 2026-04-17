@@ -79,6 +79,7 @@ export async function POST(req: Request) {
 
     // ── Recipe extraction: JSON-LD first, Claude as fallback ──
 
+    const t0 = Date.now();
     const jsonLd = extractJsonLdRecipe(rawHtml);
     const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
 
@@ -165,10 +166,10 @@ export async function POST(req: Request) {
     // Log AI cost (fire and forget)
     const aiModel = completeness.source === 'json-ld' ? null : (completeness.source === 'claude' ? 'sonnet' : 'haiku');
     if (aiModel) {
-      logAiCall({ userId: null, action: 'import_url', model: aiModel }).catch(() => {});
+      logAiCall({ userId: null, action: 'import_url', model: aiModel, durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
     if (sourceLanguage !== (reqLang ?? 'en')) {
-      logAiCall({ userId: null, action: 'translate_recipe', model: 'sonnet' }).catch(() => {});
+      logAiCall({ userId: null, action: 'translate_recipe', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
 
     // ── PDF fallback signal for incomplete results ──
