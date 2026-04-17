@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 179 — Admin data layer fixes)
+- [SESSION 179] Part 1: Migration 046 applied — added success BOOLEAN NOT NULL DEFAULT true + duration_ms INTEGER to ai_usage_log. Index on (success, created_at DESC). logAiCall() signature updated with success + durationMs params (default true/null for backward compat).
+- [SESSION 179] Part 2: Fixed hardcoded userId:null in auto-tag route (now uses user?.id). import/url, check-image, speak remain null (unauthenticated public routes — no user context available).
+- [SESSION 179] Part 3: All 10 logAiCall call sites now pass durationMs (Date.now() - t0) and success:true. Timing wrapped around AI calls in: import/url, auto-tag, check-image, speak, generate-image, meal-plan/generate, translate, generate-ingredients, finalize, regenerate-image.
+- [SESSION 179] Part 4: regenerate-image route now calls logAiCall with userId, action:'regenerate_image', model:'flux-schnell', recipeId, durationMs, success.
+- [SESSION 179] Part 5: /api/admin/system-health endpoint — real checks for database (SELECT 1 latency), Anthropic (GET /v1/models with key), Replicate (GET /v1/account), disk (df), memory (free), pm2 (jlist). All via Promise.allSettled with timeouts. 60s cache. Admin overview wired to use this instead of hardcoded strings — shows latency for APIs, used%+avail for disk/memory, uptime+restarts for pm2.
+- [SESSION 179] Typecheck clean (web). Deployed to RPi5 at commit 677e3d3, pm2 restarted; /admin HTTP 200.
+
 ## 2026-04-17 (session 178 — End-to-end regen test + regen_count timing fix)
 - [SESSION 167] Part 1 end-to-end VERIFIED: KIMLO recipe regenerated via Replicate Flux Schnell (83KB raw → 91KB watermarked). Timestamped storage key works (`ai-generated/{id}-{timestamp}.jpg`). Watermark badge visible bottom-left. Photo row updated with new URL. regen_count=1. Image loads through proxy (HTTP 200 image/jpeg).
 - [SESSION 167] Part 1 fix: regen_count was being set BEFORE Replicate generation (in regenerate-image route). If Replicate failed, the count was already burned. Moved regen_count=1 to generateAndSaveRecipeImage AFTER successful upload+save — failures don't consume the user's single regen allowance.
