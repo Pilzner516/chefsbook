@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 188 — Fix regen pill chain + preserve original as thumbnail) TYPE: CODE FIX
+- [SESSION 188] Fix 1 DIAGNOSIS: Traced full pill → prompt chain end-to-end: pill.modifier → regenerate-image route (line 73) → triggerImageGeneration(modifier) → generateAndSaveRecipeImage(modifier) → generateRecipeImage(modifier) → buildImagePrompt(recipe, theme, modifier, creativityLevel) → Replicate prompt. Chain is intact — pill selection correctly reaches the Replicate API. Prompt saved to ai_image_prompt in DB (line 262). No fix needed.
+- [SESSION 188] Fix 2 TYPE: CODE FIX: Regen was overwriting the existing primary AI photo row (UPDATE url + storage_path). Original image lost permanently. Fixed: now checks user's plan photo limit (Chef/Family=1, Pro=5). Pro users with room: INSERT new photo as primary, demote old to is_primary=false (preserved as selectable thumbnail in gallery). Chef/Family at limit: overwrite existing (no room for thumbnails). regen_count incremented on all paths.
+- [SESSION 188] Typecheck clean. Deployed at commit 2c0782a, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 184B — Three image-regen bugs) TYPE: CODE FIX
 - [SESSION 184B] Diagnosed 3 bugs: Bug 1 pills hidden in Change Image popup, Bug 2 "same image every regen", Bug 3 deleting AI image reveals external og:image URL. Reported root causes before writing any code.
 - [SESSION 184B] Bug 1+2 share a root cause: 1-regen-per-recipe hard limit. UI gate at apps/web/app/recipe/[id]/page.tsx:1029 was `regen_count < 1`; server gate at apps/web/app/api/recipes/regenerate-image/route.ts:46 returned 429 on `>= 1`. DB evidence: 8 of 10 most-recent AI photos already had regen_count=1, hiding pills for almost every user/recipe combo. The "same image" perception: after the 1st regen, the 2nd click hits 429 → UI alerts but leaves the first-regen image in state. The random seed (imageGeneration.ts:50) was always correct; the second Replicate call simply never fired.
