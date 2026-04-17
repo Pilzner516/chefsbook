@@ -210,9 +210,11 @@ export function buildImagePrompt(
 
 // ── Model Selection ──
 
-export function getImageModel(planTier: string, override?: string | null): string {
+export function getImageModel(planTier: string, override?: string | null, creativityLevel?: CreativityLevel): string {
   if (override === 'dev') return 'black-forest-labs/flux-dev';
   if (override === 'schnell') return 'black-forest-labs/flux-schnell';
+  // Levels 1-2 (faithful) need Dev for better prompt adherence
+  if (creativityLevel && creativityLevel <= 2) return 'black-forest-labs/flux-dev';
   if (planTier === 'pro') return 'black-forest-labs/flux-dev';
   return 'black-forest-labs/flux-schnell';
 }

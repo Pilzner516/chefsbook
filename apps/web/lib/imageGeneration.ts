@@ -339,12 +339,14 @@ export function triggerImageGeneration(
       const profile = profileRes.data;
 
       const theme = (profile?.image_theme ?? 'bright_fresh') as ImageTheme;
-      const model = getImageModel(profile?.plan_tier ?? 'free', profile?.image_quality_override);
 
       // creativityLevel precedence: explicit option > system_settings > default 3
       const settingVal = parseInt(settingRes.data?.value ?? '3', 10);
       const settingLevel = (settingVal >= 1 && settingVal <= 5 ? settingVal : 3) as CreativityLevel;
       const creativityLevel = options?.creativityLevel ?? settingLevel;
+
+      // Model selection: levels 1-2 use Flux Dev for better prompt adherence
+      const model = getImageModel(profile?.plan_tier ?? 'free', profile?.image_quality_override, creativityLevel);
 
       await generateAndSaveRecipeImage(recipeId, recipe, {
         theme,

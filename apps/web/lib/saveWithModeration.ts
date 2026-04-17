@@ -2,6 +2,7 @@ import { createRecipe, updateRecipe, freezeUserRecipes, supabase, supabaseAdmin 
 import type { RecipeWithDetails, ScannedRecipe, Recipe } from '@chefsbook/db';
 import { moderateRecipe, rewriteRecipeSteps } from '@chefsbook/ai';
 import type { RecipeModerationResult } from '@chefsbook/ai';
+import { triggerImageGeneration } from './imageGeneration';
 
 export type SaveResult = {
   recipe: RecipeWithDetails;
@@ -166,6 +167,18 @@ export async function createRecipeWithModeration(
     recipe.source_type ?? 'manual',
     recipe.is_new_discovery,
   );
+
+  // Fire-and-forget: auto-generate AI image for recipes with title + ≥2 ingredients
+  if (recipe.title && (recipe.ingredients?.length ?? 0) >= 2) {
+    triggerImageGeneration(created.id, {
+      title: recipe.title,
+      cuisine: recipe.cuisine ?? null,
+      ingredients: recipe.ingredients?.map((i) => ({ ingredient: i.ingredient })) ?? [],
+      tags: recipe.tags ?? [],
+      user_id: userId,
+      source_image_description: recipe.source_image_description ?? null,
+    });
+  }
 
   return { recipe: created, moderation, completeness };
 }

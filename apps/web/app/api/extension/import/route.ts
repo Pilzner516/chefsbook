@@ -304,6 +304,21 @@ export async function POST(req: Request) {
 
     try { const { logAiCall } = await import('@chefsbook/db'); const { consumeLastUsage } = await import('@chefsbook/ai'); const u = consumeLastUsage(); await logAiCall({ userId: user.id, action: 'import_url', model: 'sonnet', tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }); } catch {}
 
+    // Fire-and-forget: auto-generate AI image
+    if (newRecipe.title && (recipe.ingredients?.length ?? 0) >= 2) {
+      try {
+        const { triggerImageGeneration } = await import('@/lib/imageGeneration');
+        triggerImageGeneration(newRecipe.id, {
+          title: newRecipe.title,
+          cuisine: recipe.cuisine ?? null,
+          ingredients: (recipe.ingredients ?? []).map((i: any) => ({ ingredient: i.ingredient })),
+          tags: [],
+          user_id: user.id,
+          source_image_description: recipe.source_image_description ?? null,
+        });
+      } catch { /* non-critical */ }
+    }
+
     return Response.json({
       success: true,
       contentType: 'recipe',
