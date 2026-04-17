@@ -1,6 +1,18 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 199 — Fix "Cannot read properties of undefined (reading 'description')" on re-import) TYPE: CODE FIX
+- [SESSION 199] Root cause: session 198 added duplicate detection at /api/import/url that returns `{duplicate, existingRecipe, normalizedUrl}` (HTTP 200) when a source_url is already imported. The Re-import button handler at apps/web/app/recipe/[id]/page.tsx:handleRefresh was NOT updated — it still called /api/import/url without `skipDuplicateCheck`, then accessed `data.recipe.description` on line 272. Since re-importing always hits a recipe you already own, the duplicate branch fired 100% of the time → `data.recipe` undefined → TypeError → `alert(e.message)` at line 308 showed the native browser string "Cannot read properties of undefined (reading 'description')". Structurally analogous to sessions 189 / 195 (upstream contract changed, caller's assumption didn't).
+- [SESSION 199] TYPE: CODE FIX #1: handleRefresh now sends `skipDuplicateCheck: true` in the POST body — Re-import by definition wants a fresh re-extraction, matches the button name and the user's mental model. Session 198 added this bypass explicitly for the "Import anyway" path.
+- [SESSION 199] TYPE: CODE FIX #2: handleRefresh now guards `data.needsBrowserExtraction` (HTTP 206 blocked-site branch) and `!data.recipe` before accessing `data.recipe.description` — defense in depth against any future 200-branch.
+- [SESSION 199] TYPE: CODE FIX #3 (ui-guardian): two raw `alert()` calls inside the Re-import and Delete handlers (lines 250, 308) replaced with `useAlertDialog()` from @/components/useConfirmDialog → renders ChefsDialog. AGENDA.md gained a "UI CLEANUP FOLLOW-UPS" section noting ~40 remaining alert() call sites in apps/web for a future sweep (out of scope this session).
+- [SESSION 199] Live verification (chefsbk.app):
+  - WITHOUT skipDuplicateCheck: HTTP 200 keys=[duplicate, existingRecipe, normalizedUrl], duplicate=true → confirms pre-fix shape.
+  - WITH skipDuplicateCheck: HTTP 200 keys=[contentType, recipe, imageUrl, titleGenerated, completeness, siteWarning, discovery], recipe.title="Panisses", recipe.description starts "I fried my panisses in olive oil, as is traditional, in my cast iron skillet…" → handler line 272 now succeeds.
+  - Negative test (seriouseats.com, Cloudflare-blocked): HTTP 206 keys=[error, needsBrowserExtraction, domain, reason, message], no recipe key → new guard catches cleanly, shows extension-install message via ChefsDialog instead of native alert.
+- [SESSION 199] tsc --noEmit clean. Deployed at commit 31f1a09, pm2 restarted (pid 1709569, online, 0 errors); chefsbk.app/ and /recipe/86640816-f7f5-45cf-8e02-aca2f58ed963 both HTTP 200.
+- [SESSION 199] Browser visual test of the ChefsDialog render not executed (no interactive session); curl-level verification covers every response branch the handler can receive.
+
 ## 2026-04-17 (session 198 — Duplicate detection + canonical recipe system) TYPE: CODE FIX
 - [SESSION 198] Part 1: Migration 048 — duplicate_of UUID FK, is_canonical BOOLEAN, duplicate_checked_at TIMESTAMPTZ, source_url_normalized TEXT + 3 indexes (normalized URL, duplicate_of, title trgm). pg_trgm extension enabled. Applied on RPi5 + PostgREST restarted.
 - [SESSION 198] Part 2: packages/db/queries/duplicates.ts — normalizeSourceUrl() strips UTM/tracking params, www, protocol, trailing slashes. findDuplicateByUrl() exact match on public recipes. findDuplicateByTitle() uses pg_trgm similarity > 0.85 via find_similar_recipes RPC. checkAndMarkDuplicate() runs both checks, marks canonical/duplicate.
