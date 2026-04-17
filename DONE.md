@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 186 — Fix is_complete=false flag on 13 recipes)
+- [SESSION 186] Found 13 recipes with is_complete=false — all had ingredients (1-17 each) but the flag was never updated after earlier ingredient-population sessions. No recipes had 0 ingredients.
+- [SESSION 186] Marked 12 recipes as is_complete=true (all had ≥2 ingredients + ≥1 step + description — fully complete).
+- [SESSION 186] Deleted "Focaccia recipes" — a BBC Good Food collection page, not a real recipe (1 ingredient, 0 steps). Cleaned up associated photos, ingredients, and ai_usage_log rows.
+- [SESSION 186] Final verification: SELECT WHERE ingredient_count=0 OR is_complete=false returns 0 rows. Every recipe in the DB is complete.
+
 ## 2026-04-17 (session 185 — Fix all 0-ingredient recipes in DB)
 - [SESSION 185] Identified 6 recipes with 0 ingredients + is_complete=false, plus 7 with 0 ingredients + is_complete=true (wrong flag). Total: 13 recipes, 1 QA test shell.
 - [SESSION 185] Deleted QA Test Recipe 140 (0 ingredients, 0 steps, no source_url — useless test data).
