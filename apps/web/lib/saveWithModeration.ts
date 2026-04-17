@@ -2,7 +2,6 @@ import { createRecipe, updateRecipe, freezeUserRecipes, supabase, supabaseAdmin 
 import type { RecipeWithDetails, ScannedRecipe, Recipe } from '@chefsbook/db';
 import { moderateRecipe, rewriteRecipeSteps } from '@chefsbook/ai';
 import type { RecipeModerationResult } from '@chefsbook/ai';
-import { triggerImageGeneration } from './imageGeneration';
 
 export type SaveResult = {
   recipe: RecipeWithDetails;
@@ -168,16 +167,18 @@ export async function createRecipeWithModeration(
     recipe.is_new_discovery,
   );
 
-  // Fire-and-forget: auto-generate AI image for recipes with title + ≥2 ingredients
+  // Fire-and-forget: auto-generate AI image via server API (can't import imageGeneration.ts
+  // in client-bundled code — it uses sharp/child_process)
   if (recipe.title && (recipe.ingredients?.length ?? 0) >= 2) {
-    triggerImageGeneration(created.id, {
-      title: recipe.title,
-      cuisine: recipe.cuisine ?? null,
-      ingredients: recipe.ingredients?.map((i) => ({ ingredient: i.ingredient })) ?? [],
-      tags: recipe.tags ?? [],
-      user_id: userId,
-      source_image_description: recipe.source_image_description ?? null,
-    });
+    supabase.auth.getSession().then(({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
+      fetch('/api/recipes/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ recipeId: created.id }),
+      }).catch(() => {});
+    }).catch(() => {});
   }
 
   return { recipe: created, moderation, completeness };
