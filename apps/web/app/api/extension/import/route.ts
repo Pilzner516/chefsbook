@@ -231,7 +231,7 @@ export async function POST(req: Request) {
       }
     } catch {}
 
-    try { const { logAiCall } = await import('@chefsbook/db'); await logAiCall({ userId: user.id, action: 'import_url', model: 'sonnet', durationMs: Date.now() - t0, success: true }); } catch {}
+    try { const { logAiCall } = await import('@chefsbook/db'); const { consumeLastUsage } = await import('@chefsbook/ai'); const u = consumeLastUsage(); await logAiCall({ userId: user.id, action: 'import_url', model: 'sonnet', tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }); } catch {}
 
     return Response.json({
       success: true,

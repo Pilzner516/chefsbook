@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { supabase, supabaseAdmin, logAiCall } from '@chefsbook/db';
-import { generateMissingIngredients } from '@chefsbook/ai';
+import { generateMissingIngredients, consumeLastUsage } from '@chefsbook/ai';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: recipeId } = await params;
@@ -51,7 +51,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       tags: recipe.tags,
     });
 
-    logAiCall({ userId: user.id, action: 'generate_ingredients', model: 'sonnet', recipeId, durationMs: Date.now() - t0, success: true }).catch(() => {});
+    const u = consumeLastUsage();
+    logAiCall({ userId: user.id, action: 'generate_ingredients', model: 'sonnet', recipeId, durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
 
     return Response.json({
       ingredients: generated,

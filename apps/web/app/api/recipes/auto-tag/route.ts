@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { callClaude, extractJSON } from '@chefsbook/ai';
+import { callClaude, extractJSON, consumeLastUsage } from '@chefsbook/ai';
 import { logAiCall } from '@chefsbook/db';
 
 function getServiceClient() {
@@ -98,7 +98,8 @@ export async function POST(req: Request) {
     }
   }
 
-  logAiCall({ userId: user?.id ?? null, action: 'suggest_tags', model: 'haiku', durationMs: Date.now() - t0, success: true }).catch(() => {});
+  const u = consumeLastUsage();
+  logAiCall({ userId: user?.id ?? null, action: 'suggest_tags', model: 'haiku', durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
 
   return Response.json({ total, updated });
 }

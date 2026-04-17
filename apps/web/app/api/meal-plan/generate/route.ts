@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { generateMealPlan } from '@chefsbook/ai';
+import { generateMealPlan, consumeLastUsage } from '@chefsbook/ai';
 import type { MealPlanPreferences } from '@chefsbook/ai';
 import { logAiCall } from '@chefsbook/db';
 
@@ -36,7 +36,8 @@ export async function POST(req: Request) {
   const t0 = Date.now();
   const plan = await generateMealPlan(preferences, userRecipes);
 
-  logAiCall({ userId: user?.id, action: 'generate_meal_plan', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
+  const u = consumeLastUsage();
+  logAiCall({ userId: user?.id, action: 'generate_meal_plan', model: 'sonnet', durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
 
   return Response.json({ plan });
 }

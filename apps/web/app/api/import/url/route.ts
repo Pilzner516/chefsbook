@@ -1,6 +1,6 @@
 // TODO(web): replicate multi-page scan support (mobile sends up to 5 page images in single Claude Vision call)
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, consumeLastUsage } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
 import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt, logAiCall, isUserThrottled } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
@@ -163,13 +163,15 @@ export async function POST(req: Request) {
       });
     } catch { /* non-critical — don't block import */ }
 
-    // Log AI cost (fire and forget)
+    // Log AI cost with token counts (fire and forget)
     const aiModel = completeness.source === 'json-ld' ? null : (completeness.source === 'claude' ? 'sonnet' : 'haiku');
     if (aiModel) {
-      logAiCall({ userId: null, action: 'import_url', model: aiModel, durationMs: Date.now() - t0, success: true }).catch(() => {});
+      const u = consumeLastUsage();
+      logAiCall({ userId: null, action: 'import_url', model: aiModel, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
     if (sourceLanguage !== (reqLang ?? 'en')) {
-      logAiCall({ userId: null, action: 'translate_recipe', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
+      const u = consumeLastUsage();
+      logAiCall({ userId: null, action: 'translate_recipe', model: 'sonnet', tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
 
     // ── PDF fallback signal for incomplete results ──

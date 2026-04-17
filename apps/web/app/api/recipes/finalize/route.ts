@@ -8,7 +8,7 @@ import {
   extractDomain,
   logAiCall,
 } from '@chefsbook/db';
-import { isActuallyARecipe } from '@chefsbook/ai';
+import { isActuallyARecipe, consumeLastUsage } from '@chefsbook/ai';
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
       aiReason = result.reason;
       await applyAiVerdict(recipeId, aiVerdict, aiReason, intendedVisibility);
 
-      logAiCall({ userId, action: 'moderate_recipe', model: 'haiku', recipeId, durationMs: Date.now() - t0, success: true }).catch(() => {});
+      const u = consumeLastUsage();
+      logAiCall({ userId, action: 'moderate_recipe', model: 'haiku', recipeId, durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
     }
 
     if (url) {

@@ -1,4 +1,4 @@
-import { checkImageForWatermarks } from '@chefsbook/ai';
+import { checkImageForWatermarks, consumeLastUsage } from '@chefsbook/ai';
 import { logAiCall } from '@chefsbook/db';
 
 export async function POST(req: Request) {
@@ -11,7 +11,8 @@ export async function POST(req: Request) {
     const t0 = Date.now();
     const result = await checkImageForWatermarks(imageBase64, mimeType);
 
-    logAiCall({ userId: null, action: 'check_watermark', model: 'haiku', durationMs: Date.now() - t0, success: true }).catch(() => {});
+    const u = consumeLastUsage();
+    logAiCall({ userId: null, action: 'check_watermark', model: 'haiku', durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
 
     return Response.json(result);
   } catch (err: any) {

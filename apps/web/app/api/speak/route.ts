@@ -1,4 +1,4 @@
-import { formatVoiceRecipe } from '@chefsbook/ai';
+import { formatVoiceRecipe, consumeLastUsage } from '@chefsbook/ai';
 import { logAiCall } from '@chefsbook/db';
 
 export async function POST(req: Request) {
@@ -15,7 +15,8 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Could not extract a recipe from the transcript. Try speaking with more detail.' }, { status: 422 });
     }
 
-    logAiCall({ userId: null, action: 'import_speak', model: 'sonnet', durationMs: Date.now() - t0, success: true }).catch(() => {});
+    const u = consumeLastUsage();
+    logAiCall({ userId: null, action: 'import_speak', model: 'sonnet', durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
 
     return Response.json({ recipe });
   } catch (e: any) {
