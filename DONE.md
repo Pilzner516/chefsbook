@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 198 — Duplicate detection + canonical recipe system) TYPE: CODE FIX
+- [SESSION 198] Part 1: Migration 048 — duplicate_of UUID FK, is_canonical BOOLEAN, duplicate_checked_at TIMESTAMPTZ, source_url_normalized TEXT + 3 indexes (normalized URL, duplicate_of, title trgm). pg_trgm extension enabled. Applied on RPi5 + PostgREST restarted.
+- [SESSION 198] Part 2: packages/db/queries/duplicates.ts — normalizeSourceUrl() strips UTM/tracking params, www, protocol, trailing slashes. findDuplicateByUrl() exact match on public recipes. findDuplicateByTitle() uses pg_trgm similarity > 0.85 via find_similar_recipes RPC. checkAndMarkDuplicate() runs both checks, marks canonical/duplicate.
+- [SESSION 198] Part 3: URL import + extension import routes check for duplicates BEFORE any AI call (saves Sonnet cost). Returns { duplicate: true, existingRecipe } when match found. Scan page shows duplicate interstitial: "Add to My Recipes" (uses existing recipe_saves) or "Import anyway" (re-calls with skipDuplicateCheck). source_url_normalized saved on all new imports + backfilled for 67 existing recipes.
+- [SESSION 198] Part 4: Visibility toggle on recipe detail runs /api/recipes/check-duplicate before making public. If duplicate found, recipe stays private + owner sees amber banner: "A similar public recipe already exists" with "View the public version" + "Edit to make it unique" buttons. Canonical = first public recipe (earliest created_at).
+- [SESSION 198] Part 5: Public feed exclusion — `.is('duplicate_of', null)` added to listPublicRecipes, getPublicProfile, getFollowedRecipes, /chef/[username], /u/[username]. search_recipes RPC updated: `AND r.duplicate_of IS NULL` on public results. get_public_feed RPC updated: `AND r.duplicate_of IS NULL`. Duplicates still visible in owner's My Recipes.
+- [SESSION 198] Part 6: Admin /admin/recipes — Duplicates tab shows all flagged duplicates with canonical recipe info. Override (swap canonical) and Dismiss (clear flag) actions. Canonical/Duplicate badges on main recipe list. Admin API extended with overrideDuplicate + dismissDuplicate actions.
+- [SESSION 198] tsc --noEmit clean. Deployed at commit 0754e08, pm2 restarted; chefsbk.app/ + /admin/recipes both HTTP 200.
+
 ## 2026-04-17 (session 197 — Fix paste ingredients not saving) TYPE: CODE FIX
 - [SESSION 197] Root cause: RefreshFromSourceBanner sent `pastedIngredients` to `/api/recipes/refresh`, but the route only destructured `recipeId` — pasted data silently ignored. The route then tried to re-fetch the source URL instead of using the pasted content.
 - [SESSION 197] Fixed `/api/recipes/refresh` to accept `pastedIngredients` array in request body. When present, skips URL fetch/extract and uses pasted ingredients directly as the merge source. TYPE: CODE FIX.
