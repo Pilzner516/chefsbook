@@ -21,6 +21,10 @@ These ship before anything else. Users are already hitting these.
 
 - Raw `window.alert()` sweep (apps/web): ~40 remaining call sites across dashboard/*, components/*, app/share, app/technique, app/recipe/[id] (PDF + flag paths). Session 199 cleaned the two sites inside the recipe detail Re-import/Delete handlers; ui-guardian.md forbids native alerts. Follow-up session should replace remaining with `useAlertDialog` from `@/components/useConfirmDialog`.
 
+## BUILD / PROMPT HYGIENE
+
+- **Update `docs/prompts/200-rebuild-mobile-apk.md` Step 2** (noted in session 202): change "confirm react/react-dom exist in apps/mobile/node_modules, copy from root if missing" → "only copy if the gradle build's `:app:createBundleReleaseJsAndAssets` step fails with `Unable to resolve module react/jsx-runtime` MODULE_NOT_FOUND". Add a one-line pointer to `metro.config.js` blockList as the reason root hoisting doesn't reach Metro in release builds. Prevents the next rebuilder from defensively creating the duplicate-copy arrangement that CLAUDE.md's Metro blockList is specifically configured to prevent (session 138).
+
 ## AI ROBUSTNESS FOLLOW-UPS
 
 - Audit remaining `callClaude()` callers for appropriate `maxTokens` — `cookbookTOC()`, `scanRecipeMultiPage()`, `generateMealPlan()`, `generateDishRecipe()`, `importFromYouTube()`, `importTechnique()` likely need raises too. Session 201 raised only `importFromUrl` (3000→6000). After that session, any of these callers hitting the cap on complex input will throw `ClaudeTruncatedError` instead of returning garbage — correct behavior, but the first complex cookbook TOC / multi-page scan / dish generation request to trip it will fail user-visibly. Per-caller budget review + raise where needed.
