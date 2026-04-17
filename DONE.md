@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 187 — Add data-fix vs code-fix rule to wrapup agent)
+- [SESSION 187] Added DATA FIX vs CODE FIX mandatory classification section to .claude/agents/wrapup.md. Every bug fix must be tagged TYPE: CODE FIX or TYPE: DATA FIX ONLY. Data-fix-only for recurring bugs is never acceptable — code must change.
+- [SESSION 187] Added recurring bug rule: before wrapping, search DONE.md for prior fixes to the same issue. If a prior fix exists, data-fix-only is blocked.
+- [SESSION 187] Added Rule 6 to RULES section: "Data-fix vs code-fix classification is mandatory" — appears in every session's wrapup checklist.
+
 ## 2026-04-17 (session 186 — Fix is_complete=false flag on 13 recipes)
 - [SESSION 186] Found 13 recipes with is_complete=false — all had ingredients (1-17 each) but the flag was never updated after earlier ingredient-population sessions. No recipes had 0 ingredients.
 - [SESSION 186] Marked 12 recipes as is_complete=true (all had ≥2 ingredients + ≥1 step + description — fully complete).
