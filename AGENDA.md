@@ -20,6 +20,8 @@ These ship before anything else. Users are already hitting these.
 ## UI CLEANUP FOLLOW-UPS
 
 - Raw `window.alert()` sweep (apps/web): ~40 remaining call sites across dashboard/*, components/*, app/share, app/technique, app/recipe/[id] (PDF + flag paths). Session 199 cleaned the two sites inside the recipe detail Re-import/Delete handlers; ui-guardian.md forbids native alerts. Follow-up session should replace remaining with `useAlertDialog` from `@/components/useConfirmDialog`.
+- **Mobile Alert.alert sweep** (session 203 follow-up): GuidedScanFlow surfaces errors via `Alert.alert(t('common.errorTitle'), ...)` in the new code (title/required + generation fail + cancel paths use ChefsDialog properly). Remaining `Alert.alert` calls in scan.tsx (camera/import error paths added this session) should migrate to the mobile `useAlertDialog` hook in a future UI-polish pass. Not blocking — ChefsDialog is used for confirmations in the new flow already.
+- **Mobile i18n gap**: FR/ES/IT/DE locales are missing the `dishId.*` keys (entire namespace). New `guidedScan.*` namespace was added to all 5 locales in session 203. Consider backfilling `dishId.*` translations next time someone touches i18n. Not blocking (DishIdentificationFlow is no longer used for dish photos).
 
 ## BUILD / PROMPT HYGIENE
 

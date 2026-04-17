@@ -269,6 +269,38 @@
     "scanFailed": "Échec du scan",
     "importFailed": "Échec de l'import"
   },
+  "guidedScan": {
+    "title": "Nouvelle recette depuis une photo",
+    "stepOfTotal": "Étape {{current}} sur {{total}}",
+    "cuisineGuess": "On dirait la cuisine {{cuisine}}",
+    "step1": {
+      "heading": "Est-ce bien ça ?",
+      "titleLabel": "Titre de la recette",
+      "titlePlaceholder": "ex. Coq au Vin",
+      "commentsLabel": "Commentaires (facultatif)",
+      "commentsPlaceholder": "La recette de grand-mère, version restaurant, etc."
+    },
+    "step2": {
+      "heading": "Quelques questions rapides"
+    },
+    "step3": {
+      "heading": "Autre chose ?",
+      "prompt": "Souhaitez-vous ajouter autre chose avant que l'on crée votre recette ?",
+      "finalLabel": "Dernières pensées",
+      "finalPlaceholder": "Notes finales — régime alimentaire, méthode de cuisson, variante régionale..."
+    },
+    "generating": "Création de votre recette…",
+    "continue": "Continuer",
+    "back": "Retour",
+    "submit": "Envoyer",
+    "yes": "Oui",
+    "no": "Non",
+    "titleRequired": "Veuillez saisir un titre pour votre recette.",
+    "cancelTitle": "Abandonner ce scan ?",
+    "cancelBody": "Votre progression ne sera pas enregistrée.",
+    "cancelConfirm": "Abandonner",
+    "keepGoing": "Continuer"
+  },
   "speak": {
     "record": "Enregistrer",
     "review": "Vérifier",

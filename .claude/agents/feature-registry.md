@@ -76,6 +76,7 @@
 | Instagram import | REMOVED | packages/ai (commented), apps/mobile/app/scan | 07, 138 | Removed session 138 — scraping unreliable, no native SEND-intent receiver wired. Use photo scan on a screenshot instead. fetchInstagramPost / extractRecipeFromInstagram kept in source but no longer exported from packages/ai. scanRecipe prompt now handles social media screenshots (caption extraction). |
 | Multi-page photo scan | LIVE | apps/mobile/app/scan | 06 | Up to 5 pages |
 | Dish identification from photo | LIVE | packages/ai (analyseScannedImage), apps/mobile/app/scan | 21 | classifies → clarifying Qs → recipe |
+| Guided scan flow (A→B→C→D) | LIVE | apps/mobile/components/GuidedScanFlow.tsx, packages/ai/scanGuidedFollowUps.ts | 203 | Replaces DishIdentificationFlow for dish photos. Step A title+comments, Step B 0–3 Haiku questions (skipped when none), Step C anything-else?+final thoughts, Step D single Sonnet gen via generateDishRecipe. Logs scan_guided_followups (haiku) + scan_guided_generation (sonnet) via logAiCallFromClient. Plan-gated at startScan entry. |
 | Speak a Recipe | LIVE | apps/web/dashboard/speak/, apps/mobile | 06 | Web Speech API |
 | File import (PDF/Word/CSV/JSON) | LIVE | apps/web/app/api/import/file | 35 | pdf-parse, mammoth, papaparse |
 | YouTube import | LIVE | packages/ai (importFromYouTube) | 35 | Data API + transcript + timestamps |
@@ -237,7 +238,8 @@
 | Chef's hat fallback | LIVE | RecipeImage component | 11 | Shows when no recipe image |
 | StoreAvatar (logo.dev) | LIVE | StoreAvatar component | 69 | Initials fallback with hash color |
 | i18n (web + mobile, 5 locales) | LIVE | apps/web/locales/, apps/mobile/locales/ | 08, 53 | react-i18next |
-| FloatingTabBar (mobile) | LIVE | apps/mobile/components/FloatingTabBar.tsx | 01 | 5 tabs with i18n labels |
+| FloatingTabBar (mobile) | LIVE | apps/mobile/components/FloatingTabBar.tsx, apps/mobile/app/_layout.tsx | 01, 203 | 5 tabs with i18n labels. Session 203: mounted at root Stack (not inside (tabs) Tabs layout) so it persists on detail screens (recipe/[id], cookbook/[id], chef/[id], share/[token]). Hidden on /, /auth/*, /modal, /messages. |
+| Branded launch splash (3s min) | LIVE | apps/mobile/app/_layout.tsx (SplashOverlay) | 203 | expo-splash-screen preventAutoHideAsync at module scope; React overlay shows chef-hat asset + "ChefsBook" serif wordmark + "Welcome to ChefsBook" tagline for SPLASH_MIN_MS=3000. Warm resume never re-shows. |
 
 ---
 

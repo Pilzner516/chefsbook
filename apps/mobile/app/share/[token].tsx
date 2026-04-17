@@ -8,11 +8,13 @@ import { getRecipeByShareToken, saveRecipe } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity } from '@chefsbook/ui';
 import { Badge, Button, Divider, Loading, EmptyState } from '../../components/UIKit';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
 
 export default function SharedRecipe() {
   const { colors } = useTheme();
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
+  const tabBarHeight = useTabBarHeight();
   const session = useAuthStore((s) => s.session);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
@@ -82,7 +84,7 @@ export default function SharedRecipe() {
   if (!recipe) return <EmptyState icon="?" title="Recipe not found" message="This share link may have expired." />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ paddingBottom: tabBarHeight }}>
       <View style={{ padding: 16 }}>
         <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 8 }}>{recipe.title}</Text>
         {recipe.description && (

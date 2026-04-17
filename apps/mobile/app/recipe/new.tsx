@@ -8,11 +8,13 @@ import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { Button, Input, Card } from '../../components/UIKit';
 import { createRecipeVersion } from '@chefsbook/db';
 import type { ScannedRecipe } from '@chefsbook/db';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
 
 export default function NewRecipe() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const router = useRouter();
+  const tabBarHeight = useTabBarHeight();
   const { parentId } = useLocalSearchParams<{ parentId?: string }>();
   const session = useAuthStore((s) => s.session);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
@@ -89,7 +91,7 @@ export default function NewRecipe() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ paddingBottom: tabBarHeight }}>
       <View style={{ padding: 16, gap: 16 }}>
         <Input value={title} onChangeText={setTitle} placeholder={t('recipe.recipeTitle')} />
         <Input value={description} onChangeText={setDescription} placeholder={t('recipe.descOptional')} multiline />

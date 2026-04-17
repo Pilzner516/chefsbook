@@ -269,6 +269,38 @@
     "scanFailed": "Scansione non riuscita",
     "importFailed": "Importazione non riuscita"
   },
+  "guidedScan": {
+    "title": "Nuova ricetta dalla foto",
+    "stepOfTotal": "Passo {{current}} di {{total}}",
+    "cuisineGuess": "Sembra cucina {{cuisine}}",
+    "step1": {
+      "heading": "È giusto?",
+      "titleLabel": "Titolo della ricetta",
+      "titlePlaceholder": "es. Risotto alla Milanese",
+      "commentsLabel": "Commenti (opzionale)",
+      "commentsPlaceholder": "Ricetta della nonna, versione del ristorante, ecc."
+    },
+    "step2": {
+      "heading": "Alcune domande rapide"
+    },
+    "step3": {
+      "heading": "Qualcos'altro?",
+      "prompt": "C'è qualcos'altro che vuoi aggiungere prima che creiamo la tua ricetta?",
+      "finalLabel": "Pensieri finali",
+      "finalPlaceholder": "Ultime note — dieta, metodo di cottura, variante regionale..."
+    },
+    "generating": "Creazione della tua ricetta…",
+    "continue": "Continua",
+    "back": "Indietro",
+    "submit": "Invia",
+    "yes": "Sì",
+    "no": "No",
+    "titleRequired": "Per favore inserisci un titolo per la tua ricetta.",
+    "cancelTitle": "Annullare questa scansione?",
+    "cancelBody": "I tuoi progressi non verranno salvati.",
+    "cancelConfirm": "Annulla",
+    "keepGoing": "Continua"
+  },
   "speak": {
     "record": "Registra",
     "review": "Rivedi",

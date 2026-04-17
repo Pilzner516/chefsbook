@@ -4,23 +4,46 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 
 export async function pickImage(): Promise<string | null> {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 1,
-  });
-  if (result.canceled || !result.assets[0]) return null;
-  return result.assets[0].uri;
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+    });
+    if (result.canceled || !result.assets?.[0]?.uri) return null;
+    return result.assets[0].uri;
+  } catch (e) {
+    console.warn('[scan] launchImageLibraryAsync failed', e);
+    throw e;
+  }
 }
 
 export async function takePhoto(): Promise<string | null> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
-  if (status !== 'granted') return null;
+  if (status !== 'granted') {
+    console.warn('[scan] camera permission denied', { status });
+    return null;
+  }
 
-  const result = await ImagePicker.launchCameraAsync({
-    quality: 1,
-  });
-  if (result.canceled || !result.assets[0]) return null;
-  return result.assets[0].uri;
+  try {
+    // mediaTypes: ['images'] matches pickImage at the boundary — avoids edge cases where
+    // OEM camera apps launch in video mode under the default SDK 54 behaviour and return
+    // an asset the downstream processImage() pipeline rejects silently.
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+    });
+    if (result.canceled || !result.assets?.[0]?.uri) {
+      console.warn('[scan] camera returned no usable asset', {
+        canceled: result.canceled,
+        assetCount: result.assets?.length ?? 0,
+      });
+      return null;
+    }
+    return result.assets[0].uri;
+  } catch (e) {
+    console.warn('[scan] launchCameraAsync failed', e);
+    throw e;
+  }
 }
 
 export async function processImage(uri: string): Promise<{ base64: string; mimeType: string }> {

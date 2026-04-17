@@ -34,6 +34,7 @@ import { MealPlanPicker } from '../../components/MealPlanPicker';
 import { HeroGallery } from '../../components/HeroGallery';
 import { useConfirmDialog } from '../../components/useDialog';
 import { StorePicker } from '../../components/StorePicker';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -577,6 +578,7 @@ function RecipeDetailInner() {
   const [savingClone, setSavingClone] = useState(false);
   const [savedClone, setSavedClone] = useState(false);
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editCuisine, setEditCuisine] = useState('');
@@ -1585,15 +1587,15 @@ function RecipeDetailInner() {
           }}
           variant="ghost"
         />
-        <View style={{ height: recipe.user_id !== session?.user?.id ? 100 : 40 }} />
+        <View style={{ height: (recipe.user_id !== session?.user?.id ? 100 : 40) + tabBarHeight }} />
       </View>
     </ScrollView>
-    {/* Save bar for non-owned recipes */}
+    {/* Save bar for non-owned recipes — sits above the floating tab bar */}
     {recipe && session?.user?.id && recipe.user_id !== session.user.id && !editing && (
       <View style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
+        position: 'absolute', bottom: tabBarHeight, left: 0, right: 0,
         backgroundColor: colors.bgCard, borderTopWidth: 1, borderTopColor: colors.borderDefault,
-        paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12,
+        paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12,
       }}>
         {savedClone ? (
           <View style={{ backgroundColor: colors.accentGreenSoft, borderRadius: 10, padding: 14, alignItems: 'center' }}>

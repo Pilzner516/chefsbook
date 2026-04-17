@@ -339,6 +339,38 @@
     "manualNameHint": "Type the name of the dish and we'll find or generate a recipe for you",
     "manualNamePlaceholder": "e.g. Chicken Tikka Masala"
   },
+  "guidedScan": {
+    "title": "New Recipe from Photo",
+    "stepOfTotal": "Step {{current}} of {{total}}",
+    "cuisineGuess": "Looks like {{cuisine}}",
+    "step1": {
+      "heading": "Is this right?",
+      "titleLabel": "Recipe title",
+      "titlePlaceholder": "e.g. Coq au Vin",
+      "commentsLabel": "Comments (optional)",
+      "commentsPlaceholder": "Grandma's recipe, restaurant version, etc."
+    },
+    "step2": {
+      "heading": "A few quick questions"
+    },
+    "step3": {
+      "heading": "Anything else?",
+      "prompt": "Do you have anything else you'd like to add before we create your recipe?",
+      "finalLabel": "Final thoughts",
+      "finalPlaceholder": "Any last notes — dietary needs, cooking method, regional variant..."
+    },
+    "generating": "Creating your recipe…",
+    "continue": "Continue",
+    "back": "Back",
+    "submit": "Submit",
+    "yes": "Yes",
+    "no": "No",
+    "titleRequired": "Please enter a title for your recipe.",
+    "cancelTitle": "Discard this scan?",
+    "cancelBody": "Your progress won't be saved.",
+    "cancelConfirm": "Discard",
+    "keepGoing": "Keep going"
+  },
   "speak": {
     "record": "Record",
     "review": "Review",

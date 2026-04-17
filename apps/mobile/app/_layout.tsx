@@ -1,19 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
+import { Stack, useRouter, useSegments, useNavigationContainerRef, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
+import * as SplashScreen from 'expo-splash-screen';
 import { configureStorage } from '@chefsbook/db';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { PinnedBar } from '../components/PinnedBar';
+import { FloatingTabBar } from '../components/FloatingTabBar';
 import { ImportBanner } from '../components/ImportBanner';
 import { Loading } from '../components/UIKit';
 import '../lib/i18n';
 import { activateLanguage } from '../lib/i18n';
+
+// Keep the native splash visible during JS bootstrap so the branded splash
+// doesn't flash in and out. A 3-second minimum hold below gives the user time
+// to see the ChefsBook wordmark + tagline before the landing / tabs render.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Minimum time to show the branded splash after JS mount (cold launch only —
+// warm resume does not re-run module scope, so the splash never re-appears).
+const SPLASH_MIN_MS = 3000;
 
 // Wire SecureStore as the Supabase auth storage adapter so sessions persist across launches
 configureStorage({
@@ -71,6 +82,39 @@ function useProtectedRoute() {
   }, [session, loading, segments, navReady]);
 }
 
+// Branded splash overlay shown for a minimum of SPLASH_MIN_MS on cold launch.
+// Rendered at the root on top of everything; hand-off from the native splash
+// is seamless because both share the cream Trattoria background.
+function SplashOverlay() {
+  const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: '#faf7f0',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+      }}
+    >
+      <Image
+        source={require('../assets/images/chefs-hat.png')}
+        style={{ width: 160, height: 160, marginBottom: 24 }}
+        resizeMode="contain"
+      />
+      <Text style={{ fontSize: 42, fontWeight: '700', fontFamily, marginBottom: 8 }}>
+        <Text style={{ color: '#1f1b16' }}>Chefs</Text>
+        <Text style={{ color: '#ce2b37' }}>Book</Text>
+      </Text>
+      <Text style={{ fontSize: 15, color: '#7a6a5a', fontStyle: 'italic' }}>
+        Welcome to ChefsBook
+      </Text>
+    </View>
+  );
+}
+
 function SuspendedNotice() {
   const { colors } = useTheme();
   return (
@@ -88,9 +132,45 @@ function RootNav() {
   const { colors } = useTheme();
   const router = useRouter();
   const loading = useAuthStore((s) => s.loading);
+  const session = useAuthStore((s) => s.session);
   const profile = useAuthStore((s) => s.profile);
+  const pathname = usePathname();
+
+  // Cold-launch splash hold: record mount time, keep SplashOverlay visible and
+  // the native splash prevented until both (a) auth init settles and (b)
+  // SPLASH_MIN_MS has elapsed. hideAsync runs once, ref-guarded.
+  const splashMountRef = useRef(Date.now());
+  const splashHiddenRef = useRef(false);
+  const [splashDone, setSplashDone] = useState(false);
+
+  useEffect(() => {
+    if (loading || splashHiddenRef.current) return;
+    const elapsed = Date.now() - splashMountRef.current;
+    const remaining = Math.max(0, SPLASH_MIN_MS - elapsed);
+    const timer = setTimeout(() => {
+      splashHiddenRef.current = true;
+      setSplashDone(true);
+      SplashScreen.hideAsync().catch(() => {});
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   useProtectedRoute();
+
+  // Show the bottom tab bar on all authenticated app screens (tabs + detail
+  // stack screens like recipe/[id], cookbook/[id], chef/[id], share/[token]).
+  // Hide on: landing, auth, settings modal, full-screen messages thread,
+  // and when the user is not authenticated.
+  const isAnonymous = session?.user?.is_anonymous === true;
+  const isAuthenticated = !!session && !isAnonymous;
+  const hideTabBarRoutes = (p: string): boolean => {
+    if (!p || p === '/') return true;
+    if (p.startsWith('/auth')) return true;
+    if (p === '/modal') return true;
+    if (p === '/messages' || p.startsWith('/messages/')) return true;
+    return false;
+  };
+  const showTabBar = isAuthenticated && !profile?.is_suspended && !hideTabBarRoutes(pathname);
 
   const [frozenDismissed, setFrozenDismissed] = useState(false);
 
@@ -182,6 +262,8 @@ function RootNav() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Settings' }} />
       </Stack>
       <PinnedBar />
+      {showTabBar && <FloatingTabBar />}
+      {!splashDone && <SplashOverlay />}
     </View>
   );
 }

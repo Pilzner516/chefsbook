@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../client';
+import { supabase, supabaseAdmin } from '../client';
 
 // Cost per model — keep in sync with ai-cost.md in CLAUDE.md
 const MODEL_COSTS: Record<string, { input?: number; output?: number; fixed?: number }> = {
@@ -50,6 +50,38 @@ export async function logAiCall(params: AiCallLog): Promise<number> {
     checkAndUpdateThrottle(userId).catch(() => {});
   }
 
+  return costUsd;
+}
+
+/**
+ * Log an AI call from a client context (mobile or web browser) using the
+ * anon supabase client under the user's JWT. Additive helper — does NOT change
+ * behaviour of the existing server-side `logAiCall`. Fire-and-forget; silent on
+ * failure so client AI flows never break due to logging edge cases (RLS, network).
+ *
+ * Intended for paths where no server route is available, e.g. mobile's direct
+ * @chefsbook/ai Claude calls. If RLS denies the insert the function resolves 0
+ * silently — mobile AI calls historically haven't been logged, this is additive
+ * best-effort coverage for new flows like scan_guided_generation.
+ */
+export async function logAiCallFromClient(params: AiCallLog): Promise<number> {
+  const { userId, action, model, tokensIn = 0, tokensOut = 0, recipeId, metadata = {}, success = true, durationMs } = params;
+  const costs = MODEL_COSTS[model] ?? MODEL_COSTS.haiku;
+  const costUsd = costs.fixed ?? (tokensIn * (costs.input ?? 0) + tokensOut * (costs.output ?? 0));
+  try {
+    await supabase.from('ai_usage_log').insert({
+      user_id: userId ?? null,
+      action,
+      model,
+      tokens_in: tokensIn,
+      tokens_out: tokensOut,
+      cost_usd: costUsd,
+      recipe_id: recipeId ?? null,
+      metadata,
+      success,
+      duration_ms: durationMs ?? null,
+    });
+  } catch { /* silent — logging must never break AI flows */ }
   return costUsd;
 }
 

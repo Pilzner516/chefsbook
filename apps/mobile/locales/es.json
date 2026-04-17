@@ -269,6 +269,38 @@
     "scanFailed": "Error al escanear",
     "importFailed": "Error al importar"
   },
+  "guidedScan": {
+    "title": "Nueva receta desde la foto",
+    "stepOfTotal": "Paso {{current}} de {{total}}",
+    "cuisineGuess": "Parece cocina {{cuisine}}",
+    "step1": {
+      "heading": "¿Es esto correcto?",
+      "titleLabel": "Título de la receta",
+      "titlePlaceholder": "p. ej. Paella Valenciana",
+      "commentsLabel": "Comentarios (opcional)",
+      "commentsPlaceholder": "Receta de la abuela, versión de restaurante, etc."
+    },
+    "step2": {
+      "heading": "Unas preguntas rápidas"
+    },
+    "step3": {
+      "heading": "¿Algo más?",
+      "prompt": "¿Hay algo más que quieras añadir antes de crear tu receta?",
+      "finalLabel": "Reflexiones finales",
+      "finalPlaceholder": "Últimas notas — dieta, método de cocción, variante regional..."
+    },
+    "generating": "Creando tu receta…",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "submit": "Enviar",
+    "yes": "Sí",
+    "no": "No",
+    "titleRequired": "Por favor introduce un título para tu receta.",
+    "cancelTitle": "¿Descartar este escaneo?",
+    "cancelBody": "Tu progreso no se guardará.",
+    "cancelConfirm": "Descartar",
+    "keepGoing": "Seguir"
+  },
   "speak": {
     "record": "Grabar",
     "review": "Revisar",

@@ -15,6 +15,7 @@ import type { UserProfile, Recipe, PlanTier } from '@chefsbook/db';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, RecipeCard, Button, Loading, EmptyState, Input } from '../../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
+import { useTabBarHeight } from '../../lib/useTabBarHeight';
 
 type ProfileTab = 'recipes' | 'followers' | 'following';
 
@@ -22,6 +23,7 @@ export default function ChefProfile() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
@@ -233,7 +235,7 @@ export default function ChefProfile() {
   if (!chef) return <EmptyState icon="?" title={t('profile.notFound')} message={t('profile.notFoundMessage')} />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ paddingBottom: tabBarHeight }}>
       {/* Header */}
       <View style={{ alignItems: 'center', padding: 24, paddingBottom: 16 }}>
         <Avatar uri={chef.avatar_url} initials={getInitials(chef.display_name)} size={80} />

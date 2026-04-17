@@ -25,8 +25,9 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
 import { PostImportImageSheet } from '../../components/PostImportImageSheet';
-import { DishIdentificationFlow } from '../../components/DishIdentificationFlow';
+import { GuidedScanFlow } from '../../components/GuidedScanFlow';
 import { DiscoveryToast } from '../../components/DiscoveryToast';
+import { checkRecipeLimit } from '@chefsbook/db';
 
 // TODO(web): replicate multi-page scan support
 
@@ -155,13 +156,29 @@ export default function ScanTab() {
     }
   }, [instagramTip]);
 
-  // Start multi-page scan — capture first page and enter scan mode
+  // Start multi-page scan — capture first page and enter scan mode.
+  // Wrapped in try/catch because failures in picker/manipulator downstream were previously
+  // swallowed as unhandled Promise rejections fired from onPress — user saw nothing.
   const startScan = async (getUri: () => Promise<string | null>) => {
-    const uri = await getUri();
-    if (!uri) return;
-    const processed = await processImage(uri);
-    setScanPages([{ uri, ...processed }]);
-    setScanMode(true);
+    if (!session?.user?.id) return;
+    // Plan gate at entry — don't let free users walk through camera + AI before hitting the gate at save.
+    try {
+      const gate = await checkRecipeLimit(session.user.id);
+      if (!gate.allowed) {
+        Alert.alert(t('scan.planRequired') ?? 'Upgrade required', gate.reason ?? 'Please upgrade your plan to scan recipes.');
+        return;
+      }
+    } catch { /* non-blocking — if the gate check fails we let the flow proceed */ }
+    try {
+      const uri = await getUri();
+      if (!uri) return;
+      const processed = await processImage(uri);
+      setScanPages([{ uri, ...processed }]);
+      setScanMode(true);
+    } catch (e: any) {
+      console.warn('[scan] startScan failed', e);
+      Alert.alert(t('common.errorTitle'), e?.message ?? String(e));
+    }
   };
 
   // Add another page to the scan
@@ -170,10 +187,15 @@ export default function ScanTab() {
       Alert.alert(t('scan.maxPages'), t('scan.maxPagesBody'));
       return;
     }
-    const uri = await getUri();
-    if (!uri) return;
-    const processed = await processImage(uri);
-    setScanPages((prev) => [...prev, { uri, ...processed }]);
+    try {
+      const uri = await getUri();
+      if (!uri) return;
+      const processed = await processImage(uri);
+      setScanPages((prev) => [...prev, { uri, ...processed }]);
+    } catch (e: any) {
+      console.warn('[scan] addScanPage failed', e);
+      Alert.alert(t('common.errorTitle'), e?.message ?? String(e));
+    }
   };
 
   const removeScanPage = (index: number) => {
@@ -237,35 +259,6 @@ export default function ScanTab() {
       setPexelsLoading(false);
       Alert.alert(t('scan.scanFailed'), e.message);
       setScanPages([]);
-    }
-  };
-
-  // Force recipe scan — called from DishIdentificationFlow when user picks "It's a recipe"
-  const forceRecipeScan = async () => {
-    if (!session?.user?.id || !dishFlowBase64) return;
-    setImportStatus('importing');
-    setPexelsLoading(true);
-    setPexelsPhotos([]);
-    try {
-      const [scanned] = await Promise.all([
-        scanRecipe(dishFlowBase64, dishFlowMime),
-        searchPexels('recipe food dish').then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false)),
-      ]);
-      if (scanned.title) {
-        setPexelsLoading(true);
-        searchPexels(scanned.title).then((r) => { setPexelsPhotos(r); setPexelsLoading(false); }).catch(() => setPexelsLoading(false));
-      }
-      const recipe = await addRecipe(session.user.id, scanned);
-      setImportedRecipeId(recipe.id);
-      setImportStatus('success');
-      setImageSheetRecipeId(recipe.id);
-      setImageSheetWebsiteUrl(null);
-      setImageSheetScanUri(scanned.has_food_photo ? dishFlowImageUri : null);
-      setShowImageSheet(true);
-    } catch (e: any) {
-      setImportStatus('error');
-      setPexelsLoading(false);
-      Alert.alert(t('scan.scanFailed'), e.message);
     }
   };
 
@@ -490,16 +483,17 @@ export default function ScanTab() {
         <DiscoveryToast domain={discoveryDomain} onDismiss={() => setDiscoveryDomain(null)} />
       )}
 
-      {/* Dish identification flow */}
+      {/* Guided scan flow (session 203) — replaces DishIdentificationFlow for dish photos.
+          Walks user through Step A (confirm + comments), Step B (AI questions, 0–3),
+          Step C ("Anything else?"), Step D (single Sonnet generation). */}
       {dishFlowAnalysis && (
-        <DishIdentificationFlow
+        <GuidedScanFlow
           visible={showDishFlow}
           imageUri={dishFlowImageUri}
           imageBase64={dishFlowBase64}
           imageMimeType={dishFlowMime}
           initialAnalysis={dishFlowAnalysis}
           onDismiss={() => { setShowDishFlow(false); setDishFlowAnalysis(null); }}
-          onForceRecipeScan={forceRecipeScan}
         />
       )}
 

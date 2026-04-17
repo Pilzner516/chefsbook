@@ -269,6 +269,38 @@
     "scanFailed": "Scannen fehlgeschlagen",
     "importFailed": "Import fehlgeschlagen"
   },
+  "guidedScan": {
+    "title": "Neues Rezept aus Foto",
+    "stepOfTotal": "Schritt {{current}} von {{total}}",
+    "cuisineGuess": "Sieht aus wie {{cuisine}}",
+    "step1": {
+      "heading": "Stimmt das?",
+      "titleLabel": "Rezepttitel",
+      "titlePlaceholder": "z. B. Coq au Vin",
+      "commentsLabel": "Kommentare (optional)",
+      "commentsPlaceholder": "Omas Rezept, Restaurantversion usw."
+    },
+    "step2": {
+      "heading": "Ein paar kurze Fragen"
+    },
+    "step3": {
+      "heading": "Noch etwas?",
+      "prompt": "Möchtest du noch etwas hinzufügen, bevor wir dein Rezept erstellen?",
+      "finalLabel": "Letzte Gedanken",
+      "finalPlaceholder": "Letzte Hinweise — Ernährung, Kochmethode, regionale Variante..."
+    },
+    "generating": "Dein Rezept wird erstellt…",
+    "continue": "Weiter",
+    "back": "Zurück",
+    "submit": "Absenden",
+    "yes": "Ja",
+    "no": "Nein",
+    "titleRequired": "Bitte gib einen Titel für dein Rezept ein.",
+    "cancelTitle": "Diesen Scan verwerfen?",
+    "cancelBody": "Dein Fortschritt wird nicht gespeichert.",
+    "cancelConfirm": "Verwerfen",
+    "keepGoing": "Weitermachen"
+  },
   "speak": {
     "record": "Aufnehmen",
     "review": "Überprüfen",
