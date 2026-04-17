@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage } from '@chefsbook/ai';
+import { logAiCall } from '@chefsbook/db';
 import { ensureTitle } from '../../import/_utils';
 
 function getServiceClient() {
@@ -143,6 +144,30 @@ export async function POST(req: Request) {
     if (generated) tags.push('_unresolved');
     if (isIncomplete) tags.push('_incomplete');
 
+    // Describe source image (Haiku Vision ~$0.005) — used by levels 1-2 faithful generation.
+    let sourceImageDescription: string | null = null;
+    if (imageUrl) {
+      const tDesc = Date.now();
+      try {
+        sourceImageDescription = await describeSourceImage(imageUrl, title);
+        logAiCall({
+          userId: user.id,
+          action: 'describe_source_image',
+          model: 'haiku',
+          durationMs: Date.now() - tDesc,
+          success: !!sourceImageDescription,
+        }).catch(() => {});
+      } catch {
+        logAiCall({
+          userId: user.id,
+          action: 'describe_source_image',
+          model: 'haiku',
+          durationMs: Date.now() - tDesc,
+          success: false,
+        }).catch(() => {});
+      }
+    }
+
     const { data: newRecipe, error: insertErr } = await db
       .from('recipes')
       .insert({
@@ -157,6 +182,8 @@ export async function POST(req: Request) {
         source_type: 'url',
         source_url: url,
         image_url: imageUrl,
+        source_image_url: imageUrl,
+        source_image_description: sourceImageDescription,
         notes: recipe.notes,
         tags,
         source_language: sourceLanguage,

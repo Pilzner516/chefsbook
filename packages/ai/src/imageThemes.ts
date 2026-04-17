@@ -161,24 +161,47 @@ export function buildImagePrompt(
     .filter(Boolean)
     .join(', ');
 
-  const creativity = CREATIVITY_LEVELS[creativityLevel];
-
-  // Source description: supplementary only at levels 1-2, NEVER replaces dish name
-  const sourceContext = (creativity.useSourceDescription && recipe.source_image_description)
-    ? `, presented similarly to: ${recipe.source_image_description}`
-    : '';
+  // Levels 1-2 want source anchoring; if the field is NULL we can't deliver that,
+  // so fall back to level 3 behavior rather than silently producing a level-3
+  // prompt and labeling it "faithful".
+  let effectiveLevel = creativityLevel;
+  if (CREATIVITY_LEVELS[creativityLevel].useSourceDescription && !recipe.source_image_description) {
+    console.warn(
+      `[buildImagePrompt] creativityLevel=${creativityLevel} requested but ` +
+        `source_image_description is NULL for "${dishName}" — falling back to level 3.`,
+    );
+    effectiveLevel = 3;
+  }
+  const creativity = CREATIVITY_LEVELS[effectiveLevel];
 
   const themePrompt = IMAGE_THEMES[theme]?.prompt ?? IMAGE_THEMES.bright_fresh.prompt;
   const modifierPrompt = modifier ? `, ${modifier}` : '';
-  const creativityPrompt = creativity.promptModifier ? `, ${creativity.promptModifier}` : '';
 
+  // Levels 1-2: faithful. Lead with strong source-anchoring directive so the
+  // model treats the source description as primary reference, not a side note.
+  if (creativity.useSourceDescription && recipe.source_image_description) {
+    const leadIn = effectiveLevel === 1
+      ? 'match this source very closely'
+      : 'closely resemble this source';
+    return [
+      `Professional food photograph of ${dishName}`,
+      `— ${leadIn}: ${recipe.source_image_description}`,
+      keyIng ? `Key ingredients visible: ${keyIng}` : '',
+      recipe.cuisine ? `${recipe.cuisine} cuisine` : '',
+      creativity.promptModifier,
+      themePrompt,
+      modifierPrompt,
+      'high resolution, no text, no watermarks, no people, photorealistic',
+    ].filter(Boolean).join(', ');
+  }
+
+  // Levels 3-5 (or 1-2 with no source description): title + ingredients only.
   return [
     `Professional food photography of ${dishName}`,
     keyIng ? `featuring ${keyIng}` : '',
     recipe.cuisine ? `${recipe.cuisine} cuisine` : '',
     `served in a dish appropriate for ${dishName}`,
-    sourceContext,
-    creativityPrompt,
+    creativity.promptModifier,
     themePrompt,
     modifierPrompt,
     'high resolution, no text, no watermarks, no people, photorealistic',

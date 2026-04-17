@@ -45,6 +45,8 @@ export async function createRecipeWithModeration(
     image_url?: string | null; source_url?: string; cookbook_id?: string;
     page_number?: number; youtube_video_id?: string; channel_name?: string; video_only?: boolean;
     is_new_discovery?: boolean;
+    source_image_url?: string | null; source_image_description?: string | null;
+    source_language?: string | null; translated_from?: string | null;
   },
 ): Promise<SaveResult> {
   const created = await createRecipe(userId, recipe);

@@ -136,12 +136,29 @@ export async function POST(req: Request) {
     if (sourceLanguage !== userLanguage) recipe.translated_from = sourceLanguage;
 
     // ── Describe source image for better AI generation later ──
+    // Populates source_image_description used by creativity levels 1-2 (faithful).
     if (imageUrl && recipe.title) {
+      recipe.source_image_url = imageUrl; // always set — useful even if describe fails
+      const tDesc = Date.now();
       try {
         const desc = await describeSourceImage(imageUrl, recipe.title);
         if (desc) recipe.source_image_description = desc;
-        recipe.source_image_url = imageUrl;
-      } catch { /* non-blocking */ }
+        logAiCall({
+          userId: null,
+          action: 'describe_source_image',
+          model: 'haiku',
+          durationMs: Date.now() - tDesc,
+          success: !!desc,
+        }).catch(() => {});
+      } catch {
+        logAiCall({
+          userId: null,
+          action: 'describe_source_image',
+          model: 'haiku',
+          durationMs: Date.now() - tDesc,
+          success: false,
+        }).catch(() => {});
+      }
     }
 
     const { title, generated } = ensureTitle(recipe, url);

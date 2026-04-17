@@ -160,6 +160,8 @@ export async function createRecipe(
   recipe: ScannedRecipe & {
     image_url?: string | null; source_url?: string; cookbook_id?: string; page_number?: number;
     youtube_video_id?: string; channel_name?: string; video_only?: boolean;
+    source_image_url?: string | null; source_image_description?: string | null;
+    source_language?: string | null; translated_from?: string | null;
   },
 ): Promise<RecipeWithDetails> {
   const { data: newRecipe, error } = await supabase
@@ -182,6 +184,11 @@ export async function createRecipe(
         recipe.image_url.includes('supabase') ||
         recipe.image_url.includes('localhost')
       ) ? recipe.image_url : null,
+      // Source image reference — used by levels 1-2 faithful image generation
+      source_image_url: recipe.source_image_url ?? null,
+      source_image_description: recipe.source_image_description ?? null,
+      source_language: recipe.source_language ?? null,
+      translated_from: recipe.translated_from ?? null,
       cookbook_id: recipe.cookbook_id,
       page_number: recipe.page_number,
       notes: recipe.notes,

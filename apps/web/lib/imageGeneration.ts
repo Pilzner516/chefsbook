@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import path from 'path';
 import { supabaseAdmin } from '@chefsbook/db';
 import { buildImagePrompt as aiBuildPrompt, getImageModel } from '@chefsbook/ai';
-import type { ImageTheme } from '@chefsbook/ai';
+import type { ImageTheme, CreativityLevel } from '@chefsbook/ai';
 
 // Use the Tailscale IP for storage URLs stored in DB — reachable from all devices
 const SUPABASE_STORAGE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'http://100.110.47.62:8000';
@@ -20,7 +20,7 @@ export async function generateRecipeImage(
     tags?: string[];
     source_image_description?: string | null;
   },
-  options?: { theme?: ImageTheme; model?: string; modifier?: string },
+  options?: { theme?: ImageTheme; model?: string; modifier?: string; creativityLevel?: CreativityLevel },
 ): Promise<{ url: string; prompt: string } | null> {
   if (!REPLICATE_API_TOKEN) {
     console.warn('REPLICATE_API_TOKEN not set — skipping image generation');
@@ -29,7 +29,7 @@ export async function generateRecipeImage(
 
   const theme = options?.theme ?? 'bright_fresh';
   const model = options?.model ?? 'black-forest-labs/flux-schnell';
-  const prompt = aiBuildPrompt(recipe, theme, options?.modifier);
+  const prompt = aiBuildPrompt(recipe, theme, options?.modifier, options?.creativityLevel ?? 3);
 
   const response = await fetch(
     `https://api.replicate.com/v1/models/${model}/predictions`,
@@ -180,7 +180,7 @@ export async function generateAndSaveRecipeImage(
     user_id: string;
     source_image_description?: string | null;
   },
-  options?: { theme?: ImageTheme; model?: string; modifier?: string; replaceExisting?: boolean },
+  options?: { theme?: ImageTheme; model?: string; modifier?: string; replaceExisting?: boolean; creativityLevel?: CreativityLevel },
 ): Promise<void> {
   // Mark as generating
   await supabaseAdmin
@@ -191,7 +191,12 @@ export async function generateAndSaveRecipeImage(
     })
     .eq('id', recipeId);
 
-  const result = await generateRecipeImage(recipe, options);
+  const result = await generateRecipeImage(recipe, {
+    theme: options?.theme,
+    model: options?.model,
+    modifier: options?.modifier,
+    creativityLevel: options?.creativityLevel,
+  });
   if (!result) throw new Error('Image generation returned null');
 
   // Download the generated image
@@ -262,7 +267,7 @@ export function triggerImageGeneration(
     user_id: string;
     source_image_description?: string | null;
   },
-  options?: { modifier?: string; replaceExisting?: boolean },
+  options?: { modifier?: string; replaceExisting?: boolean; creativityLevel?: CreativityLevel },
 ): void {
   // Fire-and-forget background generation
   (async () => {
@@ -275,21 +280,35 @@ export function triggerImageGeneration(
         })
         .eq('id', recipeId);
 
-      // Fetch user's theme + plan + quality override
-      const { data: profile } = await supabaseAdmin
-        .from('user_profiles')
-        .select('image_theme, plan_tier, image_quality_override')
-        .eq('id', recipe.user_id)
-        .single();
+      // Fetch user's theme + plan + quality override, and the system-wide creativity level
+      const [profileRes, settingRes] = await Promise.all([
+        supabaseAdmin
+          .from('user_profiles')
+          .select('image_theme, plan_tier, image_quality_override')
+          .eq('id', recipe.user_id)
+          .single(),
+        supabaseAdmin
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'image_creativity_level')
+          .maybeSingle(),
+      ]);
+      const profile = profileRes.data;
 
       const theme = (profile?.image_theme ?? 'bright_fresh') as ImageTheme;
       const model = getImageModel(profile?.plan_tier ?? 'free', profile?.image_quality_override);
+
+      // creativityLevel precedence: explicit option > system_settings > default 3
+      const settingVal = parseInt(settingRes.data?.value ?? '3', 10);
+      const settingLevel = (settingVal >= 1 && settingVal <= 5 ? settingVal : 3) as CreativityLevel;
+      const creativityLevel = options?.creativityLevel ?? settingLevel;
 
       await generateAndSaveRecipeImage(recipeId, recipe, {
         theme,
         model,
         modifier: options?.modifier,
         replaceExisting: options?.replaceExisting,
+        creativityLevel,
       });
     } catch (err) {
       console.error(`Image generation failed for recipe ${recipeId}:`, err);

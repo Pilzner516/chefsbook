@@ -8,10 +8,10 @@ export async function POST(req: Request) {
       return Response.json({ error: 'recipeId required' }, { status: 400 });
     }
 
-    // Fetch recipe details
+    // Fetch recipe details — include source_image_description for levels 1-2 faithful generation
     const { data: recipe, error } = await supabaseAdmin
       .from('recipes')
-      .select('id, title, cuisine, user_id, image_generation_status')
+      .select('id, title, cuisine, user_id, image_generation_status, source_image_description')
       .eq('id', recipeId)
       .single();
 
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       cuisine: recipe.cuisine,
       ingredients: ingredients ?? [],
       user_id: recipe.user_id,
+      source_image_description: recipe.source_image_description,
     });
 
     // Log AI cost (fire and forget — model determined by plan)
