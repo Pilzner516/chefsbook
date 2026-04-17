@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 184 — Widen watermark badge so full logo fits)
+- [SESSION 184] Diagnosed: the red-square chef-hat icon on the right edge of the ChefsBook logo was visibly clipping in the applied watermark. Root cause: scripts/create-watermark-badge.mjs sized the pill dynamically (logoW + 2*40px = 1404×451) and used pill_radius = height/2, producing a full stadium shape. The stadium's flat interior was only x ∈ [225, 1179], but the logo occupied x ∈ [40, 1364]. The right-most portion of the logo (including most of the red-square hat icon) sat inside the right semicircular cap where pill alpha is 0 — so those pixels composited directly on top of food colours with no white backing, looking clipped.
+- [SESSION 184] Rewrote create-watermark-badge.mjs with a fixed-width approach: BADGE_WIDTH = 260 as the authoritative canvas width. Logo resized proportionally to 224×63 (BADGE_WIDTH - 2*PADDING_X with PADDING_X=18). Badge height derived from logo + PADDING_Y=16 top/bottom → 260×95 final. CORNER_RADIUS = 16 (moderate rounded rect, not stadium) so the flat interior covers the full logo rectangle with safe padding on all four sides.
+- [SESSION 184] Local render verified — Read tool on apps/web/public/images/watermark-chefsbook.png shows full "Chefsbook" wordmark (red Chefs + black book) + complete red-square chef-hat icon with no clipping on either side.
+- [SESSION 184] Applied on RPi5: git pull, node scripts/create-watermark-badge.mjs produced 260×95 output, node scripts/apply-watermarks.mjs processed 75/75 AI images with 0 failures.
+- [SESSION 184] Live visual verification — curl chefsbk.app/api/image?url=... for the latest AI photo (db5bae64…, 1152×896 JPEG, 140KB), Read tool rendered bread image with correct bottom-left ChefsBook badge showing the complete logo: wordmark + full red-square hat icon with padding on both sides. No right-edge clipping.
+- [SESSION 184] Deployed at commit dfe933c. No web rebuild / pm2 restart needed — only scripts and the public static badge PNG changed; apply-watermarks.mjs and apps/web/lib/imageGeneration.ts both read the PNG directly at request time.
+
 ## 2026-04-17 (session 183 — Diagnose zero-ingredient import + fix pizza recipe)
 - [SESSION 183] Diagnosed: Sicilian Pizza Recipe (83a2bfee) had 0 ingredients, 9 steps, is_complete=false. Source URL (billyparisi.com) has 19 ingredients in JSON-LD recipeIngredient. import_attempts logged success=true with no failure_reason — the pipeline treated 0 ingredients as success.
 - [SESSION 183] Root cause: the original import at 2026-04-17 01:07 used an older code path (pre-session 182 token wiring). The current pipeline works correctly — re-importing the same URL returns 19 ingredients via Claude extraction.
