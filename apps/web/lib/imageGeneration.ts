@@ -218,8 +218,9 @@ export async function generateAndSaveRecipeImage(
 
   if (options?.replaceExisting) {
     // Update existing AI photo row with new URL (busts browser cache)
+    // Set regen_count=1 HERE (after successful generation, not before triggering)
     await supabaseAdmin.from('recipe_user_photos')
-      .update({ url: publicUrl, storage_path: fileName })
+      .update({ url: publicUrl, storage_path: fileName, regen_count: 1 })
       .eq('recipe_id', recipeId)
       .eq('is_ai_generated', true)
       .eq('is_primary', true);

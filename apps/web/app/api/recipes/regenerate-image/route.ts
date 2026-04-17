@@ -47,11 +47,8 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Regeneration limit reached for this recipe' }, { status: 429 });
   }
 
-  // Increment regen count
-  await supabaseAdmin
-    .from('recipe_user_photos')
-    .update({ regen_count: (photo.regen_count ?? 0) + 1 })
-    .eq('id', photo.id);
+  // NOTE: regen_count is set by generateAndSaveRecipeImage after successful save,
+  // NOT here before triggering — so failures don't burn the user's regen allowance.
 
   // Fetch ingredients for prompt
   const { data: ingredients } = await supabaseAdmin
