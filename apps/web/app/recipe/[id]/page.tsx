@@ -1026,7 +1026,10 @@ export default function RecipePage() {
       {showChangeImageModal && recipe && (() => {
         const aiPhoto = userPhotos.find((p) => p.is_ai_generated);
         const hasAiImage = !!aiPhoto;
-        const regenAvailable = hasAiImage && (aiPhoto.regen_count ?? 0) < 1;
+        const REGEN_LIMIT = 5;
+        const regenCount = aiPhoto?.regen_count ?? 0;
+        const regenRemaining = Math.max(0, REGEN_LIMIT - regenCount);
+        const regenAvailable = hasAiImage && regenRemaining > 0;
 
         const handleRegenPill = async (pillId: string) => {
           setShowChangeImageModal(false);
@@ -1056,13 +1059,13 @@ export default function RecipePage() {
               }
               try {
                 const statusRes = await fetch(`/api/recipes/${recipe.id}/image-status`);
-                const { status, url } = await statusRes.json();
+                const { status, url, regenCount } = await statusRes.json();
                 if (status === 'complete' && url) {
                   clearInterval(poll);
                   setRegenerating(false);
-                  // Update the photo in state
+                  // Update the photo in state — use the authoritative regenCount from the server
                   setUserPhotos((prev) => prev.map((p) =>
-                    p.is_ai_generated ? { ...p, url, regen_count: (p.regen_count ?? 0) + 1 } : p
+                    p.is_ai_generated ? { ...p, url, regen_count: regenCount ?? (p.regen_count ?? 0) + 1 } : p
                   ));
                 } else if (status === 'failed') {
                   clearInterval(poll);
@@ -1117,10 +1120,12 @@ export default function RecipePage() {
                             </button>
                           ))}
                         </div>
-                        <p className="text-xs text-cb-muted">1 regeneration available</p>
+                        <p className="text-xs text-cb-muted">
+                          {regenRemaining} regeneration{regenRemaining === 1 ? '' : 's'} remaining
+                        </p>
                       </>
                     ) : (
-                      <p className="text-xs text-cb-muted">You&apos;ve used your regeneration for this recipe</p>
+                      <p className="text-xs text-cb-muted">You&apos;ve used all {REGEN_LIMIT} regenerations for this recipe</p>
                     )}
                   </div>
                 </>

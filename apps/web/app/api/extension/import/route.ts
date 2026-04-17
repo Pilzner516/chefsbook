@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage } from '@chefsbook/ai';
-import { logAiCall } from '@chefsbook/db';
+import { logAiCall, isInternalPhotoUrl } from '@chefsbook/db';
 import { ensureTitle } from '../../import/_utils';
 
 function getServiceClient() {
@@ -66,6 +66,9 @@ export async function POST(req: Request) {
     }
 
     const imageUrl = extractImageUrl(rawHtml, url);
+    // recipes.image_url / techniques.image_url must always be an internal URL
+    // (copyright safety). External og:image URLs stay in source_image_url only.
+    const safeImageUrl = imageUrl && isInternalPhotoUrl(imageUrl) ? imageUrl : null;
     const text = stripHtml(rawHtml).slice(0, 25000);
 
     if (text.length < 100) {
@@ -94,7 +97,7 @@ export async function POST(req: Request) {
           difficulty: technique.difficulty,
           source_url: url,
           source_type: 'extension',
-          image_url: imageUrl,
+          image_url: safeImageUrl,
         })
         .select()
         .single();
@@ -181,7 +184,7 @@ export async function POST(req: Request) {
         course: recipe.course,
         source_type: 'url',
         source_url: url,
-        image_url: imageUrl,
+        image_url: safeImageUrl,
         source_image_url: imageUrl,
         source_image_description: sourceImageDescription,
         notes: recipe.notes,

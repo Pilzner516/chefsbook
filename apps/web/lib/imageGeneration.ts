@@ -222,10 +222,21 @@ export async function generateAndSaveRecipeImage(
   const publicUrl = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
 
   if (options?.replaceExisting) {
-    // Update existing AI photo row with new URL (busts browser cache)
-    // Set regen_count=1 HERE (after successful generation, not before triggering)
+    // Update existing AI photo row with new URL (busts browser cache).
+    // Increment regen_count by 1 after successful generation so retries past the
+    // limit are blocked but the first N regens all succeed. Read-then-write is
+    // safe here — a single user can only trigger one regen at a time (fire-and-
+    // forget fires the whole generateAndSaveRecipeImage pipeline serially).
+    const { data: existing } = await supabaseAdmin
+      .from('recipe_user_photos')
+      .select('regen_count')
+      .eq('recipe_id', recipeId)
+      .eq('is_ai_generated', true)
+      .eq('is_primary', true)
+      .maybeSingle();
+    const newCount = (existing?.regen_count ?? 0) + 1;
     await supabaseAdmin.from('recipe_user_photos')
-      .update({ url: publicUrl, storage_path: fileName, regen_count: 1 })
+      .update({ url: publicUrl, storage_path: fileName, regen_count: newCount })
       .eq('recipe_id', recipeId)
       .eq('is_ai_generated', true)
       .eq('is_primary', true);

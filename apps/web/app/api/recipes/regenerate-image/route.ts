@@ -31,7 +31,8 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Recipe not found' }, { status: 404 });
   }
 
-  // Check regen limit (1 per recipe)
+  // Check regen limit (5 per recipe — enough to cycle through all pills)
+  const REGEN_LIMIT = 5;
   const { data: photo } = await supabaseAdmin
     .from('recipe_user_photos')
     .select('id, regen_count')
@@ -43,11 +44,11 @@ export async function POST(req: Request) {
     return Response.json({ error: 'No AI image to regenerate' }, { status: 400 });
   }
 
-  if ((photo.regen_count ?? 0) >= 1) {
+  if ((photo.regen_count ?? 0) >= REGEN_LIMIT) {
     return Response.json({ error: 'Regeneration limit reached for this recipe' }, { status: 429 });
   }
 
-  // NOTE: regen_count is set by generateAndSaveRecipeImage after successful save,
+  // NOTE: regen_count is incremented by generateAndSaveRecipeImage after successful save,
   // NOT here before triggering — so failures don't burn the user's regen allowance.
 
   // Fetch ingredients for prompt
