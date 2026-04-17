@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 185 — Fix all 0-ingredient recipes in DB)
+- [SESSION 185] Identified 6 recipes with 0 ingredients + is_complete=false, plus 7 with 0 ingredients + is_complete=true (wrong flag). Total: 13 recipes, 1 QA test shell.
+- [SESSION 185] Deleted QA Test Recipe 140 (0 ingredients, 0 steps, no source_url — useless test data).
+- [SESSION 185] Re-imported ingredients for 8 website recipes via /api/import/url: femmeactuelle.fr Parmentier (12 ing), loveandlemons Chocolate Chip Cookies (10), thepioneerwoman Cookies (11), thepioneerwoman Sheet Cake (14), rasamalaysia Cookies (10), preppykitchen Biscuits (7), spendwithpennies BBQ Ribs (13), halfbakedharvest Katsu (14).
+- [SESSION 185] Generated ingredients via Claude Sonnet for seriouseats Pasta Con le Sarde (14 ing) — site is Cloudflare-blocked so AI generated from the 11 existing steps.
+- [SESSION 185] Deleted 3 empty YouTube recipe shells (0 ingredients, 0 steps, 0 useful content): Sous Vide Prime Rib, PK Chicken Karahi, How to Make Flaky Biscuits.
+- [SESSION 185] Final verification: SELECT ... WHERE ingredient_count = 0 returns 0 rows. Every recipe in the DB now has ingredients.
+
 ## 2026-04-17 (session 184 — Widen watermark badge so full logo fits)
 - [SESSION 184] Diagnosed: the red-square chef-hat icon on the right edge of the ChefsBook logo was visibly clipping in the applied watermark. Root cause: scripts/create-watermark-badge.mjs sized the pill dynamically (logoW + 2*40px = 1404×451) and used pill_radius = height/2, producing a full stadium shape. The stadium's flat interior was only x ∈ [225, 1179], but the logo occupied x ∈ [40, 1364]. The right-most portion of the logo (including most of the red-square hat icon) sat inside the right semicircular cap where pill alpha is 0 — so those pixels composited directly on top of food colours with no white backing, looking clipped.
 - [SESSION 184] Rewrote create-watermark-badge.mjs with a fixed-width approach: BADGE_WIDTH = 260 as the authoritative canvas width. Logo resized proportionally to 224×63 (BADGE_WIDTH - 2*PADDING_X with PADDING_X=18). Badge height derived from logo + PADDING_Y=16 top/bottom → 260×95 final. CORNER_RADIUS = 16 (moderate rounded rect, not stadium) so the flat interior covers the full logo rectangle with safe padding on all four sides.
