@@ -314,7 +314,8 @@ export async function POST(req: Request) {
           ingredients: (recipe.ingredients ?? []).map((i: any) => ({ ingredient: i.ingredient })),
           tags: [],
           user_id: user.id,
-          source_image_description: recipe.source_image_description ?? null,
+          source_image_description: sourceImageDescription,
+          source_image_url: imageUrl,
         });
       } catch { /* non-critical */ }
     }

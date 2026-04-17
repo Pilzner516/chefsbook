@@ -22,11 +22,36 @@ const PROMPT_STRENGTH_BY_LEVEL: Record<number, number> = {
 };
 
 /**
+ * Fetch an image URL server-side and return as base64 data URI.
+ * Returns null on any failure — caller should fall back to text-to-image.
+ */
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(8000),
+      redirect: 'follow',
+    });
+    if (!res.ok) return null;
+    const buffer = await res.arrayBuffer();
+    if (buffer.byteLength < 1000 || buffer.byteLength > 10_000_000) return null; // too small (placeholder) or too large
+    const base64 = Buffer.from(buffer).toString('base64');
+    const mimeType = res.headers.get('content-type') || 'image/jpeg';
+    return `data:${mimeType};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Call Replicate Flux Dev to generate a recipe image.
  * img2img at all 5 creativity levels when sourceOgImageUrl is available —
  * prompt_strength is the only variable per level. Falls back to text-to-image
  * (no image param, same prompt_strength) with a console.warn when the URL is
  * absent (legacy recipes imported before source_image_url was persisted).
+ *
+ * Source images are fetched server-side as base64 before sending to Replicate
+ * to avoid hotlink blocking (sites returning 403 to Replicate's fetcher).
  */
 export async function generateRecipeImage(
   recipe: {
@@ -57,9 +82,20 @@ export async function generateRecipeImage(
   // not a model swap. Removes session-190's model switcher.
   const model = 'black-forest-labs/flux-dev';
 
-  const ogImage = options?.sourceOgImageUrl ?? null;
+  // Fetch source image server-side as base64 to avoid hotlink blocking
+  const rawOgUrl = options?.sourceOgImageUrl ?? null;
+  let ogImage: string | null = null;
+  if (rawOgUrl) {
+    ogImage = await fetchImageAsBase64(rawOgUrl);
+    if (!ogImage) {
+      console.warn(
+        `[generateRecipeImage] Failed to fetch source image for "${recipe.title}" — ` +
+          `falling back to text-to-image.`,
+      );
+    }
+  }
   const usedImg2Img = !!ogImage;
-  if (!usedImg2Img) {
+  if (!rawOgUrl) {
     console.warn(
       `[generateRecipeImage] No source_og_image_url for "${recipe.title}" — ` +
         `falling back to text-to-image at prompt_strength=${promptStrength}.`,
@@ -95,7 +131,12 @@ export async function generateRecipeImage(
   );
 
   if (!response.ok) {
-    console.error('Replicate API error:', response.status, await response.text().catch(() => ''));
+    const errorText = await response.text().catch(() => '');
+    console.error('Replicate API error:', response.status, errorText);
+    // Distinguish credit exhaustion from other errors
+    if (response.status === 402) {
+      throw new Error('REPLICATE_CREDITS_EXHAUSTED');
+    }
     return null;
   }
 
@@ -397,12 +438,20 @@ export function triggerImageGeneration(
         replaceExisting: options?.replaceExisting,
         creativityLevel,
       });
-    } catch (err) {
-      console.error(`Image generation failed for recipe ${recipeId}:`, err);
+    } catch (err: any) {
+      const isCreditExhaustion = err?.message === 'REPLICATE_CREDITS_EXHAUSTED';
+      console.error(
+        `Image generation ${isCreditExhaustion ? 'paused (credits)' : 'failed'} for recipe ${recipeId}:`,
+        err,
+      );
       try {
         await supabaseAdmin
           .from('recipes')
-          .update({ image_generation_status: 'failed' })
+          .update({
+            // Credit exhaustion is temporary — mark pending so it can be retried.
+            // Other failures are permanent — mark failed.
+            image_generation_status: isCreditExhaustion ? 'pending' : 'failed',
+          })
           .eq('id', recipeId);
       } catch { /* silent */ }
     }
