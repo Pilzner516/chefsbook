@@ -12,12 +12,33 @@ export async function POST(req: Request) {
     // source_image_description (prompt anchor at levels 1-2).
     const { data: recipe, error } = await supabaseAdmin
       .from('recipes')
-      .select('id, title, cuisine, user_id, image_generation_status, source_image_description, source_image_url')
+      .select('id, title, cuisine, user_id, image_generation_status, source_image_description, source_image_url, source_url')
       .eq('id', recipeId)
       .single();
 
     if (error || !recipe) {
       return Response.json({ error: 'Recipe not found' }, { status: 404 });
+    }
+
+    // Backfill source_image_url on-demand if missing but source_url exists
+    if (!recipe.source_image_url && recipe.source_url) {
+      try {
+        const res = await fetch(recipe.source_url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          signal: AbortSignal.timeout(8000),
+          redirect: 'follow',
+        });
+        if (res.ok) {
+          const html = await res.text();
+          const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+            ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+          if (ogMatch?.[1] && ogMatch[1].startsWith('http')) {
+            recipe.source_image_url = ogMatch[1];
+            // Persist so future generations don't need to re-fetch
+            await supabaseAdmin.from('recipes').update({ source_image_url: ogMatch[1] }).eq('id', recipeId);
+          }
+        }
+      } catch { /* non-blocking — fall through to t2i */ }
     }
 
     // Don't re-generate if already in progress or complete
