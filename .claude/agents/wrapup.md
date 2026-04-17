@@ -69,6 +69,35 @@ COST THIS SESSION:
 - Models: Haiku N×, Sonnet N×, Flux N×
 ```
 
+### Step 4b — DATA FIX vs CODE FIX — MANDATORY CLASSIFICATION
+
+Every bug fix this session must be classified before wrapup is allowed to proceed.
+
+**CODE FIX** = a change to source code that prevents the problem recurring for
+all future users and imports. This is the only acceptable resolution for a
+recurring bug.
+
+**DATA FIX** = a change to DB rows (UPDATE, DELETE, re-import) that repairs
+existing broken data only. A data fix alone is NOT a complete resolution — the
+bug will return on the next affected import or user action.
+
+Required in every DONE.md bug fix entry:
+- TYPE: CODE FIX — state what code path was changed and why it prevents recurrence
+- OR TYPE: DATA FIX ONLY — state why no code fix was needed AND confirm this
+  does not need to be repeated in future
+
+If a session applies a data fix without a code fix, the session is INCOMPLETE
+unless the agent explicitly confirms one of:
+  a) The root cause is already prevented by existing code — with evidence
+     (grep or file reference showing the guard)
+  b) A code fix is needed but out of scope — must be added to AGENDA.md as a
+     named item before wrapup proceeds
+
+**Recurring bug rule:** Before wrapping, search DONE.md for previous fixes to
+the same issue (by keyword). If a prior fix exists for the same bug, a
+data-fix-only resolution is NEVER acceptable. The code must be changed.
+No exceptions.
+
 ### Step 5 — Update DONE.md
 
 Add all completed items with [SESSION XXX] prefix.
@@ -108,6 +137,11 @@ git push
 5. **If you are out of context and cannot complete the audit,**
    write: "CONTEXT LIMIT REACHED — remaining items not audited"
    and list every remaining checklist item as DEFERRED.
+
+6. **Data-fix vs code-fix classification is mandatory.** Every bug fix
+   must be tagged TYPE: CODE FIX or TYPE: DATA FIX ONLY in the DONE.md
+   entry and the wrapup recap. Data-fix-only for a recurring bug is
+   never acceptable.
 
 ---
 
