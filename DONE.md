@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 196 — Fix false-positive missing tags banner) TYPE: CODE FIX
+- [SESSION 196] Root cause: auto-tag (fire-and-forget after import) adds tags to recipes.tags but never re-runs fetchRecipeCompleteness + applyCompletenessGate. is_complete stays false, missing_fields stays {tags}, RefreshFromSourceBanner shows despite 6+ tags being present.
+- [SESSION 196] Fixed /api/recipes/auto-tag single-recipe mode: after updating tags, re-runs completeness gate. Also strips _incomplete tag from array when tags are added. TYPE: CODE FIX.
+- [SESSION 196] Fixed extension import inline auto-tag: same completeness gate re-run after tags added. TYPE: CODE FIX.
+- [SESSION 196] DATA FIX: 3 recipes corrected (Homemade Crepes, Quiche Recipe, Sicilian-Style Pizza) — all had tags but stale is_complete=false + missing_fields={tags}.
+- [SESSION 196] Verified: 2 remaining incomplete recipes (Sicilian Pizza Dough, Crispy Chicken Katsu) are legitimately missing ingredients — banner correctly shows for them.
+- [SESSION 196] tsc --noEmit clean. Deployed at commit 13a745d, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 195 — Fix image gen race condition + temp unavailable) TYPE: CODE FIX
 - [SESSION 195] Bug 1 diagnosed: extension import route (`/api/extension/import`) passed `recipe.source_image_description` (undefined from Claude extraction) instead of `sourceImageDescription` (Haiku Vision result). Also omitted `source_image_url` entirely from `triggerImageGeneration()`. Web URL import path was unaffected (reads from DB after save).
 - [SESSION 195] Bug 1 fixed: extension route now passes correct `sourceImageDescription` variable and `imageUrl` to `triggerImageGeneration()`. TYPE: CODE FIX.
