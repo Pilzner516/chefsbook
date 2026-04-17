@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   // Check recipe ownership
   const { data: recipe } = await supabaseAdmin
     .from('recipes')
-    .select('id, title, cuisine, user_id, source_image_description')
+    .select('id, title, cuisine, user_id, source_image_description, source_image_url')
     .eq('id', recipeId)
     .single();
   if (!recipe || recipe.user_id !== user.id) {
@@ -69,15 +69,16 @@ export async function POST(req: Request) {
       tags: [],
       user_id: recipe.user_id,
       source_image_description: recipe.source_image_description,
+      source_image_url: recipe.source_image_url,
     },
     { modifier: pill.modifier, replaceExisting: true },
   );
 
-  // Log regen cost (fire-and-forget — generation is async)
+  // Log regen cost (fire-and-forget — generation is async) — all levels now Flux Dev
   logAiCall({
     userId: user.id,
     action: 'regenerate_image',
-    model: 'flux-schnell',
+    model: 'flux-dev',
     recipeId,
     durationMs: Date.now() - t0,
     success: true,

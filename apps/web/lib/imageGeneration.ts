@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import path from 'path';
 import { supabaseAdmin } from '@chefsbook/db';
-import { buildImagePrompt as aiBuildPrompt, getImageModel } from '@chefsbook/ai';
+import { buildImagePrompt as aiBuildPrompt } from '@chefsbook/ai';
 import type { ImageTheme, CreativityLevel } from '@chefsbook/ai';
 
 // Use the Tailscale IP for storage URLs stored in DB — reachable from all devices
@@ -9,8 +9,24 @@ const SUPABASE_STORAGE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'http://100
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 /**
- * Call Replicate to generate an image.
- * Model is selected based on plan tier: Pro gets Flux Dev (~$0.025), others get Schnell (~$0.003).
+ * Map creativityLevel (1–5) to Flux Dev prompt_strength for img2img.
+ * Lower strength = closer to source. Replicate's default is 0.8.
+ * Level 5 clamps at 0.95 so the source still faintly influences output.
+ */
+const PROMPT_STRENGTH_BY_LEVEL: Record<number, number> = {
+  1: 0.2,
+  2: 0.4,
+  3: 0.6,
+  4: 0.8,
+  5: 0.95,
+};
+
+/**
+ * Call Replicate Flux Dev to generate a recipe image.
+ * img2img at all 5 creativity levels when sourceOgImageUrl is available —
+ * prompt_strength is the only variable per level. Falls back to text-to-image
+ * (no image param, same prompt_strength) with a console.warn when the URL is
+ * absent (legacy recipes imported before source_image_url was persisted).
  */
 export async function generateRecipeImage(
   recipe: {
@@ -20,16 +36,50 @@ export async function generateRecipeImage(
     tags?: string[];
     source_image_description?: string | null;
   },
-  options?: { theme?: ImageTheme; model?: string; modifier?: string; creativityLevel?: CreativityLevel },
-): Promise<{ url: string; prompt: string } | null> {
+  options?: {
+    theme?: ImageTheme;
+    modifier?: string;
+    creativityLevel?: CreativityLevel;
+    sourceOgImageUrl?: string | null;
+  },
+): Promise<{ url: string; prompt: string; usedImg2Img: boolean } | null> {
   if (!REPLICATE_API_TOKEN) {
     console.warn('REPLICATE_API_TOKEN not set — skipping image generation');
     return null;
   }
 
   const theme = options?.theme ?? 'bright_fresh';
-  const model = options?.model ?? 'black-forest-labs/flux-schnell';
-  const prompt = aiBuildPrompt(recipe, theme, options?.modifier, options?.creativityLevel ?? 3);
+  const level = (options?.creativityLevel ?? 3) as CreativityLevel;
+  const prompt = aiBuildPrompt(recipe, theme, options?.modifier, level);
+  const promptStrength = PROMPT_STRENGTH_BY_LEVEL[level] ?? 0.6;
+
+  // Flux Dev at all levels — the prompt_strength spectrum carries the variation,
+  // not a model swap. Removes session-190's model switcher.
+  const model = 'black-forest-labs/flux-dev';
+
+  const ogImage = options?.sourceOgImageUrl ?? null;
+  const usedImg2Img = !!ogImage;
+  if (!usedImg2Img) {
+    console.warn(
+      `[generateRecipeImage] No source_og_image_url for "${recipe.title}" — ` +
+        `falling back to text-to-image at prompt_strength=${promptStrength}.`,
+    );
+  }
+
+  const input: Record<string, unknown> = {
+    prompt,
+    num_outputs: 1,
+    output_format: 'jpg',
+    output_quality: 85,
+    seed: Math.floor(Math.random() * 999999),
+    prompt_strength: promptStrength,
+  };
+  if (ogImage) {
+    // Replicate: when image is set, aspect_ratio is ignored and output matches source
+    input.image = ogImage;
+  } else {
+    input.aspect_ratio = '4:3';
+  }
 
   const response = await fetch(
     `https://api.replicate.com/v1/models/${model}/predictions`,
@@ -40,17 +90,7 @@ export async function generateRecipeImage(
         'Content-Type': 'application/json',
         Prefer: 'wait',
       },
-      body: JSON.stringify({
-        input: {
-          prompt,
-          aspect_ratio: '4:3',
-          num_outputs: 1,
-          output_format: 'jpg',
-          output_quality: 85,
-          seed: Math.floor(Math.random() * 999999),
-          ...(model.includes('flux-dev') ? { safety_tolerance: 5 } : {}),
-        },
-      }),
+      body: JSON.stringify({ input }),
     },
   );
 
@@ -63,7 +103,7 @@ export async function generateRecipeImage(
   const outputUrl = data.output?.[0] ?? data.output;
   if (!outputUrl || typeof outputUrl !== 'string') return null;
 
-  return { url: outputUrl, prompt };
+  return { url: outputUrl, prompt, usedImg2Img };
 }
 
 /**
@@ -179,8 +219,9 @@ export async function generateAndSaveRecipeImage(
     tags?: string[];
     user_id: string;
     source_image_description?: string | null;
+    source_image_url?: string | null;
   },
-  options?: { theme?: ImageTheme; model?: string; modifier?: string; replaceExisting?: boolean; creativityLevel?: CreativityLevel },
+  options?: { theme?: ImageTheme; modifier?: string; replaceExisting?: boolean; creativityLevel?: CreativityLevel },
 ): Promise<void> {
   // Mark as generating
   await supabaseAdmin
@@ -193,9 +234,9 @@ export async function generateAndSaveRecipeImage(
 
   const result = await generateRecipeImage(recipe, {
     theme: options?.theme,
-    model: options?.model,
     modifier: options?.modifier,
     creativityLevel: options?.creativityLevel,
+    sourceOgImageUrl: recipe.source_image_url ?? null,
   });
   if (!result) throw new Error('Image generation returned null');
 
@@ -309,6 +350,7 @@ export function triggerImageGeneration(
     tags?: string[];
     user_id: string;
     source_image_description?: string | null;
+    source_image_url?: string | null;
   },
   options?: { modifier?: string; replaceExisting?: boolean; creativityLevel?: CreativityLevel },
 ): void {
@@ -323,11 +365,11 @@ export function triggerImageGeneration(
         })
         .eq('id', recipeId);
 
-      // Fetch user's theme + plan + quality override, and the system-wide creativity level
+      // Fetch user's theme, and the system-wide creativity level
       const [profileRes, settingRes] = await Promise.all([
         supabaseAdmin
           .from('user_profiles')
-          .select('image_theme, plan_tier, image_quality_override')
+          .select('image_theme')
           .eq('id', recipe.user_id)
           .single(),
         supabaseAdmin
@@ -345,12 +387,12 @@ export function triggerImageGeneration(
       const settingLevel = (settingVal >= 1 && settingVal <= 5 ? settingVal : 3) as CreativityLevel;
       const creativityLevel = options?.creativityLevel ?? settingLevel;
 
-      // Model selection: levels 1-2 use Flux Dev for better prompt adherence
-      const model = getImageModel(profile?.plan_tier ?? 'free', profile?.image_quality_override, creativityLevel);
+      // All levels use Flux Dev (session 192) — fidelity spectrum is driven by
+      // prompt_strength in img2img mode, not a model swap. Plan-based Schnell/Dev
+      // switching and image_quality_override are intentionally ignored here.
 
       await generateAndSaveRecipeImage(recipeId, recipe, {
         theme,
-        model,
         modifier: options?.modifier,
         replaceExisting: options?.replaceExisting,
         creativityLevel,

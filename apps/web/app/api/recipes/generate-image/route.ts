@@ -8,10 +8,11 @@ export async function POST(req: Request) {
       return Response.json({ error: 'recipeId required' }, { status: 400 });
     }
 
-    // Fetch recipe details — include source_image_description for levels 1-2 faithful generation
+    // Fetch recipe details — include source_image_url (img2img reference) and
+    // source_image_description (prompt anchor at levels 1-2).
     const { data: recipe, error } = await supabaseAdmin
       .from('recipes')
-      .select('id, title, cuisine, user_id, image_generation_status, source_image_description')
+      .select('id, title, cuisine, user_id, image_generation_status, source_image_description, source_image_url')
       .eq('id', recipeId)
       .single();
 
@@ -42,10 +43,11 @@ export async function POST(req: Request) {
       ingredients: ingredients ?? [],
       user_id: recipe.user_id,
       source_image_description: recipe.source_image_description,
+      source_image_url: recipe.source_image_url,
     });
 
-    // Log AI cost (fire and forget — model determined by plan)
-    logAiCall({ userId: recipe.user_id, action: 'generate_image', model: 'flux-schnell', recipeId, durationMs: 0, success: true }).catch(() => {});
+    // Log AI cost (fire and forget) — all levels now use Flux Dev (~$0.025/image)
+    logAiCall({ userId: recipe.user_id, action: 'generate_image', model: 'flux-dev', recipeId, durationMs: 0, success: true }).catch(() => {});
 
     return Response.json({ status: 'generating' });
   } catch (err: any) {

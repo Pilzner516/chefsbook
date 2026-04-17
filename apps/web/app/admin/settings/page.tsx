@@ -98,16 +98,16 @@ export default function AdminSettingsPage() {
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 max-w-xl">
         <h2 className="text-lg font-semibold mb-2">Image Creativity Level</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Controls how different AI-generated images are from source photos. Higher values ensure more copyright distance.
+          All levels use img2img with Flux Dev — the source photo anchors the output. Lower levels stay closer to the source composition; higher levels let the AI reinterpret the dish.
         </p>
         {(() => {
           const currentLevel = parseInt(settings['image_creativity_level']?.value ?? '3', 10);
           const levels = [
-            { n: 1, label: 'Very Faithful', desc: 'Very similar to source' },
-            { n: 2, label: 'Faithful', desc: 'Similar presentation' },
-            { n: 3, label: 'Balanced', desc: 'Same dish, different style (recommended)' },
-            { n: 4, label: 'Creative', desc: 'Unique styling' },
-            { n: 5, label: 'Very Creative', desc: 'Completely original' },
+            { n: 1, label: 'Very Faithful', desc: 'Nearly identical to source photo' },
+            { n: 2, label: 'Faithful', desc: 'Same style, small variation' },
+            { n: 3, label: 'Balanced', desc: 'Same dish, different take (recommended)' },
+            { n: 4, label: 'Creative', desc: 'Inspired by source, reimagined' },
+            { n: 5, label: 'Very Creative', desc: 'Fully AI, source as loose reference' },
           ];
           return (
             <div className="space-y-2 mb-4">
@@ -138,13 +138,8 @@ export default function AdminSettingsPage() {
                   </div>
                 </label>
               ))}
-              {currentLevel <= 2 && (
-                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                  Levels 1-2 may produce images visually similar to source photos, which could raise copyright concerns.
-                </div>
-              )}
               <p className="text-xs text-gray-400 mt-2">
-                Level 3+ skips source image description in prompts — uses only recipe title and ingredients.
+                Each level maps to a Flux Dev prompt_strength: 0.2 / 0.4 / 0.6 / 0.8 / 0.95. Legacy recipes without a stored source photo fall back to text-to-image at the same strength.
               </p>
             </div>
           );
