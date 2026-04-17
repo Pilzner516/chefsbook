@@ -1,69 +1,57 @@
 #!/usr/bin/env node
 /**
  * Creates the ChefsBook watermark badge PNG.
- * Run once to generate the badge, then composite onto images.
+ *
+ * Source: scripts/chefs-hat.png (copied from docs/pics/cb_plus_hat.png) —
+ * the full "Chefsbook" wordmark + red-square hat icon as a single asset.
+ *
+ * NEVER redraw the chef's hat as SVG geometry — every attempt has produced the wrong result.
+ * The badge is simply the real logo PNG centered on a white rounded-rect pill
+ * for legibility on dark food photos. No SVG text overlay.
  *
  * Usage: node scripts/create-watermark-badge.mjs
- * Output: apps/web/public/images/watermark-chefsbook.png
+ * Output: apps/web/public/images/watermark-chefsbook.png (read by apply-watermarks.mjs)
  */
 import sharp from 'sharp';
 import { mkdirSync, existsSync } from 'fs';
-import { dirname, resolve } from 'path';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const WIDTH = 200;
-const HEIGHT = 46;
-const OUTPUT = resolve(process.cwd(), 'apps/web/public/images/watermark-chefsbook.png');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Ensure output directory exists
-const dir = dirname(OUTPUT);
-if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+const PADDING = 40; // pixels of white around logo at native size
 
-// SVG watermark badge — "ChefsBook" (no space, capital B) + toque hat icon
-const svg = `
-<svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="shadow" x="-10%" y="-20%" width="130%" height="160%">
-      <feDropShadow dx="0" dy="1" stdDeviation="3" flood-opacity="0.3"/>
-    </filter>
-  </defs>
+export async function createWatermarkBadge(outputPath) {
+  const logoPath = path.join(__dirname, 'chefs-hat.png');
+  const logoMeta = await sharp(logoPath).metadata();
+  const logoW = logoMeta.width ?? 1324;
+  const logoH = logoMeta.height ?? 371;
 
-  <!-- Opaque white pill background -->
-  <rect x="2" y="2" width="${WIDTH - 4}" height="${HEIGHT - 4}"
-    rx="21" ry="21"
-    fill="white"
-    filter="url(#shadow)"
-  />
-  <!-- Subtle border -->
-  <rect x="3" y="3" width="${WIDTH - 6}" height="${HEIGHT - 6}"
-    rx="20" ry="20"
-    fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="1"
-  />
+  const badgeW = logoW + 2 * PADDING;
+  const badgeH = logoH + 2 * PADDING;
+  const pillRadius = Math.round(badgeH / 2);
 
-  <!-- "ChefsBook" — single word, no space, tspan for color -->
-  <text x="16" y="${Math.round(HEIGHT / 2 + 6)}"
-    font-family="Arial, Helvetica, sans-serif"
-    font-size="18"
-    font-weight="700"
-    letter-spacing="-0.3"
-  ><tspan fill="#ce2b37">Chefs</tspan><tspan fill="#1a1a1a">Book</tspan></text>
+  const logoBuffer = await sharp(logoPath).png().toBuffer();
 
-  <!-- Chef toque icon — clean minimal style -->
-  <g transform="translate(148, 7)">
-    <!-- Hat brim/band (red) -->
-    <rect x="2" y="24" width="36" height="8" rx="2" fill="#ce2b37"/>
-    <!-- Hat body (white rectangle) -->
-    <rect x="6" y="8" width="28" height="18" rx="2"
-      fill="white" stroke="#ce2b37" stroke-width="1.8"/>
-    <!-- Top puff (rounded dome) -->
-    <ellipse cx="20" cy="9" rx="15" ry="9"
-      fill="white" stroke="#ce2b37" stroke-width="1.8"/>
-  </g>
-</svg>`;
+  // White rounded-rect pill (SVG gives us rounded corners with transparent outside)
+  const pillSvg = `<svg width="${badgeW}" height="${badgeH}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="${badgeW}" height="${badgeH}"
+          rx="${pillRadius}" ry="${pillRadius}"
+          fill="rgb(255,255,255)" fill-opacity="0.94"/>
+  </svg>`;
 
-await sharp(Buffer.from(svg))
-  .resize(WIDTH, HEIGHT)
-  .png({ compressionLevel: 9 })
-  .toFile(OUTPUT);
+  await sharp(Buffer.from(pillSvg))
+    .composite([{ input: logoBuffer, left: PADDING, top: PADDING }])
+    .png({ compressionLevel: 9 })
+    .toFile(outputPath);
+}
 
-console.log(`Watermark badge created: ${OUTPUT}`);
-console.log(`Size: ${WIDTH}x${HEIGHT}px`);
+const outputPath = path.resolve(process.cwd(), 'apps/web/public/images/watermark-chefsbook.png');
+const outDir = path.dirname(outputPath);
+if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+
+await createWatermarkBadge(outputPath);
+
+const finalMeta = await sharp(outputPath).metadata();
+console.log(`Watermark badge created: ${outputPath}`);
+console.log(`Size: ${finalMeta.width}x${finalMeta.height}px`);
