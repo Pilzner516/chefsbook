@@ -1,6 +1,15 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 195 — Fix image gen race condition + temp unavailable) TYPE: CODE FIX
+- [SESSION 195] Bug 1 diagnosed: extension import route (`/api/extension/import`) passed `recipe.source_image_description` (undefined from Claude extraction) instead of `sourceImageDescription` (Haiku Vision result). Also omitted `source_image_url` entirely from `triggerImageGeneration()`. Web URL import path was unaffected (reads from DB after save).
+- [SESSION 195] Bug 1 fixed: extension route now passes correct `sourceImageDescription` variable and `imageUrl` to `triggerImageGeneration()`. TYPE: CODE FIX.
+- [SESSION 195] Bug 2 diagnosed: PM2 logs show `Replicate API error: 402 Insufficient credit`. Recipes permanently marked 'failed' with no retry path. 2 recipes stuck: Homemade Crepes, Crispy Chicken Katsu Noodle Bowls.
+- [SESSION 195] Bug 2 fixed (credit handling): Replicate 402 now throws `REPLICATE_CREDITS_EXHAUSTED`; `triggerImageGeneration()` catches it and sets status to 'pending' (retryable) instead of 'failed' (permanent). TYPE: CODE FIX.
+- [SESSION 195] Bug 2 fixed (hotlink blocking): `fetchImageAsBase64()` fetches source og:image server-side with browser UA and converts to data URI before sending to Replicate. Prevents 403 from sites that block hotlinking. Falls back gracefully to text-to-image if fetch fails. TYPE: CODE FIX.
+- [SESSION 195] DATA FIX: reset 2 failed recipes to 'pending' for retry after credit replenishment.
+- [SESSION 195] tsc --noEmit clean. Deployed at commit ec5cbaa, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 194 — Fix img2img not using source image) TYPE: CODE FIX
 - [SESSION 194] DIAGNOSIS: Pulled pork recipe has source_image_url=NULL and source_image_description=NULL. DB-wide: only 4/88 recipes have source_image_url populated — all from post-session-181 imports. 84 pre-session-181 recipes have NULL because createRecipe's INSERT allowlist didn't include source_image_url until session 181. img2img silently falls back to text-to-image when source_image_url is NULL.
 - [SESSION 194] Root cause confirmed: NOT a code bug in the img2img pipeline — the Replicate call chain is correct (source_image_url → sourceOgImageUrl → image param + prompt_strength). The problem is missing data on legacy recipes.
