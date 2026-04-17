@@ -358,6 +358,5 @@ React Native views don't align with Android's uiautomator — UI hierarchy dumps
 2026-04-06 — Scan tab redesigned: hero Speak button with pulse, 2x2 icon grid, collapsible URL input, clipboard paste, Chrome share banner
 2026-04-06 — Android share target registered (intent filters for VIEW http/https + SEND text/plain)
 2026-04-06 — Linking handler added to _layout.tsx for incoming shared URLs
-2026-04-17 — FloatingTabBar moved from (tabs)/_layout.tsx to root _layout.tsx (session 203). Tab bar now persists on detail stack screens (recipe/[id], recipe/new, cookbook/[id], chef/[id], share/[token], speak, plans). Hidden on landing (/), /auth/*, /modal (settings), /messages. Detail screens added paddingBottom: tabBarHeight to ScrollViews to clear the bar.
 2026-04-17 — Scan tab: dish-photo path now opens GuidedScanFlow (Step A confirm + comments → B 0-3 AI questions → C Anything else? → D single-Sonnet generation) replacing DishIdentificationFlow. Recipe-document path unchanged. Plan gate at startScan() entry blocks free tier before camera opens.
 2026-04-17 — Cold launch: 3-second branded splash overlay (cream #faf7f0 bg, chefs-hat asset, "ChefsBook" serif wordmark, "Welcome to ChefsBook" tagline). expo-splash-screen preventAutoHideAsync at module scope + SPLASH_MIN_MS-gated hideAsync. Warm resume never re-shows splash.

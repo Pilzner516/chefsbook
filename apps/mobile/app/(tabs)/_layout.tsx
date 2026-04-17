@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
 import { useAuthStore } from '../../lib/zustand/authStore';
+import { FloatingTabBar } from '../../components/FloatingTabBar';
 
 export default function TabLayout() {
   const session = useAuthStore((s) => s.session);
@@ -10,12 +11,9 @@ export default function TabLayout() {
     return <Redirect href="/" />;
   }
 
-  // FloatingTabBar is mounted at the root layout so it persists across detail
-  // screens (recipe/[id], cookbook/[id], chef/[id], share/[token], recipe/new).
-  // We render a null tabBar here to avoid a second instance inside the Tabs layout.
   return (
     <Tabs
-      tabBar={() => null}
+      tabBar={() => <FloatingTabBar />}
       screenOptions={{
         headerShown: false,
       }}

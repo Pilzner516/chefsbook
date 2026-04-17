@@ -6,13 +6,11 @@ import { useCookbookStore } from '../../lib/zustand/cookbookStore';
 import { supabase } from '@chefsbook/db';
 import type { Recipe } from '@chefsbook/db';
 import { RecipeCard, Badge, Loading, EmptyState } from '../../components/UIKit';
-import { useTabBarHeight } from '../../lib/useTabBarHeight';
 
 export default function CookbookDetail() {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const tabBarHeight = useTabBarHeight();
   const currentCookbook = useCookbookStore((s) => s.currentCookbook);
   const fetchCookbook = useCookbookStore((s) => s.fetchCookbook);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -38,7 +36,7 @@ export default function CookbookDetail() {
   if (loading || !currentCookbook) return <Loading message="Loading cookbook..." />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ paddingBottom: tabBarHeight }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
       <View style={{ padding: 16 }}>
         <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '700', marginBottom: 4 }}>{currentCookbook.title}</Text>
         {currentCookbook.author && (

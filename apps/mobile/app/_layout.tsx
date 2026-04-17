@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
-import { Stack, useRouter, useSegments, useNavigationContainerRef, usePathname } from 'expo-router';
+import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
@@ -11,7 +11,6 @@ import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { PinnedBar } from '../components/PinnedBar';
-import { FloatingTabBar } from '../components/FloatingTabBar';
 import { ImportBanner } from '../components/ImportBanner';
 import { Loading } from '../components/UIKit';
 import '../lib/i18n';
@@ -132,9 +131,7 @@ function RootNav() {
   const { colors } = useTheme();
   const router = useRouter();
   const loading = useAuthStore((s) => s.loading);
-  const session = useAuthStore((s) => s.session);
   const profile = useAuthStore((s) => s.profile);
-  const pathname = usePathname();
 
   // Cold-launch splash hold: record mount time, keep SplashOverlay visible and
   // the native splash prevented until both (a) auth init settles and (b)
@@ -156,21 +153,6 @@ function RootNav() {
   }, [loading]);
 
   useProtectedRoute();
-
-  // Show the bottom tab bar on all authenticated app screens (tabs + detail
-  // stack screens like recipe/[id], cookbook/[id], chef/[id], share/[token]).
-  // Hide on: landing, auth, settings modal, full-screen messages thread,
-  // and when the user is not authenticated.
-  const isAnonymous = session?.user?.is_anonymous === true;
-  const isAuthenticated = !!session && !isAnonymous;
-  const hideTabBarRoutes = (p: string): boolean => {
-    if (!p || p === '/') return true;
-    if (p.startsWith('/auth')) return true;
-    if (p === '/modal') return true;
-    if (p === '/messages' || p.startsWith('/messages/')) return true;
-    return false;
-  };
-  const showTabBar = isAuthenticated && !profile?.is_suspended && !hideTabBarRoutes(pathname);
 
   const [frozenDismissed, setFrozenDismissed] = useState(false);
 
@@ -262,7 +244,6 @@ function RootNav() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Settings' }} />
       </Stack>
       <PinnedBar />
-      {showTabBar && <FloatingTabBar />}
       {!splashDone && <SplashOverlay />}
     </View>
   );

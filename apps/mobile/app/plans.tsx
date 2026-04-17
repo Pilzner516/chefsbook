@@ -9,7 +9,6 @@ import { PLAN_LIMITS, devChangePlan } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/UIKit';
-import { useTabBarHeight } from '../lib/useTabBarHeight';
 
 const TIERS: { key: PlanTier; price: string; annual: string }[] = [
   { key: 'free', price: '$0', annual: '$0' },
@@ -39,7 +38,6 @@ export default function PlansScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useTabBarHeight();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const planTier = useAuthStore((s) => s.planTier);
@@ -61,7 +59,7 @@ export default function PlansScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
       {/* Dev banner */}
       <View style={{ backgroundColor: colors.accentSoft, borderRadius: 8, padding: 10, marginBottom: 16, alignItems: 'center' }}>
         <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>{t('plans.devBanner')}</Text>
