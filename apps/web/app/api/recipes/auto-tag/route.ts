@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { callClaude, extractJSON, consumeLastUsage, suggestTagsForRecipe } from '@chefsbook/ai';
-import { logAiCall } from '@chefsbook/db';
+import { logAiCall, fetchRecipeCompleteness, applyCompletenessGate } from '@chefsbook/db';
 
 function getServiceClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '', process.env.SUPABASE_SERVICE_ROLE_KEY ?? '');
@@ -68,7 +68,18 @@ export async function POST(req: Request) {
       if (newTags.length > 0) updates.tags = [...existing, ...newTags];
 
       if (Object.keys(updates).length > 0) {
+        // Remove _incomplete tag if present — auto-tag may have made the recipe complete
+        const finalTags: string[] = (updates.tags as string[] | undefined) ?? existing;
+        if (finalTags.includes('_incomplete')) {
+          updates.tags = finalTags.filter((t: string) => t !== '_incomplete');
+        }
         await db.from('recipes').update(updates).eq('id', r.id);
+
+        // Re-run completeness gate — tags were just added, recipe may now be complete
+        try {
+          const completeness = await fetchRecipeCompleteness(r.id);
+          await applyCompletenessGate(r.id, completeness);
+        } catch { /* non-critical — don't fail the tag response */ }
       }
 
       const u = consumeLastUsage();

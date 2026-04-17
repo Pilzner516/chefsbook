@@ -243,9 +243,18 @@ export async function POST(req: Request) {
           if (!newRecipe.cuisine && suggestion.cuisine) updates.cuisine = suggestion.cuisine;
           if (!newRecipe.course && suggestion.course) updates.course = suggestion.course;
           const newTags = suggestion.tags.filter((t) => !tags.includes(t));
-          if (newTags.length > 0) updates.tags = [...tags, ...newTags];
+          if (newTags.length > 0) {
+            const merged = [...tags, ...newTags].filter((t: string) => t !== '_incomplete');
+            updates.tags = merged;
+          }
           if (Object.keys(updates).length > 0) {
             await db.from('recipes').update(updates).eq('id', newRecipe.id);
+            // Re-run completeness gate now that tags exist
+            try {
+              const { fetchRecipeCompleteness, applyCompletenessGate } = await import('@chefsbook/db');
+              const completeness = await fetchRecipeCompleteness(newRecipe.id);
+              await applyCompletenessGate(newRecipe.id, completeness);
+            } catch { /* non-critical */ }
           }
           logAiCall({
             userId: user.id,
