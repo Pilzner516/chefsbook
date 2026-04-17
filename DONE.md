@@ -1,6 +1,12 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 182 — Fix cost_usd zero for Claude calls)
+- [SESSION 182] Root cause: all 9 Claude-model logAiCall call sites passed tokensIn=0, tokensOut=0 (defaults). consumeLastUsage() existed in packages/ai/src/client.ts to capture API response token counts but was never called at the route level.
+- [SESSION 182] Fix: exported consumeLastUsage from packages/ai index. Added `const u = consumeLastUsage()` after each AI function call and passed `tokensIn: u?.inputTokens, tokensOut: u?.outputTokens` to logAiCall in all 9 Claude routes: import/url (×2), extension/import, meal-plan/generate, auto-tag, check-image, finalize, translate, generate-ingredients, speak.
+- [SESSION 182] Live verified: saveur.com Claude import → tokens_in=809, tokens_out=150, cost_usd=0.004677 (was 0.000000). Flux calls correctly show cost_usd=0.003000 (fixed cost, no tokens).
+- [SESSION 182] Typecheck clean. Deployed at commit fc5f907, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 181 — Fix duration_ms NULL in ai_usage_log)
 - [SESSION 181] Root cause: extension import route (/api/extension/import) had logAiCall without durationMs or t0. Added `const t0 = Date.now()` before extraction and `durationMs: Date.now() - t0, success: true` to the logAiCall call.
 - [SESSION 181] Verified all 11 logAiCall call sites now pass durationMs — grep confirms zero call sites missing it (regenerate-image is multi-line but has durationMs on line 81).
