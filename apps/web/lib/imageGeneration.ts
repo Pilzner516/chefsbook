@@ -222,24 +222,56 @@ export async function generateAndSaveRecipeImage(
   const publicUrl = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
 
   if (options?.replaceExisting) {
-    // Update existing AI photo row with new URL (busts browser cache).
-    // Increment regen_count by 1 after successful generation so retries past the
-    // limit are blocked but the first N regens all succeed. Read-then-write is
-    // safe here — a single user can only trigger one regen at a time (fire-and-
-    // forget fires the whole generateAndSaveRecipeImage pipeline serially).
+    // Count current photos for this recipe
+    const { count: photoCount } = await supabaseAdmin
+      .from('recipe_user_photos')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipe_id', recipeId);
+
+    // Get plan photo limit
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('plan_tier')
+      .eq('id', recipe.user_id)
+      .single();
+    const planLimits: Record<string, number> = { free: 0, chef: 1, family: 1, pro: 5 };
+    const limit = planLimits[profile?.plan_tier ?? 'chef'] ?? 1;
+
+    // Get existing primary photo's regen_count
     const { data: existing } = await supabaseAdmin
       .from('recipe_user_photos')
-      .select('regen_count')
+      .select('id, regen_count')
       .eq('recipe_id', recipeId)
       .eq('is_ai_generated', true)
       .eq('is_primary', true)
       .maybeSingle();
     const newCount = (existing?.regen_count ?? 0) + 1;
-    await supabaseAdmin.from('recipe_user_photos')
-      .update({ url: publicUrl, storage_path: fileName, regen_count: newCount })
-      .eq('recipe_id', recipeId)
-      .eq('is_ai_generated', true)
-      .eq('is_primary', true);
+
+    if ((photoCount ?? 0) < limit) {
+      // Room for another photo — INSERT new, demote old to non-primary
+      await supabaseAdmin.from('recipe_user_photos')
+        .update({ is_primary: false })
+        .eq('recipe_id', recipeId)
+        .eq('is_primary', true);
+
+      await supabaseAdmin.from('recipe_user_photos').insert({
+        recipe_id: recipeId,
+        user_id: recipe.user_id,
+        storage_path: fileName,
+        url: publicUrl,
+        is_primary: true,
+        is_ai_generated: true,
+        sort_order: 0,
+        regen_count: newCount,
+      });
+    } else {
+      // At photo limit — overwrite existing primary (Chef/Family with 1 slot)
+      await supabaseAdmin.from('recipe_user_photos')
+        .update({ url: publicUrl, storage_path: fileName, regen_count: newCount })
+        .eq('recipe_id', recipeId)
+        .eq('is_ai_generated', true)
+        .eq('is_primary', true);
+    }
   } else {
     // Insert as primary photo
     await supabaseAdmin.from('recipe_user_photos').insert({
