@@ -86,7 +86,8 @@
 | PostImportImageSheet | LIVE | apps/mobile/components/PostImportImageSheet | 19 | Shown after all imports |
 | aiChef completion (missing sections) | LIVE | packages/ai | 02 | |
 | Reimport (re-fetch URL, update AI fields) | LIVE | apps/web/app/api/import/reimport | 35 | Preserves user edits |
-| Auto-tag recipes button | LIVE | apps/web/dashboard/search/, /api/recipes/auto-tag | 35 | Retroactive tagging |
+| Auto-tag recipes button | LIVE | apps/web/dashboard/search/, /api/recipes/auto-tag | 35 | Retroactive bulk tagging (no body → loops over all user recipes needing tags) |
+| Auto-tag on every import | LIVE | packages/ai/suggestTagsForRecipe.ts, /api/recipes/auto-tag (single-recipe mode), apps/web/lib/saveWithModeration.ts, /api/extension/import | 189 | Fire-and-forget post-insert when persisted tags < 3. Haiku ~$0.0002/recipe. createRecipe now also inserts tags column directly (was silently dropped pre-session-189). Logged via logAiCall(suggest_tags/haiku). |
 | AI ingredient generation | LIVE | packages/ai (generateMissingIngredients), /api/recipes/[id]/generate-ingredients | 166 | Sonnet ~$0.003/call; generates ingredients from title+description+steps when extraction missed them; user preview before save |
 
 ---
