@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, suggestTagsForRecipe } from '@chefsbook/ai';
 import { logAiCall, isInternalPhotoUrl } from '@chefsbook/db';
 import { ensureTitle } from '../../import/_utils';
 
@@ -225,6 +225,47 @@ export async function POST(req: Request) {
           group_label: step.group_label,
         })),
       );
+    }
+
+    // Fire-and-forget: auto-tag if persisted tags < 3 (Haiku ~$0.0002/recipe).
+    // Runs in background so the client gets its response fast.
+    const persistedTagCount = (tags ?? []).filter((t: string) => t && !t.startsWith('_')).length;
+    if (persistedTagCount < 3) {
+      (async () => {
+        const tTags = Date.now();
+        try {
+          const suggestion = await suggestTagsForRecipe({
+            title: newRecipe.title,
+            description: recipe.description ?? null,
+            ingredients: (recipe.ingredients ?? []).map((i: any) => i.ingredient).filter(Boolean),
+          });
+          const updates: Record<string, unknown> = {};
+          if (!newRecipe.cuisine && suggestion.cuisine) updates.cuisine = suggestion.cuisine;
+          if (!newRecipe.course && suggestion.course) updates.course = suggestion.course;
+          const newTags = suggestion.tags.filter((t) => !tags.includes(t));
+          if (newTags.length > 0) updates.tags = [...tags, ...newTags];
+          if (Object.keys(updates).length > 0) {
+            await db.from('recipes').update(updates).eq('id', newRecipe.id);
+          }
+          logAiCall({
+            userId: user.id,
+            action: 'suggest_tags',
+            model: 'haiku',
+            recipeId: newRecipe.id,
+            durationMs: Date.now() - tTags,
+            success: true,
+          }).catch(() => {});
+        } catch {
+          logAiCall({
+            userId: user.id,
+            action: 'suggest_tags',
+            model: 'haiku',
+            recipeId: newRecipe.id,
+            durationMs: Date.now() - tTags,
+            success: false,
+          }).catch(() => {});
+        }
+      })();
     }
 
     // Apply completeness gate + AI verdict + import logging

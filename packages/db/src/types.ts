@@ -309,4 +309,5 @@ export interface ScannedRecipe {
   has_food_photo?: boolean;
   food_photo_region?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'full-page' | null;
   image_url?: string | null;
+  tags?: string[];
 }

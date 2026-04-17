@@ -192,6 +192,9 @@ export async function createRecipe(
       cookbook_id: recipe.cookbook_id,
       page_number: recipe.page_number,
       notes: recipe.notes,
+      // tags from Claude extraction (JSON-LD fast path leaves this undefined;
+      // saveWithModeration fires a fire-and-forget auto-tag post-insert if empty)
+      tags: recipe.tags ?? [],
       youtube_video_id: recipe.youtube_video_id ?? null,
       channel_name: recipe.channel_name ?? null,
       video_only: recipe.video_only ?? false,

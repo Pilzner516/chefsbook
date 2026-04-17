@@ -57,3 +57,5 @@ export type { KnownSite } from './siteList';
 export { IMAGE_THEMES, REGEN_PILLS, CREATIVITY_LEVELS, buildImagePrompt, getImageModel, describeSourceImage } from './imageThemes';
 export type { CreativityLevel } from './imageThemes';
 export type { ImageTheme, ThemeDefinition, RegenPill } from './imageThemes';
+export { suggestTagsForRecipe } from './suggestTagsForRecipe';
+export type { TagSuggestion } from './suggestTagsForRecipe';

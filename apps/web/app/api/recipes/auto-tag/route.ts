@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { callClaude, extractJSON, consumeLastUsage } from '@chefsbook/ai';
+import { callClaude, extractJSON, consumeLastUsage, suggestTagsForRecipe } from '@chefsbook/ai';
 import { logAiCall } from '@chefsbook/db';
 
 function getServiceClient() {
@@ -34,7 +34,70 @@ export async function POST(req: Request) {
   const { data: { user } } = await db.auth.getUser(authHeader.slice(7));
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Find recipes needing tags
+  // Single-recipe mode: if body has recipeId, tag just that one recipe (used by
+  // post-import fire-and-forget from saveWithModeration + extension import).
+  let singleRecipeId: string | null = null;
+  try {
+    const body = await req.json();
+    if (body?.recipeId && typeof body.recipeId === 'string') singleRecipeId = body.recipeId;
+  } catch { /* empty body is fine — bulk mode */ }
+
+  if (singleRecipeId) {
+    const t0 = Date.now();
+    const { data: r } = await db
+      .from('recipes')
+      .select('id, user_id, title, description, cuisine, course, tags')
+      .eq('id', singleRecipeId)
+      .single();
+    if (!r) return Response.json({ error: 'Recipe not found' }, { status: 404 });
+    if (r.user_id !== user.id) return Response.json({ error: 'Not your recipe' }, { status: 403 });
+
+    try {
+      const { data: ings } = await db.from('recipe_ingredients').select('ingredient').eq('recipe_id', r.id).limit(10);
+      const result = await suggestTagsForRecipe({
+        title: r.title,
+        description: r.description,
+        ingredients: (ings ?? []).map((i: any) => i.ingredient).filter(Boolean),
+      });
+
+      const updates: Record<string, unknown> = {};
+      if ((!r.cuisine || r.cuisine === '') && result.cuisine) updates.cuisine = result.cuisine;
+      if ((!r.course || r.course === '') && result.course) updates.course = result.course;
+      const existing: string[] = r.tags ?? [];
+      const newTags = result.tags.filter((t) => !existing.includes(t));
+      if (newTags.length > 0) updates.tags = [...existing, ...newTags];
+
+      if (Object.keys(updates).length > 0) {
+        await db.from('recipes').update(updates).eq('id', r.id);
+      }
+
+      const u = consumeLastUsage();
+      logAiCall({
+        userId: user.id,
+        action: 'suggest_tags',
+        model: 'haiku',
+        recipeId: r.id,
+        durationMs: Date.now() - t0,
+        tokensIn: u?.inputTokens,
+        tokensOut: u?.outputTokens,
+        success: true,
+      }).catch(() => {});
+
+      return Response.json({ updated: Object.keys(updates).length > 0, tagsAdded: newTags.length });
+    } catch (err: any) {
+      logAiCall({
+        userId: user.id,
+        action: 'suggest_tags',
+        model: 'haiku',
+        recipeId: r.id,
+        durationMs: Date.now() - t0,
+        success: false,
+      }).catch(() => {});
+      return Response.json({ error: err?.message ?? 'suggest_tags failed' }, { status: 500 });
+    }
+  }
+
+  // Bulk mode: find recipes needing tags
   const { data: recipes } = await db
     .from('recipes')
     .select('id, title, description, cuisine, course, tags')
