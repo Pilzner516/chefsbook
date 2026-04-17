@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 193 — Paste text import fallback) TYPE: CODE FIX
+- [SESSION 193] Part 1: importFromText() in packages/ai/src/importFromText.ts — Sonnet extraction from raw pasted text. Accepts any text (ingredients, steps, full recipe), returns standard ScannedRecipe JSON. Exported from @chefsbook/ai.
+- [SESSION 193] Part 2: /api/import/text route — POST endpoint accepting {text, userLanguage}. Calls importFromText(), logs via logAiCall (action: import_text), runs detectLanguage + translateRecipeContent if needed. Returns recipe + completeness.
+- [SESSION 193] Part 2: Web scan page "Paste text" panel — textarea (6 rows) + "Import from text" button below the URL import grid. Calls /api/import/text then createRecipeWithModeration. Plan-gated via checkRecipeLimit.
+- [SESSION 193] Part 3: RefreshFromSourceBanner — "Paste ingredients" button added alongside "Refresh from source". Expands inline textarea. Calls /api/import/text to parse, then merges ingredients via /api/recipes/refresh.
+- [SESSION 193] Part 4: Mobile Scan tab — "Paste text" grid cell (clipboard icon). Opens collapsible TextInput (multiline, 6 lines). "Parse Recipe" button calls importFromText() directly then addRecipe(). TextInput imported from react-native.
+- [SESSION 193] Part 5: Plan gates — web uses checkRecipeLimit before save (same as URL import). Mobile uses addRecipe store which enforces plan limits.
+- [SESSION 193] API validation: /api/import/text returns 400 with helpful message for text < 10 chars — verified via curl.
+- [SESSION 193] Typecheck clean (web + mobile). Deployed at commit 07bd2ad, pm2 restarted; chefsbk.app/ and /dashboard/scan both HTTP 200.
+
 ## 2026-04-17 (session 192 — img2img at all levels with fidelity spectrum) TYPE: CODE FIX
 - [SESSION 192] Part 1 verified before any code change: pulled live Flux Dev OpenAPI schema (version 6e4a938f…, 45M+ runs). Input accepts `image` (URL string, for img2img) and `prompt_strength` (number 0.0-1.0, default 0.8). Same endpoint + same billing as t2i (~$0.025/image flat). Replicate explicitly says "aspect_ratio of output will match this image" — so aspect_ratio is ignored when image is passed. Reported findings + 3 caveats: (a) aspect override, (b) dead `safety_tolerance: 5` not in schema, (c) output_format was 'jpg' while schema default is 'webp'.
 - [SESSION 192] Source column reuse: `recipes.source_image_url` already exists (added session 181). Per Part 2 rule ("if a suitable column already exists, use it") no new migration needed. Coverage: 4 of 88 recipes currently have it populated; legacy recipes fall back to t2i with console.warn at the same prompt_strength.
