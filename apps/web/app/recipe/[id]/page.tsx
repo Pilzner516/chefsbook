@@ -46,6 +46,7 @@ export default function RecipePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingCourse, setEditingCourse] = useState(false);
+  const [duplicateNotice, setDuplicateNotice] = useState<{ isDuplicate: boolean; canonicalId?: string; canonicalTitle?: string } | null>(null);
   const [editingCuisine, setEditingCuisine] = useState(false);
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [editingTags, setEditingTags] = useState(false);
@@ -1268,6 +1269,39 @@ export default function RecipePage() {
             onRefreshed={() => window.location.reload()}
           />
         )}
+        {/* Duplicate notice — shown when owner tries to make public but a similar recipe exists */}
+        {isOwner && duplicateNotice?.isDuplicate && (
+          <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-xl leading-none" aria-hidden>📖</span>
+              <div className="flex-1">
+                <div className="font-medium text-amber-900">
+                  A similar public recipe already exists in ChefsBook.
+                </div>
+                <div className="mt-1 text-sm text-amber-800">
+                  Your recipe has been kept private in your collection.
+                </div>
+                <div className="mt-2 flex gap-2">
+                  {duplicateNotice.canonicalId && (
+                    <a
+                      href={`/recipe/${duplicateNotice.canonicalId}`}
+                      className="inline-flex items-center gap-1.5 text-sm bg-cb-primary text-white rounded-full px-3 py-1"
+                    >
+                      View the public version
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setDuplicateNotice(null)}
+                    className="inline-flex items-center gap-1.5 text-sm border border-amber-300 text-amber-900 rounded-full px-3 py-1 hover:bg-amber-100"
+                  >
+                    Edit to make it unique
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Title & meta */}
         {editingTitle ? (
           <form onSubmit={(e) => { e.preventDefault(); saveTitle((e.currentTarget.elements.namedItem('title') as HTMLInputElement).value); }} className="mb-4">
@@ -1305,8 +1339,24 @@ export default function RecipePage() {
               <button
                 onClick={async () => {
                   const next = recipe.visibility === 'private' ? 'public' : 'private';
+                  if (next === 'public') {
+                    // Run server-side duplicate check before making public
+                    try {
+                      const res = await fetch('/api/recipes/check-duplicate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ recipeId: id }),
+                      });
+                      const dupResult = await res.json();
+                      if (dupResult.isDuplicate) {
+                        setDuplicateNotice(dupResult);
+                        return; // Don't make public
+                      }
+                    } catch { /* non-blocking — proceed with visibility change */ }
+                  }
                   await updateRecipe(id, { visibility: next as any });
                   setRecipe({ ...recipe, visibility: next as any });
+                  if (next === 'public') setDuplicateNotice(null);
                 }}
                 className={`shrink-0 mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                   recipe.visibility === 'private'

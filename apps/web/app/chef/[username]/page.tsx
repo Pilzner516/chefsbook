@@ -27,6 +27,7 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
     .eq('user_id', chef.id)
     .in('visibility', ['public', 'shared_link'])
     .is('parent_recipe_id', null)
+    .is('duplicate_of', null)
     .order('created_at', { ascending: false });
 
   const publicRecipes = (recipes ?? []) as Recipe[];

@@ -2,7 +2,7 @@
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, consumeLastUsage } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
-import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt, logAiCall, isUserThrottled } from '@chefsbook/db';
+import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt, logAiCall, isUserThrottled, normalizeSourceUrl, findDuplicateByUrl } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
@@ -21,7 +21,7 @@ function resolveUrl(src: string, base: string): string {
 }
 
 export async function POST(req: Request) {
-  const { url, forceType, userLanguage: reqLang } = await req.json();
+  const { url, forceType, userLanguage: reqLang, skipDuplicateCheck } = await req.json();
 
   if (!url || typeof url !== 'string') {
     return Response.json({ error: 'URL is required' }, { status: 400 });
@@ -30,6 +30,19 @@ export async function POST(req: Request) {
   const preflight = preflightUrl(url);
   if (!preflight.ok) {
     return Response.json({ error: preflight.error }, { status: 422 });
+  }
+
+  // Duplicate check — before any AI call to save cost
+  const normalizedUrl = normalizeSourceUrl(url);
+  if (!skipDuplicateCheck) {
+    const existing = await findDuplicateByUrl(normalizedUrl).catch(() => null);
+    if (existing) {
+      return Response.json({
+        duplicate: true,
+        existingRecipe: { id: existing.id, title: existing.title },
+        normalizedUrl,
+      });
+    }
   }
 
   const domain = extractDomain(url);
@@ -163,6 +176,7 @@ export async function POST(req: Request) {
 
     const { title, generated } = ensureTitle(recipe, url);
     recipe.title = title;
+    recipe.source_url_normalized = normalizedUrl;
 
     // Tag incomplete recipes
     if (!completeness.complete || generated) {

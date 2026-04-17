@@ -26,15 +26,31 @@ interface RecipeRow {
   source_type: string;
   moderation_status: string | null;
   created_at: string;
+  duplicate_of: string | null;
+  is_canonical: boolean;
+}
+
+interface DuplicateRow {
+  id: string;
+  title: string;
+  user_id: string;
+  original_submitter_username: string | null;
+  duplicate_of: string;
+  canonical_title: string;
+  canonical_username: string | null;
+  created_at: string;
 }
 
 type SortKey = 'title' | 'submitter' | 'visibility' | 'moderation_status' | 'created_at';
 type SortDir = 'asc' | 'desc';
 type SearchMode = 'title' | 'username';
+type Tab = 'all' | 'duplicates';
 
 export default function RecipeModerationPage() {
   const [flagged, setFlagged] = useState<FlaggedRecipe[]>([]);
   const [recipes, setRecipes] = useState<RecipeRow[]>([]);
+  const [duplicates, setDuplicates] = useState<DuplicateRow[]>([]);
+  const [tab, setTab] = useState<Tab>('all');
   const [search, setSearch] = useState('');
   const [searchMode, setSearchMode] = useState<SearchMode>('title');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
@@ -54,6 +70,7 @@ export default function RecipeModerationPage() {
       const data = await adminFetch({ page: 'recipes', search: serverSearch });
       setFlagged((data.flagged ?? []) as FlaggedRecipe[]);
       setRecipes((data.recipes ?? []) as RecipeRow[]);
+      setDuplicates((data.duplicates ?? []) as DuplicateRow[]);
     } catch (e: any) { setError(e.message); }
     setLoading(false);
   };
@@ -171,11 +188,75 @@ export default function RecipeModerationPage() {
         </div>
       )}
 
+      {/* Tab selector */}
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setTab('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium ${tab === 'all' ? 'bg-cb-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+          All Recipes
+        </button>
+        <button onClick={() => setTab('duplicates')} className={`px-4 py-1.5 rounded-full text-sm font-medium ${tab === 'duplicates' ? 'bg-cb-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+          Duplicates {duplicates.length > 0 && <span className="ml-1 bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded-full">{duplicates.length}</span>}
+        </button>
+      </div>
+
+      {/* Duplicates tab */}
+      {tab === 'duplicates' && (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Duplicate Recipe</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Owner</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Canonical Recipe</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Canonical Owner</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {duplicates.map((d) => (
+                <tr key={d.id} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <Link href={`/recipe/${d.id}`} className="font-medium text-gray-900 hover:underline">{d.title}</Link>
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    {d.original_submitter_username ? <span className="bg-cb-primary/10 text-cb-primary px-2 py-0.5 rounded-full">@{d.original_submitter_username}</span> : <span className="text-gray-400">Unknown</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/recipe/${d.duplicate_of}`} className="font-medium text-gray-900 hover:underline">{d.canonical_title}</Link>
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    {d.canonical_username ? <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">@{d.canonical_username}</span> : <span className="text-gray-400">Unknown</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          await adminPost({ action: 'overrideDuplicate', recipeId: d.id, canonicalId: d.duplicate_of });
+                          loadAll();
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100"
+                      >Override</button>
+                      <button
+                        onClick={async () => {
+                          await adminPost({ action: 'dismissDuplicate', recipeId: d.id });
+                          loadAll();
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-gray-50 text-gray-600 hover:bg-gray-100"
+                      >Dismiss</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {duplicates.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">No duplicates detected.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* All recipes list */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">All Recipes</h2>
+      {tab === 'all' && <h2 className="text-lg font-semibold text-gray-800 mb-3">All Recipes</h2>}
 
       {/* Search with mode toggle */}
-      <div className="flex gap-2 mb-4 items-center">
+      {tab === 'all' && <div className="flex gap-2 mb-4 items-center">
         <div className="relative">
           <select value={searchMode} onChange={(e) => { setSearchMode(e.target.value as SearchMode); setSearch(''); }} className="border border-gray-300 rounded-l-md px-3 py-2 text-sm bg-gray-50 pr-8 appearance-none">
             <option value="title">Title</option>
@@ -188,9 +269,9 @@ export default function RecipeModerationPage() {
           placeholder={searchMode === 'title' ? 'Search by title...' : 'Search by username...'}
           className="flex-1 max-w-md border border-l-0 border-gray-300 rounded-r-md px-3 py-2 text-sm"
         />
-      </div>
+      </div>}
 
-      {loading ? <p className="text-gray-500">Loading...</p> : (
+      {tab === 'all' && (loading ? <p className="text-gray-500">Loading...</p> : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
@@ -222,6 +303,8 @@ export default function RecipeModerationPage() {
                 <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">
                     <Link href={`/recipe/${r.id}`} className="hover:underline">{r.title}</Link>
+                    {r.is_canonical && <span className="ml-1.5 text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Canonical</span>}
+                    {r.duplicate_of && <span className="ml-1.5 text-[10px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Duplicate</span>}
                   </td>
                   <td className="px-4 py-3">
                     {r.original_submitter_username ? (
@@ -240,7 +323,7 @@ export default function RecipeModerationPage() {
           </table>
           {filteredRecipes.length === 0 && <p className="p-8 text-center text-gray-500">No recipes found.</p>}
         </div>
-      )}
+      ))}
       <ConfirmDialog />
     </div>
   );

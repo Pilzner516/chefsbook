@@ -51,13 +51,34 @@ export async function GET(req: NextRequest) {
       .select('id, title, user_id, original_submitter_username, moderation_status, moderation_flag_reason, moderation_flagged_at, visibility, created_at')
       .in('moderation_status', ['flagged_mild', 'flagged_serious'])
       .order('moderation_flagged_at', { ascending: false });
-    let q = supabaseAdmin.from('recipes').select('id, title, user_id, original_submitter_username, visibility, source_type, moderation_status, created_at')
+    let q = supabaseAdmin.from('recipes').select('id, title, user_id, original_submitter_username, visibility, source_type, moderation_status, created_at, duplicate_of, is_canonical')
       .is('parent_recipe_id', null)
       .order('created_at', { ascending: false }).limit(200);
     if (search.trim()) q = q.ilike('title', `%${search}%`);
     const { data: recipes, error } = await q;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ flagged: flagged ?? [], recipes: recipes ?? [] });
+    // Fetch duplicates list for the Duplicates tab
+    const { data: duplicates } = await supabaseAdmin.from('recipes')
+      .select('id, title, user_id, original_submitter_username, duplicate_of, created_at')
+      .not('duplicate_of', 'is', null)
+      .order('created_at', { ascending: false }).limit(100);
+    // Enrich duplicates with canonical recipe info
+    const canonicalIds = [...new Set((duplicates ?? []).map((d: any) => d.duplicate_of).filter(Boolean))];
+    const canonicalMap: Record<string, { title: string; username: string | null }> = {};
+    if (canonicalIds.length > 0) {
+      const { data: canonicals } = await supabaseAdmin.from('recipes')
+        .select('id, title, original_submitter_username')
+        .in('id', canonicalIds);
+      for (const c of canonicals ?? []) {
+        canonicalMap[c.id] = { title: c.title, username: c.original_submitter_username };
+      }
+    }
+    const enrichedDuplicates = (duplicates ?? []).map((d: any) => ({
+      ...d,
+      canonical_title: canonicalMap[d.duplicate_of]?.title ?? 'Unknown',
+      canonical_username: canonicalMap[d.duplicate_of]?.username ?? null,
+    }));
+    return NextResponse.json({ flagged: flagged ?? [], recipes: recipes ?? [], duplicates: enrichedDuplicates });
   }
 
   if (page === 'reserved-usernames') {
@@ -489,6 +510,20 @@ export async function POST(req: NextRequest) {
 
   if (action === 'hideRecipe') {
     await supabaseAdmin.from('recipes').update({ visibility: 'private' }).eq('id', body.recipeId);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'overrideDuplicate') {
+    // Swap canonical status: make the duplicate the new canonical, old canonical becomes duplicate
+    const { recipeId, canonicalId } = body;
+    await supabaseAdmin.from('recipes').update({ is_canonical: true, duplicate_of: null, duplicate_checked_at: new Date().toISOString() }).eq('id', recipeId);
+    await supabaseAdmin.from('recipes').update({ is_canonical: false, duplicate_of: recipeId, duplicate_checked_at: new Date().toISOString() }).eq('id', canonicalId);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'dismissDuplicate') {
+    // Clear the duplicate flag — recipe is no longer considered a duplicate
+    await supabaseAdmin.from('recipes').update({ duplicate_of: null, duplicate_checked_at: new Date().toISOString() }).eq('id', body.recipeId);
     return NextResponse.json({ ok: true });
   }
 

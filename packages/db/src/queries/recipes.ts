@@ -141,7 +141,8 @@ export async function listPublicRecipes(params?: {
   let query = supabase
     .from('recipes')
     .select('*')
-    .in('visibility', ['public', 'shared_link']);
+    .in('visibility', ['public', 'shared_link'])
+    .is('duplicate_of', null);
 
   if (params?.search) query = query.ilike('title', `%${params.search}%`);
   if (params?.cuisine) query = query.eq('cuisine', params.cuisine);
@@ -162,6 +163,7 @@ export async function createRecipe(
     youtube_video_id?: string; channel_name?: string; video_only?: boolean;
     source_image_url?: string | null; source_image_description?: string | null;
     source_language?: string | null; translated_from?: string | null;
+    source_url_normalized?: string | null;
   },
 ): Promise<RecipeWithDetails> {
   const { data: newRecipe, error } = await supabase
@@ -198,6 +200,7 @@ export async function createRecipe(
       youtube_video_id: recipe.youtube_video_id ?? null,
       channel_name: recipe.channel_name ?? null,
       video_only: recipe.video_only ?? false,
+      source_url_normalized: recipe.source_url_normalized ?? null,
     })
     .select()
     .single();
@@ -427,6 +430,7 @@ export async function getPublicProfile(
     .select('*')
     .eq('user_id', profile.id)
     .in('visibility', ['public', 'shared_link'])
+    .is('duplicate_of', null)
     .order('created_at', { ascending: false });
 
   return { profile, recipes: (recipes ?? []) as Recipe[] };

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, createRecipe, createTechnique, checkRecipeLimit } from '@chefsbook/db';
+import { supabase, createRecipe, createTechnique, checkRecipeLimit, saveRecipe } from '@chefsbook/db';
 import { scanRecipe } from '@chefsbook/ai';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
@@ -180,6 +180,36 @@ export default function ScanPage() {
       });
       const data = await res.json();
       if (!res.ok && res.status !== 206) throw new Error(data.error || 'Import failed');
+
+      // Handle server-side duplicate detection — recipe already exists publicly
+      if (data.duplicate && data.existingRecipe) {
+        const action = await confirm({
+          icon: '📖',
+          title: 'This recipe is already in ChefsBook',
+          body: `"${data.existingRecipe.title}" has already been imported. You can add it to your collection or import a fresh copy.`,
+          confirmLabel: 'Add to My Recipes',
+          cancelLabel: 'Import anyway',
+        });
+        if (action) {
+          // Save reference — uses existing recipe_saves table
+          const { data: sess } = await supabase.auth.getSession();
+          if (sess.session?.access_token) {
+            await saveRecipe(data.existingRecipe.id, user.id);
+          }
+          router.push(`/recipe/${data.existingRecipe.id}`);
+          setLoading(null);
+          return;
+        }
+        // User chose "Import anyway" — re-call with skipDuplicateCheck
+        const retry = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, userLanguage: storedLang || 'en', skipDuplicateCheck: true }),
+        });
+        const retryData = await retry.json();
+        if (!retry.ok && retry.status !== 206) throw new Error(retryData.error || 'Import failed');
+        Object.assign(data, retryData);
+      }
 
       // Handle extension fallback signal — for both 206 hard blocks and incomplete extractions
       if (data.needsBrowserExtraction) {

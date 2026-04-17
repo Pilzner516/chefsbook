@@ -17,6 +17,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     .eq('user_id', profile.id)
     .in('visibility', ['public', 'shared_link'])
     .is('parent_recipe_id', null)
+    .is('duplicate_of', null)
     .order('created_at', { ascending: false });
 
   return (

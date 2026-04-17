@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, suggestTagsForRecipe } from '@chefsbook/ai';
-import { logAiCall, isInternalPhotoUrl } from '@chefsbook/db';
+import { logAiCall, isInternalPhotoUrl, normalizeSourceUrl, findDuplicateByUrl } from '@chefsbook/db';
 import { ensureTitle } from '../../import/_utils';
 
 function getServiceClient() {
@@ -44,9 +44,21 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401, headers });
   }
 
-  const { url, html: clientHtml } = await req.json();
+  const { url, html: clientHtml, skipDuplicateCheck } = await req.json();
   if (!url || typeof url !== 'string') {
     return Response.json({ error: 'URL is required' }, { status: 400, headers });
+  }
+
+  // Duplicate check — before any AI call
+  const normalizedUrl = normalizeSourceUrl(url);
+  if (!skipDuplicateCheck) {
+    const existing = await findDuplicateByUrl(normalizedUrl).catch(() => null);
+    if (existing) {
+      return Response.json({
+        duplicate: true,
+        existingRecipe: { id: existing.id, title: existing.title },
+      }, { headers });
+    }
   }
 
   try {
@@ -187,6 +199,7 @@ export async function POST(req: Request) {
         image_url: safeImageUrl,
         source_image_url: imageUrl,
         source_image_description: sourceImageDescription,
+        source_url_normalized: normalizedUrl,
         notes: recipe.notes,
         tags,
         source_language: sourceLanguage,

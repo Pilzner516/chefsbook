@@ -84,6 +84,7 @@ export async function getFollowedRecipes(
     .in('user_id', followingIds)
     .in('visibility', ['public', 'shared_link'])
     .is('parent_recipe_id', null)
+    .is('duplicate_of', null)
     .order('created_at', { ascending: false })
     .limit(limit);
 
