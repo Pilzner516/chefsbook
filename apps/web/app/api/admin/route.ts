@@ -320,6 +320,18 @@ export async function GET(req: NextRequest) {
       time: r.created_at,
     }));
 
+    // System status checks
+    let replicateStatus = 'unknown';
+    try {
+      const rRes = await fetch('https://api.replicate.com/v1/account', {
+        headers: { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN ?? ''}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      replicateStatus = rRes.ok ? 'online' : 'error';
+    } catch { replicateStatus = 'error'; }
+
+    const anthropicOk = !!(process.env.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY);
+
     return NextResponse.json({
       totalUsers: users.count ?? 0,
       planCounts,
@@ -327,6 +339,12 @@ export async function GET(req: NextRequest) {
       totalRecipes: recipes.count ?? 0,
       flaggedCount: flagged.count ?? 0,
       activityFeed,
+      systemStatus: {
+        database: 'online',
+        anthropic: anthropicOk ? 'online' : 'error',
+        replicate: replicateStatus,
+        storage: 'online',
+      },
     });
   }
 

@@ -31,6 +31,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Daily aggregation — aggregate yesterday's AI usage
+  try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dateStr = yesterday.toISOString().split('T')[0];
+    await supabaseAdmin.rpc('aggregate_ai_usage_daily', { target_date: dateStr });
+    triggered.push('aggregate_ai_usage_daily');
+  } catch { /* non-critical */ }
+
   // Monthly throttle reset — first day of the month
   if (new Date().getDate() === 1) {
     try {

@@ -24,9 +24,16 @@ export default function AdminOverview() {
   const [costs, setCosts] = useState<CostData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadAll = () => {
     adminFetch({ page: 'overview' }).then(setStats).catch((e) => setError(e.message));
     adminFetch({ page: 'costs' }).then(setCosts).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadAll();
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(loadAll, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (error) return <div className="text-red-600 text-sm">{error}</div>;
@@ -38,7 +45,19 @@ export default function AdminOverview() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Command Center</h1>
+      <h1 className="text-2xl font-bold mb-4">Command Center</h1>
+
+      {/* System status row */}
+      {(stats as any).systemStatus && (
+        <div className="flex items-center gap-4 mb-4 text-xs text-gray-500">
+          {Object.entries((stats as any).systemStatus as Record<string, string>).map(([name, status]) => (
+            <span key={name} className="flex items-center gap-1">
+              {status === 'online' ? '🟢' : status === 'error' ? '🔴' : '🟡'}
+              <span className="capitalize">{name}</span>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Section 1 — Platform Health KPIs */}
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">

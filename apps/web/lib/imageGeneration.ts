@@ -97,7 +97,8 @@ async function addVisibleWatermark(imageBuffer: Buffer): Promise<Buffer> {
 
   const imgMeta = await sharp(imageBuffer).metadata();
   const wmMeta = await sharp(watermark).metadata();
-  const left = (imgMeta.width ?? 512) - (wmMeta.width ?? 160) - 12;
+  // Bottom-LEFT (session 171 — avoids CSS object-fit:cover cropping on right)
+  const left = 12;
   const top = (imgMeta.height ?? 512) - (wmMeta.height ?? 36) - 12;
 
   return sharp(imageBuffer)
@@ -199,11 +200,11 @@ export async function generateAndSaveRecipeImage(
   // Add visible ChefsBook badge watermark
   imageBuffer = await addVisibleWatermark(imageBuffer);
 
-  // Embed invisible steganographic watermark
-  imageBuffer = await embedInvisibleWatermark(imageBuffer, recipeId);
+  // NOTE: LSB steganographic watermark REMOVED in session 170 — it corrupted JPEG headers
 
-  // Upload to Supabase storage
-  const fileName = `ai-generated/${recipeId}.jpg`;
+  // Upload to Supabase storage (unique name on regen to bust cache)
+  const suffix = options?.replaceExisting ? `-${Date.now()}` : '';
+  const fileName = `ai-generated/${recipeId}${suffix}.jpg`;
   const { error: uploadError } = await supabaseAdmin.storage
     .from('recipe-user-photos')
     .upload(fileName, imageBuffer, {
@@ -216,11 +217,12 @@ export async function generateAndSaveRecipeImage(
   const publicUrl = `${SUPABASE_STORAGE_URL}/storage/v1/object/public/recipe-user-photos/${fileName}`;
 
   if (options?.replaceExisting) {
-    // Update existing AI photo row
+    // Update existing AI photo row with new URL (busts browser cache)
     await supabaseAdmin.from('recipe_user_photos')
       .update({ url: publicUrl, storage_path: fileName })
       .eq('recipe_id', recipeId)
-      .eq('is_ai_generated', true);
+      .eq('is_ai_generated', true)
+      .eq('is_primary', true);
   } else {
     // Insert as primary photo
     await supabaseAdmin.from('recipe_user_photos').insert({
