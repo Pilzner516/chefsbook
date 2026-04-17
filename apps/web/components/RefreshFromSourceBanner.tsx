@@ -146,16 +146,18 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error);
                     const recipe = data.recipe;
-                    // Merge pasted content into existing recipe via supabaseAdmin
+                    // Merge pasted content into existing recipe
                     const { data: session } = await supabase.auth.getSession();
                     if (recipe.ingredients?.length) {
                       const token = session.session?.access_token;
-                      // Use the refresh endpoint logic — save ingredients to the existing recipe
-                      await fetch('/api/recipes/refresh', {
+                      if (!token) throw new Error('Please sign in to save ingredients.');
+                      const mergeRes = await fetch('/api/recipes/refresh', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                         body: JSON.stringify({ recipeId, pastedIngredients: recipe.ingredients }),
                       });
+                      const mergeData = await mergeRes.json();
+                      if (!mergeRes.ok) throw new Error(mergeData.error ?? 'Failed to save ingredients.');
                     }
                     setStatus('ok');
                     setMsg(`Parsed ${recipe.ingredients?.length ?? 0} ingredients from pasted text.`);

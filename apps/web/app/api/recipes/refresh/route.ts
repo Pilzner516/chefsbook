@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { recipeId } = await req.json();
+    const { recipeId, pastedIngredients } = await req.json();
     if (!recipeId) return Response.json({ error: 'recipeId required' }, { status: 400 });
 
     const { data: recipe } = await supabaseAdmin
@@ -44,43 +44,50 @@ export async function POST(req: NextRequest) {
       const { data: admin } = await supabaseAdmin.from('admin_users').select('role').eq('user_id', user.id).maybeSingle();
       if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-    if (!recipe.source_url) {
-      return Response.json({ error: 'Recipe has no source URL to refresh from' }, { status: 422 });
-    }
 
-    // 1. Fetch + extract
-    let rawHtml = '';
-    try {
-      rawHtml = (await fetchWithFallback(recipe.source_url)).html;
-    } catch (e: any) {
-      return Response.json({
-        error: String(e?.message ?? e),
-        needsBrowserExtraction: true,
-        sourceUrl: recipe.source_url,
-        domain: extractDomain(recipe.source_url),
-        message: 'This site blocks server imports. Install the ChefsBook browser extension and re-open this recipe to refresh.',
-      }, { status: 206 });
-    }
-
-    const jsonLd = extractJsonLdRecipe(rawHtml);
-    const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
     let fresh: any;
-    if (complete && jsonLd) {
-      fresh = jsonLd;
+
+    // If pasted ingredients were provided, use them directly (no fetch needed)
+    if (Array.isArray(pastedIngredients) && pastedIngredients.length > 0) {
+      fresh = { ingredients: pastedIngredients };
     } else {
-      const text = stripHtml(rawHtml).slice(0, 25000);
+      if (!recipe.source_url) {
+        return Response.json({ error: 'Recipe has no source URL to refresh from' }, { status: 422 });
+      }
+
+      // 1. Fetch + extract
+      let rawHtml = '';
       try {
-        fresh = jsonLd
-          ? await importFromUrl(text, recipe.source_url, {
-              available,
-              missing,
-              jsonLdData: JSON.stringify(jsonLd, null, 2).slice(0, 3000),
-            })
-          : await importFromUrl(text, recipe.source_url);
-        if (jsonLd?.ingredients?.length && available.includes('ingredients')) fresh.ingredients = jsonLd.ingredients;
-        if (jsonLd?.steps?.length) fresh.steps = jsonLd.steps;
+        rawHtml = (await fetchWithFallback(recipe.source_url)).html;
       } catch (e: any) {
-        return Response.json({ error: `Extraction failed: ${e?.message ?? e}` }, { status: 500 });
+        return Response.json({
+          error: String(e?.message ?? e),
+          needsBrowserExtraction: true,
+          sourceUrl: recipe.source_url,
+          domain: extractDomain(recipe.source_url),
+          message: 'This site blocks server imports. Install the ChefsBook browser extension and re-open this recipe to refresh.',
+        }, { status: 206 });
+      }
+
+      const jsonLd = extractJsonLdRecipe(rawHtml);
+      const { complete, available, missing } = checkJsonLdCompleteness(jsonLd);
+      if (complete && jsonLd) {
+        fresh = jsonLd;
+      } else {
+        const text = stripHtml(rawHtml).slice(0, 25000);
+        try {
+          fresh = jsonLd
+            ? await importFromUrl(text, recipe.source_url, {
+                available,
+                missing,
+                jsonLdData: JSON.stringify(jsonLd, null, 2).slice(0, 3000),
+              })
+            : await importFromUrl(text, recipe.source_url);
+          if (jsonLd?.ingredients?.length && available.includes('ingredients')) fresh.ingredients = jsonLd.ingredients;
+          if (jsonLd?.steps?.length) fresh.steps = jsonLd.steps;
+        } catch (e: any) {
+          return Response.json({ error: `Extraction failed: ${e?.message ?? e}` }, { status: 500 });
+        }
       }
     }
 
