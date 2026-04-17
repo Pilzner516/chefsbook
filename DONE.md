@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 194 — Fix img2img not using source image) TYPE: CODE FIX
+- [SESSION 194] DIAGNOSIS: Pulled pork recipe has source_image_url=NULL and source_image_description=NULL. DB-wide: only 4/88 recipes have source_image_url populated — all from post-session-181 imports. 84 pre-session-181 recipes have NULL because createRecipe's INSERT allowlist didn't include source_image_url until session 181. img2img silently falls back to text-to-image when source_image_url is NULL.
+- [SESSION 194] Root cause confirmed: NOT a code bug in the img2img pipeline — the Replicate call chain is correct (source_image_url → sourceOgImageUrl → image param + prompt_strength). The problem is missing data on legacy recipes.
+- [SESSION 194] TYPE: CODE FIX: generate-image route now backfills source_image_url on-demand. When source_image_url is NULL but source_url exists, fetches the source page, extracts og:image, persists to DB, then passes to img2img. Non-blocking fallback to text-to-image if source page is blocked or has no og:image.
+- [SESSION 194] Note: seriouseats.com is Cloudflare-blocked — on-demand backfill will fail for this domain. These recipes will continue to use text-to-image until imported via browser extension.
+- [SESSION 194] Typecheck clean. Deployed at commit ac08148, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 193 — Paste text import fallback) TYPE: CODE FIX
 - [SESSION 193] Part 1: importFromText() in packages/ai/src/importFromText.ts — Sonnet extraction from raw pasted text. Accepts any text (ingredients, steps, full recipe), returns standard ScannedRecipe JSON. Exported from @chefsbook/ai.
 - [SESSION 193] Part 2: /api/import/text route — POST endpoint accepting {text, userLanguage}. Calls importFromText(), logs via logAiCall (action: import_text), runs detectLanguage + translateRecipeContent if needed. Returns recipe + completeness.
