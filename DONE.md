@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 197 — Fix paste ingredients not saving) TYPE: CODE FIX
+- [SESSION 197] Root cause: RefreshFromSourceBanner sent `pastedIngredients` to `/api/recipes/refresh`, but the route only destructured `recipeId` — pasted data silently ignored. The route then tried to re-fetch the source URL instead of using the pasted content.
+- [SESSION 197] Fixed `/api/recipes/refresh` to accept `pastedIngredients` array in request body. When present, skips URL fetch/extract and uses pasted ingredients directly as the merge source. TYPE: CODE FIX.
+- [SESSION 197] Fixed banner error handling: refresh response now checked for errors (was fire-and-forget). Auth token validated before merge call. TYPE: CODE FIX.
+- [SESSION 197] Verified: `/api/import/text` correctly parses "1/3 cup kewpie mayo, 1 tablespoon sriracha" → 3 ingredients with qty/unit/ingredient. Katsu recipe (0 ingredients, is_complete=false) confirmed as valid test target.
+- [SESSION 197] tsc --noEmit clean. Deployed at commit d813379, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 196 — Fix false-positive missing tags banner) TYPE: CODE FIX
 - [SESSION 196] Root cause: auto-tag (fire-and-forget after import) adds tags to recipes.tags but never re-runs fetchRecipeCompleteness + applyCompletenessGate. is_complete stays false, missing_fields stays {tags}, RefreshFromSourceBanner shows despite 6+ tags being present.
 - [SESSION 196] Fixed /api/recipes/auto-tag single-recipe mode: after updating tags, re-runs completeness gate. Also strips _incomplete tag from array when tags are added. TYPE: CODE FIX.
