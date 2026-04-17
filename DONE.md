@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 181 — Fix duration_ms NULL in ai_usage_log)
+- [SESSION 181] Root cause: extension import route (/api/extension/import) had logAiCall without durationMs or t0. Added `const t0 = Date.now()` before extraction and `durationMs: Date.now() - t0, success: true` to the logAiCall call.
+- [SESSION 181] Verified all 11 logAiCall call sites now pass durationMs — grep confirms zero call sites missing it (regenerate-image is multi-line but has durationMs on line 81).
+- [SESSION 181] Live test: imported saveur.com Classic Chicken Pot Pie via Claude extraction — ai_usage_log row shows action=import_url, model=sonnet, duration_ms=17357, success=true. duration_ms is non-null.
+- [SESSION 181] Note: cost_usd=0 for Claude calls because tokensIn/tokensOut default to 0 — consumeLastUsage() not wired into route-level logging yet. Separate issue from duration_ms fix.
+- [SESSION 181] Typecheck clean. Deployed at commit b1063da, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-16 (session 180 — Fix watermark badge to use real ChefsBook logo PNG)
 - [SESSION 180] Confirmed asset docs/pics/cb_plus_hat.png exists — verified: ls shows 131714 bytes, file reports PNG 1324x371 8-bit/color RGBA, Read tool renders full Chefsbook wordmark + red-square toque icon correctly.
 - [SESSION 180] Copied asset to scripts/chefs-hat.png — verified: ls -la shows 131714 bytes, identical to source.
