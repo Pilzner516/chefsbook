@@ -1,6 +1,11 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 178 — End-to-end regen test + regen_count timing fix)
+- [SESSION 167] Part 1 end-to-end VERIFIED: KIMLO recipe regenerated via Replicate Flux Schnell (83KB raw → 91KB watermarked). Timestamped storage key works (`ai-generated/{id}-{timestamp}.jpg`). Watermark badge visible bottom-left. Photo row updated with new URL. regen_count=1. Image loads through proxy (HTTP 200 image/jpeg).
+- [SESSION 167] Part 1 fix: regen_count was being set BEFORE Replicate generation (in regenerate-image route). If Replicate failed, the count was already burned. Moved regen_count=1 to generateAndSaveRecipeImage AFTER successful upload+save — failures don't consume the user's single regen allowance.
+- [SESSION 167] Deployed to RPi5 at commit ebb2e1b, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 177 — Fix regen save + session 166 follow-ups)
 - [SESSION 167] Part 1 CRITICAL: Diagnosed regen save issue — storage key was always `ai-generated/{recipeId}.jpg` (same URL on regen → browser cache served old image). Fixed: regen now uses timestamped key `ai-generated/{recipeId}-{timestamp}.jpg` for cache-busting. Also removed LSB steganographic watermark call from generateAndSaveRecipeImage (was still present despite session 170 removal — would have corrupted newly generated images). Fixed watermark position to bottom-LEFT (was still bottom-RIGHT in imageGeneration.ts despite session 171 fix in scripts).
 - [SESSION 167] Part 2: Admin overview activity feed now auto-refreshes every 30 seconds via setInterval.
