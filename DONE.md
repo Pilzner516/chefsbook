@@ -1,6 +1,14 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 177 — Fix regen save + session 166 follow-ups)
+- [SESSION 167] Part 1 CRITICAL: Diagnosed regen save issue — storage key was always `ai-generated/{recipeId}.jpg` (same URL on regen → browser cache served old image). Fixed: regen now uses timestamped key `ai-generated/{recipeId}-{timestamp}.jpg` for cache-busting. Also removed LSB steganographic watermark call from generateAndSaveRecipeImage (was still present despite session 170 removal — would have corrupted newly generated images). Fixed watermark position to bottom-LEFT (was still bottom-RIGHT in imageGeneration.ts despite session 171 fix in scripts).
+- [SESSION 167] Part 2: Admin overview activity feed now auto-refreshes every 30 seconds via setInterval.
+- [SESSION 167] Part 3: System status row added to admin overview — shows Database, Anthropic, Replicate, Storage status indicators. Replicate status checked via GET api.replicate.com/v1/account (5s timeout). Anthropic checked via env var presence.
+- [SESSION 167] Part 4: Daily AI usage aggregation wired into cron route — calls aggregate_ai_usage_daily() for yesterday's date on every cron trigger.
+- [SESSION 167] Part 5: isUserThrottled imported in /api/import/url — but URL import route has no userId (public endpoint), so throttle check cannot apply here. DEFERRED to authenticated import paths.
+- [SESSION 167] Typecheck clean (web). Deployed to RPi5 at commit db270a4, pm2 restarted; chefsbk.app/, /admin both HTTP 200.
+
 ## 2026-04-16 (session 176 — Complete session 162 incomplete items)
 - [SESSION 166] Part 0: buildImagePrompt() now always leads with cleaned dish name (removes "recipe", "how to make", site names). Source description is supplementary only ("presented similarly to:") at levels 1-2, never replaces dish name.
 - [SESSION 166] Part 0: REGEN_PILLS strengthened — 'wrong_dish' now says "CRITICAL: the image must clearly show the dish named in the title", 'update_scene' adds "different color palette", 'brighter'/'moodier' are more specific, 'closer'/'overhead' are more directive.
