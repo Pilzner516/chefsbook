@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 190 — Fix level 1 faithful gen + auto-image on import) TYPE: CODE FIX
+- [SESSION 190] DIAGNOSIS: source_image_description IS populated for Sicilian Pan Pizza (describes rectangular sheet pan with pepperoni correctly). image_creativity_level IS 1 in system_settings. ai_image_prompt DOES contain "match this source very closely" + full description. The prompt is correct — the issue is Flux Schnell's poor adherence to long descriptive prompts at level 1.
+- [SESSION 190] Fix 1 TYPE: CODE FIX: getImageModel() now accepts creativityLevel parameter. Levels 1-2 always use Flux Dev (~$0.025) for better prompt adherence, regardless of plan tier. triggerImageGeneration reordered to determine creativityLevel before model selection so it flows correctly.
+- [SESSION 190] Fix 2 TYPE: CODE FIX: Auto-image-generation wired into saveWithModeration.ts (all web imports via scan page) and /api/extension/import. Fire-and-forget POST to /api/recipes/generate-image after successful import when recipe has title + ≥2 ingredients. Used fetch() to API route (not direct import) to avoid pulling sharp/child_process into client bundle.
+- [SESSION 190] Build fix: initial attempt imported triggerImageGeneration directly in saveWithModeration.ts — caused webpack "Reading from node:child_process" error because saveWithModeration is bundled into client code. Fixed by using fetch to the server API route instead.
+- [SESSION 190] Typecheck clean. Deployed at commit 49ffa90, pm2 restarted; chefsbk.app/ HTTP 200.
+
 ## 2026-04-17 (session 189 — Auto-tag on every import) TYPE: CODE FIX
 - [SESSION 189] Diagnosed: Sicilian-Style Pizza (kingarthurbaking) imported with tags={} despite "auto-tag fires on every import" being the expected behavior. DB-wide evidence: `SELECT COUNT(*) FROM ai_usage_log WHERE action='suggest_tags'` returned 0 — suggest_tags has literally never fired in production. Two independent root causes reported before writing code.
 - [SESSION 189] Root cause A: /api/recipes/auto-tag was a MANUAL BULK batch, triggered only by the /dashboard/search "Auto-tag" button. Nothing in the import pipeline (/api/import/url, scan, finalize, saveWithModeration, /api/extension/import) ever called it.
