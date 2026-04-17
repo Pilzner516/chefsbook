@@ -11,7 +11,7 @@ import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { RefreshFromSourceBanner } from '@/components/RefreshFromSourceBanner';
-import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
@@ -98,6 +98,7 @@ export default function RecipePage() {
   const [guestEmail, setGuestEmail] = useState('');
   const [guestSubmitting, setGuestSubmitting] = useState(false);
   const [copyrightConfirm, CopyrightDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagSubmitting, setFlagSubmitting] = useState(false);
   const [flagSubmitted, setFlagSubmitted] = useState(false);
@@ -247,7 +248,7 @@ export default function RecipePage() {
       await deleteRecipe(id);
       router.push('/dashboard');
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Delete failed', body: e?.message ?? 'Please try again.' });
       setDeleting(false);
     }
   };
@@ -259,13 +260,20 @@ export default function RecipePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
 
+      // skipDuplicateCheck: this IS the recipe we're re-importing — bypass session 198's duplicate gate
       const res = await fetch('/api/import/url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: recipe.source_url }),
+        body: JSON.stringify({ url: recipe.source_url, skipDuplicateCheck: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Re-import failed');
+      if (data.needsBrowserExtraction) {
+        throw new Error(data.message || 'This site blocks server imports. Install the ChefsBook browser extension and try again.');
+      }
+      if (!data.recipe) {
+        throw new Error(data.error || 'Re-import returned no recipe data.');
+      }
 
       // Update AI-derived fields — preserve user edits (tags, notes, title, custom images)
       await updateRecipe(id, {
@@ -305,7 +313,7 @@ export default function RecipePage() {
         setServings(updated.servings);
       }
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Re-import failed', body: e?.message ?? 'Please try again.' });
     } finally {
       setRefreshing(false);
     }
@@ -1226,6 +1234,7 @@ export default function RecipePage() {
 
       <article className="max-w-4xl mx-auto py-10 px-6">
         <CopyrightDialog />
+        <AlertDialog />
         {/* Copyright review banner (owner only) */}
         {isOwner && (recipe as any).copyright_review_pending && (
           <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-card">

@@ -17,6 +17,10 @@ These ship before anything else. Users are already hitting these.
 | 4 | Favourite toggle UI (heart/star button on cards + detail) | Filter pill exists but nothing to trigger it | S |
 | 5 | Recipe image remote patterns (`next.config.ts`) | Images broken for non-Supabase domains | S |
 
+## UI CLEANUP FOLLOW-UPS
+
+- Raw `window.alert()` sweep (apps/web): ~40 remaining call sites across dashboard/*, components/*, app/share, app/technique, app/recipe/[id] (PDF + flag paths). Session 199 cleaned the two sites inside the recipe detail Re-import/Delete handlers; ui-guardian.md forbids native alerts. Follow-up session should replace remaining with `useAlertDialog` from `@/components/useConfirmDialog`.
+
 ## TIER 2 — COMPLETE HALF-BUILT FEATURES
 
 Backend or partial UI exists. Just needs finishing.
