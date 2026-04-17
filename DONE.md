@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-17 (session 183 — Diagnose zero-ingredient import + fix pizza recipe)
+- [SESSION 183] Diagnosed: Sicilian Pizza Recipe (83a2bfee) had 0 ingredients, 9 steps, is_complete=false. Source URL (billyparisi.com) has 19 ingredients in JSON-LD recipeIngredient. import_attempts logged success=true with no failure_reason — the pipeline treated 0 ingredients as success.
+- [SESSION 183] Root cause: the original import at 2026-04-17 01:07 used an older code path (pre-session 182 token wiring). The current pipeline works correctly — re-importing the same URL returns 19 ingredients via Claude extraction.
+- [SESSION 183] Fix: populated 19 ingredients into the existing pizza recipe from a fresh import. Marked is_complete=true. Verified: psql shows 19 ingredients, is_complete=true.
+- [SESSION 183] Pipeline verification: billyparisi.com → 19 ingredients, 9 steps, completeness.source=claude, completeness.complete=true. No code changes needed — the pipeline is working correctly now.
+- [SESSION 183] Note: 5 other recipes with 0 ingredients identified (Chocolate Chip Cookies ×3, Tender Oven-Baked BBQ Ribs, Homemade Biscuits). These are from older imports before the JSON-LD + Claude extraction fixes. They need individual re-import or ingredient generation.
+
 ## 2026-04-17 (session 181 — Fix faithful image generation at creativity levels 1-2)
 - [SESSION 181] Diagnosed 4 independent bugs that made levels 1-2 silently fall back to level 3 in production. DB evidence: 0/90 recipes had source_image_description populated; 0/90 had source_image_url. grep proved image_creativity_level was never read by any generation code (only by the admin settings UI).
 - [SESSION 181] Bug A — createRecipe() had an explicit insert allowlist in packages/db/src/queries/recipes.ts that silently dropped source_image_description + source_image_url (and source_language + translated_from from session 152). Added all four to the insert; widened type signature; also widened createRecipeWithModeration's type.
