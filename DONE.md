@@ -1,6 +1,17 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-16 (session 180 — Fix watermark badge to use real ChefsBook logo PNG)
+- [SESSION 180] Confirmed asset docs/pics/cb_plus_hat.png exists — verified: ls shows 131714 bytes, file reports PNG 1324x371 8-bit/color RGBA, Read tool renders full Chefsbook wordmark + red-square toque icon correctly.
+- [SESSION 180] Copied asset to scripts/chefs-hat.png — verified: ls -la shows 131714 bytes, identical to source.
+- [SESSION 180] Rewrote scripts/create-watermark-badge.mjs — replaces SVG toque geometry with a sharp composite of the real chefs-hat.png on a white rounded-rect pill (rx=badgeH/2, fill-opacity 0.94). NO SVG text overlay — the PNG already contains the wordmark. Output 1404x451 (3.11:1). Deviation from PART 3 template: dropped the SVG "Chefs"+"Book" overlay (would duplicate the PNG wordmark) and use the full logo rather than a 32x32 crop (the asset is the whole logo, not hat-only).
+- [SESSION 180] First PART-3-verbatim attempt (resize-to-32x32 + duplicate text) produced a squished full-wordmark tile next to duplicate SVG text — stopped per PART 5, reported to user, got option-1 direction (use whole asset), re-implemented.
+- [SESSION 180] Local render verified — Read tool on apps/web/public/images/watermark-chefsbook.png shows the real logo on a white pill, no squished copies, no duplicated text.
+- [SESSION 180] Applied on RPi5 — scripts/apply-watermarks.mjs re-run against all AI images: 75/75 succeeded, 0 failed.
+- [SESSION 180] Live visual verification — curl'd https://chefsbk.app/api/image?url=... for newest AI photo (db5bae64…), pulled 141KB JPEG 1152x896, Read tool renders bread image with correct bottom-left ChefsBook badge (red wordmark + black "book" + real hat icon on white pill).
+- [SESSION 180] CLAUDE.md locked — added explicit rule near the LSB-watermark note: always use scripts/chefs-hat.png; NEVER redraw the hat or wordmark as SVG geometry; attempts in sessions 158, 164, 170, 171 all failed for the same reason.
+- [SESSION 180] Deployed at commit cdba7fc. No web rebuild / pm2 restart needed — only scripts and a public static image changed; apply-watermarks.mjs and imageGeneration.ts both read the PNG directly.
+
 ## 2026-04-17 (session 179 — Admin data layer fixes)
 - [SESSION 179] Part 1: Migration 046 applied — added success BOOLEAN NOT NULL DEFAULT true + duration_ms INTEGER to ai_usage_log. Index on (success, created_at DESC). logAiCall() signature updated with success + durationMs params (default true/null for backward compat).
 - [SESSION 179] Part 2: Fixed hardcoded userId:null in auto-tag route (now uses user?.id). import/url, check-image, speak remain null (unauthenticated public routes — no user context available).
