@@ -564,7 +564,9 @@ ${pageText.slice(0, 25000)}`;
   } else {
     prompt = `${IMPORT_PROMPT}\n\nSource URL: ${sourceUrl}\n\nPage content:\n${pageText.slice(0, 25000)}`;
   }
-  const text = await callClaude({ prompt, maxTokens: 3000 });
+  // 6000 covers multi-component recipes (e.g. Bûche de Noël — 5 sub-recipes,
+  // 20+ ingredients, 30+ steps). 3000 truncated mid-array (session 200).
+  const text = await callClaude({ prompt, maxTokens: 6000 });
   return extractJSON<ScannedRecipe>(text);
 }
 

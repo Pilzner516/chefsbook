@@ -1,4 +1,4 @@
-export { callClaude, extractJSON, getApiKey, consumeLastUsage } from './client';
+export { callClaude, extractJSON, getApiKey, consumeLastUsage, ClaudeTruncatedError, ClaudeJsonParseError } from './client';
 export { scanRecipe, scanRecipeMultiPage } from './scanRecipe';
 export { importFromUrl, importUrlFull, classifyPage, hasRecipeSchema, stripHtml, fetchPage, extractJsonLdRecipe, checkJsonLdCompleteness } from './importFromUrl';
 export type { ImportCompleteness } from './importFromUrl';

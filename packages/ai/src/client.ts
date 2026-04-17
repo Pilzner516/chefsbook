@@ -1,8 +1,30 @@
+import { jsonrepair } from 'jsonrepair';
+
 const SONNET = 'claude-sonnet-4-20250514';
 const HAIKU = 'claude-haiku-4-5-20251001';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
 export { SONNET, HAIKU };
+
+export class ClaudeTruncatedError extends Error {
+  readonly stopReason: string;
+  constructor(stopReason: string) {
+    super(`Claude response truncated (stop_reason=${stopReason}). Raise maxTokens on the caller.`);
+    this.name = 'ClaudeTruncatedError';
+    this.stopReason = stopReason;
+  }
+}
+
+export class ClaudeJsonParseError extends Error {
+  readonly excerpt: string;
+  readonly originalError: string;
+  constructor(originalError: string, excerpt: string) {
+    super(`Failed to parse Claude JSON response: ${originalError}`);
+    this.name = 'ClaudeJsonParseError';
+    this.originalError = originalError;
+    this.excerpt = excerpt;
+  }
+}
 
 export function getApiKey(): string {
   return (
@@ -53,6 +75,12 @@ export async function callClaude(params: {
     };
   }
 
+  // Truncation: never hand a cut-off response to JSON.parse — the array/object
+  // will be unterminated and every caller would silently misparse.
+  if (data.stop_reason === 'max_tokens') {
+    throw new ClaudeTruncatedError(data.stop_reason);
+  }
+
   return data.content?.[0]?.text ?? '';
 }
 
@@ -67,5 +95,20 @@ export function consumeLastUsage() {
 export function extractJSON<T>(text: string): T {
   const match = text.match(/```json\s*([\s\S]*?)```/) ?? text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
   if (!match) throw new Error('No JSON found in Claude response');
-  return JSON.parse(match[1] ?? match[0]);
+  const raw = match[1] ?? match[0];
+  try {
+    return JSON.parse(raw);
+  } catch (e: any) {
+    // LLMs occasionally emit trailing commas, unterminated arrays, or stray
+    // control characters that JSON.parse rejects. jsonrepair fixes all common
+    // cases in-process at zero extra API cost.
+    try {
+      return JSON.parse(jsonrepair(raw));
+    } catch (repairErr: any) {
+      const offsetMatch = /position (\d+)/.exec(e?.message ?? '');
+      const offset = offsetMatch ? parseInt(offsetMatch[1], 10) : 0;
+      const excerpt = raw.slice(Math.max(0, offset - 60), offset + 60);
+      throw new ClaudeJsonParseError(e?.message ?? String(e), excerpt);
+    }
+  }
 }

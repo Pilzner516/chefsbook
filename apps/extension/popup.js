@@ -217,8 +217,16 @@ async function renderSaveView(token, email) {
       const link = el('a', { className: 'view-link', href: API_BASE + '/recipe/' + data.recipe.id, target: '_blank', textContent: 'View recipe \u2192' });
       saveSection.appendChild(link);
     } catch (err) {
+      // Never leak raw parser / server-stack text to users — log for devtools,
+      // show a calm message with a retry.
+      console.error('[ChefsBook extension] import failed:', err);
+      const raw = err && err.message ? String(err.message) : '';
+      const isTechnical = /JSON|parse|Unexpected token|Expected|stop_reason|position \d+/i.test(raw);
+      const friendly = isTechnical
+        ? "Couldn't read this recipe. Try again, or open it in the web app."
+        : raw || 'Import failed. Try again.';
       saveSection.textContent = '';
-      saveSection.appendChild(el('div', { className: 'status status-error', textContent: err.message }));
+      saveSection.appendChild(el('div', { className: 'status status-error', textContent: friendly }));
       const retryBtn = el('button', { className: 'btn btn-outline', textContent: 'Try again' });
       retryBtn.addEventListener('click', () => location.reload());
       saveSection.appendChild(retryBtn);

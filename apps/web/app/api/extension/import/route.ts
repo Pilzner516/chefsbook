@@ -348,6 +348,28 @@ export async function POST(req: Request) {
       recipe: { id: newRecipe.id, title: newRecipe.title },
     }, { headers });
   } catch (e: any) {
-    return Response.json({ error: e.message }, { status: 500, headers });
+    // Telemetry: extension-path extraction failures previously never reached
+    // logImportAttempt (that call lives past this catch). Log failure class
+    // so admins can see parse/truncation patterns in /admin/import-sites.
+    try {
+      const { logImportAttempt, extractDomain } = await import('@chefsbook/db');
+      const excerpt = e?.excerpt ? String(e.excerpt).slice(0, 200) : '';
+      const name = e?.name ?? 'Error';
+      const reason = `${name}: ${String(e?.message ?? e).slice(0, 180)}${excerpt ? ` | excerpt: ${excerpt}` : ''}`;
+      await logImportAttempt({
+        userId: user.id,
+        url,
+        domain: extractDomain(url),
+        success: false,
+        failureReason: `[extension-html] ${reason}`,
+      });
+    } catch {}
+    // Friendly server-side message for the extension popup; detailed error is
+    // preserved in import_attempts.failure_reason for admin review.
+    const isParseOrTruncation = e?.name === 'ClaudeJsonParseError' || e?.name === 'ClaudeTruncatedError';
+    const userMessage = isParseOrTruncation
+      ? "Couldn't read this recipe. Try again, or open it in the web app."
+      : (e?.message ?? 'Import failed');
+    return Response.json({ error: userMessage }, { status: 500, headers });
   }
 }

@@ -21,6 +21,10 @@ These ship before anything else. Users are already hitting these.
 
 - Raw `window.alert()` sweep (apps/web): ~40 remaining call sites across dashboard/*, components/*, app/share, app/technique, app/recipe/[id] (PDF + flag paths). Session 199 cleaned the two sites inside the recipe detail Re-import/Delete handlers; ui-guardian.md forbids native alerts. Follow-up session should replace remaining with `useAlertDialog` from `@/components/useConfirmDialog`.
 
+## AI ROBUSTNESS FOLLOW-UPS
+
+- Audit remaining `callClaude()` callers for appropriate `maxTokens` — `cookbookTOC()`, `scanRecipeMultiPage()`, `generateMealPlan()`, `generateDishRecipe()`, `importFromYouTube()`, `importTechnique()` likely need raises too. Session 201 raised only `importFromUrl` (3000→6000). After that session, any of these callers hitting the cap on complex input will throw `ClaudeTruncatedError` instead of returning garbage — correct behavior, but the first complex cookbook TOC / multi-page scan / dish generation request to trip it will fail user-visibly. Per-caller budget review + raise where needed.
+
 ## TIER 2 — COMPLETE HALF-BUILT FEATURES
 
 Backend or partial UI exists. Just needs finishing.
