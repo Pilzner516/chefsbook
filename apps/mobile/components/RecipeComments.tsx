@@ -10,6 +10,7 @@ import type { CommentRow } from '@chefsbook/db';
 import { moderateComment } from '@chefsbook/ai';
 import { PLAN_LIMITS } from '@chefsbook/db';
 import { Avatar } from './UIKit';
+import ChefsDialog from './ChefsDialog';
 import { getInitials } from '@chefsbook/ui';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -37,6 +38,10 @@ export function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, commentsE
   const [replyingTo, setReplyingTo] = useState<CommentRow | null>(null);
   const [replyText, setReplyText] = useState('');
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+  const [showDeleteCommentDialog, setShowDeleteCommentDialog] = useState(false);
+  const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<string | null>(null);
+  const [showBlockUserDialog, setShowBlockUserDialog] = useState(false);
+  const [pendingBlockUserId, setPendingBlockUserId] = useState<string | null>(null);
 
   const isOwner = session?.user?.id === recipeOwnerId;
   const canComment = PLAN_LIMITS[planTier]?.canComment && profile?.is_searchable && !profile?.comments_suspended;
@@ -161,17 +166,13 @@ export function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, commentsE
   };
 
   const handleDelete = (commentId: string) => {
-    Alert.alert(t('comments.deleteComment'), t('comments.deleteConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: async () => { await deleteComment(commentId); loadComments(); } },
-    ]);
+    setPendingDeleteCommentId(commentId);
+    setShowDeleteCommentDialog(true);
   };
 
   const handleBlock = (userId: string) => {
-    Alert.alert(t('comments.blockUser'), '', [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: 'Block', style: 'destructive', onPress: async () => { if (session?.user?.id) await blockCommenter(session.user.id, userId); } },
-    ]);
+    setPendingBlockUserId(userId);
+    setShowBlockUserDialog(true);
   };
 
   const handleFlag = async (commentId: string, reason: string) => {
@@ -386,6 +387,26 @@ export function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, commentsE
           </View>
         </TouchableOpacity>
       </Modal>
+      <ChefsDialog
+        visible={showDeleteCommentDialog}
+        title={t('comments.deleteComment')}
+        body={t('comments.deleteConfirm')}
+        onClose={() => setShowDeleteCommentDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowDeleteCommentDialog(false) },
+          { label: t('common.delete'), variant: 'secondary', onPress: async () => { setShowDeleteCommentDialog(false); if (pendingDeleteCommentId) { await deleteComment(pendingDeleteCommentId); loadComments(); setPendingDeleteCommentId(null); } } },
+        ]}
+      />
+      <ChefsDialog
+        visible={showBlockUserDialog}
+        title={t('comments.blockUser')}
+        body=""
+        onClose={() => setShowBlockUserDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowBlockUserDialog(false) },
+          { label: 'Block', variant: 'secondary', onPress: async () => { setShowBlockUserDialog(false); if (session?.user?.id && pendingBlockUserId) { await blockCommenter(session.user.id, pendingBlockUserId); setPendingBlockUserId(null); } } },
+        ]}
+      />
     </View>
   );
 }
