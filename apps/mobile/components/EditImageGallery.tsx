@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActionSheetIOS, Platform } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -9,6 +9,7 @@ import type { RecipeUserPhoto } from '@chefsbook/db';
 import { pickImage, takePhoto, processImage } from '../lib/image';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { PexelsPickerSheet } from './PexelsPickerSheet';
+import ChefsDialog from './ChefsDialog';
 import type { PexelsPhoto } from '@chefsbook/ai';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -29,6 +30,12 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'error'>('idle');
   const [lastFailedUri, setLastFailedUri] = useState<string | null>(null);
   const [showPexels, setShowPexels] = useState(false);
+  // Dialog state
+  const [showSourcePickerDialog, setShowSourcePickerDialog] = useState(false);
+  const [showCopyrightDialog, setShowCopyrightDialog] = useState(false);
+  const [showDeletePhotoDialog, setShowDeletePhotoDialog] = useState(false);
+  const [pendingDeletePhoto, setPendingDeletePhoto] = useState<RecipeUserPhoto | null>(null);
+  const pendingUploadFnRef = useRef<() => void>(() => {});
   const photoLimit = PLAN_LIMITS[planTier]?.maxPhotosPerRecipe ?? 3;
 
   useEffect(() => {
@@ -119,14 +126,8 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
   const uploading = uploadState !== 'idle';
 
   const confirmCopyrightThenUpload = (uploadFn: () => void) => {
-    Alert.alert(
-      'Image Upload Confirmation',
-      'By uploading you confirm this image is yours, you have permission to use it, or it is free to use (Creative Commons / public domain).\n\nPlease do NOT upload images taken from recipe websites, copyrighted photos, or screenshots of other apps.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Confirm & Upload', onPress: uploadFn },
-      ],
-    );
+    pendingUploadFnRef.current = uploadFn;
+    setShowCopyrightDialog(true);
   };
 
   const showImagePicker = () => {
@@ -139,37 +140,12 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       );
       return;
     }
-
-    const options = [t('gallery.takePhoto'), t('gallery.chooseLibrary'), t('gallery.findPhoto'), t('common.cancel')];
-    const cancelIndex = 3;
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options, cancelButtonIndex: cancelIndex },
-        async (idx) => {
-          if (idx === 0) { const uri = await takePhoto(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); }
-          if (idx === 1) { const uri = await pickImage(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); }
-          if (idx === 2) setShowPexels(true);
-        },
-      );
-    } else {
-      Alert.alert(t('gallery.addPhoto'), t('gallery.chooseSource'), [
-        { text: t('gallery.takePhoto'), onPress: async () => { const uri = await takePhoto(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); } },
-        { text: t('gallery.chooseLibrary'), onPress: async () => { const uri = await pickImage(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); } },
-        { text: t('gallery.findPhoto'), onPress: () => setShowPexels(true) },
-        { text: t('common.cancel'), style: 'cancel' },
-      ]);
-    }
+    setShowSourcePickerDialog(true);
   };
 
   const handleDelete = (photo: RecipeUserPhoto) => {
-    Alert.alert(t('gallery.deletePhoto'), t('gallery.cannotUndo'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: async () => {
-        await deleteRecipePhoto(photo.id);
-        await loadPhotos();
-      }},
-    ]);
+    setPendingDeletePhoto(photo);
+    setShowDeletePhotoDialog(true);
   };
 
   const handleSetPrimary = async (photo: RecipeUserPhoto) => {
@@ -188,6 +164,50 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
       onSelect={uploadFromPexels}
       onClose={() => setShowPexels(false)}
     />
+  );
+
+  const dialogs = (
+    <>
+      {/* Add photo source picker */}
+      <ChefsDialog
+        visible={showSourcePickerDialog}
+        title={t('gallery.addPhoto')}
+        body={t('gallery.chooseSource')}
+        layout="vertical"
+        onClose={() => setShowSourcePickerDialog(false)}
+        buttons={[
+          { label: t('gallery.takePhoto'), variant: 'primary', onPress: async () => { setShowSourcePickerDialog(false); const uri = await takePhoto(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); } },
+          { label: t('gallery.chooseLibrary'), variant: 'positive', onPress: async () => { setShowSourcePickerDialog(false); const uri = await pickImage(); if (uri) confirmCopyrightThenUpload(() => uploadPhoto(uri)); } },
+          { label: t('gallery.findPhoto'), variant: 'positive', onPress: () => { setShowSourcePickerDialog(false); setShowPexels(true); } },
+          { label: t('common.cancel'), variant: 'text', onPress: () => setShowSourcePickerDialog(false) },
+        ]}
+      />
+      {/* Copyright confirmation */}
+      <ChefsDialog
+        visible={showCopyrightDialog}
+        title="Image Upload Confirmation"
+        body="By uploading you confirm this image is yours, you have permission to use it, or it is free to use (Creative Commons / public domain).\n\nPlease do NOT upload images taken from recipe websites, copyrighted photos, or screenshots of other apps."
+        onClose={() => setShowCopyrightDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowCopyrightDialog(false) },
+          { label: 'Confirm & Upload', variant: 'primary', onPress: () => { setShowCopyrightDialog(false); pendingUploadFnRef.current(); } },
+        ]}
+      />
+      {/* Delete photo confirmation */}
+      <ChefsDialog
+        visible={showDeletePhotoDialog}
+        title={t('gallery.deletePhoto')}
+        body={t('gallery.cannotUndo')}
+        onClose={() => setShowDeletePhotoDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowDeletePhotoDialog(false) },
+          { label: t('common.delete'), variant: 'secondary', onPress: async () => {
+            setShowDeletePhotoDialog(false);
+            if (pendingDeletePhoto) { await deleteRecipePhoto(pendingDeletePhoto.id); await loadPhotos(); setPendingDeletePhoto(null); }
+          }},
+        ]}
+      />
+    </>
   );
 
   const uploadPill = uploadState === 'uploading' ? (
@@ -253,6 +273,7 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
           )}
           {uploadPill}
         </TouchableOpacity>
+        {dialogs}
         {pexelsSheet}
       </>
     );
@@ -307,8 +328,8 @@ export function EditImageGallery({ recipeId, userId, editing, recipeTitle }: Pro
         </TouchableOpacity>
       </ScrollView>
       <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('gallery.longPress')}</Text>
+      {dialogs}
       {pexelsSheet}
     </View>
   );
 }
-
