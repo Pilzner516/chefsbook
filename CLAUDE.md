@@ -69,11 +69,13 @@ and fixed 3-5 times each. Reading the agents prevents repeating known mistakes.
 
 ## Build & dev commands
 
+Workspace package names: `@chefsbook/mobile`, `@chefsbook/web`, `@chefsbook/db`, `@chefsbook/ai`, `@chefsbook/ui`
+
 ```bash
 # Full monorepo
 turbo dev                                    # all apps
 npm run mobile                               # mobile only (turbo dev --filter=@chefsbook/mobile)
-npm run web                                   # web only (turbo dev --filter=@chefsbook/web)
+npm run web                                  # web only (turbo dev --filter=@chefsbook/web)
 turbo build                                  # build all
 
 # Individual apps
@@ -83,11 +85,24 @@ cd apps/web && npm run dev
 # Type checking (no test suite yet)
 cd apps/mobile && npx tsc --noEmit
 cd apps/web && npx tsc --noEmit
-cd apps/web && npm run lint                  # next lint (only web has lint)
+# NOTE: npm run lint fails on web — no .eslintrc.json configured (interactive wizard not run)
 
 # EAS builds (local builder on dev PC — cloud quota limited)
 cd apps/mobile && eas build --platform android --profile development --local
 cd apps/mobile && eas build --platform ios --profile development --local
+```
+
+### DB migrations (apply on RPi5)
+
+```bash
+# Apply a migration file
+ssh rasp@rpi5-eth "psql postgresql://supabase_admin:<pw>@localhost:5432/postgres -f /mnt/chefsbook/repo/supabase/migrations/<file>.sql"
+
+# After any new table: restart PostgREST schema cache (or queries return "not found in schema cache")
+ssh rasp@rpi5-eth "docker restart supabase-rest"
+
+# Inspect a table schema before writing queries
+ssh rasp@rpi5-eth "psql postgresql://supabase_admin:<pw>@localhost:5432/postgres -c '\d tablename'"
 ```
 
 ## Infrastructure
@@ -113,6 +128,16 @@ cd apps/mobile && eas build --platform ios --profile development --local
 - Restart tunnel: `sudo systemctl restart cloudflared`
 - Tunnel logs: `journalctl -u cloudflared -n 50`
 - Web logs: `pm2 logs chefsbook-web`
+
+## Quick Reference: Top Gotchas
+
+These five mistakes recur across sessions — check before writing any code:
+
+1. **Web Supabase URL = `https://api.chefsbk.app`** (NOT `http://100.110.47.62:8000`) — mixed content blocks WebSocket on HTTPS pages. Mobile still uses the direct IP.
+2. **Server-to-server fetches = `http://localhost:3000`** (NOT the `req.url` origin) — tunnel URL returns HTML error pages instead of JSON on timeout.
+3. **Delete stale APK JS bundle before rebuilding**: `rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`
+4. **After `expo prebuild --clean`**: re-add `android.enableJetifier=true` to `gradle.properties` + re-apply signing config to `build.gradle` (both get wiped).
+5. **New table migration**: always `docker restart supabase-rest` on RPi5 after applying, or PostgREST returns "table not found in schema cache".
 
 ## Environment variables (in .env.local at monorepo root)
 
@@ -327,10 +352,9 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 
 ## Known issues
 
-- **Extension import JSON.parse fails on complex recipes — FIXED in session 201:** callClaude() now throws ClaudeTruncatedError on stop_reason==='max_tokens' (no more silent truncation). extractJSON() has a jsonrepair fallback; on irreparable output throws ClaudeJsonParseError with a ~120-char excerpt. importFromUrl's extraction call raised 3000→6000 maxTokens (covers 5-component recipes like Bûche de Noël). popup.js shows friendly message on parser-class errors; route.ts logs failures to import_attempts. Extension bumped to v1.1.1 — users reinstall manually from /mnt/chefsbook/chefsbook-extension-v1.1.1.zip. Follow-up: other callClaude callers (cookbookTOC, scanRecipeMultiPage, generateMealPlan, etc.) may also need maxTokens raises — see AGENDA.md "AI ROBUSTNESS FOLLOW-UPS".
+- **callClaude maxTokens follow-up:** other callers (cookbookTOC, scanRecipeMultiPage, generateMealPlan, etc.) may need maxTokens raises beyond their defaults — see AGENDA.md "AI ROBUSTNESS FOLLOW-UPS".
 - **Import completeness gate not wired on 2 paths (session 141):** web bookmark batch loop at apps/web/app/dashboard/scan/page.tsx:444 uses createRecipe() directly; cookbook recipe import at apps/web/app/dashboard/cookbooks/[id]/page.tsx:79 uses createRecipe() directly. Both should route through createRecipeWithModeration (web) or call /api/recipes/finalize to get the gate.
 - **Import visibility lock is backend-only (session 141):** applyCompletenessGate sets visibility=private for incomplete recipes, but the UI visibility toggle on recipe detail can still be flipped to public. A UI-side check against is_complete + ai_recipe_verdict='approved' is not yet implemented; the next save/finalize call would re-flag it private on the backend though.
-- **Mobile: app.json SEND intent filter removed — FIXED via session 202 APK rebuild.** Session 139 removed the filter; session 202 built a fresh release APK at `apps/mobile/android/app/build/outputs/apk/release/app-release.apk` (113 MB, signed CN=ChefsBook App, built from commit 207c398). Install via `adb install -r` to pick up the change. Future rebuilds: the prompt 200 Step 2 "copy react+react-dom from root" is needed because Metro's blockList prevents root resolution during gradle's `createBundleReleaseJsAndAssets` step — only needed at build time, don't pre-copy defensively. Session 203 rebuilt the APK with post-demo fixes but FIX 1 (tab bar persistence) introduced a regression hiding the bar on all screens. Session 204 reverted FIX 1 and rebuilt: current APK is **117,778,754 bytes**, same signing cert (SHA-256 29f59dba...), built from commit 0ffe40e. Kept from session 203: GuidedScanFlow code path, camera try/catch, 3-second branded splash.
 - **Mobile: floating tab bar missing on recipe detail + other root-Stack screens** — Original pre-session-203 bug. FloatingTabBar is mounted inside `apps/mobile/app/(tabs)/_layout.tsx` via `tabBar={() => <FloatingTabBar />}`, so any stack push past the tabs group (recipe/[id], recipe/new, cookbook/[id], chef/[id], share/[token], speak, plans) covers the entire Tabs layout including the bar. Needs a dedicated session that honors the prompt-203 mandatory investigation-pause — reattempt must avoid the `(tabs)` root-resolves-to-`/` pitfall that sank session 203's fix.
 - **Mobile: camera capture silently drops back to My Recipes tab** — Session 203 FIX 2 added try/catch with visible Alert to `startScan`/`addScanPage`/`lib/image.ts` but the bug persists on the session-204 APK. The try/catch is likely swallowing the real error without surfacing it. Dedicated debug session needed: capture adb logcat during repro, remove silent catches, add explicit error reporting before re-wrapping.
 - **Mobile: guided scan-to-recipe flow untestable** — Session 203 FIX 3 (GuidedScanFlow component, scan_guided_followups + scan_guided_generation logging) ships in the session-204 APK but cannot be exercised while FIX 2 (camera) is broken — camera never hands off to the flow.
@@ -361,7 +385,7 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - assetlinks.json has placeholder fingerprint — needs release APK signing key SHA256 (`keytool -list -v -keystore [keystore.jks]`)
 - Emulator must be launched from CLI (`emulator -avd Medium_Phone_API_36.1 -no-snapshot -gpu host`) — Android Studio Device Manager launches headless/invisible window
 - Metro hostname: set `REACT_NATIVE_PACKAGER_HOSTNAME=localhost` before `npx expo start` when on Tailscale (otherwise Metro advertises Tailscale IP, unreachable from emulator)
-- **Mobile storage uploads FIXED** — Root cause: `supautils` GUC check hook blocked `set_config()` for non-superuser `supabase_storage_admin` role. Fix: `ALTER ROLE supabase_storage_admin SUPERUSER;` on RPi5 PostgreSQL. Persists across restarts (stored in pg_authid). If storage breaks after full volume reset, re-run the ALTER ROLE.
+- **Mobile storage uploads**: if uploads break after a full volume reset on RPi5, re-run `ALTER ROLE supabase_storage_admin SUPERUSER;` on PostgreSQL (the fix from session ~140; persists in pg_authid but resets on full DB reinit).
 - **Supabase storage image display requires `apikey` header** — Self-hosted Kong gateway returns 401 on public bucket URLs without the `apikey` header. All `<Image>` sources loading from Supabase storage must include `headers: { apikey: SUPABASE_ANON_KEY }`. Applied in EditImageGallery and RecipeImage components.
 - APK rebuild note: always delete cached JS bundle before rebuilding (`rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`) or Gradle uses stale code
 - Jetifier: `android.enableJetifier=true` must be added to `android/gradle.properties` after every `expo prebuild --clean` (it gets wiped)
@@ -420,47 +444,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 
 ### AI cost reference
 
-`callClaude()` accepts `model` param — defaults to Sonnet, pass `HAIKU` for classification tasks.
-
-| Function | Model | Est. cost/call | Cached? |
-|----------|-------|---------------|---------|
-| moderateComment() | haiku | ~$0.00016 | No (new content each time) |
-| moderateMessage() | haiku | ~$0.00016 | No (new DM each send) |
-| moderateRecipe() | haiku | ~$0.00020 | Yes (skip if content unchanged) |
-| isUsernameFamilyFriendly() (usernameCheck) | haiku | ~$0.00008 | No (one-time at signup) |
-| isActuallyARecipe() | haiku | ~$0.0002 | No (one-time per completed import) |
-| classifyContent() | haiku | ~$0.00016 | No (one-time per import) |
-| classifyPage() (importFromUrl) | haiku | ~$0.00016 | No (one-time per import) |
-| suggestPurchaseUnit() | haiku | ~$0.00040 | No (one-time per cart add) |
-| analyseScannedImage() (dishIdentify) | haiku | ~$0.00030 | No (each scan is new) |
-| reanalyseDish() (dishIdentify) | haiku | ~$0.00030 | No (user-initiated clarification) |
-| rewriteRecipeSteps() | haiku | ~$0.0003 | No (one-time per URL import, fire-and-forget) |
-| checkImageForWatermarks() | haiku (vision) | ~$0.005 | No (one-time per user image upload) |
-| describeSourceImage() | haiku (vision) | ~$0.005 | No (one-time per import when og:image available) |
-| detectLanguage() | haiku | ~$0.0001 | No (often free via heuristic; haiku fallback for ambiguous) |
-| translateRecipeContent() | sonnet | ~$0.003 | No (one-time at import when source != user language) |
-| generateMissingIngredients() | sonnet | ~$0.003 | No (user-initiated when recipe missing ingredients) |
-| socialShareText / socialShareHashtags | haiku | ~$0.00020 | No (user-initiated) |
-| matchFolderToCategory() | haiku | ~$0.00016 | No (one-time per import) |
-| matchFoldersToCategories() (batch) | haiku | ~$0.0005 | No (one-time per bookmark import) |
-| lookupCookbook() (ISBN image) | haiku | ~$0.00020 | No (user-initiated) |
-| translateRecipeTitle() | haiku | ~$0.00020 | Yes (is_title_only row in recipe_translations) |
-| mergeShoppingList() | haiku | ~$0.0008 | No (user-initiated list merge) — SWITCHED from sonnet session 139 |
-| suggestRecipes() | haiku | ~$0.0006 | No (user-initiated "what can I make") — SWITCHED from sonnet session 139 |
-| translateRecipe() (full) | sonnet | ~$0.011 | Yes (shared row in recipe_translations per recipe+lang) |
-| importFromUrl() (extraction / gap-fill) | sonnet | ~$0.015 | Yes (one-time per import) |
-| scanRecipe() / scanRecipeMultiPage() | sonnet | ~$0.015 | Yes (one-time per scan) |
-| generateMealPlan() (mealPlanWizard) | sonnet | ~$0.020 | No (user-initiated) |
-| generateDishRecipe() (dishIdentify) | sonnet | ~$0.015 | No (user-initiated) |
-| generateScanFollowUpQuestions() (guidedScan Step B) | haiku | ~$0.00015 | No (one-time per guided scan) |
-| scan_guided_generation (GuidedScanFlow Step D — reuses generateDishRecipe) | sonnet | ~$0.015 | No (user-initiated; logged via logAiCallFromClient on mobile) |
-| generateVariation() | sonnet | ~$0.015 | No (user-initiated "make it vegan" etc.) |
-| importFromYouTube() | sonnet | ~$0.015 | Yes (one-time per YouTube import) |
-| importTechnique() / importTechniqueFromYouTube() | sonnet | ~$0.015 | Yes (one-time per technique import) |
-| formatVoiceRecipe() | sonnet | ~$0.010 | No (user-initiated dictation) |
-| cookbookTOC() (generateTableOfContents) | sonnet | ~$0.020 | No (one-time per cookbook add) |
-| aiChefComplete() | sonnet | ~$0.015 | No (user-initiated "finish this recipe") |
-| fetchInstagramPost / extractRecipeFromInstagram | sonnet | DISABLED | DEPRECATED session 138 — no longer exported |
+`callClaude()` accepts `model` param — defaults to Sonnet, pass `HAIKU` for classification/short tasks. Full per-function cost table is in `.claude/agents/ai-cost.md` (mandatory reading whenever touching `@chefsbook/ai`).
 
 ## Builds
 
