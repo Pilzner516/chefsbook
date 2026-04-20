@@ -145,22 +145,25 @@ function RootNav() {
   const loading = useAuthStore((s) => s.loading);
   const profile = useAuthStore((s) => s.profile);
 
-  // Cold-launch splash hold: record mount time, keep SplashOverlay visible and
-  // the native splash prevented until both (a) auth init settles and (b)
-  // SPLASH_MIN_MS has elapsed. hideAsync runs once, ref-guarded.
+  // Cold-launch splash hold: hide the native splash as soon as JS mounts so the
+  // JS SplashOverlay (cream bg + hat + wordmark) takes over immediately. Keep the
+  // JS overlay visible for SPLASH_MIN_MS after auth settles so users see the
+  // branded welcome screen for a full 3 seconds.
   const splashMountRef = useRef(Date.now());
-  const splashHiddenRef = useRef(false);
   const [splashDone, setSplashDone] = useState(false);
 
+  // Hide the native Android splash immediately once RN has rendered — the JS
+  // overlay renders below it and takes over seamlessly.
   useEffect(() => {
-    if (loading || splashHiddenRef.current) return;
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  // Keep the JS overlay up until auth settles + 3 s have elapsed since mount.
+  useEffect(() => {
+    if (loading) return;
     const elapsed = Date.now() - splashMountRef.current;
     const remaining = Math.max(0, SPLASH_MIN_MS - elapsed);
-    const timer = setTimeout(() => {
-      splashHiddenRef.current = true;
-      setSplashDone(true);
-      SplashScreen.hideAsync().catch(() => {});
-    }, remaining);
+    const timer = setTimeout(() => setSplashDone(true), remaining);
     return () => clearTimeout(timer);
   }, [loading]);
 
