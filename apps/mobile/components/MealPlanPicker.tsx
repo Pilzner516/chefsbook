@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { getMealPlansForWeek, addMealPlan, PLAN_LIMITS, canDo } from '@chefsbook/db';
+import ChefsDialog from './ChefsDialog';
 import type { MealPlan, MealSlot, PlanTier } from '@chefsbook/db';
 
 const MEAL_SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -56,6 +57,11 @@ export function MealPlanPicker({ visible, recipeId, recipeServings, onClose, onA
   const [servings, setServings] = useState(recipeServings || 4);
   const [existing, setExisting] = useState<MealPlan[]>([]);
   const [saving, setSaving] = useState(false);
+  const [showSlotOccupiedDialog, setShowSlotOccupiedDialog] = useState(false);
+  const [pendingSlotInfo, setPendingSlotInfo] = useState<{ slot: MealSlot; dayName: string } | null>(null);
+  const [showMismatchDialog, setShowMismatchDialog] = useState(false);
+  const [mismatchInfo, setMismatchInfo] = useState<{ refServing: number; servings: number; dayName: string } | null>(null);
+  const mismatchResolveRef = useRef<(v: boolean) => void>(() => {});
 
   const weekDays = getWeekDays(weekStart);
   const todayStr = formatDate(new Date());
@@ -81,14 +87,8 @@ export function MealPlanPicker({ visible, recipeId, recipeServings, onClose, onA
     if (!selectedDay) return;
     if (isSlotOccupied(selectedDay, slot)) {
       const dayName = DAY_NAMES[weekDays.findIndex((d) => formatDate(d) === selectedDay)] ?? '';
-      Alert.alert(
-        t('mealPicker.slotOccupied'),
-        t('mealPicker.slotOccupiedBody', { day: dayName, meal: slot }),
-        [
-          { text: t('mealPicker.addAnyway'), onPress: () => setSelectedSlot(slot) },
-          { text: t('mealPicker.pickAnother'), style: 'cancel' },
-        ],
-      );
+      setPendingSlotInfo({ slot, dayName });
+      setShowSlotOccupiedDialog(true);
     } else {
       setSelectedSlot(slot);
     }
@@ -104,14 +104,9 @@ export function MealPlanPicker({ visible, recipeId, recipeServings, onClose, onA
       if (refServing && (servings / refServing > 2 || refServing / servings > 2)) {
         const dayName = DAY_NAMES[weekDays.findIndex((d) => formatDate(d) === selectedDay)] ?? '';
         const proceed = await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            'Servings mismatch',
-            `This recipe serves ${servings}, but other recipes on ${dayName} serve ${refServing}. Add anyway?`,
-            [
-              { text: t('common.cancel'), style: 'cancel', onPress: () => resolve(false) },
-              { text: t('mealPicker.addAnyway'), onPress: () => resolve(true) },
-            ],
-          );
+          mismatchResolveRef.current = resolve;
+          setMismatchInfo({ refServing, servings, dayName });
+          setShowMismatchDialog(true);
         });
         if (!proceed) return;
       }
@@ -264,6 +259,26 @@ export function MealPlanPicker({ visible, recipeId, recipeServings, onClose, onA
           )}
         </View>
       </View>
+      <ChefsDialog
+        visible={showSlotOccupiedDialog}
+        title={t('mealPicker.slotOccupied')}
+        body={pendingSlotInfo ? t('mealPicker.slotOccupiedBody', { day: pendingSlotInfo.dayName, meal: pendingSlotInfo.slot }) : ''}
+        onClose={() => setShowSlotOccupiedDialog(false)}
+        buttons={[
+          { label: t('mealPicker.pickAnother'), variant: 'cancel', onPress: () => setShowSlotOccupiedDialog(false) },
+          { label: t('mealPicker.addAnyway'), variant: 'primary', onPress: () => { setShowSlotOccupiedDialog(false); if (pendingSlotInfo) { setSelectedSlot(pendingSlotInfo.slot); setPendingSlotInfo(null); } } },
+        ]}
+      />
+      <ChefsDialog
+        visible={showMismatchDialog}
+        title="Servings mismatch"
+        body={mismatchInfo ? `This recipe serves ${mismatchInfo.servings}, but other recipes on ${mismatchInfo.dayName} serve ${mismatchInfo.refServing}. Add anyway?` : ''}
+        onClose={() => { setShowMismatchDialog(false); mismatchResolveRef.current(false); }}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => { setShowMismatchDialog(false); mismatchResolveRef.current(false); } },
+          { label: t('mealPicker.addAnyway'), variant: 'primary', onPress: () => { setShowMismatchDialog(false); mismatchResolveRef.current(true); } },
+        ]}
+      />
     </Modal>
   );
 }
