@@ -38,6 +38,9 @@ export function QANotepad({ visible, onClose }: Props) {
   const [inputText, setInputText] = useState('');
   const [showSendConfirm, setShowSendConfirm] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showDeleteItemDialog, setShowDeleteItemDialog] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showClearAllDialog, setShowClearAllDialog] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -82,17 +85,12 @@ export function QANotepad({ visible, onClose }: Props) {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert(t('notepad.deleteItem'), '', [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => saveItems(items.filter((i) => i.id !== id)) },
-    ]);
+    setPendingDeleteId(id);
+    setShowDeleteItemDialog(true);
   };
 
   const handleClearAll = () => {
-    Alert.alert(t('notepad.clearTitle'), t('notepad.clearBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('notepad.clearAll'), style: 'destructive', onPress: () => saveItems([]) },
-    ]);
+    setShowClearAllDialog(true);
   };
 
   const handleSendToAdmin = async () => {
@@ -367,6 +365,26 @@ export function QANotepad({ visible, onClose }: Props) {
       buttons={[
         { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowSendConfirm(false) },
         { label: t('notepad.sendConfirm'), variant: 'primary', onPress: handleSendToAdmin },
+      ]}
+    />
+    <ChefsDialog
+      visible={showDeleteItemDialog}
+      title={t('notepad.deleteItem')}
+      body=""
+      onClose={() => setShowDeleteItemDialog(false)}
+      buttons={[
+        { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowDeleteItemDialog(false) },
+        { label: t('common.delete'), variant: 'secondary', onPress: () => { setShowDeleteItemDialog(false); if (pendingDeleteId) { saveItems(items.filter((i) => i.id !== pendingDeleteId)); setPendingDeleteId(null); } } },
+      ]}
+    />
+    <ChefsDialog
+      visible={showClearAllDialog}
+      title={t('notepad.clearTitle')}
+      body={t('notepad.clearBody')}
+      onClose={() => setShowClearAllDialog(false)}
+      buttons={[
+        { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowClearAllDialog(false) },
+        { label: t('notepad.clearAll'), variant: 'secondary', onPress: () => { setShowClearAllDialog(false); saveItems([]); } },
       ]}
     />
     </>
