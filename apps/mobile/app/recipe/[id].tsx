@@ -215,6 +215,11 @@ function CookingNotesSection({ recipeId }: { recipeId: string }) {
   );
 }
 
+const DESCRIPTOR_UNITS = new Set([
+  'handful', 'pinch', 'dash', 'splash', 'sprig', 'drizzle',
+  'bunch', 'knob', 'clove', 'slice', 'piece', 'spoonful',
+]);
+
 // --- Linked ingredient row (feature #6) ---
 function IngredientRow({
   ing,
@@ -233,6 +238,15 @@ function IngredientRow({
   const converted = useMemo(() => {
     return convertIngredient(scaled, ing.unit, units, ing.ingredient);
   }, [scaled, ing.unit, units, ing.ingredient]);
+
+  // If quantity is 0 or null but a descriptor unit is present, display 1
+  const displayQuantity = useMemo(() => {
+    if ((converted.quantity === 0 || converted.quantity === null) && converted.unit) {
+      const unitWord = converted.unit.toLowerCase().split(' ')[0] ?? '';
+      if (DESCRIPTOR_UNITS.has(unitWord)) return 1;
+    }
+    return converted.quantity;
+  }, [converted.quantity, converted.unit]);
 
   // Check if this ingredient matches another recipe title (sub-recipe linking)
   const linked = useMemo(() => {
@@ -257,7 +271,7 @@ function IngredientRow({
         numberOfLines={1}
         style={{ color: colors.accent, fontSize: 15, width: 80, textAlign: 'right', marginRight: 12 }}
       >
-        {formatQuantity(converted.quantity)} {converted.unit}
+        {formatQuantity(displayQuantity)} {converted.unit}
       </Text>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
         <Text style={{
