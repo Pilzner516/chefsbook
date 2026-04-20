@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { StoreAvatar } from '../../components/StoreAvatar';
 import { Button, Card, EmptyState, Loading, Input } from '../../components/UIKit';
+import ChefsDialog from '../../components/ChefsDialog';
 import { StorePicker } from '../../components/StorePicker';
 import type { ShoppingListItem, StoreCategory } from '@chefsbook/db';
 
@@ -90,6 +91,12 @@ export default function ShopTab() {
   const [editingQty, setEditingQty] = useState<string | null>(null);
   const [editQtyValue, setEditQtyValue] = useState('');
   const [fontSize, setFontSize] = useState<FontSize>('medium');
+  const [showDeleteItemDialog, setShowDeleteItemDialog] = useState(false);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<ShoppingListItem | null>(null);
+  const [showRemoveRecipeDialog, setShowRemoveRecipeDialog] = useState(false);
+  const [pendingRemoveGroup, setPendingRemoveGroup] = useState<{ name: string; items: ShoppingListItem[] } | null>(null);
+  const [showDeleteListDialog, setShowDeleteListDialog] = useState(false);
+  const [pendingDeleteList, setPendingDeleteList] = useState<{ id: string; name: string } | null>(null);
   const fs = FONT_SCALES[fontSize];
   const preferredUnits = usePreferencesStore((s) => s.units);
 
@@ -134,10 +141,8 @@ export default function ShopTab() {
   };
 
   const handleDeleteItem = (item: ShoppingListItem) => {
-    Alert.alert(t('shop.deleteItem'), t('shop.removeIngredient', { name: item.ingredient }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => deleteItem(item.id) },
-    ]);
+    setPendingDeleteItem(item);
+    setShowDeleteItemDialog(true);
   };
 
   const handleSaveQty = (itemId: string) => {
@@ -146,29 +151,13 @@ export default function ShopTab() {
   };
 
   const handleRemoveRecipeGroup = (groupName: string, groupItems: ShoppingListItem[]) => {
-    Alert.alert(
-      t('shop.removeRecipe'),
-      t('shop.removeRecipeBody', { name: groupName, count: groupItems.length }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.remove'),
-          style: 'destructive',
-          onPress: async () => {
-            for (const item of groupItems) {
-              await deleteItem(item.id);
-            }
-          },
-        },
-      ],
-    );
+    setPendingRemoveGroup({ name: groupName, items: groupItems });
+    setShowRemoveRecipeDialog(true);
   };
 
   const handleDeleteList = (listId: string, name: string) => {
-    Alert.alert(t('shop.deleteList'), t('shop.deleteListBody', { name }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => removeList(listId) },
-    ]);
+    setPendingDeleteList({ id: listId, name });
+    setShowDeleteListDialog(true);
   };
 
   const items = currentList?.items ?? [];
@@ -252,6 +241,41 @@ export default function ShopTab() {
       />
     );
   }
+
+  const shopDialogs = (
+    <>
+      <ChefsDialog
+        visible={showDeleteItemDialog}
+        title={t('shop.deleteItem')}
+        body={pendingDeleteItem ? t('shop.removeIngredient', { name: pendingDeleteItem.ingredient }) : ''}
+        onClose={() => setShowDeleteItemDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowDeleteItemDialog(false) },
+          { label: t('common.delete'), variant: 'secondary', onPress: () => { setShowDeleteItemDialog(false); if (pendingDeleteItem) { deleteItem(pendingDeleteItem.id); setPendingDeleteItem(null); } } },
+        ]}
+      />
+      <ChefsDialog
+        visible={showRemoveRecipeDialog}
+        title={t('shop.removeRecipe')}
+        body={pendingRemoveGroup ? t('shop.removeRecipeBody', { name: pendingRemoveGroup.name, count: pendingRemoveGroup.items.length }) : ''}
+        onClose={() => setShowRemoveRecipeDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowRemoveRecipeDialog(false) },
+          { label: t('common.remove'), variant: 'secondary', onPress: async () => { setShowRemoveRecipeDialog(false); if (pendingRemoveGroup) { for (const item of pendingRemoveGroup.items) await deleteItem(item.id); setPendingRemoveGroup(null); } } },
+        ]}
+      />
+      <ChefsDialog
+        visible={showDeleteListDialog}
+        title={t('shop.deleteList')}
+        body={pendingDeleteList ? t('shop.deleteListBody', { name: pendingDeleteList.name }) : ''}
+        onClose={() => setShowDeleteListDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowDeleteListDialog(false) },
+          { label: t('common.delete'), variant: 'secondary', onPress: () => { setShowDeleteListDialog(false); if (pendingDeleteList) { removeList(pendingDeleteList.id); setPendingDeleteList(null); } } },
+        ]}
+      />
+    </>
+  );
 
   // ── List detail view ──
   if (currentList) {
@@ -443,6 +467,7 @@ export default function ShopTab() {
 
           <View style={{ height: tabBarHeight }} />
         </ScrollView>
+        {shopDialogs}
       </View>
     );
   }
@@ -518,6 +543,7 @@ export default function ShopTab() {
           onCreated={handleStorePickerCreated}
           onCancel={() => setShowNewModal(false)}
         />
+        {shopDialogs}
       </View>
     );
   }
