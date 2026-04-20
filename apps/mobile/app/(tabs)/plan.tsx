@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActionSheetIOS, Platform, Modal, TextInput, FlatList, Image } from 'react-native';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, FlatList, Image } from 'react-native';
+import ChefsDialog from '../../components/ChefsDialog';
 
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 import { useRouter } from 'expo-router';
@@ -82,45 +83,24 @@ export default function PlanTab() {
   const [showPlanStorePicker, setShowPlanStorePicker] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [wizardVisible, setWizardVisible] = useState(false);
+  // Dialog state
+  const [showMealActionsDialog, setShowMealActionsDialog] = useState(false);
+  const [mealActionsTarget, setMealActionsTarget] = useState<any>(null);
+  const [showRemoveMealDialog, setShowRemoveMealDialog] = useState(false);
+  const [removeMealTarget, setRemoveMealTarget] = useState<any>(null);
+  const [showMismatchDialog, setShowMismatchDialog] = useState(false);
+  const [mismatchDetails, setMismatchDetails] = useState('');
+  const mismatchResolveRef = useRef<((addAnyway: boolean) => void) | null>(null);
+  const mismatchCartRef = useRef<{ date: string; dayIndex: number } | null>(null);
 
   const showMealActions = (plan: any) => {
-    const options = [t('plan.viewRecipe'), t('plan.removeFromPlan'), t('common.cancel')];
-    const destructiveIndex = 1;
-    const cancelIndex = 2;
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options, destructiveButtonIndex: destructiveIndex, cancelButtonIndex: cancelIndex },
-        (idx) => handleMealAction(idx, plan),
-      );
-    } else {
-      Alert.alert(
-        (plan as any).recipe?.title ?? plan.meal_slot,
-        '',
-        [
-          { text: t('plan.viewRecipe'), onPress: () => plan.recipe_id && router.push(`/recipe/${plan.recipe_id}`) },
-          { text: t('plan.removeFromPlan'), style: 'destructive', onPress: () => confirmRemove(plan) },
-          { text: t('common.cancel'), style: 'cancel' },
-        ],
-      );
-    }
-  };
-
-  const handleMealAction = (idx: number, plan: any) => {
-    if (idx === 0 && plan.recipe_id) router.push(`/recipe/${plan.recipe_id}`);
-    if (idx === 1) confirmRemove(plan);
+    setMealActionsTarget(plan);
+    setShowMealActionsDialog(true);
   };
 
   const confirmRemove = (plan: any) => {
-    Alert.alert(t('plan.removeMeal'), t('plan.removeMealBody', { title: (plan as any).recipe?.title ?? plan.meal_slot }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.remove'), style: 'destructive', onPress: async () => {
-        await removePlan(plan.id);
-        if (session?.user?.id && weekDates.length === 7) {
-          fetchWeek(session.user.id, weekDates[0]!, weekDates[6]!);
-        }
-      }},
-    ]);
+    setRemoveMealTarget(plan);
+    setShowRemoveMealDialog(true);
   };
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
@@ -204,23 +184,18 @@ export default function PlanTab() {
         const dayName = t(`days.${DAY_KEYS[dayIndex]}`);
         const details = recipePlans.map((m: any) => `• ${m.recipe?.title ?? 'Recipe'} — ${m.servings ?? m.recipe?.servings ?? 4}x`).join('\n');
         return new Promise<void>((resolve) => {
-          Alert.alert(
-            t('mealCard.mismatchTitle'),
-            t('mealCard.mismatchBody', { day: dayName }) + '\n\n' + details,
-            [
-              { text: t('mealCard.reviewServings'), style: 'cancel', onPress: () => resolve() },
-              {
-                text: t('mealCard.addAnyway'),
-                onPress: async () => {
-                  if (session?.user?.id) await fetchShoppingLists(session.user.id);
-                  setCartDate(date);
-                  setCartDayIndex(dayIndex);
-                  setListPickerVisible(true);
-                  resolve();
-                },
-              },
-            ],
-          );
+          mismatchCartRef.current = { date, dayIndex };
+          mismatchResolveRef.current = async (addAnyway: boolean) => {
+            if (addAnyway) {
+              if (session?.user?.id) await fetchShoppingLists(session.user.id);
+              setCartDate(date);
+              setCartDayIndex(dayIndex);
+              setListPickerVisible(true);
+            }
+            resolve();
+          };
+          setMismatchDetails(`${t('mealCard.mismatchBody', { day: dayName })}\n\n${details}`);
+          setShowMismatchDialog(true);
         });
       }
     }
@@ -707,6 +682,48 @@ export default function PlanTab() {
           handleAddDayToList(listId, listName);
         }}
         onCancel={() => setShowPlanStorePicker(false)}
+      />
+      {/* Meal actions option picker */}
+      <ChefsDialog
+        visible={showMealActionsDialog}
+        title={mealActionsTarget?.recipe?.title ?? mealActionsTarget?.meal_slot ?? ''}
+        body=""
+        layout="vertical"
+        onClose={() => setShowMealActionsDialog(false)}
+        buttons={[
+          { label: t('plan.viewRecipe'), variant: 'primary', onPress: () => { setShowMealActionsDialog(false); if (mealActionsTarget?.recipe_id) router.push(`/recipe/${mealActionsTarget.recipe_id}` as any); } },
+          { label: t('plan.removeFromPlan'), variant: 'secondary', onPress: () => { setShowMealActionsDialog(false); confirmRemove(mealActionsTarget); } },
+          { label: t('common.cancel'), variant: 'text', onPress: () => setShowMealActionsDialog(false) },
+        ]}
+      />
+      {/* Remove meal confirmation */}
+      <ChefsDialog
+        visible={showRemoveMealDialog}
+        title={t('plan.removeMeal')}
+        body={t('plan.removeMealBody', { title: removeMealTarget?.recipe?.title ?? removeMealTarget?.meal_slot ?? '' })}
+        onClose={() => setShowRemoveMealDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowRemoveMealDialog(false) },
+          { label: t('common.remove'), variant: 'secondary', onPress: async () => {
+            setShowRemoveMealDialog(false);
+            if (removeMealTarget) {
+              await removePlan(removeMealTarget.id);
+              if (session?.user?.id && weekDates.length === 7) fetchWeek(session.user.id, weekDates[0]!, weekDates[6]!);
+              setRemoveMealTarget(null);
+            }
+          }},
+        ]}
+      />
+      {/* Servings mismatch dialog */}
+      <ChefsDialog
+        visible={showMismatchDialog}
+        title={t('mealCard.mismatchTitle')}
+        body={mismatchDetails}
+        onClose={() => { setShowMismatchDialog(false); mismatchResolveRef.current?.(false); }}
+        buttons={[
+          { label: t('mealCard.reviewServings'), variant: 'cancel', onPress: () => { setShowMismatchDialog(false); mismatchResolveRef.current?.(false); } },
+          { label: t('mealCard.addAnyway'), variant: 'primary', onPress: () => { setShowMismatchDialog(false); mismatchResolveRef.current?.(true); } },
+        ]}
       />
     </View>
   );
