@@ -196,7 +196,10 @@ export function QANotepad({ visible, onClose }: Props) {
           )}
 
           {/* List */}
-          <ScrollView style={{ flex: 1, padding: 16 }}>
+          <ScrollView
+            style={{ flex: 1, padding: 16 }}
+            contentContainerStyle={{ paddingBottom: 80 + insets.bottom }}
+          >
             {items.length === 0 ? (
               <View style={{ alignItems: 'center', paddingTop: 60 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 15 }}>{t('notepad.noItems')}</Text>
@@ -232,21 +235,29 @@ export function QANotepad({ visible, onClose }: Props) {
             )}
           </ScrollView>
 
-          {/* Footer */}
+          {/* FAB — Add Item */}
           {!showInput && (
-            <View style={{ padding: 16, paddingBottom: 16 + insets.bottom, borderTopWidth: 1, borderTopColor: colors.borderDefault }}>
-              <TouchableOpacity
-                onPress={() => setShowInput(true)}
-                style={{
-                  backgroundColor: colors.accent,
-                  borderRadius: 12,
-                  paddingVertical: 14,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('notepad.addItem')}</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => setShowInput(true)}
+              style={{
+                position: 'absolute',
+                bottom: 16 + insets.bottom,
+                right: 20,
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                backgroundColor: colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 6,
+              }}
+            >
+              <Ionicons name="add" size={28} color="#fff" />
+            </TouchableOpacity>
           )}
         </View>
       </View>
