@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 
 export interface ChefsDialogButton {
   label: string;
-  variant: 'primary' | 'secondary' | 'cancel' | 'positive';
+  variant: 'primary' | 'secondary' | 'cancel' | 'positive' | 'text';
   onPress: () => void;
 }
 
@@ -15,9 +15,11 @@ interface ChefsDialogProps {
   body: string | ReactNode;
   buttons: ChefsDialogButton[];
   onClose?: () => void;
+  /** 'vertical' stacks pills full-width; 'horizontal' is the default side-by-side layout */
+  layout?: 'horizontal' | 'vertical';
 }
 
-export default function ChefsDialog({ visible, icon, title, body, buttons, onClose }: ChefsDialogProps) {
+export default function ChefsDialog({ visible, icon, title, body, buttons, onClose, layout = 'horizontal' }: ChefsDialogProps) {
   const { colors } = useTheme();
 
   // White text on red/green buttons stays '#ffffff' (accessible contrast on colored bg)
@@ -26,6 +28,7 @@ export default function ChefsDialog({ visible, icon, title, body, buttons, onClo
     secondary: { bg: 'transparent', border: colors.accent, text: colors.accent },
     cancel: { bg: 'transparent', border: '#d1d5db', text: colors.textSecondary },
     positive: { bg: colors.accentGreen, text: '#ffffff' },
+    text: { bg: 'transparent', text: colors.textSecondary },
   };
 
   return (
@@ -34,27 +37,55 @@ export default function ChefsDialog({ visible, icon, title, body, buttons, onClo
         <View style={[styles.container, { backgroundColor: colors.bgCard }]}>
           {icon && <Text style={styles.icon}>{icon}</Text>}
           <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-          <View style={styles.body}>
+          <View style={[styles.body, layout === 'vertical' ? { width: '100%' } : undefined]}>
             {typeof body === 'string' ? <Text style={[styles.bodyText, { color: colors.textSecondary }]}>{body}</Text> : body}
           </View>
-          <View style={styles.buttonRow}>
-            {buttons.map((btn) => {
-              const vs = VARIANT_STYLES[btn.variant];
-              return (
-                <TouchableOpacity
-                  key={btn.label}
-                  onPress={btn.onPress}
-                  style={[
-                    styles.button,
-                    { backgroundColor: vs.bg },
-                    vs.border ? { borderWidth: 1.5, borderColor: vs.border } : undefined,
-                  ]}
-                >
-                  <Text style={[styles.buttonText, { color: vs.text }]}>{btn.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          {layout === 'vertical' ? (
+            <View style={styles.buttonColumn}>
+              {buttons.map((btn) => {
+                const vs = VARIANT_STYLES[btn.variant];
+                if (btn.variant === 'text') {
+                  return (
+                    <TouchableOpacity key={btn.label} onPress={btn.onPress} style={styles.textButton}>
+                      <Text style={[styles.textButtonLabel, { color: vs.text }]}>{btn.label}</Text>
+                    </TouchableOpacity>
+                  );
+                }
+                return (
+                  <TouchableOpacity
+                    key={btn.label}
+                    onPress={btn.onPress}
+                    style={[
+                      styles.pillButton,
+                      { backgroundColor: vs.bg },
+                      vs.border ? { borderWidth: 1.5, borderColor: vs.border } : undefined,
+                    ]}
+                  >
+                    <Text style={[styles.pillButtonText, { color: vs.text }]}>{btn.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.buttonRow}>
+              {buttons.map((btn) => {
+                const vs = VARIANT_STYLES[btn.variant];
+                return (
+                  <TouchableOpacity
+                    key={btn.label}
+                    onPress={btn.onPress}
+                    style={[
+                      styles.button,
+                      { backgroundColor: vs.bg },
+                      vs.border ? { borderWidth: 1.5, borderColor: vs.border } : undefined,
+                    ]}
+                  >
+                    <Text style={[styles.buttonText, { color: vs.text }]}>{btn.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -85,7 +116,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
   body: { marginBottom: 24 },
   bodyText: { fontSize: 14, lineHeight: 22, textAlign: 'center' },
+  // horizontal layout
   buttonRow: { flexDirection: 'row', gap: 12, justifyContent: 'center' },
   button: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 24 },
   buttonText: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  // vertical layout
+  buttonColumn: { width: '100%', gap: 10 },
+  pillButton: { width: '100%', borderRadius: 24, paddingVertical: 13, alignItems: 'center' },
+  pillButtonText: { fontSize: 15, fontWeight: '600' },
+  textButton: { marginTop: 4, paddingVertical: 8, alignItems: 'center', width: '100%' },
+  textButtonLabel: { fontSize: 14, fontWeight: '500' },
 });
