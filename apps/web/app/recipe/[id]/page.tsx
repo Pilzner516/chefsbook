@@ -129,7 +129,12 @@ export default function RecipePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setIsLoggedIn(true);
-        isPro(user.id).then(setUserIsPro);
+        isPro(user.id).then(async (pro) => {
+          if (pro) { setUserIsPro(true); return; }
+          // Admins get Pro-equivalent access (matches server-side bypass in PDF route)
+          const { data: adminRow } = await supabase.from('admin_users').select('role').eq('user_id', user.id).maybeSingle();
+          if (adminRow) setUserIsPro(true);
+        });
         // Fetch user language preference
         supabase.from('user_profiles').select('preferred_language, username').eq('id', user.id).maybeSingle()
           .then(({ data: profile }) => {

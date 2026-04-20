@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getRecipe, listRecipePhotos } from '@chefsbook/db';
+import { supabase, supabaseAdmin, getRecipe, listRecipePhotos } from '@chefsbook/db';
 import { PLAN_LIMITS } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
@@ -45,16 +45,25 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Plan check
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('plan_tier')
-    .eq('id', userId)
-    .single();
+  // Admins bypass plan gate
+  const { data: adminRow } = await supabaseAdmin
+    .from('admin_users')
+    .select('role')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  const plan = (profile?.plan_tier as PlanTier) ?? 'free';
-  if (!PLAN_LIMITS[plan]?.canPDF) {
-    return NextResponse.json({ error: 'Pro plan required for PDF export' }, { status: 403 });
+  if (!adminRow) {
+    // Plan check for non-admins
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('plan_tier')
+      .eq('id', userId)
+      .single();
+
+    const plan = (profile?.plan_tier as PlanTier) ?? 'free';
+    if (!PLAN_LIMITS[plan]?.canPDF) {
+      return NextResponse.json({ error: 'Pro plan required for PDF export' }, { status: 403 });
+    }
   }
 
   // Fetch recipe
