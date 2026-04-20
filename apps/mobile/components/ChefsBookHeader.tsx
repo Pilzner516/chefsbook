@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
@@ -7,11 +8,15 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { LANGUAGES } from '@chefsbook/ui';
 import { LanguagePickerModal } from './LanguagePickerModal';
 import { QANotepad } from './QANotepad';
+import ChefsDialog from './ChefsDialog';
 import NotificationBell from './NotificationBell';
+
+const isStaging = process.env.EXPO_PUBLIC_APP_VARIANT === 'staging';
 
 export function ChefsBookHeader() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
   const session = useAuthStore((s) => s.session);
   const language = usePreferencesStore((s) => s.language);
@@ -19,6 +24,7 @@ export function ChefsBookHeader() {
   const setUnits = usePreferencesStore((s) => s.setUnits);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
   const [qaNotepadVisible, setQaNotepadVisible] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const langEntry = LANGUAGES.find((l) => l.code === language);
   const langLabel = langEntry ? `${langEntry.flag} ${langEntry.code.toUpperCase()}` : (language || 'en').toUpperCase();
@@ -43,7 +49,7 @@ export function ChefsBookHeader() {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <TouchableOpacity onPress={() => setQaNotepadVisible(true)} activeOpacity={1}>
+        <TouchableOpacity onPress={() => setShowUserMenu(true)} activeOpacity={1}>
           <Text style={{ fontSize: 28, fontWeight: '700', fontFamily }}>
             <Text style={{ color: colors.textPrimary }}>Chefs</Text>
             <Text style={{ color: colors.accent }}>Book</Text>
@@ -117,6 +123,27 @@ export function ChefsBookHeader() {
       <QANotepad
         visible={qaNotepadVisible}
         onClose={() => setQaNotepadVisible(false)}
+      />
+      <ChefsDialog
+        visible={showUserMenu}
+        icon="⚙️"
+        title="ChefsBook"
+        body=""
+        layout="vertical"
+        onClose={() => setShowUserMenu(false)}
+        buttons={[
+          {
+            label: '⚙️  Settings',
+            variant: 'primary',
+            onPress: () => { setShowUserMenu(false); router.push('/modal'); },
+          },
+          ...(isStaging ? [{
+            label: '📋  QA Notepad',
+            variant: 'secondary' as const,
+            onPress: () => { setShowUserMenu(false); setQaNotepadVisible(true); },
+          }] : []),
+          { label: 'Cancel', variant: 'text' as const, onPress: () => setShowUserMenu(false) },
+        ]}
       />
     </View>
   );
