@@ -7,6 +7,7 @@ import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import * as SplashScreen from 'expo-splash-screen';
 import { configureStorage } from '@chefsbook/db';
+import { getPendingCameraResult, storePendingRecoveryUri } from '../lib/image';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { usePreferencesStore } from '../lib/zustand/preferencesStore';
@@ -74,7 +75,18 @@ function useProtectedRoute() {
     const isAuthenticated = session && !isAnonymous;
 
     if (isAuthenticated && (inAuth || isLanding)) {
-      router.replace('/(tabs)');
+      // Check for a pending camera result from Android Activity Recreation before
+      // deciding which tab to land on. If a result exists, route to scan so the
+      // tab's useFocusEffect can pick it up; otherwise land on the default tab.
+      (async () => {
+        const uri = await getPendingCameraResult();
+        if (uri) {
+          storePendingRecoveryUri(uri);
+          router.replace('/(tabs)/scan');
+        } else {
+          router.replace('/(tabs)');
+        }
+      })();
     } else if (!isAuthenticated && inTabs) {
       router.replace('/');
     }

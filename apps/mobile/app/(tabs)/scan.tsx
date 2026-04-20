@@ -20,7 +20,7 @@ import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { scanRecipe, scanRecipeMultiPage, analyseScannedImage } from '@chefsbook/ai';
 import type { ScanImageAnalysis, PexelsPhoto } from '@chefsbook/ai';
 import { searchPexels } from '@chefsbook/ai';
-import { pickImage, takePhoto, processImage, getPendingCameraResult } from '../../lib/image';
+import { pickImage, takePhoto, processImage, getPendingCameraResult, consumePendingRecoveryUri } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
@@ -146,7 +146,11 @@ export default function ScanTab() {
     useCallback(() => {
       (async () => {
         if (!session?.user?.id) return;
-        const uri = await getPendingCameraResult();
+        // consumePendingRecoveryUri() reads the URI stored by root layout after
+        // Android Activity Recreation. Avoids double-calling getPendingResultAsync
+        // which would return null on the second call (result is consumed on first call).
+        const moduleUri = consumePendingRecoveryUri();
+        const uri = moduleUri ?? await getPendingCameraResult();
         if (!uri) return;
         try {
           const processed = await processImage(uri);
