@@ -19,6 +19,7 @@ Return ONLY a JSON object, no markdown, no explanation:
     { "step_number": 1, "instruction": "string", "timer_minutes": "number|null", "group_label": "string|null" }
   ],
   "notes": "string | null",
+  "tags": ["lowercase-tag"],
   "source_type": "scan",
   "has_food_photo": "boolean",
   "food_photo_region": "top-left|top-right|bottom-left|bottom-right|full-page|null"
@@ -32,6 +33,7 @@ Rules:
 - Temperatures: preserve original units (°F or °C)
 - Use null for any field not visible or not applicable
 - Descriptor quantities: for ingredients where the stated amount is a vague descriptor ("a handful", "a pinch", "a dash", "a splash", "a sprig", "a drizzle", "to taste") output quantity: 1, unit: the descriptor word (e.g. quantity: 1, unit: "pinch"). Never output quantity: 0 for these cases.
+- tags: 3-6 lowercase, hyphen-separated tags describing the recipe (cuisine, main ingredient, cooking method, dietary flags if applicable). Always include at least one tag. Examples: ["italian","pasta","baked"], ["vegan","soup","quick"]
 
 Timer extraction (critical for auto-timer feature):
 - Scan each step for ANY time reference: "5 minutes", "1 hour", "30 sec", "2-3 min", "about 10 minutes", "45 min or until golden"

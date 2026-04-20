@@ -11,7 +11,7 @@ import { processImage } from '../lib/image';
 import type { ScanImageAnalysis } from '@chefsbook/ai';
 import type { ScanFollowUp } from '@chefsbook/ai';
 import { consumeLastUsage } from '@chefsbook/ai';
-import { logAiCallFromClient } from '@chefsbook/db';
+import { logAiCallFromClient, checkRecipeCompleteness, updateRecipe } from '@chefsbook/db';
 import { useConfirmDialog } from './useDialog';
 
 // ── Steps ──
@@ -167,6 +167,20 @@ export function GuidedScanFlow({
       const finalRecipe = { ...scanned, title: trimmedTitle || scanned.title };
 
       const recipe = await addRecipe(session.user.id, finalRecipe);
+
+      // Set visibility based on completeness (non-blocking)
+      try {
+        const completeness = checkRecipeCompleteness({
+          title: finalRecipe.title,
+          description: finalRecipe.description,
+          ingredients: finalRecipe.ingredients,
+          steps: finalRecipe.steps,
+          tags: (finalRecipe as any).tags,
+        });
+        if (completeness.isComplete) {
+          await updateRecipe(recipe.id, { visibility: 'public' });
+        }
+      } catch { /* non-blocking */ }
 
       // Upload the scan photo as the primary recipe image (non-blocking)
       try {

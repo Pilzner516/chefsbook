@@ -120,6 +120,7 @@ Create a detailed, home-cook-friendly recipe. Return ONLY a JSON object:
     { "step_number": 1, "instruction": "string", "timer_minutes": number|null, "group_label": "string|null" }
   ],
   "notes": "string|null",
+  "tags": ["lowercase-tag"],
   "source_type": "ai"
 }
 
@@ -128,7 +129,8 @@ Rules:
 - Include prep and cook times
 - Use standard ingredient measurements
 - Extract timer_minutes from each step that mentions a time duration
-- Group ingredients/steps when the recipe has distinct components (e.g. "For the sauce:")`;
+- Group ingredients/steps when the recipe has distinct components (e.g. "For the sauce:")
+- tags: 3-6 lowercase, hyphen-separated tags describing the recipe (cuisine, main ingredient, cooking method, dietary flags if applicable). Always include at least one tag. Examples: ["italian","pasta","one-pot"], ["vegan","salad","quick"]`;
 
 export async function generateDishRecipe(params: {
   imageBase64: string;

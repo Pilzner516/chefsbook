@@ -20,14 +20,14 @@ import { useRecipeStore } from '../../lib/zustand/recipeStore';
 import { scanRecipe, scanRecipeMultiPage, analyseScannedImage } from '@chefsbook/ai';
 import type { ScanImageAnalysis, PexelsPhoto } from '@chefsbook/ai';
 import { searchPexels } from '@chefsbook/ai';
-import { pickImage, takePhoto, processImage } from '../../lib/image';
+import { pickImage, takePhoto, processImage, getPendingCameraResult } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
 import { PostImportImageSheet } from '../../components/PostImportImageSheet';
 import { GuidedScanFlow } from '../../components/GuidedScanFlow';
 import { DiscoveryToast } from '../../components/DiscoveryToast';
-import { checkRecipeLimit } from '@chefsbook/db';
+import { checkRecipeLimit, checkRecipeCompleteness, updateRecipe } from '@chefsbook/db';
 
 // TODO(web): replicate multi-page scan support
 
@@ -134,6 +134,30 @@ export default function ScanTab() {
         }
       })();
     }, []),
+  );
+
+  // Camera-result recovery after Android kills MainActivity during external camera intent.
+  // Expo's super.onCreate(null) disables state restoration, so the original launchCameraAsync
+  // Promise in startScan() is orphaned by the time the camera result is delivered. The SDK
+  // persists the result via getPendingResultAsync; we pick it up on Scan-tab focus and run the
+  // same post-capture pipeline startScan's happy path uses. Plan gate is skipped on the recovery
+  // path — the user already cleared it when they launched the camera.
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        if (!session?.user?.id) return;
+        const uri = await getPendingCameraResult();
+        if (!uri) return;
+        try {
+          const processed = await processImage(uri);
+          setScanPages([{ uri, ...processed }]);
+          setScanMode(true);
+        } catch (e: any) {
+          console.warn('[scan] pending-result recovery failed', e);
+          Alert.alert(t('common.errorTitle'), e?.message ?? String(e));
+        }
+      })();
+    }, [session?.user?.id]),
   );
 
   // Auto-import from share sheet
@@ -246,6 +270,28 @@ export default function ScanTab() {
       }
 
       const recipe = await addRecipe(session.user.id, scanned);
+
+      // Apply client-side completeness gate: complete scan recipes should be public.
+      // The server-side finalize endpoint also runs this, but runs asynchronously and
+      // needs tags in DB — which are now included in SCAN_PROMPT output.
+      try {
+        const completeness = checkRecipeCompleteness({
+          title: scanned.title,
+          description: scanned.description,
+          ingredients: scanned.ingredients,
+          steps: scanned.steps,
+          tags: (scanned as any).tags,
+        });
+        if (completeness.isComplete) {
+          await updateRecipe(recipe.id, { visibility: 'public' });
+        } else {
+          const existingTags: string[] = (scanned as any).tags ?? [];
+          if (!existingTags.includes('_incomplete')) {
+            await updateRecipe(recipe.id, { tags: [...existingTags, '_incomplete'] });
+          }
+        }
+      } catch { /* non-blocking — visibility fallback: DB default 'public' */ }
+
       setImportedRecipeId(recipe.id);
       setImportStatus('success');
 
