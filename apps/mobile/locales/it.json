@@ -361,7 +361,14 @@
     "copySaved": "Ricetta salvata come copia.",
     "unsavedChanges": "Modifiche non salvate",
     "unsavedChangesBody": "Hai modifiche non salvate. Scartarle?",
-    "discard": "Scarta"
+    "discard": "Scarta",
+    "visibilityPrivate": "Privato",
+    "visibilityPublic": "Pubblico",
+    "makePublic": "Rendere pubblico?",
+    "makePublicBody": "Chiunque potrà scoprire e visualizzare questa ricetta.",
+    "makePrivate": "Rendere privato?",
+    "makePrivateBody": "Solo tu potrai vedere questa ricetta.",
+    "visibilityUpdateFailed": "Impossibile aggiornare la visibilità"
   },
   "settings": {
     "language": "Lingua",

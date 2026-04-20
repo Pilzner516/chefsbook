@@ -199,7 +199,14 @@
     "copySaved": "Recipe saved as a copy.",
     "unsavedChanges": "Unsaved Changes",
     "unsavedChangesBody": "You have unsaved changes. Discard them?",
-    "discard": "Discard"
+    "discard": "Discard",
+    "visibilityPrivate": "Private",
+    "visibilityPublic": "Public",
+    "makePublic": "Make Public?",
+    "makePublicBody": "Anyone will be able to discover and view this recipe.",
+    "makePrivate": "Make Private?",
+    "makePrivateBody": "Only you will be able to see this recipe.",
+    "visibilityUpdateFailed": "Failed to update visibility"
   },
   "shop": {
     "shoppingLists": "Shopping Lists",

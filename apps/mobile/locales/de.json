@@ -361,7 +361,14 @@
     "copySaved": "Rezept als Kopie gespeichert.",
     "unsavedChanges": "Nicht gespeicherte Änderungen",
     "unsavedChangesBody": "Sie haben nicht gespeicherte Änderungen. Verwerfen?",
-    "discard": "Verwerfen"
+    "discard": "Verwerfen",
+    "visibilityPrivate": "Privat",
+    "visibilityPublic": "Öffentlich",
+    "makePublic": "Öffentlich machen?",
+    "makePublicBody": "Jeder kann dieses Rezept entdecken und ansehen.",
+    "makePrivate": "Privat machen?",
+    "makePrivateBody": "Nur Sie können dieses Rezept sehen.",
+    "visibilityUpdateFailed": "Sichtbarkeit konnte nicht aktualisiert werden"
   },
   "settings": {
     "language": "Sprache",

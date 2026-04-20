@@ -602,6 +602,7 @@ function RecipeDetailInner() {
   const [editVisibility, setEditVisibility] = useState<'private' | 'shared_link' | 'public'>('private');
   const [savingEdit, setSavingEdit] = useState(false);
   const [heroRefreshKey, setHeroRefreshKey] = useState(0);
+  const [visibilityUpdating, setVisibilityUpdating] = useState(false);
   const [showMealPicker, setShowMealPicker] = useState(false);
   const language = usePreferencesStore((s) => s.language);
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
@@ -798,6 +799,27 @@ function RecipeDetailInner() {
         { text: t('common.cancel'), style: 'cancel' },
       ],
     );
+  };
+
+  const handleToggleVisibility = async (recipe: typeof currentRecipe) => {
+    if (!recipe || visibilityUpdating) return;
+    const isPublic = recipe.visibility === 'public';
+    const ok = await confirmAction({
+      title: isPublic ? t('recipe.makePrivate') : t('recipe.makePublic'),
+      body: isPublic ? t('recipe.makePrivateBody') : t('recipe.makePublicBody'),
+      confirmLabel: isPublic ? t('recipe.visibilityPrivate') : t('recipe.visibilityPublic'),
+    });
+    if (!ok) return;
+    const newVisibility = isPublic ? 'private' : 'public';
+    setVisibilityUpdating(true);
+    try {
+      await updateRecipe(recipe.id, { visibility: newVisibility as any });
+      await fetchRecipe(recipe.id);
+    } catch {
+      Alert.alert(t('common.errorTitle'), t('recipe.visibilityUpdateFailed'));
+    } finally {
+      setVisibilityUpdating(false);
+    }
   };
 
   const startEditing = () => {
@@ -1362,6 +1384,41 @@ function RecipeDetailInner() {
                 : `${recipe.save_count} saves`}
             </Text>
           </View>
+        )}
+
+        {/* Visibility toggle — owner only */}
+        {recipe.user_id === session?.user?.id && (
+          <TouchableOpacity
+            onPress={() => handleToggleVisibility(recipe)}
+            disabled={visibilityUpdating}
+            style={{
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              backgroundColor: recipe.visibility === 'public' ? colors.accentGreenSoft : colors.bgBase,
+              borderRadius: 20,
+              paddingHorizontal: 12,
+              paddingVertical: 5,
+              marginBottom: 10,
+              borderWidth: 1,
+              borderColor: recipe.visibility === 'public' ? colors.accentGreen : colors.borderDefault,
+              opacity: visibilityUpdating ? 0.5 : 1,
+            }}
+          >
+            <Ionicons
+              name={recipe.visibility === 'public' ? 'globe-outline' : 'lock-closed-outline'}
+              size={13}
+              color={recipe.visibility === 'public' ? colors.accentGreen : colors.textMuted}
+            />
+            <Text style={{
+              color: recipe.visibility === 'public' ? colors.accentGreen : colors.textMuted,
+              fontSize: 12,
+              fontWeight: '600',
+            }}>
+              {recipe.visibility === 'public' ? t('recipe.visibilityPublic') : t('recipe.visibilityPrivate')}
+            </Text>
+          </TouchableOpacity>
         )}
 
         {/* Import status warning banner */}
