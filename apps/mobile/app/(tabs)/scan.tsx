@@ -24,6 +24,7 @@ import { pickImage, takePhoto, processImage, getPendingCameraResult, consumePend
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { Input } from '../../components/UIKit';
+import ChefsDialog from '../../components/ChefsDialog';
 import { PostImportImageSheet } from '../../components/PostImportImageSheet';
 import { GuidedScanFlow } from '../../components/GuidedScanFlow';
 import { DiscoveryToast } from '../../components/DiscoveryToast';
@@ -72,6 +73,8 @@ export default function ScanTab() {
   const [pasteText, setPasteText] = useState('');
   // Discovery toast — shown when the imported URL is from a site we hadn't seen
   const [discoveryDomain, setDiscoveryDomain] = useState<string | null>(null);
+  const [showInstagramTipDialog, setShowInstagramTipDialog] = useState(false);
+  const [showInstagramRedirectDialog, setShowInstagramRedirectDialog] = useState(false);
 
   // Speak button pulse animation
   const pulseScale = useSharedValue(1);
@@ -176,11 +179,7 @@ export default function ScanTab() {
   // Instagram URL arrived via deep link — show a tip (scraping is no longer supported)
   useEffect(() => {
     if (instagramTip === '1') {
-      Alert.alert(
-        'Instagram import',
-        "Instagram no longer lets us import posts directly. Screenshot the post, then tap \"Scan a photo\" below — we'll read it for you.",
-        [{ text: 'Got it' }],
-      );
+      setShowInstagramTipDialog(true);
     }
   }, [instagramTip]);
 
@@ -318,11 +317,7 @@ export default function ScanTab() {
     u.includes('instagram.com/p/') || u.includes('instagram.com/reel/');
 
   const showInstagramRedirect = () => {
-    Alert.alert(
-      'Instagram import',
-      "Instagram no longer lets us import posts directly. Screenshot the post, then tap \"Scan a photo\" below — we'll read the ingredients and steps from the caption.",
-      [{ text: 'OK' }],
-    );
+    setShowInstagramRedirectDialog(true);
   };
 
   const handleImport = async (urlToImport?: string) => {
@@ -830,6 +825,20 @@ export default function ScanTab() {
 
         <View style={{ height: tabBarHeight }} />
       </ScrollView>
+      <ChefsDialog
+        visible={showInstagramTipDialog}
+        title="Instagram import"
+        body={'Instagram no longer lets us import posts directly. Screenshot the post, then tap "Scan a photo" below \u2014 we\'ll read it for you.'}
+        onClose={() => setShowInstagramTipDialog(false)}
+        buttons={[{ label: 'Got it', variant: 'primary', onPress: () => setShowInstagramTipDialog(false) }]}
+      />
+      <ChefsDialog
+        visible={showInstagramRedirectDialog}
+        title="Instagram import"
+        body={'Instagram no longer lets us import posts directly. Screenshot the post, then tap "Scan a photo" below \u2014 we\'ll read the ingredients and steps from the caption.'}
+        onClose={() => setShowInstagramRedirectDialog(false)}
+        buttons={[{ label: 'OK', variant: 'primary', onPress: () => setShowInstagramRedirectDialog(false) }]}
+      />
     </View>
   );
 }

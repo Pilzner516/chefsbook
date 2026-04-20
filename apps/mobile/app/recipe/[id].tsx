@@ -700,6 +700,8 @@ function RecipeDetailInner() {
   const [whichListOptions, setWhichListOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [showVersionPickerDialog, setShowVersionPickerDialog] = useState(false);
   const [versionPickerOptions, setVersionPickerOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [showReimportSoonDialog, setShowReimportSoonDialog] = useState(false);
+  const [showAiChefDialog, setShowAiChefDialog] = useState(false);
   // Refs hold the recipe/action target for dialogs (avoids extra re-renders)
   const shareTargetRef = React.useRef<typeof currentRecipe>(null);
   const privateSharUrlRef = React.useRef<string>('');
@@ -1615,14 +1617,14 @@ function RecipeDetailInner() {
                     body: t('recipe.reimportBody'),
                     confirmLabel: t('recipe.reimportTitle'),
                   });
-                  if (ok) Alert.alert(t('recipe.comingSoon'), t('recipe.reimportSoon'));
+                  if (ok) setShowReimportSoonDialog(true);
                 }}
                 style={{ flex: 1, backgroundColor: colors.bgCard, borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
               >
                 <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>{t('recipe.tryReimport')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => Alert.alert('aiChef', t('recipe.aiChefBody'))}
+                onPress={() => setShowAiChefDialog(true)}
                 style={{ flex: 1, backgroundColor: colors.accentGreenSoft, borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
               >
                 <Text style={{ color: colors.accentGreen, fontSize: 13, fontWeight: '600' }}>{'\u2728'} {t('recipe.completeAiChef')}</Text>
@@ -2005,6 +2007,20 @@ function RecipeDetailInner() {
         })),
         { label: t('common.cancel'), variant: 'text' as const, onPress: () => setShowVersionPickerDialog(false) },
       ]}
+    />
+    <ChefsDialog
+      visible={showReimportSoonDialog}
+      title={t('recipe.comingSoon')}
+      body={t('recipe.reimportSoon')}
+      onClose={() => setShowReimportSoonDialog(false)}
+      buttons={[{ label: t('common.ok'), variant: 'primary', onPress: () => setShowReimportSoonDialog(false) }]}
+    />
+    <ChefsDialog
+      visible={showAiChefDialog}
+      title="aiChef"
+      body={t('recipe.aiChefBody')}
+      onClose={() => setShowAiChefDialog(false)}
+      buttons={[{ label: t('common.ok'), variant: 'primary', onPress: () => setShowAiChefDialog(false) }]}
     />
     <StorePicker
       visible={showRecipeStorePicker}
