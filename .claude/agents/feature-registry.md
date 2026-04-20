@@ -61,7 +61,7 @@
 | Add to My Recipes (save/bookmark) | LIVE | packages/db (saveRecipe), apps/web/app/recipe/[id]/ | 32, 95, 104 | Uses recipe_saves (no clone); My Recipes shows owned + saved via JOIN |
 | Share link generation | LIVE | chefsbk.app/recipe/[id]?ref=[username] | 32 | |
 | Guest access (view-only) | LIVE | apps/web/app/recipe/[id]/, guest_sessions table | 32 | Email capture |
-| PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49, 129 | Plan gated; options modal before generate (include image/comments toggles); query params to PDF route |
+| PDF export (Pro plan) | LIVE | apps/web/app/recipe/[id]/pdf/, @react-pdf/renderer | 33, 49, 129, P-209 | Plan gated; options modal before generate; admin bypass: admin_users row → skip plan check on both server and client |
 | Print recipe | LIVE | apps/web | 35, 129 | Options modal before print (include image/comments toggles); CSS print-hide class toggled via JS; @media print CSS |
 | Recipe saves count | LIVE | recipe_saves table, trigger | 03 | |
 | Save count display (bookmark icon) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/, /api/recipe/[id]/savers | 97, 108, 132 | Bookmark icon + count; savers modal fetches via /api/recipe/[id]/savers (server-side supabaseAdmin); proper pluralization |
@@ -240,6 +240,7 @@
 | i18n (web + mobile, 5 locales) | LIVE | apps/web/locales/, apps/mobile/locales/ | 08, 53 | react-i18next |
 | FloatingTabBar (mobile) | LIVE | apps/mobile/components/FloatingTabBar.tsx, apps/mobile/app/_layout.tsx | 01, 203 | 5 tabs with i18n labels. Session 203: mounted at root Stack (not inside (tabs) Tabs layout) so it persists on detail screens (recipe/[id], cookbook/[id], chef/[id], share/[token]). Hidden on /, /auth/*, /modal, /messages. |
 | Branded launch splash (3s min) | LIVE | apps/mobile/app/_layout.tsx (SplashOverlay) | 203 | expo-splash-screen preventAutoHideAsync at module scope; React overlay shows chef-hat asset + "ChefsBook" serif wordmark + "Welcome to ChefsBook" tagline for SPLASH_MIN_MS=3000. Warm resume never re-shows. |
+| Web loading splash | LIVE | apps/web/app/loading.tsx | P-209 | Next.js Suspense fallback: cream #faf7f0, chef hat from /images/chefs-hat.png, ChefsBook Georgia serif wordmark, Welcome tagline. Zero network calls, all assets local. |
 
 ---
 
