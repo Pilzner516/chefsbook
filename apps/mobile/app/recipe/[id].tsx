@@ -35,6 +35,7 @@ import { RecipeComments } from '../../components/RecipeComments';
 import { MealPlanPicker } from '../../components/MealPlanPicker';
 import { HeroGallery } from '../../components/HeroGallery';
 import { useConfirmDialog } from '../../components/useDialog';
+import ChefsDialog from '../../components/ChefsDialog';
 import { StorePicker } from '../../components/StorePicker';
 
 // --- Error boundary to catch render crashes ---
@@ -691,6 +692,18 @@ function RecipeDetailInner() {
   const language = usePreferencesStore((s) => s.language);
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
   const [translating, setTranslating] = useState(false);
+  // Dialog state — replaces Alert.alert for all user-facing choices
+  const [showChangeImageDialog, setShowChangeImageDialog] = useState(false);
+  const [showShareOptionsDialog, setShowShareOptionsDialog] = useState(false);
+  const [showPrivateShareDialog, setShowPrivateShareDialog] = useState(false);
+  const [showWhichListDialog, setShowWhichListDialog] = useState(false);
+  const [whichListOptions, setWhichListOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [showVersionPickerDialog, setShowVersionPickerDialog] = useState(false);
+  const [versionPickerOptions, setVersionPickerOptions] = useState<Array<{ id: string; label: string }>>([]);
+  // Refs hold the recipe/action target for dialogs (avoids extra re-renders)
+  const shareTargetRef = React.useRef<typeof currentRecipe>(null);
+  const privateSharUrlRef = React.useRef<string>('');
+  const addToListRef = React.useRef<(listId: string, listName: string) => void>(() => {});
 
   useEffect(() => {
     if (id) fetchRecipe(id);
@@ -798,14 +811,9 @@ function RecipeDetailInner() {
       if (lists.length === 0) {
         setShowRecipeStorePicker(true);
       } else {
-        Alert.alert(t('recipe.addToList'), t('recipe.whichList'), [
-          ...lists.slice(0, 5).map((list) => ({
-            text: list.name,
-            onPress: () => addToList(list.id, list.name),
-          })),
-          { text: t('recipe.newList'), onPress: () => setShowRecipeStorePicker(true) },
-          { text: t('common.cancel'), style: 'cancel' },
-        ]);
+        addToListRef.current = addToList;
+        setWhichListOptions(lists.slice(0, 5));
+        setShowWhichListDialog(true);
       }
     } catch (err) {
       console.error('[RecipeDetail] shopping list error:', err);
@@ -815,74 +823,54 @@ function RecipeDetailInner() {
 
   const handleShareRecipe = (r: typeof recipe) => {
     if (!r) return;
+    shareTargetRef.current = r;
+    setShowShareOptionsDialog(true);
+  };
+
+  const executeShareViaLink = async () => {
+    const r = shareTargetRef.current;
+    if (!r) return;
     const profile = useAuthStore.getState().profile;
-    const userPlan = profile?.plan_tier ?? 'free';
-
-    const doShare = async () => {
-      // If private, warn and update to shared_link
-      if (r.visibility === 'private') {
-        Alert.alert(
-          t('share.privacyWarningTitle'),
-          t('share.privacyWarningMessage'),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            {
-              text: t('share.shareAnyway'),
-              onPress: async () => {
-                await updateRecipe(r.id, { visibility: 'shared_link' });
-                fetchRecipe(r.id);
-                const url = getShareUrl(r.share_token, profile?.username);
-                await Clipboard.setStringAsync(url);
-                Alert.alert(t('share.linkCopied'));
-                shareRecipe(r, profile?.username);
-              },
-            },
-          ],
-        );
-        return;
-      }
+    if (r.visibility === 'private') {
       const url = getShareUrl(r.share_token, profile?.username);
-      await Clipboard.setStringAsync(url);
-      Alert.alert(t('share.linkCopied'));
-      shareRecipe(r, profile?.username);
-    };
+      privateSharUrlRef.current = url;
+      setShowShareOptionsDialog(false);
+      setShowPrivateShareDialog(true);
+      return;
+    }
+    const url = getShareUrl(r.share_token, profile?.username);
+    await Clipboard.setStringAsync(url);
+    Alert.alert(t('share.linkCopied'));
+    shareRecipe(r, profile?.username);
+  };
 
-    Alert.alert(
-      t('share.title'),
-      undefined,
-      [
-        { text: `🔗 ${t('share.shareViaLink')}`, onPress: doShare },
-        {
-          text: `📄 ${t('share.shareAsPdf')}${canDo(userPlan, 'canPDF') ? '' : ` (${t('share.proOnly')})`}`,
-          onPress: async () => {
-            if (!canDo(userPlan, 'canPDF')) {
-              Alert.alert(t('share.proOnly'), t('share.proOnlyMessage'));
-              return;
-            }
-            try {
-              const { data: { session: sess } } = await supabase.auth.getSession();
-              if (!sess?.access_token) return;
-              const FileSystem = require('expo-file-system/legacy');
-              const Sharing = require('expo-sharing');
-              const pdfUri = FileSystem.cacheDirectory + `${r.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_')}.pdf`;
-              const result = await FileSystem.downloadAsync(
-                `https://chefsbk.app/recipe/${r.id}/pdf`,
-                pdfUri,
-                { headers: { Authorization: `Bearer ${sess.access_token}` } },
-              );
-              if (result.status === 200) {
-                await Sharing.shareAsync(result.uri, { mimeType: 'application/pdf', dialogTitle: `Share ${r.title}` });
-              } else {
-                Alert.alert(t('common.errorTitle'), 'PDF generation failed');
-              }
-            } catch (e: any) {
-              Alert.alert(t('common.errorTitle'), e.message);
-            }
-          },
-        },
-        { text: t('common.cancel'), style: 'cancel' },
-      ],
-    );
+  const executeShareAsPdf = async () => {
+    const r = shareTargetRef.current;
+    if (!r) return;
+    const userPlan = useAuthStore.getState().profile?.plan_tier ?? 'free';
+    if (!canDo(userPlan, 'canPDF')) {
+      Alert.alert(t('share.proOnly'), t('share.proOnlyMessage'));
+      return;
+    }
+    try {
+      const { data: { session: sess } } = await supabase.auth.getSession();
+      if (!sess?.access_token) return;
+      const FileSystem = require('expo-file-system/legacy');
+      const Sharing = require('expo-sharing');
+      const pdfUri = FileSystem.cacheDirectory + `${r.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_')}.pdf`;
+      const result = await FileSystem.downloadAsync(
+        `https://chefsbk.app/recipe/${r.id}/pdf`,
+        pdfUri,
+        { headers: { Authorization: `Bearer ${sess.access_token}` } },
+      );
+      if (result.status === 200) {
+        await Sharing.shareAsync(result.uri, { mimeType: 'application/pdf', dialogTitle: `Share ${r.title}` });
+      } else {
+        Alert.alert(t('common.errorTitle'), 'PDF generation failed');
+      }
+    } catch (e: any) {
+      Alert.alert(t('common.errorTitle'), e.message);
+    }
   };
 
   // ── Image management ──
@@ -954,28 +942,7 @@ function RecipeDetailInner() {
   };
 
   const handleChangeImageTap = () => {
-    Alert.alert(
-      t('imageManager.changeImage'),
-      '',
-      [
-        { text: t('imageManager.takePhoto'), onPress: handleTakePhoto },
-        { text: t('imageManager.chooseFromLibrary'), onPress: handleChooseFromLibrary },
-        { text: t('imageManager.generateAiImage'), onPress: () => setShowAiGenerationModal(true) },
-        {
-          text: t('imageManager.removeImage'),
-          style: 'destructive' as const,
-          onPress: async () => {
-            const ok = await confirmAction({
-              title: t('imageManager.removeImageTitle'),
-              body: t('imageManager.removeImageBody'),
-              confirmLabel: t('common.remove'),
-            });
-            if (ok) await handleRemoveImage();
-          },
-        },
-        { text: t('common.cancel'), style: 'cancel' },
-      ],
-    );
+    setShowChangeImageDialog(true);
   };
 
   const handleImageGenerated = () => {
@@ -1512,17 +1479,13 @@ function RecipeDetailInner() {
               const parentId = recipe.parent_recipe_id || recipe.id;
               try {
                 const versions = await getRecipeVersions(parentId);
-                Alert.alert(
-                  t('recipes.recipeVersions'),
-                  versions.map((v) => `Version ${v.version_number}${v.version_label ? ` — ${v.version_label}` : ''}: ${v.title}`).join('\n'),
-                  [
-                    ...versions.filter((v) => v.id !== recipe.id).map((v) => ({
-                      text: `V${v.version_number}${v.version_label ? ` (${v.version_label})` : ''}`,
-                      onPress: () => router.push(`/recipe/${v.id}`),
-                    })),
-                    { text: t('common.cancel'), style: 'cancel' as const },
-                  ],
-                );
+                const otherVersions = versions.filter((v) => v.id !== recipe.id);
+                if (otherVersions.length === 0) return;
+                setVersionPickerOptions(otherVersions.map((v) => ({
+                  id: v.id,
+                  label: `V${v.version_number}${v.version_label ? ` (${v.version_label})` : ''} — ${v.title}`,
+                })));
+                setShowVersionPickerDialog(true);
               } catch {}
             }}
             style={{ marginBottom: 8 }}
@@ -1645,13 +1608,14 @@ function RecipeDetailInner() {
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <TouchableOpacity
-                onPress={() => {
-                  if (recipe.source_url) {
-                    Alert.alert(t('recipe.reimportTitle'), t('recipe.reimportBody'), [
-                      { text: t('common.cancel') },
-                      { text: t('recipe.reimportTitle'), onPress: () => Alert.alert(t('recipe.comingSoon'), t('recipe.reimportSoon')) },
-                    ]);
-                  }
+                onPress={async () => {
+                  if (!recipe.source_url) return;
+                  const ok = await confirmAction({
+                    title: t('recipe.reimportTitle'),
+                    body: t('recipe.reimportBody'),
+                    confirmLabel: t('recipe.reimportTitle'),
+                  });
+                  if (ok) Alert.alert(t('recipe.comingSoon'), t('recipe.reimportSoon'));
                 }}
                 style={{ flex: 1, backgroundColor: colors.bgCard, borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
               >
@@ -1707,18 +1671,13 @@ function RecipeDetailInner() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      t('attribution.removeSharedBy'),
-                      t('attribution.removeSharedByConfirm'),
-                      [
-                        { text: t('common.cancel'), style: 'cancel' },
-                        { text: t('common.delete'), style: 'destructive', onPress: async () => {
-                          await removeSharedBy(recipe.id);
-                          fetchRecipe(recipe.id);
-                        }},
-                      ],
-                    );
+                  onPress={async () => {
+                    const ok = await confirmAction({
+                      title: t('attribution.removeSharedBy'),
+                      body: t('attribution.removeSharedByConfirm'),
+                      confirmLabel: t('common.delete'),
+                    });
+                    if (ok) { await removeSharedBy(recipe.id); fetchRecipe(recipe.id); }
                   }}
                   style={{ padding: 2 }}
                 >
@@ -1964,6 +1923,89 @@ function RecipeDetailInner() {
       </View>
     )}
     <ConfirmActionDialog />
+    {/* Change Image option picker */}
+    <ChefsDialog
+      visible={showChangeImageDialog}
+      title={t('imageManager.changeImage')}
+      body=""
+      layout="vertical"
+      onClose={() => setShowChangeImageDialog(false)}
+      buttons={[
+        { label: t('imageManager.generateAiImage'), variant: 'primary', onPress: () => { setShowChangeImageDialog(false); setShowAiGenerationModal(true); } },
+        { label: t('imageManager.chooseFromLibrary'), variant: 'positive', onPress: () => { setShowChangeImageDialog(false); handleChooseFromLibrary(); } },
+        { label: t('imageManager.takePhoto'), variant: 'positive', onPress: () => { setShowChangeImageDialog(false); handleTakePhoto(); } },
+        { label: t('imageManager.removeImage'), variant: 'secondary', onPress: async () => { setShowChangeImageDialog(false); const ok = await confirmAction({ title: t('imageManager.removeImageTitle'), body: t('imageManager.removeImageBody'), confirmLabel: t('common.remove') }); if (ok) await handleRemoveImage(); } },
+        { label: t('common.cancel'), variant: 'text', onPress: () => setShowChangeImageDialog(false) },
+      ]}
+    />
+    {/* Share options picker */}
+    <ChefsDialog
+      visible={showShareOptionsDialog}
+      title={t('share.title')}
+      body=""
+      layout="vertical"
+      onClose={() => setShowShareOptionsDialog(false)}
+      buttons={[
+        { label: `🔗 ${t('share.shareViaLink')}`, variant: 'primary', onPress: () => { setShowShareOptionsDialog(false); executeShareViaLink(); } },
+        { label: `📄 ${t('share.shareAsPdf')}`, variant: 'positive', onPress: () => { setShowShareOptionsDialog(false); executeShareAsPdf(); } },
+        { label: t('common.cancel'), variant: 'text', onPress: () => setShowShareOptionsDialog(false) },
+      ]}
+    />
+    {/* Private recipe share confirmation */}
+    <ChefsDialog
+      visible={showPrivateShareDialog}
+      title={t('share.privacyWarningTitle')}
+      body={t('share.privacyWarningMessage')}
+      onClose={() => setShowPrivateShareDialog(false)}
+      buttons={[
+        { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowPrivateShareDialog(false) },
+        { label: t('share.shareAnyway'), variant: 'primary', onPress: async () => {
+          setShowPrivateShareDialog(false);
+          const r = shareTargetRef.current;
+          if (!r) return;
+          const userProfile = useAuthStore.getState().profile;
+          await updateRecipe(r.id, { visibility: 'shared_link' });
+          fetchRecipe(r.id);
+          const url = privateSharUrlRef.current || getShareUrl(r.share_token, userProfile?.username);
+          await Clipboard.setStringAsync(url);
+          Alert.alert(t('share.linkCopied'));
+          shareRecipe(r, userProfile?.username);
+        }},
+      ]}
+    />
+    {/* Which shopping list picker */}
+    <ChefsDialog
+      visible={showWhichListDialog}
+      title={t('recipe.addToList')}
+      body={t('recipe.whichList')}
+      layout="vertical"
+      onClose={() => setShowWhichListDialog(false)}
+      buttons={[
+        ...whichListOptions.map((list) => ({
+          label: list.name,
+          variant: 'positive' as const,
+          onPress: () => { setShowWhichListDialog(false); addToListRef.current(list.id, list.name); },
+        })),
+        { label: t('recipe.newList'), variant: 'secondary' as const, onPress: () => { setShowWhichListDialog(false); setShowRecipeStorePicker(true); } },
+        { label: t('common.cancel'), variant: 'text' as const, onPress: () => setShowWhichListDialog(false) },
+      ]}
+    />
+    {/* Recipe version picker */}
+    <ChefsDialog
+      visible={showVersionPickerDialog}
+      title={t('recipes.recipeVersions')}
+      body=""
+      layout="vertical"
+      onClose={() => setShowVersionPickerDialog(false)}
+      buttons={[
+        ...versionPickerOptions.map((v) => ({
+          label: v.label,
+          variant: 'positive' as const,
+          onPress: () => { setShowVersionPickerDialog(false); router.push(`/recipe/${v.id}` as any); },
+        })),
+        { label: t('common.cancel'), variant: 'text' as const, onPress: () => setShowVersionPickerDialog(false) },
+      ]}
+    />
     <StorePicker
       visible={showRecipeStorePicker}
       onCreated={async (listId, listName) => {
