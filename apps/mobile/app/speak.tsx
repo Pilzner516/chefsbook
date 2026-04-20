@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { formatVoiceRecipe } from '@chefsbook/ai';
 import { formatQuantity, LANGUAGES } from '@chefsbook/ui';
 import { Button, Card, Loading, Divider } from '../components/UIKit';
+import ChefsDialog from '../components/ChefsDialog';
 import { PexelsPickerSheet } from '../components/PexelsPickerSheet';
 import type { PexelsPhoto } from '@chefsbook/ai';
 
@@ -41,6 +42,7 @@ export default function SpeakScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const session = useAuthStore((s) => s.session);
+  const planTier = useAuthStore((s) => s.planTier);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
   const language = usePreferencesStore((s) => s.language);
 
@@ -61,6 +63,7 @@ export default function SpeakScreen() {
   const [error, setError] = useState('');
   const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [showPexels, setShowPexels] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
   // Ref to access latest interim in the 'end' handler
   const interimRef = useRef('');
 
@@ -130,14 +133,7 @@ export default function SpeakScreen() {
   };
 
   const clearTranscript = () => {
-    Alert.alert(t('speak.clearRecording'), '', [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.clear'), style: 'destructive', onPress: () => {
-        setFinalTranscript('');
-        setInterimTranscript('');
-        interimRef.current = '';
-      }},
-    ]);
+    setShowClearDialog(true);
   };
 
   const generateRecipe = async () => {
@@ -179,6 +175,20 @@ export default function SpeakScreen() {
           const { data: urlData } = supabase.storage.from('recipe-user-photos').getPublicUrl(fileName);
           await addRecipePhoto(saved.id, session.user.id, fileName, urlData.publicUrl);
         } catch {} // non-blocking
+      } else if (planTier !== 'free' && session.access_token) {
+        // Feature C: auto-generate AI image in background for Chef+ accounts
+        const WEB_API_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'http://100.110.47.62:8000').replace(':8000', ':3000');
+        const token = session.access_token;
+        const recipeId = saved.id;
+        fetch(`${WEB_API_URL}/api/recipes/mobile-generate-image`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ recipeId, theme: 'bright_fresh', creativityLevel: 3 }),
+        }).then((res) => {
+          if (res.ok) {
+            // image_url already updated on recipes row by the API — nothing more needed
+          }
+        }).catch(() => {}); // silent on failure
       }
       router.replace(`/recipe/${saved.id}`);
     } catch (e: any) {
@@ -317,6 +327,16 @@ export default function SpeakScreen() {
             <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '700' }}>{t('speak.extractRecipe')}</Text>
           </TouchableOpacity>
         </View>
+        <ChefsDialog
+          visible={showClearDialog}
+          title={t('speak.clearRecording')}
+          body=""
+          onClose={() => setShowClearDialog(false)}
+          buttons={[
+            { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowClearDialog(false) },
+            { label: t('common.clear'), variant: 'secondary', onPress: () => { setShowClearDialog(false); setFinalTranscript(''); setInterimTranscript(''); interimRef.current = ''; } },
+          ]}
+        />
       </View>
     );
   }
