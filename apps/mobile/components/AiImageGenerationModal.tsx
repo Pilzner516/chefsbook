@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, Modal, ScrollView, TouchableOpacity,
   ActivityIndicator, Image, Alert,
@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import { IMAGE_THEMES } from '@chefsbook/ai';
 import type { ImageTheme, CreativityLevel } from '@chefsbook/ai';
+import { supabase } from '@chefsbook/db';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -42,6 +43,17 @@ export function AiImageGenerationModal({ visible, recipeId, onClose, onImageGene
 
   const isFreePlan = planTier === 'free';
   const canTryAgain = hasGenerated && regenCount < REGEN_LIMIT;
+
+  useEffect(() => {
+    if (!visible) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('system_settings').select('value').eq('key', 'image_creativity_level').single();
+        const level = parseInt(data?.value ?? '3', 10);
+        if (level >= 1 && level <= 5) setCreativity(level as CreativityLevel);
+      } catch {}
+    })();
+  }, [visible]);
 
   const generate = async (replaceExisting = false) => {
     if (!session?.access_token) return;
@@ -99,7 +111,6 @@ export function AiImageGenerationModal({ visible, recipeId, onClose, onImageGene
     setHasGenerated(false);
     setGenerating(false);
     setSelectedTheme('bright_fresh');
-    setCreativity(3);
     onClose();
   };
 
@@ -189,117 +200,64 @@ export function AiImageGenerationModal({ visible, recipeId, onClose, onImageGene
           </View>
         ) : (
           /* Configuration state */
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
-          >
-            {/* Theme picker */}
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 }}>
-              {t('imageManager.chooseTheme')}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {THEMES.map((theme) => (
-                  <TouchableOpacity
-                    key={theme.id}
-                    onPress={() => setSelectedTheme(theme.id)}
-                    style={{
-                      width: 100, borderRadius: 10, overflow: 'hidden',
-                      borderWidth: 2,
-                      borderColor: selectedTheme === theme.id ? colors.accent : colors.borderDefault,
-                      backgroundColor: colors.bgCard,
-                    }}
-                  >
-                    <View style={{ padding: 10, alignItems: 'center', gap: 4 }}>
-                      <Text style={{ fontSize: 24 }}>{theme.emoji}</Text>
-                      <Text style={{
-                        fontSize: 11, fontWeight: '600', color: colors.textPrimary,
-                        textAlign: 'center', lineHeight: 14,
-                      }}>
-                        {theme.name}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-
-            {/* Creativity slider */}
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 }}>
-              {t('imageManager.creativity')}
-            </Text>
-            <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 12 }}>
-              {creativity === 1 ? t('imageManager.creativityVeryFaithful')
-                : creativity === 2 ? t('imageManager.creativityFaithful')
-                : creativity === 3 ? t('imageManager.creativityBalanced')
-                : creativity === 4 ? t('imageManager.creativityCreative')
-                : t('imageManager.creativityVeryCreative')}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <TouchableOpacity
-                onPress={() => setCreativity((c) => Math.max(1, c - 1) as CreativityLevel)}
-                style={{
-                  width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: colors.bgBase, alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 1, borderColor: colors.borderDefault,
-                }}
-              >
-                <Text style={{ fontSize: 20, color: colors.textPrimary, lineHeight: 24 }}>−</Text>
-              </TouchableOpacity>
-
-              <View style={{ flex: 1, flexDirection: 'row', gap: 4 }}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <TouchableOpacity
-                    key={n}
-                    onPress={() => setCreativity(n as CreativityLevel)}
-                    style={{
-                      flex: 1, height: 6, borderRadius: 3,
-                      backgroundColor: n <= creativity ? colors.accent : colors.borderDefault,
-                    }}
-                  />
-                ))}
-              </View>
-
-              <TouchableOpacity
-                onPress={() => setCreativity((c) => Math.min(5, c + 1) as CreativityLevel)}
-                style={{
-                  width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: colors.bgBase, alignItems: 'center', justifyContent: 'center',
-                  borderWidth: 1, borderColor: colors.borderDefault,
-                }}
-              >
-                <Text style={{ fontSize: 20, color: colors.textPrimary, lineHeight: 24 }}>+</Text>
-              </TouchableOpacity>
-
-              <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, width: 24, textAlign: 'center' }}>
-                {creativity}
-              </Text>
-            </View>
-          </ScrollView>
-        )}
-
-        {/* Generate button — shown only in configuration state */}
-        {!isFreePlan && !generating && !generatedUrl && (
-          <View style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: 16, paddingBottom: insets.bottom + 16,
-            backgroundColor: colors.bgScreen,
-            borderTopWidth: 1, borderTopColor: colors.borderDefault,
-          }}>
-            <TouchableOpacity
-              onPress={() => generate(false)}
-              style={{
-                backgroundColor: colors.accent, borderRadius: 10,
-                paddingVertical: 14, alignItems: 'center',
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ionicons name="sparkles" size={18} color="#fff" />
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-                  {t('imageManager.generateButton')}
+          <View style={{ flex: 1, justifyContent: 'space-between' }}>
+            <View style={{ padding: 16 }}>
+              {/* Theme picker */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary }}>
+                  {t('imageManager.chooseTheme')}
                 </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted }}>swipe for more →</Text>
               </View>
-            </TouchableOpacity>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {THEMES.map((theme) => (
+                    <TouchableOpacity
+                      key={theme.id}
+                      onPress={() => setSelectedTheme(theme.id)}
+                      style={{
+                        width: 100, borderRadius: 10, overflow: 'hidden',
+                        borderWidth: 2,
+                        borderColor: selectedTheme === theme.id ? colors.accent : colors.borderDefault,
+                        backgroundColor: colors.bgCard,
+                      }}
+                    >
+                      <View style={{ padding: 10, alignItems: 'center', gap: 4 }}>
+                        <Text style={{ fontSize: 24 }}>{theme.emoji}</Text>
+                        <Text style={{
+                          fontSize: 11, fontWeight: '600', color: colors.textPrimary,
+                          textAlign: 'center', lineHeight: 14,
+                        }}>
+                          {theme.name}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* Generate button — normal flow, no absolute positioning */}
+            <View style={{
+              padding: 16, paddingBottom: insets.bottom + 16,
+              borderTopWidth: 1, borderTopColor: colors.borderDefault,
+              backgroundColor: colors.bgScreen,
+            }}>
+              <TouchableOpacity
+                onPress={() => generate(false)}
+                style={{
+                  backgroundColor: colors.accent, borderRadius: 10,
+                  paddingVertical: 14, alignItems: 'center',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="sparkles" size={18} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+                    {t('imageManager.generateButton')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
