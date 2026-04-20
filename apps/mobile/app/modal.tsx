@@ -7,6 +7,7 @@ import { useAuthStore } from '../lib/zustand/authStore';
 import { updateProfile, supabase } from '@chefsbook/db';
 import { PLAN_LIMITS } from '@chefsbook/db/subscriptions';
 import { Avatar, Button, Card, Divider, Input, Badge } from '../components/UIKit';
+import ChefsDialog from '../components/ChefsDialog';
 import { getInitials } from '@chefsbook/ui';
 
 export default function SettingsModal() {
@@ -28,6 +29,8 @@ export default function SettingsModal() {
   const [confirmPw, setConfirmPw] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
   const loadProfile = useAuthStore((s) => s.loadProfile);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [showPrivateModeDialog, setShowPrivateModeDialog] = useState(false);
 
   const isAnonymous = !session?.user?.email;
 
@@ -146,21 +149,7 @@ export default function SettingsModal() {
                 value={profile.is_searchable}
                 onValueChange={(value) => {
                   if (!value) {
-                    Alert.alert(
-                      t('settings.privateMode'),
-                      `\u2022 ${t('settings.privateWarning1')}\n\u2022 ${t('settings.privateWarning2')}\n\u2022 ${t('settings.privateWarning3')}`,
-                      [
-                        { text: t('common.cancel'), style: 'cancel' },
-                        {
-                          text: t('settings.switchPrivate'),
-                          style: 'destructive',
-                          onPress: async () => {
-                            await updateProfile(profile.id, { is_searchable: false });
-                            await loadProfile();
-                          },
-                        },
-                      ],
-                    );
+                    setShowPrivateModeDialog(true);
                   } else {
                     (async () => {
                       await updateProfile(profile.id, { is_searchable: true });
@@ -210,16 +199,31 @@ export default function SettingsModal() {
         {!isAnonymous && (
           <Button
             title="Sign Out"
-            onPress={() => {
-              Alert.alert('Sign Out', 'Are you sure?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Sign Out', style: 'destructive', onPress: signOut },
-              ]);
-            }}
+            onPress={() => setShowSignOutDialog(true)}
             variant="ghost"
           />
         )}
       </View>
+      <ChefsDialog
+        visible={showSignOutDialog}
+        title="Sign Out"
+        body="Are you sure you want to sign out?"
+        onClose={() => setShowSignOutDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowSignOutDialog(false) },
+          { label: 'Sign Out', variant: 'secondary', onPress: () => { setShowSignOutDialog(false); signOut(); } },
+        ]}
+      />
+      <ChefsDialog
+        visible={showPrivateModeDialog}
+        title={t('settings.privateMode')}
+        body={`\u2022 ${t('settings.privateWarning1')}\n\u2022 ${t('settings.privateWarning2')}\n\u2022 ${t('settings.privateWarning3')}`}
+        onClose={() => setShowPrivateModeDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowPrivateModeDialog(false) },
+          { label: t('settings.switchPrivate'), variant: 'secondary', onPress: async () => { setShowPrivateModeDialog(false); if (profile) { await updateProfile(profile.id, { is_searchable: false }); await loadProfile(); } } },
+        ]}
+      />
     </ScrollView>
   );
 }
