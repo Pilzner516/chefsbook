@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView, Alert, TextInput, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Modal, ScrollView, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,9 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '../context/ThemeContext';
+import ChefsDialog from './ChefsDialog';
+import { useAuthStore } from '../lib/zustand/authStore';
+import { supabase } from '@chefsbook/db';
 
 const isStaging = process.env.EXPO_PUBLIC_APP_VARIANT === 'staging';
 
@@ -28,9 +31,15 @@ export function QANotepad({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const session = useAuthStore((s) => s.session);
+  const profile = useAuthStore((s) => s.profile);
   const [items, setItems] = useState<QAItem[]>([]);
   const [showInput, setShowInput] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [showSendConfirm, setShowSendConfirm] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load items on open
   useEffect(() => {
@@ -86,6 +95,48 @@ export function QANotepad({ visible, onClose }: Props) {
     ]);
   };
 
+  const handleSendToAdmin = async () => {
+    if (!session?.user?.id) return;
+    setSending(true);
+    try {
+      const timestamp = new Date().toISOString();
+      const noteLines = items.map((item, i) => `${i + 1}. ${item.text}`).join('\n');
+      const body = [
+        '[QA NOTEPAD]',
+        `User: ${profile?.display_name || profile?.username || 'Unknown'}`,
+        `Username: @${profile?.username || 'unknown'}`,
+        `User ID: ${session.user.id}`,
+        `Submitted: ${timestamp}`,
+        '',
+        'Notes:',
+        noteLines,
+      ].join('\n');
+
+      const { error } = await supabase.from('help_requests').insert({
+        user_id: session.user.id,
+        user_email: session.user.email,
+        username: profile?.username,
+        message: body,
+        subject: `[QA NOTEPAD] from @${profile?.username || 'user'}`,
+        body,
+        status: 'open',
+      });
+      if (error) throw error;
+
+      await saveItems([]);
+
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      setShowSuccessToast(true);
+      toastTimer.current = setTimeout(() => setShowSuccessToast(false), 2500);
+    } catch (e) {
+      console.warn('Failed to send QA notepad:', e);
+      Alert.alert(t('common.errorTitle'), t('notepad.sendFailed'));
+    } finally {
+      setSending(false);
+      setShowSendConfirm(false);
+    }
+  };
+
   const handleExport = async () => {
     const date = new Date().toLocaleDateString();
     const report = `ChefsBook QA Report — ${date}\n\n` +
@@ -117,6 +168,7 @@ export function QANotepad({ visible, onClose }: Props) {
   };
 
   return (
+    <>
     <Modal visible={visible} animationType="slide" transparent>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
         <View style={{
@@ -150,9 +202,27 @@ export function QANotepad({ visible, onClose }: Props) {
               <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600' }}>{t('notepad.title')}</Text>
               <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t('notepad.subtitle')}</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
-              <Ionicons name="close" size={24} color={colors.textMuted} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (items.length === 0) {
+                    Alert.alert(t('notepad.sendTitle'), t('notepad.sendEmpty'));
+                    return;
+                  }
+                  setShowSendConfirm(true);
+                }}
+                style={{ padding: 4 }}
+                disabled={sending}
+              >
+                {sending
+                  ? <ActivityIndicator size="small" color={colors.accent} />
+                  : <Ionicons name="paper-plane-outline" size={22} color={colors.accent} />
+                }
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Add input */}
@@ -259,8 +329,46 @@ export function QANotepad({ visible, onClose }: Props) {
               <Ionicons name="add" size={28} color="#fff" />
             </TouchableOpacity>
           )}
+
+          {/* Success toast */}
+          {showSuccessToast && (
+            <View style={{
+              position: 'absolute',
+              top: 80,
+              left: 24,
+              right: 24,
+              backgroundColor: '#2d6a4f',
+              borderRadius: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 20,
+              alignItems: 'center',
+              elevation: 10,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 6,
+            }}>
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
+                {t('notepad.sendSuccess')}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
+
     </Modal>
+
+    <ChefsDialog
+      visible={showSendConfirm}
+      icon="📋"
+      title={t('notepad.sendConfirmTitle')}
+      body={t('notepad.sendConfirmBody')}
+      onClose={() => setShowSendConfirm(false)}
+      buttons={[
+        { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowSendConfirm(false) },
+        { label: t('notepad.sendConfirm'), variant: 'primary', onPress: handleSendToAdmin },
+      ]}
+    />
+    </>
   );
 }

@@ -157,6 +157,7 @@
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
 | "Got an Idea?" feedback card | LIVE | FeedbackCard component (web + mobile) | 73, 103 | Inline error display; min 10 chars; errors show inside modal |
+| QA Notepad send-to-admin | LIVE | apps/mobile/components/QANotepad.tsx | P-206 | Paper-plane icon in header sends all items as [QA NOTEPAD]-prefixed help_request; ChefsDialog confirm; success toast 2.5s; clears notepad on success |
 | Feedback stored in help_requests table | LIVE | packages/db, /api/feedback | 73 | |
 | Privacy policy page | LIVE | apps/web/app/privacy/ | 77 | |
 
