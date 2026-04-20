@@ -27,6 +27,8 @@ import { Badge, Button, Card, Divider, Loading, Input } from '../../components/U
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { EditImageGallery } from '../../components/EditImageGallery';
+import { AiImageGenerationModal } from '../../components/AiImageGenerationModal';
+import { takePhoto, pickImage, uploadRecipePhoto } from '../../lib/image';
 import { RecipeImage } from '../../components/RecipeImage';
 import { LikeButton } from '../../components/LikeButton';
 import { RecipeComments } from '../../components/RecipeComments';
@@ -66,7 +68,9 @@ function CookMode({
   useKeepAwake();
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
   const step = steps[currentStep];
   const autoTimers = useMemo(() => parseTimers(step?.instruction ?? ''), [step]);
   const allTimers = useMemo(() => {
@@ -77,15 +81,93 @@ function CookMode({
     return timers;
   }, [autoTimers, step]);
 
+  const speakStep = (instruction: string) => {
+    const Speech = require('expo-speech');
+    Speech.stop();
+    Speech.speak(instruction, { language: 'en' });
+  };
+
+  const navigateStep = (next: number) => {
+    setCurrentStep(next);
+    if (ttsEnabled && steps[next]?.instruction) {
+      speakStep(steps[next].instruction);
+    }
+  };
+
+  const handleExit = () => {
+    const Speech = require('expo-speech');
+    Speech.stop();
+    onExit();
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      {/* TTS toggle header */}
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingTop: insets.top + 8,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderDefault,
+      }}>
+        <TouchableOpacity
+          onPress={() => setTtsEnabled((v) => !v)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+            backgroundColor: ttsEnabled ? '#ce2b37' : colors.bgBase,
+            borderWidth: 1,
+            borderColor: ttsEnabled ? '#ce2b37' : colors.borderDefault,
+          }}
+        >
+          <Ionicons
+            name={ttsEnabled ? 'volume-high' : 'volume-high-outline'}
+            size={18}
+            color={ttsEnabled ? '#ffffff' : colors.textSecondary}
+          />
+          <Text style={{ fontSize: 13, fontWeight: '600', color: ttsEnabled ? '#ffffff' : colors.textSecondary }}>
+            {t('recipe.ttsToggle')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
         <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 8 }}>
           Step {currentStep + 1} of {steps.length}
         </Text>
-        <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '600', textAlign: 'center', lineHeight: 32, marginBottom: 24 }}>
-          {step?.instruction}
-        </Text>
+
+        {/* Step instruction + "read this step" one-shot button */}
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '600', textAlign: 'center', lineHeight: 32, marginBottom: 12 }}>
+            {step?.instruction}
+          </Text>
+          <TouchableOpacity
+            onPress={() => step?.instruction && speakStep(step.instruction)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              alignSelf: 'center',
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              borderRadius: 16,
+              backgroundColor: colors.bgBase,
+              borderWidth: 1,
+              borderColor: colors.borderDefault,
+            }}
+          >
+            <Ionicons name="volume-medium-outline" size={16} color={colors.textSecondary} />
+            <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '500' }}>{t('recipe.readStep')}</Text>
+          </TouchableOpacity>
+        </View>
 
         {allTimers.length > 0 && (
           <View style={{ gap: 12, marginBottom: 24 }}>
@@ -97,17 +179,17 @@ function CookMode({
 
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Button title="Previous" onPress={() => setCurrentStep((s) => Math.max(0, s - 1))} variant="secondary" disabled={currentStep === 0} />
+            <Button title="Previous" onPress={() => navigateStep(Math.max(0, currentStep - 1))} variant="secondary" disabled={currentStep === 0} />
           </View>
           <View style={{ flex: 1 }}>
             {currentStep < steps.length - 1 ? (
-              <Button title="Next" onPress={() => setCurrentStep((s) => s + 1)} />
+              <Button title="Next" onPress={() => navigateStep(currentStep + 1)} />
             ) : (
-              <Button title="Done!" onPress={onExit} />
+              <Button title="Done!" onPress={handleExit} />
             )}
           </View>
         </View>
-        <TouchableOpacity onPress={onExit} style={{ marginTop: 20, alignItems: 'center' }}>
+        <TouchableOpacity onPress={handleExit} style={{ marginTop: 20, alignItems: 'center', paddingBottom: insets.bottom + 16 }}>
           <Text style={{ color: colors.textSecondary, fontSize: 14 }}>{t('recipe.exitCookMode')}</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -602,6 +684,8 @@ function RecipeDetailInner() {
   const [editVisibility, setEditVisibility] = useState<'private' | 'shared_link' | 'public'>('private');
   const [savingEdit, setSavingEdit] = useState(false);
   const [heroRefreshKey, setHeroRefreshKey] = useState(0);
+  const [showAiGenerationModal, setShowAiGenerationModal] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [visibilityUpdating, setVisibilityUpdating] = useState(false);
   const [showMealPicker, setShowMealPicker] = useState(false);
   const language = usePreferencesStore((s) => s.language);
@@ -799,6 +883,103 @@ function RecipeDetailInner() {
         { text: t('common.cancel'), style: 'cancel' },
       ],
     );
+  };
+
+  // ── Image management ──
+
+  const handlePhotoUpload = async (localUri: string) => {
+    if (!session?.user?.id || !currentRecipe) return;
+    const ok = await confirmAction({
+      title: t('imageManager.copyrightTitle'),
+      body: t('imageManager.copyrightBody'),
+      confirmLabel: t('imageManager.iOwnThis'),
+    });
+    if (!ok) return;
+    setUploadingImage(true);
+    try {
+      const publicUrl = await uploadRecipePhoto(localUri, currentRecipe.id);
+      await supabase.from('recipe_user_photos')
+        .update({ is_primary: false })
+        .eq('recipe_id', currentRecipe.id).eq('is_primary', true);
+      await supabase.from('recipe_user_photos').insert({
+        recipe_id: currentRecipe.id,
+        user_id: session.user.id,
+        storage_path: `${currentRecipe.id}/${Date.now()}.jpg`,
+        url: publicUrl,
+        is_primary: true,
+        sort_order: 0,
+      });
+      await updateRecipe(currentRecipe.id, { image_url: publicUrl });
+      setHeroRefreshKey((k) => k + 1);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const uri = await takePhoto();
+      if (uri) await handlePhotoUpload(uri);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    try {
+      const uri = await pickImage();
+      if (uri) await handlePhotoUpload(uri);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!currentRecipe) return;
+    try {
+      const { data: photos } = await supabase
+        .from('recipe_user_photos')
+        .select('id')
+        .eq('recipe_id', currentRecipe.id);
+      for (const photo of photos ?? []) {
+        await supabase.from('recipe_user_photos').delete().eq('id', photo.id);
+      }
+      await updateRecipe(currentRecipe.id, { image_url: null });
+      setHeroRefreshKey((k) => k + 1);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    }
+  };
+
+  const handleChangeImageTap = () => {
+    Alert.alert(
+      t('imageManager.changeImage'),
+      '',
+      [
+        { text: t('imageManager.takePhoto'), onPress: handleTakePhoto },
+        { text: t('imageManager.chooseFromLibrary'), onPress: handleChooseFromLibrary },
+        { text: t('imageManager.generateAiImage'), onPress: () => setShowAiGenerationModal(true) },
+        {
+          text: t('imageManager.removeImage'),
+          style: 'destructive' as const,
+          onPress: async () => {
+            const ok = await confirmAction({
+              title: t('imageManager.removeImageTitle'),
+              body: t('imageManager.removeImageBody'),
+              confirmLabel: t('common.remove'),
+            });
+            if (ok) await handleRemoveImage();
+          },
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
+
+  const handleImageGenerated = () => {
+    setHeroRefreshKey((k) => k + 1);
   };
 
   const handleToggleVisibility = async (recipe: typeof currentRecipe) => {
@@ -1289,7 +1470,29 @@ function RecipeDetailInner() {
       <ChefsBookHeader />
       <ScrollView style={{ flex: 1 }}>
       {/* Hero image gallery — user photos or fallback to recipe.image_url / chef's hat */}
-      <HeroGallery recipeId={recipe.id} fallbackImageUrl={recipe.image_url} refreshKey={heroRefreshKey} />
+      <View style={{ position: 'relative' }}>
+        <HeroGallery recipeId={recipe.id} fallbackImageUrl={recipe.image_url} refreshKey={heroRefreshKey} />
+        {recipe.user_id === session?.user?.id && (
+          <TouchableOpacity
+            onPress={handleChangeImageTap}
+            disabled={uploadingImage}
+            style={{
+              position: 'absolute', bottom: 12, right: 12,
+              backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20,
+              paddingHorizontal: 10, paddingVertical: 6,
+              flexDirection: 'row', alignItems: 'center', gap: 4,
+            }}
+          >
+            {uploadingImage
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Ionicons name="camera-outline" size={16} color="#fff" />
+            }
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
+              {uploadingImage ? t('imageManager.uploading') : t('imageManager.changeImage')}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={{ padding: 16 }}>
 
@@ -1786,6 +1989,14 @@ function RecipeDetailInner() {
       }}
       onCancel={() => setShowRecipeStorePicker(false)}
     />
+    {currentRecipe && (
+      <AiImageGenerationModal
+        visible={showAiGenerationModal}
+        recipeId={currentRecipe.id}
+        onClose={() => setShowAiGenerationModal(false)}
+        onImageGenerated={handleImageGenerated}
+      />
+    )}
     </View>
   );
 }

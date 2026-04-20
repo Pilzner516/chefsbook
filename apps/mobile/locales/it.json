@@ -166,7 +166,9 @@
     "stepsOnePerLine": "Un passaggio per riga",
     "notesOptional": "Note (facoltative)",
     "saveRecipe": "Salva Ricetta",
-    "enterTitle": "Inserisci un titolo per la ricetta."
+    "enterTitle": "Inserisci un titolo per la ricetta.",
+    "ttsToggle": "Leggi ad alta voce",
+    "readStep": "Leggi questo passaggio"
   },
   "shop": {
     "shoppingLists": "Liste della Spesa",
@@ -398,7 +400,14 @@
     "share": "Condividi",
     "copied": "Copiato!",
     "copiedBody": "Report QA copiato negli appunti.",
-    "uploadFailed": "Caricamento non riuscito"
+    "uploadFailed": "Caricamento non riuscito",
+    "sendTitle": "Invia all'admin",
+    "sendEmpty": "Nessun elemento da inviare. Aggiungi prima alcune note.",
+    "sendConfirmTitle": "Inviare al team?",
+    "sendConfirmBody": "Inviare le note QA al team di ChefsBook? Potranno vedere il tuo nome e contattarti se necessario.",
+    "sendConfirm": "Invia",
+    "sendSuccess": "Grazie per il tuo feedback! Lo apprezziamo davvero. 🙏",
+    "sendFailed": "Invio non riuscito. Le tue note sono ancora qui."
   },
   "gallery": {
     "photoLimit": "Limite foto raggiunto",
@@ -486,5 +495,37 @@
     "accountFrozenTitle": "Account in revisione",
     "accountFrozenMessage": "Il tuo account è in revisione. Le tue ricette pubbliche sono state temporaneamente nascoste.",
     "contactSupport": "Contatta il supporto"
+  },
+  "imageManager": {
+    "changeImage": "Cambia immagine",
+    "takePhoto": "Scatta una foto",
+    "chooseFromLibrary": "Scegli dalla libreria",
+    "generateAiImage": "Genera immagine con IA",
+    "removeImage": "Rimuovi immagine",
+    "removeImageTitle": "Rimuovere l'immagine?",
+    "removeImageBody": "Questo rimuoverà l'immagine della ricetta. Puoi aggiungerne una nuova in qualsiasi momento.",
+    "uploading": "Caricamento...",
+    "copyrightTitle": "È la tua foto?",
+    "copyrightBody": "Carica solo foto di tua proprietà o per cui hai il permesso.",
+    "iOwnThis": "Sì, è mia",
+    "upgradeTitle": "Esegui l'upgrade per generare immagini",
+    "upgradeBody": "La generazione di immagini IA è disponibile nei piani Chef, Famiglia e Pro.",
+    "generateButton": "Genera",
+    "generating": "Generazione dell'immagine…",
+    "generatingHint": "Di solito richiede 10–20 secondi",
+    "chooseTheme": "Scegli un tema",
+    "creativity": "Creatività",
+    "creativityVeryFaithful": "Molto fedele — molto vicino alla fonte",
+    "creativityFaithful": "Fedele — presentazione simile",
+    "creativityBalanced": "Equilibrato — stesso piatto, stile fresco (consigliato)",
+    "creativityCreative": "Creativo — stile unico",
+    "creativityVeryCreative": "Molto creativo — interpretazione originale",
+    "previewPrompt": "Ti piace? Usala, o riprova per un risultato diverso.",
+    "useThisImage": "Usa questa immagine",
+    "tryAgain": "Riprova",
+    "regenLimitTitle": "Limite di rigenerazione raggiunto",
+    "regenLimitBody": "Questa ricetta ha raggiunto il numero massimo di rigenerazioni di immagini IA.",
+    "regenLimitReached": "Limite di rigenerazione raggiunto per questa ricetta",
+    "generationFailed": "Generazione dell'immagine fallita. Riprova."
   }
 }
