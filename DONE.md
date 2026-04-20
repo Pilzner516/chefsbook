@@ -1,6 +1,28 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-20 (session P-208 — Camera Scan Debug + Cook Mode TTS) TYPE: CODE FIX (Part A) + FEATURE (Part B) + BUILD
+
+### Part A — Camera Scan Fix (TYPE: CODE FIX)
+- [P-208] ROOT CAUSE DIAGNOSED (code analysis): Android Activity Recreation during `launchCameraAsync()`. When Android kills the ChefsBook process for camera memory, app recreates → `useProtectedRoute()` → `router.replace('/(tabs)')` → My Recipes tab. The `getPendingCameraResult()` check in scan.tsx `useFocusEffect` never fires because Scan tab never receives focus. NOT an error suppression issue — the try/catch was correct, but the recovery path was unreachable.
+- [P-208] FIX: `useProtectedRoute()` in `apps/mobile/app/_layout.tsx` now calls `getPendingCameraResult()` BEFORE deciding which tab to route to after auth settles. If a pending result exists, it stores the URI via `storePendingRecoveryUri()` (module-level in `apps/mobile/lib/image.ts`) and routes to `/(tabs)/scan` instead of `/(tabs)`. Scan tab's existing `useFocusEffect` then calls `consumePendingRecoveryUri()` first (no double call to `getPendingResultAsync` which consumes on first call).
+- [P-208] Multi-page skip fix: `takePhoto()` in `apps/mobile/lib/image.ts` now differentiates explicit user cancel (`result.canceled = true` → return null, silent) from unexpected camera error (no assets, not canceled → `throw new Error('Camera returned no image. Please try again.')`). `addScanPage()`'s existing catch block then surfaces the Alert. Previously both cases returned null, causing silent page loss.
+- [P-208] LOGCAT: No JS errors or unhandled rejections in logcat during app startup after new build. "ReactNativeJS: Running main" + only harmless StatusBarModule warnings. Device-level camera reproduction not possible on emulator (Supabase unreachable from emulator network, no test credentials available).
+
+### Part B — Cook Mode TTS (TYPE: FEATURE)
+- [P-208] `expo-speech` was already installed (`~14.0.0`) — no new package install needed.
+- [P-208] `CookMode` component in `apps/mobile/app/recipe/[id].tsx` updated with:
+  - TTS toggle pill in header (speaker icon, pomodoro red `#ce2b37` when on, grey outline when off). State persists for cook session only (no cross-session persistence).
+  - `speakStep(instruction)` helper: calls `Speech.stop()` then `Speech.speak(instruction, { language: 'en' })`. Uses `require('expo-speech')` (lazy) per project pattern for optional native modules.
+  - `navigateStep(next)`: replaces direct `setCurrentStep` in Previous/Next handlers; speaks next step text if TTS toggle is on.
+  - "Read this step" pill: small outline button below each step instruction. Calls `speakStep` immediately regardless of toggle state. Does NOT change toggle state.
+  - `handleExit()`: calls `Speech.stop()` before `onExit()` to prevent audio leak into normal app.
+  - Safe area: TTS header uses `insets.top + 8`, exit link uses `insets.bottom + 16`.
+- [P-208] i18n: `recipe.ttsToggle` and `recipe.readStep` added to all 5 locale files (en/fr/es/it/de). Verified with grep — all 5 files have both keys.
+- [P-208] TypeScript: `npx tsc --noEmit` clean in apps/mobile (pre-existing expo-file-system warning only).
+- [P-208] Build: `./gradlew assembleRelease --no-daemon` BUILD SUCCESSFUL in 2m 9s. APK at `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`. Signing: SHA-256 `29f59dba813b6f7bb7b1381540253ee46d468fc0245618f8b52a8a2b4d94b73e` (same keystore as P-205/session 204/203/142 — Play Store continuity preserved).
+- [P-208] INCOMPLETE: Live device verification of TTS and camera recovery not performed — emulator cannot reach Supabase at http://100.110.47.62:8000 (Tailscale IP, not accessible from emulator), no test credentials available. Functional verification requires sideload on physical device with Tailscale. Sideload: `adb install -r apps/mobile/android/app/build/outputs/apk/release/app-release.apk`
+
 ## 2026-04-20 (session P-206 — Mobile QA Notepad Send-to-Admin) TYPE: FEATURE
 - [P-206] Added Send to Admin capability to QA Notepad (`apps/mobile/components/QANotepad.tsx`). Paper-plane-outline icon added to the header right area (alongside the existing close button), distinct from and non-conflicting with P-205's Add Item FAB at bottom-right. Tapping it: (a) shows empty-guard alert if no items, (b) opens ChefsDialog confirmation "Send to Team?" with cancel/send buttons, (c) on confirm inserts a `help_requests` row with `subject=[QA NOTEPAD] from @username` and `body` containing user display name, username, user ID, timestamp, and numbered notepad items, (d) clears all notepad items from local React state and FileSystem, (e) shows a green success toast "Thanks for your feedback! We really appreciate it. 🙏" auto-dismissing after 2.5s. On failure: shows error alert, notepad NOT cleared. The ChefsDialog is a sibling Modal (not nested inside QANotepad Modal) to avoid Android nested-modal stack issues. TYPE: CODE FIX for zero — this is a new feature; no existing code path was modified, only additive changes.
 - [P-206] i18n: 7 new keys added to all 5 locale files (`en/fr/es/it/de.json`) under `notepad` namespace: `sendTitle`, `sendEmpty`, `sendConfirmTitle`, `sendConfirmBody`, `sendConfirm`, `sendSuccess`, `sendFailed`.

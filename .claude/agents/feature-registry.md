@@ -41,6 +41,7 @@
 | Recipe detail (read mode) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 01 | |
 | Recipe detail (edit mode) | LIVE | same as above | 03 | |
 | Recipe versioning | LIVE | packages/db, apps/mobile, apps/web | 06 | parent_recipe_id, version_number |
+| Cook Mode TTS | LIVE | apps/mobile/app/recipe/[id].tsx (CookMode component) | P-208 | Speaker pill toggle (red on/grey off) in header; "Read this step" pill per step card; expo-speech, zero AI calls. Speaks on step navigation when toggle on. Stop on exit. i18n: recipe.ttsToggle + recipe.readStep in all 5 locales. |
 | Save a Copy | LIVE | apps/mobile/app/recipe/, apps/web | 13 | Creates fully independent clone |
 | Recipe visibility (private/public) | LIVE | packages/db, RLS policies | 32, 104 | Default = 'public'; shared_link migrated to public |
 | Recipe privacy toggle | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 35 | |
@@ -74,7 +75,7 @@
 |---------|--------|-------------|---------|-------|
 | URL import (JSON-LD first) | LIVE | packages/ai (importFromUrl), apps/web/app/api/import/ | 02, 152 | 25k char limit; session 152 added import-time translation (detectLanguage→translateRecipeContent when source!=user lang) |
 | Instagram import | REMOVED | packages/ai (commented), apps/mobile/app/scan | 07, 138 | Removed session 138 — scraping unreliable, no native SEND-intent receiver wired. Use photo scan on a screenshot instead. fetchInstagramPost / extractRecipeFromInstagram kept in source but no longer exported from packages/ai. scanRecipe prompt now handles social media screenshots (caption extraction). |
-| Multi-page photo scan | LIVE | apps/mobile/app/scan | 06 | Up to 5 pages |
+| Multi-page photo scan | LIVE | apps/mobile/app/(tabs)/scan.tsx | 06, P-208 | Up to 5 pages. takePhoto() throws on non-cancel errors; addScanPage() catch shows Alert instead of silent page loss. |
 | Dish identification from photo | LIVE | packages/ai (analyseScannedImage), apps/mobile/app/scan | 21 | classifies → clarifying Qs → recipe |
 | Guided scan flow (A→B→C→D) | LIVE | apps/mobile/components/GuidedScanFlow.tsx, packages/ai/scanGuidedFollowUps.ts | 203 | Replaces DishIdentificationFlow for dish photos. Step A title+comments, Step B 0–3 Haiku questions (skipped when none), Step C anything-else?+final thoughts, Step D single Sonnet gen via generateDishRecipe. Logs scan_guided_followups (haiku) + scan_guided_generation (sonnet) via logAiCallFromClient. Plan-gated at startScan entry. |
 | Speak a Recipe | LIVE | apps/web/dashboard/speak/, apps/mobile | 06 | Web Speech API |
