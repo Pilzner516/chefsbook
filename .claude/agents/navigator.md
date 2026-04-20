@@ -1,5 +1,5 @@
 # ChefsBook Navigator Agent
-# Updated: 2026-04-06
+# Updated: 2026-04-20
 # Purpose: Read this before any navigation or UI work.
 # Update this file whenever screens are added or changed.
 
@@ -128,9 +128,11 @@ File: apps/mobile/app/recipe/[id].tsx
 Reach: Tap any recipe card from Recipes tab or Search results
 Params: id (recipe UUID)
 Elements: Back arrow + "Recipe" header, title (bold), description text, badges row (cuisine, course, cook time), action buttons row (Save heart, Share link, Pin red), "Edit Recipe" button (pencil icon), green "Cook Mode" button (full width), Steps section (numbered with instructions), timer badges on steps with timers (red, tappable → CountdownTimer), Ingredients section (with quantities, scalable), Cooking Notes section ("+ Add" → text input), Tags section with AI auto-tag
-Actions: Save/unsave (heart toggle), Share → native share sheet, Pin → pinned bar, Edit Recipe → inline edit mode (title, description, ingredients, steps become editable inputs, Save/Cancel buttons), Cook Mode → full-screen step-by-step view, Timer badges → tap to start CountdownTimer, Add cooking note, Manage tags (add/remove, AI suggest)
-Edit mode: Inline — fields become TextInputs, ingredients/steps editable, cuisine/course/dietary pickers, save calls updateRecipe + replaceIngredients + replaceSteps
-Cook mode: Full screen, "Step X of Y", large instruction text (22px centered), Previous/Next/Done buttons, CountdownTimers auto-detected from step text, useKeepAwake to prevent screen sleep, "Exit cook mode" link
+Change Image overlay (owner-only): Semi-transparent bar over the hero image with camera icon + "Change Image" label. Only rendered when recipe.user_id === current user id. Taps → action sheet with 3 options: GENERATE AI IMAGE / CHOOSE FROM LIBRARY / TAKE A PHOTO.
+Actions: Save/unsave (heart toggle), Share → native share sheet, Pin → pinned bar, Edit Recipe → inline edit mode (title, description, ingredients, steps become editable inputs, Save/Cancel buttons), Cook Mode → full-screen step-by-step view, Timer badges → tap to start CountdownTimer, Add cooking note, Manage tags (add/remove, AI suggest), Change Image (owner only) → action sheet
+Edit mode: Inline — fields become TextInputs, ingredients/steps editable, cuisine/course/dietary pickers, save calls updateRecipe + replaceIngredients + replaceSteps. Floating save bar pinned at bottom (safe-area). BackHandler + Cancel show "Unsaved Changes" ChefsDialog before dismissing.
+Cook mode: Full screen, "Step X of Y", large instruction text (22px centered), Previous/Next/Done buttons, CountdownTimers auto-detected from step text, useKeepAwake to prevent screen sleep, "Exit cook mode" link. TTS toggle pill in header (speaker icon, red when on). "Read this step" pill per step.
+AiImageGenerationModal: Full-screen modal opened from "GENERATE AI IMAGE" action sheet option or auto after Speak-a-Recipe. States: (1) free plan gate, (2) loading spinner, (3) preview with Use This Image + Try Again (up to 5 regens), (4) config with horizontal theme scroller + creativity slider. Pinned Generate button at bottom with safe-area.
 
 ### Recipe New
 Route: /recipe/new

@@ -23,6 +23,39 @@
 - [P-208] Build: `./gradlew assembleRelease --no-daemon` BUILD SUCCESSFUL in 2m 9s. APK at `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`. Signing: SHA-256 `29f59dba813b6f7bb7b1381540253ee46d468fc0245618f8b52a8a2b4d94b73e` (same keystore as P-205/session 204/203/142 — Play Store continuity preserved).
 - [P-208] INCOMPLETE: Live device verification of TTS and camera recovery not performed — emulator cannot reach Supabase at http://100.110.47.62:8000 (Tailscale IP, not accessible from emulator), no test credentials available. Functional verification requires sideload on physical device with Tailscale. Sideload: `adb install -r apps/mobile/android/app/build/outputs/apk/release/app-release.apk`
 
+## 2026-04-20 (session P-207 — Mobile Recipe Image Management) TYPE: FEATURE ×3 + CODE FIX + BUILD
+
+### Feature A — Change Image overlay + action sheet (TYPE: FEATURE)
+- [P-207] Owner-only "Change Image" overlay on recipe detail (`apps/mobile/app/recipe/[id].tsx`). Semi-transparent bar with camera icon + "Change Image" label, rendered over the hero image. Visibility gate: `recipe.user_id === session?.user?.id`. Tapping opens an action sheet with 3 options: GENERATE AI IMAGE, CHOOSE FROM LIBRARY, TAKE A PHOTO.
+- [P-207] GENERATE AI IMAGE → opens `AiImageGenerationModal` (Feature B). CHOOSE FROM LIBRARY → `pickImage()` + `uploadRecipePhoto()` + `setMainPhoto()`. TAKE A PHOTO → `takePhoto()` + `uploadRecipePhoto()` + `setMainPhoto()`.
+- [P-207] Evidence: UIAutomator confirmed overlay present on owned "Scrambled Eggs" recipe (`content-desc=", Change Image"` clickable node). Action sheet 3 options confirmed via UIAutomator.
+
+### Feature B — AI Image Generation Modal (TYPE: FEATURE)
+- [P-207] `apps/mobile/components/AiImageGenerationModal.tsx` — new file. 4 UI states: (1) Free plan gate — sparkles icon + upgrade message + Close button; (2) Loading — ActivityIndicator + "Generating…" + hint text; (3) Preview — 280px image + "Use This Image" + optional "Try Again" (up to REGEN_LIMIT=5) + regen-limit message; (4) Configuration — horizontal theme scroller + creativity slider + pinned Generate button.
+- [P-207] Theme scroller: `Object.values(IMAGE_THEMES)` rendered as 100px tile cards with emoji + name, selected highlighted with `colors.accent` border. Creativity slider: 5 tap-segments (accent=filled, muted=empty) + −/+ buttons + numeric display + label (Very Faithful → Very Creative). Safe-area applied to modal footer.
+- [P-207] API: `POST ${WEB_API_URL}/api/recipes/mobile-generate-image` with `{recipeId, theme, creativityLevel, replaceExisting}`. 402 → upgrade Alert; 429 → regen limit Alert.
+- [P-207] Evidence: UIAutomator confirmed plan gate shown for free plan user, and config modal (themes + creativity + Generate button) shown for Pro plan user after authStore fix. Generation API call not verified — emulator cannot reach RPi5 at 100.110.47.62:3000.
+
+### Feature C — Auto-generate after Speak-a-Recipe (TYPE: FEATURE)
+- [P-207] After `speak` flow completes and recipe is saved, `AiImageGenerationModal` auto-opens with `replaceExisting=false`. Not device-verified — blocked by emulator network limitation (cannot reach RPi5 image generation API).
+
+### i18n — imageManager namespace (TYPE: FEATURE)
+- [P-207] 33 new i18n keys added under `imageManager` namespace to all 5 locale files (en/fr/es/it/de): `generateAiImage`, `chooseTheme`, `creativity`, `creativityVeryFaithful` through `creativityVeryCreative`, `generateButton`, `generating`, `generatingHint`, `previewPrompt`, `useThisImage`, `tryAgain`, `regenLimitReached`, `regenLimitTitle`, `regenLimitBody`, `upgradeTitle`, `upgradeBody`, `generationFailed`, `changeImage`, `chooseFromLibrary`, `takePhoto`.
+
+### Bug Fix — authStore.ts loadProfile filter (TYPE: CODE FIX)
+- [P-207] `apps/mobile/lib/zustand/authStore.ts` `loadProfile()` was calling `.select('*').single()` with no user ID filter. With the `profiles: public read` RLS policy (`qual=true`) returning ALL profiles, `.single()` failed with multiple-row error → `data=null` → `planTier` stayed `'free'` for ALL users. Fix: fetch session + add `.eq('id', session.user.id)` filter before `.single()`. This is the root cause of all plan-gate UI bugs on mobile.
+
+### Supabase table verification (TYPE: EVIDENCE)
+- [P-207] `recipe_user_photos` table confirmed: `url`, `storage_path`, `is_primary`, `sort_order`, `is_ai_generated`, `regen_count`, `watermark_risk_level`, `upload_confirmed_copyright` columns.
+- [P-207] `ai_usage_log` table existence confirmed.
+
+### Build
+- [P-207] New APK built with authStore.ts loadProfile fix. Installed via `npx expo run:android --variant release` (adb install path failed with INSTALL_PARSE_FAILED_NOT_APK). APK `lastUpdateTime=2026-04-20 12:58:58` confirmed by emulator package manager.
+- [P-207] Signing: same keystore as P-205/P-208 (Play Store continuity preserved).
+
+### Evidence limitations
+- [P-207] `adb exec-out screencap -p` returns stale cached frames on this emulator (clock frozen at 12:25). All state verification done via UIAutomator XML dump + Python text extraction. Generation API calls (loading/preview states, Feature C) not verifiable — emulator cannot reach RPi5 at 100.110.47.62:3000.
+
 ## 2026-04-20 (session P-206 — Mobile QA Notepad Send-to-Admin) TYPE: FEATURE
 - [P-206] Added Send to Admin capability to QA Notepad (`apps/mobile/components/QANotepad.tsx`). Paper-plane-outline icon added to the header right area (alongside the existing close button), distinct from and non-conflicting with P-205's Add Item FAB at bottom-right. Tapping it: (a) shows empty-guard alert if no items, (b) opens ChefsDialog confirmation "Send to Team?" with cancel/send buttons, (c) on confirm inserts a `help_requests` row with `subject=[QA NOTEPAD] from @username` and `body` containing user display name, username, user ID, timestamp, and numbered notepad items, (d) clears all notepad items from local React state and FileSystem, (e) shows a green success toast "Thanks for your feedback! We really appreciate it. 🙏" auto-dismissing after 2.5s. On failure: shows error alert, notepad NOT cleared. The ChefsDialog is a sibling Modal (not nested inside QANotepad Modal) to avoid Android nested-modal stack issues. TYPE: CODE FIX for zero — this is a new feature; no existing code path was modified, only additive changes.
 - [P-206] i18n: 7 new keys added to all 5 locale files (`en/fr/es/it/de.json`) under `notepad` namespace: `sendTitle`, `sendEmpty`, `sendConfirmTitle`, `sendConfirmBody`, `sendConfirm`, `sendSuccess`, `sendFailed`.

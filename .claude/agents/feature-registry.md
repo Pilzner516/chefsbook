@@ -1,5 +1,5 @@
 # ChefsBook Feature Registry
-# Updated: 2026-04-14
+# Updated: 2026-04-20
 # Purpose: Read this before modifying ANY existing feature.
 #           Update this before running /wrapup on ANY session.
 #
@@ -214,6 +214,8 @@
 | Flagged messages (admin) | LIVE | /admin/messages, /api/admin (messages) | 116 | Includes user-flagged messages via message_flags; shows flag count + reasons |
 | Step rewriting on import | LIVE | packages/ai (rewriteRecipeSteps), apps/web/lib/saveWithModeration.ts | 147 | HAIKU ~$0.0003/recipe; fire-and-forget on URL/extension imports; backfill script at scripts/rewrite-imported-steps.mjs |
 | AI image generation | LIVE | apps/web/lib/imageGeneration.ts, /api/recipes/generate-image, /api/recipes/regenerate-image, packages/ai/src/imageThemes.ts | 147, 156, 181, 184B, 192 | Replicate Flux Dev ~$0.025/image at ALL levels (session 192 unified — prompt_strength spectrum replaces model switching). Visible ChefsBook badge watermark (session 180). Creativity levels 1-5 from system_settings.image_creativity_level map to prompt_strength {1:0.2, 2:0.4, 3:0.6, 4:0.8, 5:0.95}. img2img when recipes.source_image_url is populated — passes og:image URL as Flux `image` param; aspect_ratio of output matches source. Falls back to text-to-image at same prompt_strength with console.warn when source_image_url is NULL (legacy recipes pre-session-181). Level-1 prompt still leads with "match this source very closely: <describeSourceImage output>" when source_image_description exists. Regeneration limit = 5 per recipe (session 184B); regen_count is incremented (read-then-write). |
+| AI image generation (mobile) | LIVE | apps/mobile/components/AiImageGenerationModal.tsx, /api/recipes/mobile-generate-image | P-207 | Same Replicate backend as web. Modal: 4 states — free plan gate, loading, preview, config. Theme picker (horizontal scroll, emoji tile cards). Creativity slider 1–5 (segment tap + ±buttons). REGEN_LIMIT=5. 402→upgrade alert; 429→regen limit alert. Auto-opens after Speak-a-Recipe save. i18n: 33 keys in imageManager namespace across all 5 locales. |
+| Change Image overlay (mobile) | LIVE | apps/mobile/app/recipe/[id].tsx | P-207 | Owner-only semi-transparent bar over hero image. Taps → action sheet: GENERATE AI IMAGE / CHOOSE FROM LIBRARY / TAKE A PHOTO. |
 | Image watermark check | LIVE | packages/ai (checkImageForWatermarks), /api/recipes/check-image | 147 | HAIKU Vision ~$0.005/check; blocks high-risk uploads, warns on medium; runs before every user image upload |
 | Copyright confirmation modal | LIVE | apps/web/app/recipe/[id]/page.tsx, apps/mobile/components/EditImageGallery.tsx | 147 | ChefsDialog (web) / Alert (mobile) before every image upload; confirms user owns the image |
 | Recipe flagging system | LIVE | recipe_flags table, /api/recipes/flag, apps/web/app/recipe/[id]/page.tsx | 147, 148 | Report modal with 6 pill reasons + optional comment; users report only — NO auto-visibility changes; admins act via /admin/copyright |

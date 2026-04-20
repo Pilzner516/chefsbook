@@ -38,9 +38,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   loadProfile: async () => {
+    const session = get().session ?? (await supabase.auth.getSession()).data.session;
+    if (!session?.user?.id) return;
     const { data } = await supabase
       .from('user_profiles')
       .select('*')
+      .eq('id', session.user.id)
       .single();
     if (data) {
       set({ profile: data as UserProfile, planTier: (data as UserProfile).plan_tier });
