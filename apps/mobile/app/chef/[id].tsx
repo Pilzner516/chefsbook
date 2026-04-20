@@ -14,6 +14,7 @@ import {
 import type { UserProfile, Recipe, PlanTier } from '@chefsbook/db';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, RecipeCard, Button, Loading, EmptyState, Input } from '../../components/UIKit';
+import ChefsDialog from '../../components/ChefsDialog';
 import { getInitials } from '@chefsbook/ui';
 
 type ProfileTab = 'recipes' | 'followers' | 'following';
@@ -47,6 +48,7 @@ export default function ChefProfile() {
   const [messageError, setMessageError] = useState<string | null>(null);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [userPlanTier, setUserPlanTier] = useState<PlanTier>('free');
+  const [showUnfollowDialog, setShowUnfollowDialog] = useState(false);
 
   const isOwnProfile = session?.user?.id === id;
 
@@ -104,30 +106,7 @@ export default function ChefProfile() {
     }
 
     if (isFollowingUser) {
-      // Confirm unfollow
-      Alert.alert(
-        t('follow.unfollowConfirmTitle'),
-        t('follow.unfollowConfirmMessage', { username: chef?.username ?? chef?.display_name }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('follow.unfollow'),
-            style: 'destructive',
-            onPress: async () => {
-              setFollowLoading(true);
-              setIsFollowingUser(false);
-              setFollowerCount((c) => Math.max(0, c - 1));
-              try {
-                await unfollowUser(session.user.id, id);
-              } catch {
-                setIsFollowingUser(true);
-                setFollowerCount((c) => c + 1);
-              }
-              setFollowLoading(false);
-            },
-          },
-        ],
-      );
+      setShowUnfollowDialog(true);
       return;
     }
 
@@ -432,6 +411,28 @@ export default function ChefProfile() {
           </View>
         </View>
       </Modal>
+      <ChefsDialog
+        visible={showUnfollowDialog}
+        title={t('follow.unfollowConfirmTitle')}
+        body={t('follow.unfollowConfirmMessage', { username: chef?.username ?? chef?.display_name })}
+        onClose={() => setShowUnfollowDialog(false)}
+        buttons={[
+          { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowUnfollowDialog(false) },
+          { label: t('follow.unfollow'), variant: 'secondary', onPress: async () => {
+            setShowUnfollowDialog(false);
+            setFollowLoading(true);
+            setIsFollowingUser(false);
+            setFollowerCount((c) => Math.max(0, c - 1));
+            try {
+              await unfollowUser(session!.user.id, id!);
+            } catch {
+              setIsFollowingUser(true);
+              setFollowerCount((c) => c + 1);
+            }
+            setFollowLoading(false);
+          }},
+        ]}
+      />
       {/* Message compose sheet */}
       {showMessageSheet && (
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
