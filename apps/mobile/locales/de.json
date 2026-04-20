@@ -358,7 +358,10 @@
     "mealPlanSaved": "Essensplan gespeichert!",
     "translating": "Übersetzen…",
     "saveACopy": "Kopie speichern",
-    "copySaved": "Rezept als Kopie gespeichert."
+    "copySaved": "Rezept als Kopie gespeichert.",
+    "unsavedChanges": "Nicht gespeicherte Änderungen",
+    "unsavedChangesBody": "Sie haben nicht gespeicherte Änderungen. Verwerfen?",
+    "discard": "Verwerfen"
   },
   "settings": {
     "language": "Sprache",

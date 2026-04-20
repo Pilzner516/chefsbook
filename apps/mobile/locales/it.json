@@ -358,7 +358,10 @@
     "mealPlanSaved": "Piano pasti salvato!",
     "translating": "Traduzione…",
     "saveACopy": "Salva una copia",
-    "copySaved": "Ricetta salvata come copia."
+    "copySaved": "Ricetta salvata come copia.",
+    "unsavedChanges": "Modifiche non salvate",
+    "unsavedChangesBody": "Hai modifiche non salvate. Scartarle?",
+    "discard": "Scarta"
   },
   "settings": {
     "language": "Lingua",

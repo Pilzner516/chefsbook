@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image, ActivityIndicator, BackHandler } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -823,10 +823,36 @@ function RecipeDetailInner() {
     setEditing(true);
   };
 
-  const cancelEditing = () => {
-    setEditing(false);
-    setHeroRefreshKey((k) => k + 1);
+  const cancelEditing = async () => {
+    const ok = await confirmAction({
+      title: t('recipe.unsavedChanges'),
+      body: t('recipe.unsavedChangesBody'),
+      confirmLabel: t('recipe.discard'),
+    });
+    if (ok) {
+      setEditing(false);
+      setHeroRefreshKey((k) => k + 1);
+    }
   };
+
+  useEffect(() => {
+    if (!editing) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      confirmAction({
+        title: t('recipe.unsavedChanges'),
+        body: t('recipe.unsavedChangesBody'),
+        confirmLabel: t('recipe.discard'),
+      }).then((ok) => {
+        if (ok) {
+          setEditing(false);
+          setHeroRefreshKey((k) => k + 1);
+        }
+      });
+      return true;
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
 
   const saveEditing = async () => {
     if (!currentRecipe || !session?.user?.id) return;
@@ -911,7 +937,8 @@ function RecipeDetailInner() {
 
   if (editing) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}>
         <View style={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <Text style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '700' }}>{t('recipe.editRecipe')}</Text>
@@ -1129,71 +1156,109 @@ function RecipeDetailInner() {
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 4 }}>{t('recipe.notes')}</Text>
           <TextInput value={editNotes} onChangeText={setEditNotes} multiline style={{ backgroundColor: colors.bgBase, borderRadius: 8, padding: 12, fontSize: 14, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 16, minHeight: 60, textAlignVertical: 'top' }} />
 
-          <Button title={savingEdit ? t('recipe.saving') : t('common.save')} onPress={saveEditing} disabled={savingEdit} />
-
-          <View style={{ marginTop: 16 }}>
-            <TouchableOpacity
-              onPress={async () => {
-                if (!session?.user?.id || !currentRecipe) return;
-                try {
-                  const copy = await addRecipe(session.user.id, {
-                    title: (currentRecipe.title ?? '') + ' (Copy)',
-                    description: currentRecipe.description ?? null,
-                    cuisine: currentRecipe.cuisine ?? null,
-                    course: currentRecipe.course as any,
-                    servings: currentRecipe.servings ?? 4,
-                    prep_minutes: currentRecipe.prep_minutes ?? null,
-                    cook_minutes: currentRecipe.cook_minutes ?? null,
-                    notes: currentRecipe.notes ?? null,
-                    source_type: 'manual' as any,
-                    ingredients: (currentRecipe.ingredients ?? []).map((i) => ({
-                      quantity: i.quantity,
-                      unit: i.unit,
-                      ingredient: i.ingredient,
-                      preparation: i.preparation,
-                      optional: i.optional,
-                      group_label: i.group_label,
-                    })),
-                    steps: (currentRecipe.steps ?? []).map((s) => ({
-                      step_number: s.step_number,
-                      instruction: s.instruction,
-                      timer_minutes: s.timer_minutes,
-                      group_label: s.group_label,
-                    })),
-                  });
-                  // Copy tags and dietary flags
-                  if ((currentRecipe.tags?.length ?? 0) > 0 || (currentRecipe.dietary_flags?.length ?? 0) > 0) {
-                    await updateRecipe(copy.id, {
-                      tags: currentRecipe.tags ?? [],
-                      dietary_flags: currentRecipe.dietary_flags ?? [],
-                    });
-                  }
-                  Alert.alert(t('recipe.copySaved'));
-                  router.replace(`/recipe/${copy.id}`);
-                } catch (err: any) {
-                  Alert.alert(t('common.errorTitle'), err.message);
-                }
-              }}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                backgroundColor: colors.bgBase,
-                borderRadius: 10,
-                paddingVertical: 12,
-                borderWidth: 1,
-                borderColor: colors.borderDefault,
-              }}
-            >
-              <Ionicons name="copy-outline" size={18} color={colors.textSecondary} />
-              <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '600' }}>{t('recipe.saveACopy')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={{ height: 40 }} />
+          <View style={{ height: 16 }} />
         </View>
       </ScrollView>
+
+      {/* Floating save bar */}
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: colors.bgScreen,
+        borderTopWidth: 1,
+        borderTopColor: colors.borderDefault,
+        paddingHorizontal: 16,
+        paddingTop: 12,
+        paddingBottom: 12 + insets.bottom,
+        flexDirection: 'row',
+        gap: 10,
+      }}>
+        <TouchableOpacity
+          onPress={async () => {
+            if (!session?.user?.id || !currentRecipe) return;
+            setSavingClone(true);
+            try {
+              const copy = await addRecipe(session.user.id, {
+                title: (currentRecipe.title ?? '') + ' (Copy)',
+                description: currentRecipe.description ?? null,
+                cuisine: currentRecipe.cuisine ?? null,
+                course: currentRecipe.course as any,
+                servings: currentRecipe.servings ?? 4,
+                prep_minutes: currentRecipe.prep_minutes ?? null,
+                cook_minutes: currentRecipe.cook_minutes ?? null,
+                notes: currentRecipe.notes ?? null,
+                source_type: 'manual' as any,
+                ingredients: (currentRecipe.ingredients ?? []).map((i) => ({
+                  quantity: i.quantity,
+                  unit: i.unit,
+                  ingredient: i.ingredient,
+                  preparation: i.preparation,
+                  optional: i.optional,
+                  group_label: i.group_label,
+                })),
+                steps: (currentRecipe.steps ?? []).map((s) => ({
+                  step_number: s.step_number,
+                  instruction: s.instruction,
+                  timer_minutes: s.timer_minutes,
+                  group_label: s.group_label,
+                })),
+              });
+              if ((currentRecipe.tags?.length ?? 0) > 0 || (currentRecipe.dietary_flags?.length ?? 0) > 0) {
+                await updateRecipe(copy.id, {
+                  tags: currentRecipe.tags ?? [],
+                  dietary_flags: currentRecipe.dietary_flags ?? [],
+                });
+              }
+              Alert.alert(t('recipe.copySaved'));
+              router.replace(`/recipe/${copy.id}`);
+            } catch (err: any) {
+              Alert.alert(t('common.errorTitle'), err.message);
+            } finally {
+              setSavingClone(false);
+            }
+          }}
+          disabled={savingClone || savingEdit}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            backgroundColor: colors.bgBase,
+            borderRadius: 10,
+            paddingVertical: 13,
+            borderWidth: 1,
+            borderColor: colors.borderDefault,
+            opacity: savingClone || savingEdit ? 0.5 : 1,
+          }}
+        >
+          <Ionicons name="copy-outline" size={16} color={colors.textSecondary} />
+          <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '600' }}>
+            {savingClone ? t('recipe.saving') : t('recipe.saveACopy')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={saveEditing}
+          disabled={savingEdit || savingClone}
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.accent,
+            borderRadius: 10,
+            paddingVertical: 13,
+            opacity: savingEdit || savingClone ? 0.5 : 1,
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>
+            {savingEdit ? t('recipe.saving') : t('common.save')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <ConfirmActionDialog />
+      </View>
     );
   }
 

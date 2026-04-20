@@ -358,7 +358,10 @@
     "mealPlanSaved": "Planning enregistré !",
     "translating": "Traduction…",
     "saveACopy": "Enregistrer une copie",
-    "copySaved": "Recette enregistrée en tant que copie."
+    "copySaved": "Recette enregistrée en tant que copie.",
+    "unsavedChanges": "Modifications non enregistrées",
+    "unsavedChangesBody": "Vous avez des modifications non enregistrées. Les ignorer ?",
+    "discard": "Ignorer"
   },
   "settings": {
     "language": "Langue",

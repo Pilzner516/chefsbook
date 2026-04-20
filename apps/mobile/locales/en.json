@@ -196,7 +196,10 @@
     "addStep": "+ Add",
     "translating": "Translating…",
     "saveACopy": "Save a Copy",
-    "copySaved": "Recipe saved as a copy."
+    "copySaved": "Recipe saved as a copy.",
+    "unsavedChanges": "Unsaved Changes",
+    "unsavedChangesBody": "You have unsaved changes. Discard them?",
+    "discard": "Discard"
   },
   "shop": {
     "shoppingLists": "Shopping Lists",
