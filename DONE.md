@@ -2126,6 +2126,29 @@
 - ADB verified: Auto-tag AI returns 7 suggestions (pork, ribs, oven-baked, barbecue, tender, american, comfort-food) as green dashed pills
 - ADB verified: Tags persist to Supabase and sync to web (confirmed via REST API query)
 
+## 2026-04-21 (session Prompt-C)
+- Recipe image lightbox gallery (web only)
+- New component: `apps/web/components/RecipeLightbox.tsx`
+  - Full-screen modal with near-black overlay (rgba(0,0,0,0.92))
+  - Navigation: left/right arrow buttons, keyboard (ArrowLeft/Right/Escape), touch swipe (50px threshold)
+  - Image counter (N / total) centred below image, hidden when only 1 image
+  - Arrows hidden when only 1 image
+  - Body scroll lock while open (`document.body.style.overflow = 'hidden'`)
+  - Click outside image or X button closes
+  - Uses `createPortal` for z-index isolation
+- Recipe detail page wiring (`apps/web/app/recipe/[id]/page.tsx`):
+  - Added `lightboxOpen` state
+  - Hero image: added `cursor-zoom-in` class and `onClick` handler
+  - Images array built from `userPhotos` + `recipe.image_url` (deduplicated)
+  - RecipeLightbox component rendered before closing `</main>` tag
+- Behaviour:
+  - Clicking hero image opens lightbox at first image (index 0)
+  - Thumbnail strip behaviour unchanged — thumbnails still switch hero image only
+  - Navigation wraps (first ← last, last → first)
+  - Swipe ignores vertical-dominant gestures
+- TypeScript clean: `npx tsc --noEmit` passes
+- Deployed to chefsbk.app: build successful (35 pages), PM2 restart successful, site verified (HTTP 200)
+
 ## 2026-04-21 (session Prompt-B + Prompt-B-FIX)
 - Sous Chef suggest feature for incomplete recipes (web only)
 - New API route: `/api/recipes/[id]/sous-chef-suggest` — POST, auth-gated, Haiku model (~$0.0005/call)
