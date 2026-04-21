@@ -82,9 +82,9 @@ const tiers = [
 
 const steps = [
   { num: '1', title: 'Sign up', desc: 'Free, takes 30 seconds.' },
-  { num: '2', title: 'Import recipes', desc: 'Scan a photo, paste a URL, speak it, or upload a PDF.' },
-  { num: '3', title: 'Organise & plan', desc: 'Meal planner, shopping lists, cookbooks.' },
-  { num: '4', title: 'Discover & share', desc: 'Follow chefs, share recipes, build your collection.' },
+  { num: '2', title: 'Import recipes', desc: 'Scan, speak, import, discover & share recipes.' },
+  { num: '3', title: 'Organise & plan', desc: 'Plan meals,  manage shopping lists,' },
+  { num: '4', title: 'Discover & share', desc: 'and cook smarter together.' },
 ];
 
 export default function HomePage() {
@@ -131,7 +131,7 @@ export default function HomePage() {
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight tracking-tight text-cb-text">
           Your recipes. Your community.<br />
-          <span className="text-cb-primary">Your Chef's Platform</span>
+          <span className="text-cb-primary">Your cooking life, connected</span>
         </h1>
         <p className="text-cb-secondary text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
           Scan, speak, import, and discover recipes. Plan meals, generate smart shopping lists,
@@ -155,7 +155,7 @@ export default function HomePage() {
 
       {/* Features */}
       <section id="features" className="max-w-5xl mx-auto px-6 pb-24">
-        <h2 className="text-3xl font-bold text-center mb-4 text-cb-text">Everything you need</h2>
+        <h2 className="text-3xl font-bold text-center mb-4 text-cb-text">The smarter way to cook together</h2>
         <p className="text-cb-secondary text-center mb-12 text-lg">From capture to kitchen to table.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {featureGroups.map((group) => (
