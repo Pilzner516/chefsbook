@@ -1,6 +1,38 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-20 (session P-210 — Native Dialog Audit + Splash Fix + Settings Access) TYPE: CODE FIX + FEATURE + BUILD
+
+### Part A — ChefsDialog Extensions (TYPE: CODE FIX)
+- [P-210] `ChefsDialog.tsx`: added `layout='vertical'` prop (stacks buttons full-width as pills) and `text` variant button (plain cancel link, no border/bg). Enables multi-action menus and text-link dismissal patterns.
+
+### Part B — Native Dialog Conversion (TYPE: CODE FIX)
+- [P-210] `apps/mobile/app/recipe/[id].tsx`: converted 7 Alert.alert dialogs to ChefsDialog (delete recipe, remove from cookbook, reimport-soon stub, AI chef stub, unfollow prompt, cancel cook, share error).
+- [P-210] `apps/mobile/components/EditImageGallery.tsx`: converted ActionSheetIOS action sheet + delete-photo Alert to ChefsDialog (ActionSheetIOS removed entirely).
+- [P-210] `apps/mobile/app/(tabs)/plan.tsx`: converted ActionSheetIOS meal-action sheet + 3 Alert.alert dialogs (remove meal, servings mismatch, delete plan) to ChefsDialog. Promise-based mismatch dialog uses `mismatchResolveRef` pattern.
+- [P-210] `apps/mobile/app/(tabs)/shop.tsx`: converted 3 Alert.alert dialogs (delete item, remove recipe group, delete list) to ChefsDialog.
+- [P-210] `apps/mobile/app/modal.tsx` (Settings): converted Sign Out + Private Mode Alert.alert dialogs to ChefsDialog.
+- [P-210] `apps/mobile/app/speak.tsx`: converted clear-recording Alert.alert to ChefsDialog (`showClearDialog` state).
+- [P-210] `apps/mobile/app/chef/[id].tsx`: converted Unfollow Alert.alert to ChefsDialog.
+- [P-210] `apps/mobile/components/RecipeComments.tsx`: converted delete-comment + block-user Alert.alert dialogs to ChefsDialog.
+- [P-210] `apps/mobile/components/MealPlanPicker.tsx`: converted slot-occupied + servings-mismatch Alert.alert dialogs to ChefsDialog. Mismatch uses Promise+ref pattern.
+- [P-210] `apps/mobile/components/QANotepad.tsx`: converted delete-item + clear-all Alert.alert dialogs to ChefsDialog (2 new dialogs alongside existing send-confirm dialog).
+- [P-210] `apps/mobile/app/(tabs)/scan.tsx`: converted Instagram tip + Instagram redirect Coming Soon stubs to ChefsDialog.
+
+### Part C — AiImageGenerationModal Refactor (TYPE: FEATURE)
+- [P-210] Removed creativity slider UI entirely from `AiImageGenerationModal.tsx`. Creativity level now fetched from `system_settings` table (key `image_creativity_level`) via Supabase on modal open.
+- [P-210] Fixed dead-space layout: replaced ScrollView with `flex: 1, justifyContent: 'space-between'` View so Generate button docks to footer without absolute positioning.
+- [P-210] Added "swipe for more →" text hint beside theme picker heading as scroll affordance (expo-linear-gradient not installed).
+
+### Logo Tap → Settings Menu (TYPE: FEATURE)
+- [P-210] `ChefsBookHeader.tsx`: logo tap now opens a ChefsDialog menu (⚙️ icon) with "⚙️ Settings" → `router.push('/modal')` and (staging-only) "📋 QA Notepad". Replaces direct QA Notepad open on logo tap. Settings now accessible from any tab without navigating to a specific screen.
+
+### Splash Screen Fix (TYPE: CODE FIX)
+- [P-210] `apps/mobile/app/_layout.tsx`: fixed splash sequencing bug — `SplashScreen.hideAsync()` and `setSplashDone(true)` were called simultaneously, so user never saw the branded JS overlay. Fix: call `hideAsync()` immediately on JS mount, keep `setSplashDone(true)` on 3-second timer after auth settles. Branded overlay (hat + ChefsBook wordmark + tagline) now visible for full 3 seconds on cold launch.
+
+### Verification (TYPE: EVIDENCE)
+- [P-210] Emulator verified: branded splash ✅, logo tap → ChefsDialog ✅, Settings navigation ✅, Sign Out ChefsDialog ✅. APK installed (com.chefsbook.app).
+
 ## 2026-04-20 (session P-208 — Camera Scan Debug + Cook Mode TTS) TYPE: CODE FIX (Part A) + FEATURE (Part B) + BUILD
 
 ### Part A — Camera Scan Fix (TYPE: CODE FIX)
