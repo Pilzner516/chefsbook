@@ -117,8 +117,8 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-4xl mx-auto text-center py-20 px-6">
-        <div className="flex justify-center mb-6">
+      <section className="max-w-4xl mx-auto text-center pt-24 pb-28 px-6">
+        <div className="flex justify-center mb-8">
           <img
             src="/images/chefs-hat-hd.png"
             srcSet="/images/chefs-hat-hd.png 2x"
@@ -126,17 +126,22 @@ export default function HomePage() {
             height={128}
             alt="ChefsBook"
             className="object-contain"
-            style={{ imageRendering: 'auto' }}
+            style={{ imageRendering: "auto" }}
           />
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight tracking-tight text-cb-text">
-          Your recipes. Your community.<br />
-          <span className="block mt-2 text-cb-primary">Your cooking life, connected</span>
+      
+        <h1 className="text-4xl sm:text-5xl font-bold mb-7 leading-tight tracking-tight text-cb-text">
+          Your recipes. Your community.
+          <span className="block mt-3 text-cb-primary">
+            Your cooking life, connected
+          </span>
         </h1>
-        <p className="text-cb-secondary text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-          Scan, speak, import, discover recipes, plan meals, 
-          generate smart shopping lists, and share what you cook — all in one place.
+      
+        <p className="text-cb-secondary text-lg mb-12 max-w-2xl mx-auto leading-relaxed">
+          Import recipes from anywhere, plan meals, build smart shopping lists,
+          and cook together in one place.
         </p>
+      
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/auth"
@@ -144,6 +149,7 @@ export default function HomePage() {
           >
             Start for free
           </Link>
+      
           <Link
             href="#how-it-works"
             className="w-full sm:w-auto border-2 border-cb-green text-cb-green px-8 py-3 rounded-input text-lg font-semibold hover:bg-cb-green hover:text-white transition-colors text-center"
@@ -151,6 +157,10 @@ export default function HomePage() {
             How it works
           </Link>
         </div>
+      
+        <p className="mt-8 text-sm sm:text-base text-cb-secondary opacity-80">
+          Trusted by home cooks everywhere
+        </p>
       </section>
 
       {/* Features */}
