@@ -75,7 +75,7 @@ export default function SpeakPage() {
     setGenerating(true);
     setError('');
     try {
-      setGenStep('Reading your recipe...');
+      setGenStep('Your Sous Chef is reading your recipe...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
       const gate = await checkRecipeLimit(user.id);
@@ -136,7 +136,7 @@ export default function SpeakPage() {
           <svg className="w-10 h-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>
         </div>
         <h1 className="text-2xl font-bold mb-2">Speak a Recipe</h1>
-        <p className="text-cb-secondary mb-6">Voice recipe entry is a Pro feature. Dictate any recipe and AI will format it for you.</p>
+        <p className="text-cb-secondary mb-6">Voice recipe entry is a Pro feature. Dictate any recipe and your Sous Chef will format it for you.</p>
         <Link href="/dashboard/settings" className="bg-cb-primary text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 inline-block">Upgrade to Pro</Link>
       </div>
     );
@@ -253,7 +253,7 @@ export default function SpeakPage() {
           <div className="w-16 h-16 rounded-full bg-cb-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
             <svg className="w-8 h-8 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" /></svg>
           </div>
-          <p className="text-lg font-bold mb-2">Creating your recipe...</p>
+          <p className="text-lg font-bold mb-2">Your Sous Chef is creating your recipe...</p>
           <p className="text-sm text-cb-secondary">{genStep}</p>
         </div>
       )}

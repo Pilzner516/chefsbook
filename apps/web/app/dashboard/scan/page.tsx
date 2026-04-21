@@ -655,7 +655,7 @@ export default function ScanPage() {
               className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading === 'url' ? (
-                <><Spinner size={16} /> {isYouTubeUrl(url) ? 'Importing from YouTube...' : 'Importing...'}</>
+                <><Spinner size={16} /> Your Sous Chef is fetching this recipe...</>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -679,12 +679,12 @@ export default function ScanPage() {
       <div className="bg-cb-card border border-cb-border rounded-card p-6 mb-8">
         <h2 className="font-semibold mb-1">Paste recipe text</h2>
         <p className="text-cb-secondary text-sm mb-4">
-          Copy recipe text from any source — ingredients, steps, or the full recipe. AI will extract and structure it.
+          Copy recipe text from any source — ingredients, steps, or the full recipe. Your Sous Chef will extract and structure it.
         </p>
         <textarea
           value={pasteText}
           onChange={(e) => setPasteText(e.target.value)}
-          placeholder="Paste recipe text here — ingredients, steps, or the full recipe. AI will extract and structure it for you."
+          placeholder="Paste recipe text here — ingredients, steps, or the full recipe. Your Sous Chef will extract and structure it for you."
           rows={6}
           className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors resize-none mb-3"
         />
@@ -714,7 +714,7 @@ export default function ScanPage() {
           </div>
           <div>
             <h2 className="font-semibold">Speak a recipe</h2>
-            <p className="text-cb-secondary text-sm">Dictate a recipe and AI will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
+            <p className="text-cb-secondary text-sm">Dictate a recipe and your Sous Chef will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
           </div>
           <svg className="w-5 h-5 text-cb-secondary ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
         </div>

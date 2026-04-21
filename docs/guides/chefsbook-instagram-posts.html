@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChefsBook — Instagram Launch Posts</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #faf7f0;
+    --red: #ce2b37;
+    --green: #009246;
+    --ink: #1a1208;
+    --muted: #7a6a52;
+    --light-red: #fdf0f1;
+    --light-green: #f0f9f4;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0ede6;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 40px;
+    font-weight: 500;
+  }
+  .subtitle span { color: var(--red); font-weight: 600; }
+
+  /* Nav tabs */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+  .tab {
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .tab:hover { border-color: var(--red); color: var(--red); }
+  .tab.active { background: var(--red); color: white; border-color: var(--red); }
+
+  /* Post grid */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 32px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .post-card {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .post-card.visible { display: flex; }
+
+  /* Instagram frame */
+  .ig-frame {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+    position: relative;
+  }
+
+  .ig-mock {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 36px 32px;
+    position: relative;
+  }
+
+  /* ────── POST DESIGNS ────── */
+
+  /* POST 1 — Launch */
+  .p1 { background: var(--cream); }
+  .p1 .eyebrow { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+  .p1 .big { font-family: 'Fraunces', serif; font-size: 3rem; font-weight: 900; line-height: 1; color: var(--ink); margin-bottom: 12px; }
+  .p1 .big em { color: var(--red); font-style: italic; }
+  .p1 .tagline { font-size: 0.9rem; color: var(--muted); line-height: 1.5; max-width: 240px; }
+  .p1 .logo-row { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .p1 .toque { font-size: 1.8rem; }
+  .p1 .logotext { font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 700; }
+  .p1 .logotext span { color: var(--red); }
+  .p1-stripe { position: absolute; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, var(--red) 33%, var(--green) 33% 66%, var(--cream) 66%); }
+  .p1-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); position: absolute; top: 24px; right: 24px; }
+
+  /* POST 2 — Import */
+  .p2 { background: var(--ink); }
+  .p2 .top-tag { background: var(--red); color: white; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 12px; border-radius: 100px; margin-bottom: 20px; display: inline-block; }
+  .p2 .headline { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 20px; }
+  .p2 .headline em { color: #f0c14a; font-style: italic; }
+  .p2 .methods { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .p2 .method { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; text-align: left; }
+  .p2 .method-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .p2 .method-text { color: rgba(255,255,255,0.9); font-size: 0.82rem; font-weight: 500; line-height: 1.3; }
+  .p2 .method-text strong { color: white; display: block; font-size: 0.85rem; }
+
+  /* POST 3 — AI */
+  .p3 { background: linear-gradient(135deg, #1a0a0c 0%, #2d0a10 50%, #1a0a0c 100%); }
+  .p3-grid { position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(206,43,55,0.15) 1px, transparent 1px); background-size: 28px 28px; }
+  .p3-content { position: relative; z-index: 1; }
+  .p3 .ai-badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); border: 1px solid var(--red); padding: 4px 12px; border-radius: 100px; display: inline-block; margin-bottom: 16px; }
+  .p3 .headline { font-family: 'Fraunces', serif; font-size: 2.1rem; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 6px; }
+  .p3 .sub { color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 22px; }
+  .p3 .ai-features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .p3 .ai-feat { background: rgba(206,43,55,0.12); border: 1px solid rgba(206,43,55,0.25); border-radius: 10px; padding: 12px 10px; }
+  .p3 .ai-feat .icon { font-size: 1.4rem; margin-bottom: 4px; }
+  .p3 .ai-feat .label { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); line-height: 1.3; }
+
+  /* POST 4 — Meal Plan */
+  .p4 { background: var(--green); }
+  .p4 .corner-text { position: absolute; top: 20px; right: 20px; font-family: 'Fraunces', serif; font-style: italic; font-size: 0.75rem; color: rgba(255,255,255,0.6); writing-mode: vertical-rl; }
+  .p4 .number { font-family: 'Fraunces', serif; font-size: 5rem; font-weight: 900; color: rgba(255,255,255,0.15); line-height: 1; margin-bottom: -10px; }
+  .p4 .headline { font-family: 'Fraunces', serif; font-size: 2.2rem; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 12px; }
+  .p4 .desc { font-size: 0.85rem; color: rgba(255,255,255,0.85); line-height: 1.5; margin-bottom: 20px; max-width: 240px; }
+  .p4 .pill-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .p4 .pill { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35); border-radius: 100px; padding: 5px 14px; font-size: 0.75rem; font-weight: 600; color: white; }
+  .p4-stripe { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: rgba(0,0,0,0.15); }
+
+  /* POST 5 — Pricing */
+  .p5 { background: var(--cream); padding: 28px 24px; }
+  .p5 .eyebrow { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .p5 .headline { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 900; color: var(--ink); line-height: 1.1; margin-bottom: 18px; }
+  .p5 .headline em { color: var(--red); font-style: italic; }
+  .p5 .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .p5 .plan { border-radius: 12px; padding: 14px 12px; text-align: left; }
+  .p5 .plan.free { background: white; border: 2px solid #e8e0d0; }
+  .p5 .plan.chef { background: var(--red); border: 2px solid var(--red); }
+  .p5 .plan.family { background: white; border: 2px solid #e8e0d0; }
+  .p5 .plan.pro { background: var(--ink); border: 2px solid var(--ink); }
+  .p5 .plan-name { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .p5 .plan.free .plan-name, .p5 .plan.family .plan-name { color: var(--muted); }
+  .p5 .plan.chef .plan-name { color: rgba(255,255,255,0.7); }
+  .p5 .plan.pro .plan-name { color: rgba(255,255,255,0.6); }
+  .p5 .plan-price { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 900; }
+  .p5 .plan.free .plan-price, .p5 .plan.family .plan-price { color: var(--ink); }
+  .p5 .plan.chef .plan-price, .p5 .plan.pro .plan-price { color: white; }
+  .p5 .plan-per { font-size: 0.65rem; font-weight: 500; }
+  .p5 .plan.free .plan-per, .p5 .plan.family .plan-per { color: var(--muted); }
+  .p5 .plan.chef .plan-per { color: rgba(255,255,255,0.7); }
+  .p5 .plan.pro .plan-per { color: rgba(255,255,255,0.6); }
+  .p5 .popular { background: #f0c14a; color: var(--ink); font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 100px; display: inline-block; margin-bottom: 6px; }
+  .p5 .domain { text-align: center; margin-top: 14px; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+  .p5 .domain span { color: var(--red); }
+
+  /* POST 6 — Mobile */
+  .p6 { background: linear-gradient(160deg, #0d1f0d 0%, #0a2d1a 100%); }
+  .p6-accent { position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(0, 146, 70, 0.2); }
+  .p6-content { position: relative; z-index: 1; }
+  .p6 .eyebrow { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green); margin-bottom: 14px; }
+  .p6 .headline { font-family: 'Fraunces', serif; font-size: 2.4rem; font-weight: 900; color: white; line-height: 1; margin-bottom: 12px; }
+  .p6 .headline em { font-style: italic; color: #5dde8a; }
+  .p6 .desc { font-size: 0.82rem; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 20px; max-width: 230px; }
+  .p6 .badges { display: flex; gap: 8px; justify-content: center; }
+  .p6 .badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 16px; font-size: 0.75rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 6px; }
+
+  /* POST 7 — Share */
+  .p7 { background: var(--cream); }
+  .p7 .big-q { font-family: 'Fraunces', serif; font-size: 8rem; font-weight: 900; color: var(--red); line-height: 0.8; margin-bottom: 8px; opacity: 0.15; position: absolute; top: 20px; left: 24px; }
+  .p7-content { position: relative; z-index: 1; }
+  .p7 .quote { font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 700; font-style: italic; color: var(--ink); line-height: 1.25; margin-bottom: 16px; max-width: 260px; }
+  .p7 .attribution { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+  .p7 .divider { width: 40px; height: 3px; background: var(--red); border-radius: 2px; margin: 12px auto; }
+  .p7 .cta { background: var(--red); color: white; font-size: 0.78rem; font-weight: 700; padding: 9px 20px; border-radius: 100px; display: inline-block; margin-top: 4px; }
+
+  /* POST 8 — CTA */
+  .p8 { background: var(--red); }
+  .p8-pattern { position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px); background-size: 22px 22px; }
+  .p8-content { position: relative; z-index: 1; }
+  .p8 .big { font-family: 'Fraunces', serif; font-size: 3.5rem; font-weight: 900; color: white; line-height: 0.95; margin-bottom: 14px; }
+  .p8 .big em { font-style: italic; color: #f0c14a; }
+  .p8 .sub { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 24px; max-width: 220px; line-height: 1.4; }
+  .p8 .url { background: white; color: var(--red); font-size: 0.9rem; font-weight: 800; padding: 10px 24px; border-radius: 100px; display: inline-block; letter-spacing: 0.02em; }
+  .p8 .free-label { margin-top: 14px; font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 500; }
+
+  /* Caption area */
+  .caption-area {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    color: var(--ink);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .caption-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .caption-text { color: #3a3020; }
+  .hashtags { margin-top: 8px; color: var(--red); font-size: 0.78rem; font-weight: 500; line-height: 1.8; }
+
+  .copy-btn {
+    display: block;
+    width: 100%;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s;
+  }
+  .copy-btn:hover { background: var(--red); }
+  .copy-btn.copied { background: var(--green); }
+
+  .post-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🍴 ChefsBook</h1>
+<p class="subtitle">Instagram Launch Posts — <span>chefsbk.app</span></p>
+
+<div class="tabs">
+  <button class="tab active" onclick="filter('all')">All 8 Posts</button>
+  <button class="tab" onclick="filter('launch')">Launch</button>
+  <button class="tab" onclick="filter('feature')">Features</button>
+  <button class="tab" onclick="filter('pricing')">Pricing</button>
+  <button class="tab" onclick="filter('cta')">CTA</button>
+</div>
+
+<div class="posts-grid" id="grid">
+
+  <!-- POST 1: Launch Announcement -->
+  <div class="post-card visible" data-category="launch">
+    <div class="post-num">Post 01 — Launch Day</div>
+    <div class="ig-frame">
+      <div class="ig-mock p1">
+        <div class="p1-dot"></div>
+        <div class="logo-row">
+          <span class="toque">👨‍🍳</span>
+          <span class="logotext"><span>Chefs</span>Book</span>
+        </div>
+        <div class="eyebrow">Now live</div>
+        <div class="big">Every recipe.<br><em>One place.</em></div>
+        <div class="tagline">Import, organise, plan and cook — from any website, any page, anywhere.</div>
+        <div class="p1-stripe"></div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">🍴 We're live! ChefsBook is officially open — your new home for every recipe you'll ever love.<br><br>Import from any website. Organise your collection. Plan your meals. Build your shopping list. All in one place, on web and mobile.<br><br>Start for free at chefsbk.app ✨</div>
+      <div class="hashtags">#ChefsBook #RecipeApp #FoodApp #MealPlanning #Cooking #HomeChef #FoodTech #RecipeOrganizer #Launch</div>
+      <button class="copy-btn" onclick="copyCaption(this, 1)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 2: Import -->
+  <div class="post-card visible" data-category="feature">
+    <div class="post-num">Post 02 — Import Feature</div>
+    <div class="ig-frame">
+      <div class="ig-mock p2">
+        <div class="top-tag">Feature spotlight</div>
+        <div class="headline">Import recipes from <em>anywhere.</em></div>
+        <div class="methods">
+          <div class="method"><span class="method-icon">🔗</span><div class="method-text"><strong>Paste a URL</strong>Any recipe site, instantly structured</div></div>
+          <div class="method"><span class="method-icon">📄</span><div class="method-text"><strong>Upload a PDF</strong>Old cookbooks, scanned pages</div></div>
+          <div class="method"><span class="method-icon">🎙️</span><div class="method-text"><strong>Speak a recipe</strong>Describe it — AI does the rest</div></div>
+          <div class="method"><span class="method-icon">✍️</span><div class="method-text"><strong>Type it in</strong>Full recipe editor included</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">Your grandma's handwritten card. That blog you can never find again. A recipe you heard on a podcast.<br><br>ChefsBook imports them all. 🔗 Paste a URL. 📄 Upload a PDF. 🎙️ Speak it aloud. ✍️ Type it in.<br><br>Every recipe, perfectly structured and ready to cook. Try it free at chefsbk.app</div>
+      <div class="hashtags">#ChefsBook #RecipeImport #HomeChef #CookingApp #FoodOrganizer #DigitalCookbook #MealPrep #Cooking</div>
+      <button class="copy-btn" onclick="copyCaption(this, 2)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 3: AI -->
+  <div class="post-card visible" data-category="feature">
+    <div class="post-num">Post 03 — AI Features</div>
+    <div class="ig-frame">
+      <div class="ig-mock p3">
+        <div class="p3-grid"></div>
+        <div class="p3-content">
+          <div class="ai-badge">Powered by AI</div>
+          <div class="headline">Your recipes,<br>made smarter.</div>
+          <div class="sub">AI works quietly in the background</div>
+          <div class="ai-features">
+            <div class="ai-feat"><div class="icon">🖼️</div><div class="label">Auto-generates beautiful dish photos</div></div>
+            <div class="ai-feat"><div class="icon">🌍</div><div class="label">Translates into 5 languages</div></div>
+            <div class="ai-feat"><div class="icon">🏷️</div><div class="label">Tags, categorises & structures</div></div>
+            <div class="ai-feat"><div class="icon">✅</div><div class="label">Verifies completeness before publishing</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">What if your recipe app was actually intelligent? 🤖<br><br>ChefsBook uses AI to generate stunning dish photos, translate recipes into 5 languages, auto-tag and categorise your collection, and verify every recipe is complete before it goes live.<br><br>It's not just storage — it's a smart kitchen companion. chefsbk.app</div>
+      <div class="hashtags">#ChefsBook #AIFood #FoodTech #SmartKitchen #RecipeAI #CookingApp #HomeChef #FoodPhotography #AIRecipes</div>
+      <button class="copy-btn" onclick="copyCaption(this, 3)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 4: Meal Planning -->
+  <div class="post-card visible" data-category="feature">
+    <div class="post-num">Post 04 — Meal Planning</div>
+    <div class="ig-frame">
+      <div class="ig-mock p4">
+        <div class="corner-text">chefsbk.app</div>
+        <div class="number">7</div>
+        <div class="headline">Days planned.<br>List built.<br>Stress gone.</div>
+        <div class="desc">Drag recipes onto your weekly plan — ChefsBook automatically builds your shopping list, grouped by department.</div>
+        <div class="pill-row">
+          <span class="pill">🛒 Smart shopping list</span>
+          <span class="pill">📅 Weekly planner</span>
+          <span class="pill">📱 Synced to mobile</span>
+        </div>
+        <div class="p4-stripe"></div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">Sunday planning, sorted. 📅<br><br>Map out your week's meals in ChefsBook and watch your shopping list build itself — ingredients grouped by department, quantities merged automatically, synced instantly to your phone.<br><br>No more forgotten items. No more mid-week scramble. Just cook. chefsbk.app</div>
+      <div class="hashtags">#ChefsBook #MealPlanning #MealPrep #ShoppingList #HomeChef #WeeklyMeals #Cooking #FoodOrganizer #MealPrepSunday</div>
+      <button class="copy-btn" onclick="copyCaption(this, 4)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 5: Pricing -->
+  <div class="post-card visible" data-category="pricing">
+    <div class="post-num">Post 05 — Plans & Pricing</div>
+    <div class="ig-frame">
+      <div class="ig-mock p5">
+        <div class="eyebrow">Plans for every kitchen</div>
+        <div class="headline">Start <em>free.</em><br>Cook more.</div>
+        <div class="plans">
+          <div class="plan free">
+            <div class="plan-name">Free</div>
+            <div class="plan-price">$0<span class="plan-per">/mo</span></div>
+          </div>
+          <div class="plan chef">
+            <div class="popular">★ Most Popular</div>
+            <div class="plan-name">Chef</div>
+            <div class="plan-price">$4.99<span class="plan-per">/mo</span></div>
+          </div>
+          <div class="plan family">
+            <div class="plan-name">Family</div>
+            <div class="plan-price">$9.99<span class="plan-per">/mo</span></div>
+          </div>
+          <div class="plan pro">
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">$14.99<span class="plan-per">/mo</span></div>
+          </div>
+        </div>
+        <div class="domain">Visit <span>chefsbk.app</span> to compare plans</div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">ChefsBook has a plan for every kitchen — including a free one. 🍳<br><br>🆓 Free — get started, no card needed<br>👨‍🍳 Chef ($4.99/mo) — AI image generation, unlimited imports, meal planning<br>👨‍👩‍👧 Family ($9.99/mo) — everything Chef + shared household access<br>⭐ Pro ($14.99/mo) — all features + PDF export + priority AI<br><br>Sign up free at chefsbk.app</div>
+      <div class="hashtags">#ChefsBook #RecipeApp #MealPlanning #HomeChef #FoodApp #CookingApp #FoodTech #Launch #Pricing</div>
+      <button class="copy-btn" onclick="copyCaption(this, 5)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 6: Mobile App -->
+  <div class="post-card visible" data-category="feature">
+    <div class="post-num">Post 06 — Mobile App</div>
+    <div class="ig-frame">
+      <div class="ig-mock p6">
+        <div class="p6-accent"></div>
+        <div class="p6-content">
+          <div class="eyebrow">Mobile app</div>
+          <div class="headline">Cook with<br>both <em>hands.</em></div>
+          <div class="desc">Full recipe library, meal plan, shopping list and step-by-step cook mode — all available offline on Android.</div>
+          <div class="badges">
+            <div class="badge">📱 Android</div>
+            <div class="badge">🍎 iOS soon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">Your entire recipe collection, in your pocket. 📱<br><br>The ChefsBook mobile app keeps everything in sync — browse your library, follow step-by-step cook mode, check off your shopping list at the store, and get notifications when someone saves your recipes.<br><br>Now on Android. iOS coming soon. Get it at chefsbk.app</div>
+      <div class="hashtags">#ChefsBook #MobileApp #AndroidApp #RecipeApp #CookingApp #HomeChef #FoodApp #MealPrep #DigitalKitchen</div>
+      <button class="copy-btn" onclick="copyCaption(this, 6)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 7: Social Proof / Community -->
+  <div class="post-card visible" data-category="launch">
+    <div class="post-num">Post 07 — The Why</div>
+    <div class="ig-frame">
+      <div class="ig-mock p7">
+        <div class="big-q">"</div>
+        <div class="p7-content">
+          <div class="quote">"I built the recipe app I always wished existed."</div>
+          <div class="divider"></div>
+          <div class="attribution">— The ChefsBook team</div>
+          <div class="cta">Start free at chefsbk.app →</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">Tabs open. Screenshots saved. Handwritten cards lost in a drawer.<br><br>We've all been there. So we built ChefsBook — a recipe app that actually keeps up with the way you cook, discover, and plan meals in real life.<br><br>Import from anywhere. Organise your way. Cook with confidence.<br><br>Join us at chefsbk.app — it's free to start. 🍴</div>
+      <div class="hashtags">#ChefsBook #FoodApp #Cooking #HomeChef #RecipeOrganizer #MealPlanning #FoodCommunity #CookingInspiration #FoodLover</div>
+      <button class="copy-btn" onclick="copyCaption(this, 7)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <!-- POST 8: Final CTA -->
+  <div class="post-card visible" data-category="cta">
+    <div class="post-num">Post 08 — Final CTA</div>
+    <div class="ig-frame">
+      <div class="ig-mock p8">
+        <div class="p8-pattern"></div>
+        <div class="p8-content">
+          <div class="big">Start<br>cooking<br><em>smarter.</em></div>
+          <div class="sub">Recipes from anywhere. Plans that work. Lists that build themselves.</div>
+          <div class="url">chefsbk.app</div>
+          <div class="free-label">Free to start. No credit card.</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption-area">
+      <div class="caption-label">Caption</div>
+      <div class="caption-text">Stop losing recipes. Stop forgetting what's in the fridge. Stop planning meals from scratch every Sunday.<br><br>ChefsBook puts your whole culinary life in one place — beautifully organised, AI-powered, and always in sync across web and mobile.<br><br>👇 Link in bio — free to start at chefsbk.app</div>
+      <div class="hashtags">#ChefsBook #RecipeApp #MealPlanning #HomeChef #FoodTech #CookingApp #Launch #FoodOrganizer #DigitalCookbook #Cooking</div>
+      <button class="copy-btn" onclick="copyCaption(this, 8)">Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const captions = {
+  1: `🍴 We're live! ChefsBook is officially open — your new home for every recipe you'll ever love.
+
+Import from any website. Organise your collection. Plan your meals. Build your shopping list. All in one place, on web and mobile.
+
+Start for free at chefsbk.app ✨
+
+#ChefsBook #RecipeApp #FoodApp #MealPlanning #Cooking #HomeChef #FoodTech #RecipeOrganizer #Launch`,
+  2: `Your grandma's handwritten card. That blog you can never find again. A recipe you heard on a podcast.
+
+ChefsBook imports them all. 🔗 Paste a URL. 📄 Upload a PDF. 🎙️ Speak it aloud. ✍️ Type it in.
+
+Every recipe, perfectly structured and ready to cook. Try it free at chefsbk.app
+
+#ChefsBook #RecipeImport #HomeChef #CookingApp #FoodOrganizer #DigitalCookbook #MealPrep #Cooking`,
+  3: `What if your recipe app was actually intelligent? 🤖
+
+ChefsBook uses AI to generate stunning dish photos, translate recipes into 5 languages, auto-tag and categorise your collection, and verify every recipe is complete before it goes live.
+
+It's not just storage — it's a smart kitchen companion. chefsbk.app
+
+#ChefsBook #AIFood #FoodTech #SmartKitchen #RecipeAI #CookingApp #HomeChef #FoodPhotography #AIRecipes`,
+  4: `Sunday planning, sorted. 📅
+
+Map out your week's meals in ChefsBook and watch your shopping list build itself — ingredients grouped by department, quantities merged automatically, synced instantly to your phone.
+
+No more forgotten items. No more mid-week scramble. Just cook. chefsbk.app
+
+#ChefsBook #MealPlanning #MealPrep #ShoppingList #HomeChef #WeeklyMeals #Cooking #FoodOrganizer #MealPrepSunday`,
+  5: `ChefsBook has a plan for every kitchen — including a free one. 🍳
+
+🆓 Free — get started, no card needed
+👨‍🍳 Chef ($4.99/mo) — AI image generation, unlimited imports, meal planning
+👨‍👩‍👧 Family ($9.99/mo) — everything Chef + shared household access
+⭐ Pro ($14.99/mo) — all features + PDF export + priority AI
+
+Sign up free at chefsbk.app
+
+#ChefsBook #RecipeApp #MealPlanning #HomeChef #FoodApp #CookingApp #FoodTech #Launch #Pricing`,
+  6: `Your entire recipe collection, in your pocket. 📱
+
+The ChefsBook mobile app keeps everything in sync — browse your library, follow step-by-step cook mode, check off your shopping list at the store, and get notifications when someone saves your recipes.
+
+Now on Android. iOS coming soon. Get it at chefsbk.app
+
+#ChefsBook #MobileApp #AndroidApp #RecipeApp #CookingApp #HomeChef #FoodApp #MealPrep #DigitalKitchen`,
+  7: `Tabs open. Screenshots saved. Handwritten cards lost in a drawer.
+
+We've all been there. So we built ChefsBook — a recipe app that actually keeps up with the way you cook, discover, and plan meals in real life.
+
+Import from anywhere. Organise your way. Cook with confidence.
+
+Join us at chefsbk.app — it's free to start. 🍴
+
+#ChefsBook #FoodApp #Cooking #HomeChef #RecipeOrganizer #MealPlanning #FoodCommunity #CookingInspiration #FoodLover`,
+  8: `Stop losing recipes. Stop forgetting what's in the fridge. Stop planning meals from scratch every Sunday.
+
+ChefsBook puts your whole culinary life in one place — beautifully organised, AI-powered, and always in sync across web and mobile.
+
+👇 Link in bio — free to start at chefsbk.app
+
+#ChefsBook #RecipeApp #MealPlanning #HomeChef #FoodTech #CookingApp #Launch #FoodOrganizer #DigitalCookbook #Cooking`
+};
+
+function copyCaption(btn, postNum) {
+  navigator.clipboard.writeText(captions[postNum]).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy Caption + Hashtags';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function filter(cat) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.post-card').forEach(card => {
+    if (cat === 'all' || card.dataset.category === cat) {
+      card.classList.add('visible');
+    } else {
+      card.classList.remove('visible');
+    }
+  });
+}
+</script>
+</body>
+</html>

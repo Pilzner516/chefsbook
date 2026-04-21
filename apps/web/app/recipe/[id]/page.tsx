@@ -807,7 +807,7 @@ export default function RecipePage() {
                   disabled={downloadingPdf}
                   className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''} ${downloadingPdf ? 'opacity-50' : ''}`}
                 >
-                  {downloadingPdf ? '⏳ Generating...' : '📄 Download PDF'}
+                  {downloadingPdf ? '⏳ Your Sous Chef is working on it...' : '📄 Download PDF'}
                   {!userIsPro && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Pro</span>}
                 </button>
                 {isOwner && (
@@ -1003,7 +1003,7 @@ export default function RecipePage() {
                 <div className="w-16 h-16 rounded-full bg-cb-bg flex items-center justify-center animate-pulse">
                   <img src="/images/chefs-hat.png" alt="" className="w-10 h-10 opacity-60" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 </div>
-                <span className="text-cb-secondary text-sm">Generating recipe image...</span>
+                <span className="text-cb-secondary text-sm">Your Sous Chef is creating your image...</span>
                 <span className="text-cb-muted text-xs">This takes about 10-15 seconds</span>
               </div>
             ) : (
@@ -2292,7 +2292,7 @@ export default function RecipePage() {
                 disabled={downloadingPdf}
                 className="flex-1 py-2 rounded-input text-sm font-semibold bg-cb-primary text-white hover:opacity-90 disabled:opacity-50"
               >
-                {downloadingPdf ? 'Generating...' : 'Generate PDF'}
+                {downloadingPdf ? 'Your Sous Chef is working on it...' : 'Generate PDF'}
               </button>
             </div>
           </div>

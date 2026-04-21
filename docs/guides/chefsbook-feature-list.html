@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChefsBook — Feature List</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #faf7f0;
+  --red: #ce2b37;
+  --green: #009246;
+  --ink: #1a1208;
+  --muted: #7a6a52;
+  --border: #e8e0d0;
+  --card: #ffffff;
+}
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--ink);
+  padding: 48px 40px 36px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-text { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 900; color: white; }
+.logo-text span { color: var(--red); }
+.header-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+.header-title { font-family: 'Fraunces', serif; font-size: 2.8rem; font-weight: 900; color: white; line-height: 1.05; margin-top: 12px; }
+.header-title em { color: #f0c14a; font-style: italic; }
+.header-right { text-align: right; }
+.stat-row { display: flex; gap: 24px; justify-content: flex-end; flex-wrap: wrap; margin-top: 8px; }
+.stat { text-align: center; }
+.stat-n { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 900; color: white; line-height: 1; }
+.stat-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+/* ── STRIPE ── */
+.stripe { height: 5px; background: linear-gradient(90deg, var(--red) 33.3%, var(--green) 33.3% 66.6%, #f0c14a 66.6%); }
+
+/* ── LAYOUT ── */
+.wrapper { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── FILTERS ── */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+.filter-btn {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--red); color: var(--red); }
+.filter-btn.active { background: var(--red); color: white; border-color: var(--red); }
+
+/* ── CATEGORY SECTIONS ── */
+.category { margin-bottom: 32px; }
+.cat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+.cat-icon { font-size: 1.4rem; }
+.cat-title { font-family: 'Fraunces', serif; font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+.cat-count { margin-left: auto; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--cream); border: 1px solid var(--border); border-radius: 100px; padding: 3px 10px; }
+
+/* ── FEATURE GRID ── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.feat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: box-shadow 0.15s;
+}
+.feat:hover { box-shadow: 0 3px 16px rgba(0,0,0,0.07); }
+.feat-check { width: 18px; height: 18px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.feat-check svg { width: 10px; height: 10px; fill: white; }
+.feat-body {}
+.feat-name { font-size: 0.85rem; font-weight: 600; color: var(--ink); line-height: 1.3; }
+.feat-desc { font-size: 0.75rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.feat-plan {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 100px;
+  align-self: flex-start;
+  white-space: nowrap;
+}
+.plan-free { background: #f0f9f4; color: var(--green); border: 1px solid #c3e6d0; }
+.plan-chef { background: #fdf0f1; color: var(--red); border: 1px solid #f5c5c8; }
+.plan-family { background: #fff8e8; color: #a06400; border: 1px solid #f0d98a; }
+.plan-pro { background: var(--ink); color: white; }
+
+/* ── PLAN LEGEND ── */
+.legend {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 28px;
+  background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px;
+  align-items: center;
+}
+.legend-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; }
+
+/* ── PRINT / EXPORT ── */
+@media print {
+  .filters, .stripe + .stripe { display: none; }
+  .feat { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">
+      <span style="font-size:1.6rem">👨‍🍳</span>
+      <span class="logo-text"><span>Chefs</span>Book</span>
+    </div>
+    <div class="header-tag">Product Feature List — chefsbk.app</div>
+    <div class="header-title">Everything that's<br><em>built & shipped.</em></div>
+  </div>
+  <div class="header-right">
+    <div class="stat-row">
+      <div class="stat"><div class="stat-n">200+</div><div class="stat-label">Sessions</div></div>
+      <div class="stat"><div class="stat-n">70+</div><div class="stat-label">Features</div></div>
+      <div class="stat"><div class="stat-n">2</div><div class="stat-label">Platforms</div></div>
+      <div class="stat"><div class="stat-n">5</div><div class="stat-label">Languages</div></div>
+    </div>
+  </div>
+</header>
+<div class="stripe"></div>
+
+<div class="wrapper">
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterAll(this)">All Features</button>
+    <button class="filter-btn" onclick="filterCat(this,'import')">Import</button>
+    <button class="filter-btn" onclick="filterCat(this,'ai')">AI & Intelligence</button>
+    <button class="filter-btn" onclick="filterCat(this,'organisation')">Organisation</button>
+    <button class="filter-btn" onclick="filterCat(this,'planning')">Meal Planning</button>
+    <button class="filter-btn" onclick="filterCat(this,'social')">Social</button>
+    <button class="filter-btn" onclick="filterCat(this,'mobile')">Mobile</button>
+    <button class="filter-btn" onclick="filterCat(this,'web')">Web</button>
+    <button class="filter-btn" onclick="filterCat(this,'sharing')">Sharing</button>
+  </div>
+
+  <div class="legend">
+    <span class="legend-label">Plan gates:</span>
+    <span class="legend-item"><span class="feat-plan plan-free">Free</span> All users</span>
+    <span class="legend-item"><span class="feat-plan plan-chef">Chef</span> $4.99/mo</span>
+    <span class="legend-item"><span class="feat-plan plan-family">Family</span> $9.99/mo</span>
+    <span class="legend-item"><span class="feat-plan plan-pro">Pro</span> $14.99/mo</span>
+  </div>
+
+  <!-- ── RECIPE IMPORT ── -->
+  <div class="category" data-cat="import">
+    <div class="cat-header">
+      <span class="cat-icon">🔗</span>
+      <span class="cat-title">Recipe Import</span>
+      <span class="cat-count">10 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">URL Import</div><div class="feat-desc">JSON-LD-first extraction from any recipe website; 25,000-char limit</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">PDF Import</div><div class="feat-desc">Upload PDF cookbooks, scanned pages, or any recipe document</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Word / CSV / JSON / TXT</div><div class="feat-desc">Universal file import — mammoth, papaparse, native JSON parsing</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">YouTube Import</div><div class="feat-desc">Data API + transcript extraction + Claude structuring with timestamps</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Speak a Recipe</div><div class="feat-desc">Describe a recipe verbally; Web Speech API + Claude structures it</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Camera Scan (mobile)</div><div class="feat-desc">Photograph a recipe page; guided conversational flow extracts it</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Chrome / Edge Extension</div><div class="feat-desc">One-click import from any page; also detects cooking techniques</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Clipboard Paste (mobile)</div><div class="feat-desc">Share a URL from any Android app directly into ChefsBook</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Completeness Gate</div><div class="feat-desc">AI verifies title, description, 2+ ingredients with quantities, 1+ step, 1+ tag before publishing</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Manual Recipe Entry</div><div class="feat-desc">Full inline editor — type or paste any recipe from scratch</div></div><span class="feat-plan plan-chef">Chef</span></div>
+    </div>
+  </div>
+
+  <!-- ── AI ── -->
+  <div class="category" data-cat="ai">
+    <div class="cat-header">
+      <span class="cat-icon">🤖</span>
+      <span class="cat-title">AI & Intelligence</span>
+      <span class="cat-count">9 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">AI Image Generation</div><div class="feat-desc">Flux Schnell (Chef/Family) or Flux Dev (Pro) via Replicate; creativity slider 1–5</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">10 Image Themes</div><div class="feat-desc">Rustic, editorial, dark moody, bright minimalist and more; pre-generated pasta examples</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Image Regeneration</div><div class="feat-desc">One regeneration per recipe via controlled pill prompts</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Auto-Tagging</div><div class="feat-desc">Claude extracts 5–8 lowercase tags per recipe; retroactive batch tag button</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">5-Language Translation</div><div class="feat-desc">English, French, Spanish, Italian, German; cached per recipe in DB</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Guided Scan Flow</div><div class="feat-desc">AI follow-up questions from camera scan; Haiku for questions, Sonnet for structuring</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">AI Chef Suggestions</div><div class="feat-desc">Suggests missing recipe sections when import is incomplete</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">AI Comment Moderation</div><div class="feat-desc">3-verdict AI moderation (approve / flag / reject) on all comments</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Cookbook Intelligence</div><div class="feat-desc">ISBN lookup, AI cover reading, auto table-of-contents generation</div></div><span class="feat-plan plan-chef">Chef</span></div>
+    </div>
+  </div>
+
+  <!-- ── ORGANISATION ── -->
+  <div class="category" data-cat="organisation">
+    <div class="cat-header">
+      <span class="cat-icon">📚</span>
+      <span class="cat-title">Organisation</span>
+      <span class="cat-count">12 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Recipe Library</div><div class="feat-desc">Grid, List, and Table view modes; sort by date, name, rating</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Smart Search</div><div class="feat-desc">Full-text ILIKE search across title, description, cuisine, ingredients, tags</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Category Drill-down</div><div class="feat-desc">Filter by Cuisine, Course, Source, Tags, Cook Time with active pills</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Cookbooks</div><div class="feat-desc">Physical cookbook management; ISBN lookup, cover art, recipe-to-book linking</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Techniques Library</div><div class="feat-desc">Separate content type; AI-classified; two-column detail page (tips, mistakes, steps)</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Favorites</div><div class="feat-desc">Heart toggle on cards and recipe detail; dedicated Favorites category</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Tags & Cuisines</div><div class="feat-desc">31 cuisines + custom entry; 5–8 auto-tags per recipe; filterable</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Recipe Privacy</div><div class="feat-desc">Private / Shared Link / Public toggle per recipe</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Recipe Editing</div><div class="feat-desc">Inline edit: title, description, ingredients (per-row), steps, notes, cuisine, course, tags</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Cooking Notes</div><div class="feat-desc">Personal log per recipe — add, list, and delete your cook notes</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Unit Toggle</div><div class="feat-desc">Metric / Imperial preference saved to profile and synced to DB</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">User Photo Gallery</div><div class="feat-desc">Upload your own cook photos per recipe; set as primary image</div></div><span class="feat-plan plan-chef">Chef</span></div>
+    </div>
+  </div>
+
+  <!-- ── MEAL PLANNING ── -->
+  <div class="category" data-cat="planning">
+    <div class="cat-header">
+      <span class="cat-icon">📅</span>
+      <span class="cat-title">Meal Planning & Shopping</span>
+      <span class="cat-count">6 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Weekly Meal Planner</div><div class="feat-desc">Drag recipes onto any day of the week; edit and remove meals inline</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Servings Mismatch Warning</div><div class="feat-desc">Alerts when adding a recipe with >2× serving difference vs existing day meals</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Auto Shopping List</div><div class="feat-desc">Ingredients merged and deduplicated from plan; grouped by department</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Store Management</div><div class="feat-desc">Add stores with logo.dev branding; two-level store → item hierarchy</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Offline Shopping List (mobile)</div><div class="feat-desc">AsyncStorage cache; checkboxes local-only; syncs on reconnect</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Cross-device Sync</div><div class="feat-desc">Shopping list and meal plan sync in real-time across web and mobile via Supabase Realtime</div></div><span class="feat-plan plan-chef">Chef</span></div>
+    </div>
+  </div>
+
+  <!-- ── SOCIAL ── -->
+  <div class="category" data-cat="social">
+    <div class="cat-header">
+      <span class="cat-icon">🌍</span>
+      <span class="cat-title">Social & Community</span>
+      <span class="cat-count">10 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Public Discover Feed</div><div class="feat-desc">Browse all public recipes; filter by cuisine</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Likes</div><div class="feat-desc">Like count badge on cards and detail; likers modal for recipe owners</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Saves (social)</div><div class="feat-desc">Save public recipes to your collection; save count badge; savers modal</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Follow System</div><div class="feat-desc">Follow other chefs; follower/following counts on profiles</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Threaded Comments</div><div class="feat-desc">Nested replies; Chef+ required to comment; AI moderation on all comments</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Notifications</div><div class="feat-desc">Bell with unread badge; real-time via Supabase; tap to navigate (web + mobile)</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Direct Messages</div><div class="feat-desc">Inbox + thread view with real-time updates; ChefsDialog flag picker</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Recipe Attribution</div><div class="feat-desc">Original submitter + source URL always shown; shared_by attribution pill</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Social Share Modal</div><div class="feat-desc">AI-generated platform text for Instagram, Pinterest, Facebook; copy/download</div></div><span class="feat-plan plan-pro">Pro</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Chef Profiles</div><div class="feat-desc">Public profile pages with bio, avatar, recipe grid, follower counts</div></div><span class="feat-plan plan-free">Free</span></div>
+    </div>
+  </div>
+
+  <!-- ── MOBILE ── -->
+  <div class="category" data-cat="mobile">
+    <div class="cat-header">
+      <span class="cat-icon">📱</span>
+      <span class="cat-title">Mobile App (Android)</span>
+      <span class="cat-count">8 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Step-by-Step Cook Mode</div><div class="feat-desc">Full-screen per-step view; swipe through ingredients and steps hands-free</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Offline Shopping List</div><div class="feat-desc">Works without internet; syncs when back online</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Camera Scan Import</div><div class="feat-desc">Photograph recipe pages; guided AI flow with follow-up questions</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Translated Recipe Titles</div><div class="feat-desc">Recipe list shows titles in your chosen language automatically</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Deep Link Handling</div><div class="feat-desc">chefsbk.app/recipe/[id] links open directly in the app</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Android Share Target</div><div class="feat-desc">Share any URL from any app directly into ChefsBook's import flow</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Branded Splash Screen</div><div class="feat-desc">3-second ChefsBook splash on cold launch; flash-free native-to-React handoff</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">5-Tab Navigation</div><div class="feat-desc">Recipes, Search, Scan, Plan, Cart — floating tab bar persists across screens</div></div><span class="feat-plan plan-free">Free</span></div>
+    </div>
+  </div>
+
+  <!-- ── WEB ── -->
+  <div class="category" data-cat="web">
+    <div class="cat-header">
+      <span class="cat-icon">🖥️</span>
+      <span class="cat-title">Web App</span>
+      <span class="cat-count">8 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">PDF Export</div><div class="feat-desc">Formatted recipe PDF via @react-pdf/renderer; hero image included</div></div><span class="feat-plan plan-pro">Pro</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Print Support</div><div class="feat-desc">Recipe detail and shopping list print buttons; @media print CSS</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Guest Recipe Access</div><div class="feat-desc">Shared link guests can view recipes; email capture for conversion</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Onboarding Bubbles</div><div class="feat-desc">Contextual help tips on first use; dismissable per feature</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Internationalisation (i18n)</div><div class="feat-desc">5 locales (EN/FR/ES/IT/DE); react-i18next; language selector in sidebar</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Stripe Payments</div><div class="feat-desc">Chef / Family / Pro subscription billing; monthly and annual plans</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Admin Dashboard</div><div class="feat-desc">Service-role moderation panel; AI-assisted recipe review; user management</div></div><span class="feat-plan plan-free">Free</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Feedback Card</div><div class="feat-desc">In-app feedback submission from any dashboard page</div></div><span class="feat-plan plan-free">Free</span></div>
+    </div>
+  </div>
+
+  <!-- ── SHARING ── -->
+  <div class="category" data-cat="sharing">
+    <div class="cat-header">
+      <span class="cat-icon">🔗</span>
+      <span class="cat-title">Sharing & Collaboration</span>
+      <span class="cat-count">5 features</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Share Links</div><div class="feat-desc">chefsbk.app/recipe/[id]?ref=[username] — shareable on any platform</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Share as PDF</div><div class="feat-desc">Export and share a beautifully formatted recipe PDF</div></div><span class="feat-plan plan-pro">Pro</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">"Add to My ChefsBook"</div><div class="feat-desc">One-tap clone of a public recipe into your own collection</div></div><span class="feat-plan plan-chef">Chef</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Family Plan Sharing</div><div class="feat-desc">Shared household collection; all family members see the same recipes</div></div><span class="feat-plan plan-family">Family</span></div>
+      <div class="feat"><div class="feat-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" fill="none"/></svg></div><div class="feat-body"><div class="feat-name">Social Post Generator</div><div class="feat-desc">AI writes Instagram, Pinterest, Facebook captions with hashtags</div></div><span class="feat-plan plan-pro">Pro</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function filterAll(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.category').forEach(c => c.style.display = '');
+}
+function filterCat(btn, cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.category').forEach(c => {
+    c.style.display = c.dataset.cat === cat ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

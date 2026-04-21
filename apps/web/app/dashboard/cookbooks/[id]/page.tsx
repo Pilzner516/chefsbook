@@ -191,7 +191,7 @@ export default function CookbookDetailPage() {
             {cookbook.rating && <span className="text-amber-500">{'★'.repeat(cookbook.rating)}{'☆'.repeat(5 - cookbook.rating)}</span>}
             {!cookbook.toc_fetched && (
               <button onClick={fetchToc} disabled={fetchingToc} className="text-xs text-cb-primary hover:underline disabled:opacity-50">
-                {fetchingToc ? 'Fetching contents...' : 'Fetch table of contents'}
+                {fetchingToc ? 'Your Sous Chef is preparing the contents...' : 'Fetch table of contents'}
               </button>
             )}
           </div>
@@ -215,7 +215,7 @@ export default function CookbookDetailPage() {
       {/* Fetching indicator */}
       {fetchingToc && (
         <div className="text-center py-8 text-cb-secondary">
-          <p className="text-sm font-medium">AI is generating the table of contents...</p>
+          <p className="text-sm font-medium">Your Sous Chef is generating the table of contents...</p>
           <p className="text-xs mt-1">This may take a moment</p>
         </div>
       )}

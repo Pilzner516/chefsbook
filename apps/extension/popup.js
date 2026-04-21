@@ -204,11 +204,11 @@ async function renderSaveView(token, email) {
   const isBlocked = isPdfFallbackSite(pageUrl);
   saveBtn.addEventListener('click', async () => {
     saveBtn.disabled = true;
-    saveBtn.textContent = isBlocked ? 'Getting full recipe...' : 'Importing recipe...';
+    saveBtn.textContent = 'Your Sous Chef is fetching this recipe...';
 
     const html = await getPageHtml(tab?.id);
 
-    saveBtn.textContent = isBlocked ? 'Getting full recipe...' : 'Importing recipe...';
+    saveBtn.textContent = 'Your Sous Chef is fetching this recipe...';
 
     try {
       const data = await importRecipe(pageUrl, html, token);

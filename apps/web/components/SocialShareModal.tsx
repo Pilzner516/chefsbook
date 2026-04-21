@@ -136,7 +136,7 @@ export default function SocialShareModal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-semibold">Post Text</label>
-              <button onClick={generateText} disabled={generatingText} className="text-xs text-cb-primary hover:underline disabled:opacity-50">{generatingText ? 'Generating...' : 'Regenerate'}</button>
+              <button onClick={generateText} disabled={generatingText} className="text-xs text-cb-primary hover:underline disabled:opacity-50">{generatingText ? 'Your Sous Chef is working on it...' : 'Regenerate'}</button>
             </div>
             <textarea
               value={postText}

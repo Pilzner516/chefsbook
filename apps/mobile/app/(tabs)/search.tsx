@@ -6,7 +6,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { listRecipes, listPublicRecipes, saveRecipe, searchByIngredient, searchUsers, getFollowedRecipes, getFollowingCount } from '@chefsbook/db';
+import { listRecipes, listPublicRecipes, saveRecipe, searchByIngredient, searchUsers, getFollowedRecipes, getFollowingCount, getBatchTranslatedTitles } from '@chefsbook/db';
 import type { Recipe, UserProfile } from '@chefsbook/db';
 import { Avatar } from '../../components/UIKit';
 import { getInitials } from '@chefsbook/ui';
@@ -51,7 +51,7 @@ const SOURCE_OPTIONS = ['url', 'scan', 'manual', 'voice', 'youtube'];
 
 export default function SearchTab() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { q: initialQuery } = useLocalSearchParams<{ q?: string }>();
   const session = useAuthStore((s) => s.session);
@@ -75,7 +75,31 @@ export default function SearchTab() {
   const [feedRecipes, setFeedRecipes] = useState<(Recipe & { author_username: string | null; author_avatar: string | null })[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [followingCountVal, setFollowingCountVal] = useState(0);
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
+  const [feedTranslatedTitles, setFeedTranslatedTitles] = useState<Record<string, string>>({});
   const insets = useSafeAreaInsets();
+
+  // Batch-fetch translated titles for search results when language is not English
+  useEffect(() => {
+    if (results.length === 0) { setTranslatedTitles({}); return; }
+    const lang = i18n.language;
+    if (lang && lang !== 'en') {
+      getBatchTranslatedTitles(results.map((r) => r.id), lang).then(setTranslatedTitles);
+    } else {
+      setTranslatedTitles({});
+    }
+  }, [results, i18n.language]);
+
+  // Batch-fetch translated titles for What's New feed
+  useEffect(() => {
+    if (feedRecipes.length === 0) { setFeedTranslatedTitles({}); return; }
+    const lang = i18n.language;
+    if (lang && lang !== 'en') {
+      getBatchTranslatedTitles(feedRecipes.map((r) => r.id), lang).then(setFeedTranslatedTitles);
+    } else {
+      setFeedTranslatedTitles({});
+    }
+  }, [feedRecipes, i18n.language]);
 
   // Load following count on mount
   useEffect(() => {
@@ -714,7 +738,7 @@ export default function SearchTab() {
               results.map((recipe) => (
                 <View key={recipe.id} style={{ marginBottom: mode === 'discover' ? 4 : 0 }}>
                   <RecipeCard
-                    title={recipe.title}
+                    title={translatedTitles[recipe.id] ?? recipe.title}
                     imageUrl={recipe.image_url}
                     cuisine={recipe.cuisine}
                     totalMinutes={recipe.total_minutes}
@@ -778,7 +802,7 @@ export default function SearchTab() {
                       @{recipe.author_username ?? '?'} · {timeAgo(recipe.created_at)}
                     </Text>
                     <RecipeCard
-                      title={recipe.title}
+                      title={feedTranslatedTitles[recipe.id] ?? recipe.title}
                       imageUrl={recipe.image_url}
                       cuisine={recipe.cuisine}
                       totalMinutes={recipe.total_minutes}
