@@ -44,6 +44,7 @@ Use the cheapest model that produces acceptable quality:
 | Speak a Recipe formatting | claude-sonnet-4-6 | Structured extraction |
 | Purchase unit suggestions | claude-haiku-4-5 | Simple lookup/suggestion |
 | isActuallyARecipe verdict | claude-haiku-4-5 | Simple 3-way classification after completeness gate |
+| Sous Chef suggest (incomplete recipes) | claude-haiku-4-5 | Structured gap-fill, user-reviewed before save (~$0.0003–$0.0006/call) |
 
 **Never use Opus** for any automated background task. Opus is for one-off complex
 reasoning that a human initiates and waits for.

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@chefsbook/db';
+import { SousChefSuggestModal } from './SousChefSuggestModal';
 
 interface Props {
   recipeId: string;
@@ -16,11 +17,14 @@ interface Props {
  * hands off to the installed browser extension via postMessage.
  */
 export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, onRefreshed }: Props) {
-  const [status, setStatus] = useState<'idle' | 'refreshing' | 'ok' | 'error' | 'needs-ext'>('idle');
+  const [status, setStatus] = useState<'idle' | 'refreshing' | 'ok' | 'error' | 'needs-ext' | 'suggesting'>('idle');
   const [msg, setMsg] = useState<string>('');
   const [showPaste, setShowPaste] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasting, setPasting] = useState(false);
+  const [showSousChefModal, setShowSousChefModal] = useState(false);
+  const [sousChefSuggestions, setSousChefSuggestions] = useState<any>(null);
+  const [hadSourceScrape, setHadSourceScrape] = useState(false);
 
   if (!sourceUrl || missingFields.length === 0) return null;
 
@@ -80,6 +84,152 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
     }
   };
 
+  const triggerSousChef = async () => {
+    setStatus('suggesting');
+    setMsg('Your Sous Chef is preparing this recipe…');
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) { setStatus('error'); setMsg('Please sign in.'); return; }
+
+      const res = await fetch(`/api/recipes/${recipeId}/sous-chef-suggest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
+      });
+
+      const body = await res.json();
+      if (!res.ok) {
+        setStatus('error');
+        setMsg(body.error ?? 'Sous Chef suggestion failed.');
+        return;
+      }
+
+      setSousChefSuggestions(body.suggestions);
+      setHadSourceScrape(body.hadSourceScrape);
+      setShowSousChefModal(true);
+      setStatus('idle');
+      setMsg('');
+    } catch (e: any) {
+      setStatus('error');
+      setMsg(String(e?.message ?? e));
+    }
+  };
+
+  const handleSousChefSave = async (data: { ingredients?: any[]; steps?: any[] }) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Please sign in.');
+
+      // Merge ingredients
+      if (data.ingredients && data.ingredients.length > 0) {
+        // Get existing ingredients count
+        const { count: existingCount } = await supabase
+          .from('recipe_ingredients')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipe_id', recipeId);
+
+        const startOrder = (existingCount ?? 0) + 1;
+
+        // Insert new ingredients
+        const ingredientsToInsert = data.ingredients.map((ing, idx) => ({
+          recipe_id: recipeId,
+          order: startOrder + idx,
+          amount: ing.amount || null,
+          unit: ing.unit || null,
+          name: ing.name,
+          notes: ing.notes || null,
+        }));
+
+        const { error: ingError } = await supabase
+          .from('recipe_ingredients')
+          .insert(ingredientsToInsert);
+
+        if (ingError) throw ingError;
+      }
+
+      // Add steps (only if none existed)
+      if (data.steps && data.steps.length > 0) {
+        const stepsToInsert = data.steps.map((step) => ({
+          recipe_id: recipeId,
+          order: step.order,
+          instruction: step.instruction,
+        }));
+
+        const { error: stepError } = await supabase
+          .from('recipe_steps')
+          .insert(stepsToInsert);
+
+        if (stepError) throw stepError;
+      }
+
+      // Check completeness and show publish dialog if needed
+      const { data: updatedRecipe } = await supabase
+        .from('recipes')
+        .select('visibility, is_complete')
+        .eq('id', recipeId)
+        .single();
+
+      setStatus('ok');
+      setMsg('Recipe updated by your Sous Chef ✨');
+
+      // Re-evaluate completeness via finalize endpoint
+      await fetch('/api/recipes/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ recipeId }),
+      });
+
+      onRefreshed?.();
+
+      // Check if we should show publish prompt
+      if (updatedRecipe?.visibility === 'private') {
+        const { data: ingredients } = await supabase
+          .from('recipe_ingredients')
+          .select('amount')
+          .eq('recipe_id', recipeId);
+
+        const { data: steps } = await supabase
+          .from('recipe_steps')
+          .select('id')
+          .eq('recipe_id', recipeId);
+
+        const { data: recipe } = await supabase
+          .from('recipes')
+          .select('title, description')
+          .eq('id', recipeId)
+          .single();
+
+        const hasMinIngredients = (ingredients?.length ?? 0) >= 2 && ingredients?.some(i => i.amount);
+        const hasSteps = (steps?.length ?? 0) >= 1;
+        const hasTitle = !!recipe?.title;
+        const hasDescription = !!recipe?.description;
+
+        if (hasMinIngredients && hasSteps && hasTitle && hasDescription) {
+          // Show publish dialog
+          const shouldPublish = window.confirm(
+            'Your recipe is ready to share with the Chefsbook community. Would you like to publish it?'
+          );
+
+          if (shouldPublish) {
+            await supabase
+              .from('recipes')
+              .update({ visibility: 'public' })
+              .eq('id', recipeId);
+
+            setMsg('Your recipe is now public 🎉');
+            onRefreshed?.();
+          }
+        }
+      }
+    } catch (e: any) {
+      setStatus('error');
+      setMsg(String(e?.message ?? e));
+      throw e;
+    }
+  };
+
   return (
     <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 mb-4">
       <div className="flex items-start gap-3">
@@ -98,14 +248,30 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
               {msg}
             </div>
           )}
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex gap-2 flex-wrap">
             <button
               type="button"
               onClick={refresh}
-              disabled={status === 'refreshing'}
+              disabled={status === 'refreshing' || status === 'suggesting'}
               className="inline-flex items-center gap-1.5 text-sm bg-cb-primary text-white rounded-full px-3 py-1 disabled:opacity-60"
             >
               {status === 'refreshing' ? 'Refreshing…' : '🔄 Refresh from source'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPaste(!showPaste)}
+              disabled={status === 'refreshing' || status === 'suggesting'}
+              className="inline-flex items-center gap-1.5 text-sm border border-amber-300 text-amber-900 rounded-full px-3 py-1 hover:bg-amber-100 disabled:opacity-60"
+            >
+              📋 Paste {missingFields[0] ?? 'text'}
+            </button>
+            <button
+              type="button"
+              onClick={triggerSousChef}
+              disabled={status === 'refreshing' || status === 'suggesting'}
+              className="inline-flex items-center gap-1.5 text-sm bg-cb-primary text-white rounded-full px-3 py-1 disabled:opacity-60"
+            >
+              {status === 'suggesting' ? 'Preparing…' : '✨ Sous Chef'}
             </button>
             {status === 'needs-ext' && (
               <a
@@ -115,13 +281,6 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
                 Install extension
               </a>
             )}
-            <button
-              type="button"
-              onClick={() => setShowPaste(!showPaste)}
-              className="inline-flex items-center gap-1.5 text-sm border border-amber-300 text-amber-900 rounded-full px-3 py-1 hover:bg-amber-100"
-            >
-              📋 Paste {missingFields[0] ?? 'text'}
-            </button>
           </div>
           {showPaste && (
             <div className="mt-3">
@@ -179,6 +338,17 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
           )}
         </div>
       </div>
+
+      {/* Sous Chef Modal */}
+      {showSousChefModal && sousChefSuggestions && (
+        <SousChefSuggestModal
+          isOpen={showSousChefModal}
+          onClose={() => setShowSousChefModal(false)}
+          suggestions={sousChefSuggestions}
+          hadSourceScrape={hadSourceScrape}
+          onSave={handleSousChefSave}
+        />
+      )}
     </div>
   );
 }
