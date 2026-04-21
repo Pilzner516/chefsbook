@@ -943,7 +943,7 @@ export default function RecipePage() {
           <div className="aspect-video rounded-card overflow-hidden bg-black">
             <iframe
               ref={ytIframeRef}
-              src={`https://www.youtube.com/embed/${recipe.youtube_video_id}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+              src={`https://www.youtube.com/embed/${recipe.youtube_video_id}?enablejsapi=1&autoplay=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

@@ -13,6 +13,7 @@ import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import FeedbackCard from '@/components/FeedbackCard';
 import NotificationBell from '@/components/NotificationBell';
 import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
+import VisibilityHintBanner from '@/components/VisibilityHintBanner';
 import { useConfirmDialog } from '@/components/useConfirmDialog';
 import ThemePickerModal from '@/components/ThemePickerModal';
 import { IMAGE_THEMES } from '@chefsbook/ai';
@@ -163,6 +164,76 @@ export default function DashboardPage() {
     setSelected(new Set());
   };
 
+  const handleMakePrivate = async () => {
+    if (selected.size === 0) return;
+    const publicRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'public');
+    if (publicRecipes.length === 0) return;
+
+    const ok = await confirm({
+      title: 'Make recipes private?',
+      body: `This will make ${publicRecipes.length} recipe${publicRecipes.length > 1 ? 's' : ''} private. They won't be visible to other members until you change them back to Public.`,
+      confirmLabel: 'Make Private'
+    });
+    if (!ok) return;
+
+    setBulkAction('updating');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/recipes/bulk-visibility', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ ids: publicRecipes.map(r => r.id), visibility: 'private' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await loadRecipes();
+      alert(`${publicRecipes.length} recipe${publicRecipes.length > 1 ? 's' : ''} set to private`);
+    } catch (e: any) {
+      alert(e.message);
+    }
+    setBulkAction(null);
+    setSelectMode(false);
+    setSelected(new Set());
+  };
+
+  const handleMakePublic = async () => {
+    if (selected.size === 0) return;
+    const privateRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'private');
+    if (privateRecipes.length === 0) return;
+
+    const ok = await confirm({
+      title: 'Make recipes public?',
+      body: `This will make ${privateRecipes.length} recipe${privateRecipes.length > 1 ? 's' : ''} public and visible to all Chefsbook members.`,
+      confirmLabel: 'Make Public'
+    });
+    if (!ok) return;
+
+    setBulkAction('updating');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/recipes/bulk-visibility', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ ids: privateRecipes.map(r => r.id), visibility: 'public' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await loadRecipes();
+      alert(`${privateRecipes.length} recipe${privateRecipes.length > 1 ? 's' : ''} set to public`);
+    } catch (e: any) {
+      alert(e.message);
+    }
+    setBulkAction(null);
+    setSelectMode(false);
+    setSelected(new Set());
+  };
+
   const handleToggleFavourite = async (e: React.MouseEvent, recipeId: string, current: boolean) => {
     e.preventDefault();
     e.stopPropagation();
@@ -277,6 +348,7 @@ export default function DashboardPage() {
   return (
     <div className="p-8">
       <IncompleteRecipesBanner />
+      <VisibilityHintBanner />
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Recipes</h1>
@@ -299,6 +371,24 @@ export default function DashboardPage() {
                 </svg>
                 Re-import
               </button>
+              {recipes.some(r => selected.has(r.id) && r.visibility === 'public') && (
+                <button
+                  onClick={handleMakePrivate}
+                  disabled={!!bulkAction}
+                  className="border border-cb-border text-cb-secondary px-4 py-2 rounded-input text-sm font-semibold hover:bg-cb-bg hover:text-cb-text disabled:opacity-50"
+                >
+                  Make Private
+                </button>
+              )}
+              {recipes.some(r => selected.has(r.id) && r.visibility === 'private') && (
+                <button
+                  onClick={handleMakePublic}
+                  disabled={!!bulkAction}
+                  className="border border-cb-border text-cb-secondary px-4 py-2 rounded-input text-sm font-semibold hover:bg-cb-bg hover:text-cb-text disabled:opacity-50"
+                >
+                  Make Public
+                </button>
+              )}
               <button
                 onClick={handleBulkDelete}
                 disabled={selected.size === 0 || !!bulkAction}

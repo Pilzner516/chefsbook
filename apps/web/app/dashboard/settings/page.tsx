@@ -215,6 +215,65 @@ export default function SettingsPage() {
         <button onClick={saveProfile} disabled={saving} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
       </div>
 
+      {/* Privacy */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Privacy</h2>
+        <div>
+          <p className="text-sm text-cb-secondary mb-3">Make all your public recipes private. They won't be visible to other members until you change them back to Public.</p>
+          <button
+            onClick={async () => {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) return;
+
+              // Check if there are any public recipes
+              const { count } = await supabase
+                .from('recipes')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('visibility', 'public');
+
+              if (!count || count === 0) {
+                setMessage('All your recipes are already private');
+                setTimeout(() => setMessage(''), 3000);
+                return;
+              }
+
+              const confirmed = window.confirm(`Make all recipes private?\n\nThis will set all your public recipes to private. They won't be visible to other members until you change them back to Public. Are you sure?`);
+              if (!confirmed) return;
+
+              setSaving(true);
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const res = await fetch('/api/recipes/bulk-visibility', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                  },
+                  body: JSON.stringify({ ids: [], visibility: 'private', all: true }),
+                });
+
+                if (!res.ok) {
+                  const data = await res.json();
+                  throw new Error(data.error);
+                }
+
+                setMessage('All your recipes are now private');
+                setTimeout(() => setMessage(''), 3000);
+              } catch (e: any) {
+                setMessage(e.message ?? 'Failed to update recipes');
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving}
+            className="border border-red-200 text-cb-primary px-4 py-2 rounded-input text-sm font-semibold hover:bg-red-50 disabled:opacity-50"
+          >
+            {saving ? 'Updating...' : 'Make all my recipes private'}
+          </button>
+        </div>
+      </section>
+
       {/* Change Password */}
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Change Password</h2>
