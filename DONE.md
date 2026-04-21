@@ -1,6 +1,13 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-21 (deploy infrastructure + landing copy) TYPE: INFRA + COPY
+
+- [2026-04-21] Created `/mnt/chefsbook/deploy-staging.sh` on RPi5 — git pull → clean `.next` + `node_modules/react|react-dom` → `NODE_OPTIONS=--max-old-space-size=1024 npx next build --no-lint` → `pm2 restart chefsbook-web`. Script is idempotent and handles the duplicate-React / SWC warning issues automatically.
+- [2026-04-21] Fixed TypeScript `Buffer<ArrayBufferLike>` type error in `apps/web/app/api/recipes/mobile-generate-image/route.ts` (sharp `.toBuffer()` result wrapped in `Buffer.from()` with `as Buffer` cast). Build was failing at type-check on RPi5.
+- [2026-04-21] Updated landing page `h1` headline to "Your Chef's Platform" (`apps/web/app/page.tsx`). Deployed and verified live at chefsbk.app.
+- [2026-04-21] Diagnosed SWC lockfile warning as non-fatal: `⨯ Failed to patch lockfile [TypeError: Cannot read properties of undefined (reading 'os')]` is a Next.js 15.3.9 warning on arm64 — build still compiles via SWC in ~27s. `npm install` in workspace is blocked by EOVERRIDE (root package.json has both `overrides.react` and `dependencies.react`); workaround is to never run npm install on Pi — clean and rebuild is sufficient.
+
 ## 2026-04-20 (session P-210 — Native Dialog Audit + Splash Fix + Settings Access) TYPE: CODE FIX + FEATURE + BUILD
 
 ### Part A — ChefsDialog Extensions (TYPE: CODE FIX)
