@@ -12,6 +12,7 @@ import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { RefreshFromSourceBanner } from '@/components/RefreshFromSourceBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
+import { RecipeLightbox } from '@/components/RecipeLightbox';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
@@ -108,6 +109,7 @@ export default function RecipePage() {
   const [regenerating, setRegenerating] = useState(false);
   const [generationFailed, setGenerationFailed] = useState(false);
   const [showChangeImageModal, setShowChangeImageModal] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -952,7 +954,8 @@ export default function RecipePage() {
             <img
               src={userPhotos.length > 0 ? proxyIfNeeded(userPhotos[0].url) : proxyIfNeeded(recipe.image_url!)}
               alt={recipe.title}
-              className={`w-full h-full ${recipe.cookbook_id ? 'object-contain' : 'object-cover'}`}
+              className={`w-full h-full ${recipe.cookbook_id ? 'object-contain' : 'object-cover'} cursor-zoom-in`}
+              onClick={() => setLightboxOpen(true)}
             />
             {isOwner && !regenerating && (
               <button
@@ -2298,6 +2301,30 @@ export default function RecipePage() {
           </div>
         </div>
       )}
+
+      {/* Recipe Image Lightbox */}
+      <RecipeLightbox
+        images={(() => {
+          const images: string[] = [];
+          // Add user photos first
+          if (userPhotos.length > 0) {
+            images.push(...userPhotos.map(p => proxyIfNeeded(p.url)));
+          }
+          // Add original image_url if it exists and isn't already in the array
+          if (recipe.image_url) {
+            const proxiedImageUrl = proxyIfNeeded(recipe.image_url);
+            if (!images.includes(proxiedImageUrl)) {
+              // Only add if it's not the same as the first user photo
+              if (userPhotos.length === 0 || userPhotos[0].url !== recipe.image_url) {
+                images.push(proxiedImageUrl);
+              }
+            }
+          }
+          return images;
+        })()}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </main>
   );
 }
