@@ -11,14 +11,14 @@ const featureGroups = [
       'Import from any URL',
       'Speak a recipe (voice entry)',
       'Import from PDFs, Word docs, and bookmark exports',
-      'Identify dishes from photos with AI',
+      'Identify dishes from photos with your AI Sous Chef',
     ],
   },
   {
     title: 'Organise & Plan',
     items: [
       'Recipe versioning (multiple versions of one recipe)',
-      'AI meal planner',
+      'Meal planner',
       'Smart shopping lists (store-grouped, unit-aware)',
       'Cookbook organisation',
     ],
@@ -34,12 +34,12 @@ const featureGroups = [
     ],
   },
   {
-    title: 'AI Powered',
+    title: 'AI Sous Chef Powered',
     items: [
       'Auto-tagging',
       'Recipe translation (5 languages)',
       'Dish identification',
-      'AI meal plan generation',
+      'Meal plan generation',
       'Content moderation',
     ],
   },
