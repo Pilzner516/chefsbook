@@ -4,13 +4,13 @@ import { callClaude } from '@chefsbook/ai';
 
 interface SousChefSuggestion {
   ingredients?: Array<{
-    amount: string;
+    quantity: string;
     unit: string;
-    name: string;
-    notes?: string;
+    ingredient: string;
+    preparation?: string;
   }>;
   steps?: Array<{
-    order: number;
+    step_number: number;
     instruction: string;
   }>;
 }
@@ -49,15 +49,15 @@ export async function POST(
     // Fetch ingredients and steps
     const { data: ingredients } = await supabaseAdmin
       .from('recipe_ingredients')
-      .select('amount, unit, name, notes')
+      .select('quantity, unit, ingredient, preparation')
       .eq('recipe_id', id)
-      .order('order');
+      .order('sort_order');
 
     const { data: steps } = await supabaseAdmin
       .from('recipe_steps')
-      .select('order, instruction')
+      .select('step_number, instruction')
       .eq('recipe_id', id)
-      .order('order');
+      .order('step_number');
 
     // Step B — Attempt source re-fetch (best-effort, 8 second timeout)
     let sourceScrape: string | null = null;
@@ -175,7 +175,7 @@ Schema:
     if (needsIngredients) {
       prompt += `
   "ingredients": [
-    { "amount": "2", "unit": "cups", "name": "all-purpose flour", "notes": "" }
+    { "quantity": "2", "unit": "cups", "ingredient": "all-purpose flour", "preparation": "" }
   ]`;
       if (needsSteps) prompt += ',';
     }
@@ -183,7 +183,7 @@ Schema:
     if (needsSteps) {
       prompt += `
   "steps": [
-    { "order": 1, "instruction": "Mix the dry ingredients together." }
+    { "step_number": 1, "instruction": "Mix the dry ingredients together." }
   ]`;
     }
 

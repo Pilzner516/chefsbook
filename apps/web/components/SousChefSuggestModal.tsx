@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 
 interface Ingredient {
-  amount: string;
+  quantity: string;
   unit: string;
-  name: string;
-  notes?: string;
+  ingredient: string;
+  preparation?: string;
 }
 
 interface Step {
-  order: number;
+  step_number: number;
   instruction: string;
 }
 
@@ -43,7 +43,7 @@ export function SousChefSuggestModal({ isOpen, onClose, suggestions, hadSourceSc
   const hasSteps = steps.length > 0;
 
   const addIngredient = () => {
-    setIngredients([...ingredients, { amount: '', unit: '', name: '', notes: '' }]);
+    setIngredients([...ingredients, { quantity: '', unit: '', ingredient: '', preparation: '' }]);
   };
 
   const removeIngredient = (index: number) => {
@@ -57,14 +57,14 @@ export function SousChefSuggestModal({ isOpen, onClose, suggestions, hadSourceSc
   };
 
   const addStep = () => {
-    const newOrder = steps.length > 0 ? Math.max(...steps.map(s => s.order)) + 1 : 1;
-    setSteps([...steps, { order: newOrder, instruction: '' }]);
+    const newStepNumber = steps.length > 0 ? Math.max(...steps.map(s => s.step_number)) + 1 : 1;
+    setSteps([...steps, { step_number: newStepNumber, instruction: '' }]);
   };
 
   const removeStep = (index: number) => {
     const filtered = steps.filter((_, i) => i !== index);
     // Reorder
-    const reordered = filtered.map((step, i) => ({ ...step, order: i + 1 }));
+    const reordered = filtered.map((step, i) => ({ ...step, step_number: i + 1 }));
     setSteps(reordered);
   };
 
@@ -78,7 +78,7 @@ export function SousChefSuggestModal({ isOpen, onClose, suggestions, hadSourceSc
     setSaving(true);
     try {
       await onSave({
-        ingredients: hasIngredients ? ingredients.filter(i => i.name.trim()) : undefined,
+        ingredients: hasIngredients ? ingredients.filter(i => i.ingredient.trim()) : undefined,
         steps: hasSteps ? steps.filter(s => s.instruction.trim()) : undefined,
       });
       onClose();
@@ -129,9 +129,9 @@ export function SousChefSuggestModal({ isOpen, onClose, suggestions, hadSourceSc
                   <div key={index} className="flex gap-2 items-start">
                     <input
                       type="text"
-                      value={ingredient.amount}
-                      onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
-                      placeholder="Amt"
+                      value={ingredient.quantity}
+                      onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
+                      placeholder="Qty"
                       className="w-20 px-3 py-2 border border-cb-border rounded-input outline-none focus:border-cb-primary text-sm"
                     />
                     <input
@@ -143,16 +143,16 @@ export function SousChefSuggestModal({ isOpen, onClose, suggestions, hadSourceSc
                     />
                     <input
                       type="text"
-                      value={ingredient.name}
-                      onChange={(e) => updateIngredient(index, 'name', e.target.value)}
-                      placeholder="Name"
+                      value={ingredient.ingredient}
+                      onChange={(e) => updateIngredient(index, 'ingredient', e.target.value)}
+                      placeholder="Ingredient"
                       className="flex-1 px-3 py-2 border border-cb-border rounded-input outline-none focus:border-cb-primary text-sm"
                     />
                     <input
                       type="text"
-                      value={ingredient.notes || ''}
-                      onChange={(e) => updateIngredient(index, 'notes', e.target.value)}
-                      placeholder="Notes"
+                      value={ingredient.preparation || ''}
+                      onChange={(e) => updateIngredient(index, 'preparation', e.target.value)}
+                      placeholder="Prep"
                       className="w-32 px-3 py-2 border border-cb-border rounded-input outline-none focus:border-cb-primary text-sm"
                     />
                     <button
@@ -183,7 +183,7 @@ export function SousChefSuggestModal({ isOpen, onClose, suggestions, hadSourceSc
                 {steps.map((step, index) => (
                   <div key={index} className="flex gap-2 items-start">
                     <div className="w-8 h-8 flex items-center justify-center bg-cb-primary text-white rounded-full text-sm font-semibold flex-shrink-0 mt-1">
-                      {step.order}
+                      {step.step_number}
                     </div>
                     <textarea
                       value={step.instruction}

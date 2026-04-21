@@ -122,6 +122,11 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
       const token = sessionData.session?.access_token;
       if (!token) throw new Error('Please sign in.');
 
+      // Get current user ID
+      const { data: userData } = await supabase.auth.getUser(token);
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('User not found');
+
       // Merge ingredients
       if (data.ingredients && data.ingredients.length > 0) {
         // Get existing ingredients count
@@ -130,16 +135,17 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
           .select('*', { count: 'exact', head: true })
           .eq('recipe_id', recipeId);
 
-        const startOrder = (existingCount ?? 0) + 1;
+        const startSortOrder = (existingCount ?? 0) + 1;
 
         // Insert new ingredients
         const ingredientsToInsert = data.ingredients.map((ing, idx) => ({
           recipe_id: recipeId,
-          order: startOrder + idx,
-          amount: ing.amount || null,
+          user_id: userId,
+          sort_order: startSortOrder + idx,
+          quantity: ing.quantity ? parseFloat(ing.quantity) : null,
           unit: ing.unit || null,
-          name: ing.name,
-          notes: ing.notes || null,
+          ingredient: ing.ingredient,
+          preparation: ing.preparation || null,
         }));
 
         const { error: ingError } = await supabase
@@ -153,7 +159,8 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
       if (data.steps && data.steps.length > 0) {
         const stepsToInsert = data.steps.map((step) => ({
           recipe_id: recipeId,
-          order: step.order,
+          user_id: userId,
+          step_number: step.step_number,
           instruction: step.instruction,
         }));
 
@@ -187,7 +194,7 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
       if (updatedRecipe?.visibility === 'private') {
         const { data: ingredients } = await supabase
           .from('recipe_ingredients')
-          .select('amount')
+          .select('quantity')
           .eq('recipe_id', recipeId);
 
         const { data: steps } = await supabase
@@ -201,7 +208,7 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
           .eq('id', recipeId)
           .single();
 
-        const hasMinIngredients = (ingredients?.length ?? 0) >= 2 && ingredients?.some(i => i.amount);
+        const hasMinIngredients = (ingredients?.length ?? 0) >= 2 && ingredients?.some(i => i.quantity);
         const hasSteps = (steps?.length ?? 0) >= 1;
         const hasTitle = !!recipe?.title;
         const hasDescription = !!recipe?.description;
