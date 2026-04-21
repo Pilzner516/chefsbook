@@ -131,11 +131,11 @@ export default function HomePage() {
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight tracking-tight text-cb-text">
           Your recipes. Your community.<br />
-          <span className="text-cb-primary">Your cooking life, connected</span>
+          <span className="block mt-2 text-cb-primary">Your cooking life, connected</span>
         </h1>
         <p className="text-cb-secondary text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-          Scan, speak, import, and discover recipes. Plan meals, generate smart shopping lists,
-          follow your favourite chefs, and share what you cook &mdash; all in one place.
+          Scan, speak, import, discover recipes, plan meals, 
+          generate smart shopping lists, and share what you cook — all in one place.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
@@ -148,7 +148,7 @@ export default function HomePage() {
             href="#how-it-works"
             className="w-full sm:w-auto border-2 border-cb-green text-cb-green px-8 py-3 rounded-input text-lg font-semibold hover:bg-cb-green hover:text-white transition-colors text-center"
           >
-            See how it works
+            How it works
           </Link>
         </div>
       </section>
@@ -156,7 +156,7 @@ export default function HomePage() {
       {/* Features */}
       <section id="features" className="max-w-5xl mx-auto px-6 pb-24">
         <h2 className="text-3xl font-bold text-center mb-4 text-cb-text">The smarter way to cook together</h2>
-        <p className="text-cb-secondary text-center mb-12 text-lg">From capture to kitchen to table.</p>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {featureGroups.map((group) => (
             <div key={group.title} className="bg-cb-card border border-cb-border rounded-card p-6">
