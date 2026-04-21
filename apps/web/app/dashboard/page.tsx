@@ -56,6 +56,18 @@ export default function DashboardPage() {
     setSortKey(getStoredSort());
   }, []);
 
+  // Update activeFilter when URL param changes
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam === 'incomplete') {
+      setActiveFilter('Incomplete');
+    } else if (filterParam === 'favourites') {
+      setActiveFilter('Favourites');
+    } else if (!filterParam || filterParam === 'all') {
+      setActiveFilter('All');
+    }
+  }, [searchParams]);
+
   const changeView = (v: ViewMode) => { setViewMode(v); localStorage.setItem('cb_view', v); };
   const changeSort = (s: SortKey) => { setSortKey(s); localStorage.setItem('cb_sort', s); };
 

@@ -714,7 +714,7 @@ export default function ScanPage() {
           </div>
           <div>
             <h2 className="font-semibold">Speak a recipe</h2>
-            <p className="text-cb-secondary text-sm">Dictate a recipe and your Sous Chef will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
+            <p className="text-cb-secondary text-sm">Dictate a recipe and Your Sous Chef will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
           </div>
           <svg className="w-5 h-5 text-cb-secondary ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
         </div>

@@ -136,7 +136,7 @@ export default function SpeakPage() {
           <svg className="w-10 h-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>
         </div>
         <h1 className="text-2xl font-bold mb-2">Speak a Recipe</h1>
-        <p className="text-cb-secondary mb-6">Voice recipe entry is a Pro feature. Dictate any recipe and your Sous Chef will format it for you.</p>
+        <p className="text-cb-secondary mb-6">Voice recipe entry is a Pro feature. Dictate any recipe and Your Sous Chef will format it for you.</p>
         <Link href="/dashboard/settings" className="bg-cb-primary text-white px-6 py-3 rounded-input text-sm font-semibold hover:opacity-90 inline-block">Upgrade to Pro</Link>
       </div>
     );
