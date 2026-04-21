@@ -1,6 +1,73 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-21 (session Prompt-E — Notes copyright + Edit UX + Housekeeping) TYPE: CODE FIX ×4
+
+### FIX 1 — Notes copyright: paraphrase at import time
+
+**Old prompt text** (packages/ai/src/importFromUrl.ts line 20):
+```
+"notes": "string | null",
+```
+(no extraction instructions)
+
+**New prompt text** (packages/ai/src/importFromUrl.ts line 38-39):
+```
+- For "notes": Extract the SUBSTANCE of any notes, tips, storage instructions, scaling advice, timing notes, serving suggestions, or substitution hints. Rewrite them as clean prose paragraphs in a neutral voice. Do NOT copy the source site's formatting, label prefixes (e.g. "MULTIPLE:", "TOTAL TIME:", "STORAGE:", "NOTE:", "TIP:"), or sentence structure. Do NOT copy verbatim phrases — paraphrase entirely. If there are no meaningful notes beyond what's already in the description or steps, return null.
+```
+
+**SQL sweep**: 1 row updated (recipes with verbatim notes containing label prefixes)
+
+**Rationale**: Notes are the most personally authored content. Verbatim scraping = copyright violation. Every other field (description, ingredients, steps) is already paraphrased by AI extraction — notes must receive the same treatment.
+
+### FIX 2 — Notes Edit button (matches Ingredients/Steps pattern)
+
+**File**: apps/web/app/recipe/[id]/page.tsx (lines 1892-1924)
+
+**Changes**:
+- Added Edit button to Notes section header (top-right, matches Ingredients/Steps pattern exactly)
+- Added Save/Cancel buttons in edit mode (bottom-right, same layout as other sections)
+- **Removed** click-on-text edit behavior (inconsistent with other sections)
+- **Removed** "+ Add notes" button (Edit button serves both purposes)
+- Added placeholder text when no notes exist: "No notes yet. Click Edit to add some."
+- Edit button only visible to recipe owner (`isOwner` gate)
+
+### FIX 3 — AGENDA.md cleanup (false positive removal)
+
+**File**: AGENDA.md (Tier 1 table + detailed section)
+
+**Removed**: Item #6 "Import Pipeline Diagnostic — Incomplete recipes that should have been complete" (lines 18 + 20-53)
+
+**Reason**: The Launch-Import-Diagnostic session confirmed the premise was incorrect — there are ZERO incomplete recipes with source URLs. The import pipeline is working correctly. The JSON-LD-first extraction prevents truncation issues.
+
+### FIX 4 — Incomplete recipes banner copy update
+
+**File**: apps/web/components/IncompleteRecipesBanner.tsx (line 37)
+
+**Old text**: 
+```
+⚠️ You have {count} recipes that need attention. They're saved as private until you complete them.
+```
+
+**New text**:
+```
+⚠️ You have {count} draft recipes. These are draft recipes — add ingredients and steps to complete and publish them.
+```
+
+**Rationale**: The old copy implied a system failure or import problem. In reality these are draft recipes from speak/scan features that the user started but didn't finish. The new copy clarifies this.
+
+**i18n status**: The banner component is NOT i18n'd — text is hardcoded in English. `apps/web/locales/*.json` files exist but the component doesn't use react-i18next. Adding i18n would require component refactor (out of scope for this copy-only fix).
+
+### Verification
+
+- ✅ TypeScript: `npx tsc --noEmit` clean
+- ✅ Deploy: files copied to RPi5 via SCP → `npx next build --no-lint` succeeded → `pm2 restart chefsbook-web` online
+- ✅ Smoke tests:
+  - `curl -I https://chefsbk.app/recipe/024d27d1-af26-4008-83cd-3775787bbcec` → HTTP 200
+  - `curl -I https://chefsbk.app/dashboard` → HTTP 200
+
+---
+
 ## 2026-04-21 (session Launch-Import-Diagnostic — Import Pipeline Investigation) TYPE: DIAGNOSTIC
 
 **OBJECTIVE**: Investigate why recipes marked incomplete have source URLs that are scrapeable (hypothesis: rate limiting, JS rendering, or 25k char truncation).
