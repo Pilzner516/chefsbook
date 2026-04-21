@@ -34,7 +34,7 @@ export default function IncompleteRecipesBanner() {
   return (
     <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-card px-4 py-3 mb-4 flex items-center justify-between">
       <div className="text-sm">
-        ⚠️ You have {count} recipe{count === 1 ? '' : 's'} that need attention. They&apos;re saved as private until you complete them.{' '}
+        ⚠️ You have {count} draft recipe{count === 1 ? '' : 's'}. These are draft recipes — add ingredients and steps to complete and publish them.{' '}
         <Link href="/dashboard?filter=incomplete" className="underline font-semibold">Review now →</Link>
       </div>
       <button onClick={dismiss} className="text-xs text-amber-700 hover:text-amber-900">Dismiss</button>

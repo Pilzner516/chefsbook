@@ -1891,35 +1891,38 @@ export default function RecipePage() {
 
         {/* Notes */}
         <section className="mb-10">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-cb-border">
+            <h2 className="text-xl font-bold">Notes</h2>
+            {isOwner && !editingNotes && (
+              <button onClick={() => setEditingNotes(true)} className="text-xs text-cb-primary hover:underline">Edit</button>
+            )}
+          </div>
           {editingNotes ? (
             <div>
-              <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
               <textarea
                 defaultValue={recipe.notes ?? ''}
                 autoFocus
                 rows={4}
                 className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary mb-2"
-                onBlur={(e) => saveNotes(e.target.value)}
+                id="notes-textarea"
               />
+              <div className="flex items-center gap-2">
+                <span className="flex-1" />
+                <button onClick={() => setEditingNotes(false)} className="text-sm text-cb-secondary hover:text-cb-text">Cancel</button>
+                <button onClick={() => {
+                  const textarea = document.getElementById('notes-textarea') as HTMLTextAreaElement;
+                  if (textarea) saveNotes(textarea.value);
+                }} disabled={saving} className="bg-cb-primary text-white px-4 py-1.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             </div>
           ) : (displayNotes || recipe.notes) ? (
-            <div>
-              <h2 className="text-xl font-bold mb-4 pb-2 border-b border-cb-border">Notes</h2>
-              <p
-                className={`text-cb-secondary leading-relaxed ${isOwner ? 'cursor-pointer hover:bg-cb-bg/50 rounded-input px-2 py-1 -mx-2' : ''}`}
-                onClick={() => isOwner && setEditingNotes(true)}
-                title={isOwner ? 'Click to edit notes' : undefined}
-              >
-                {displayNotes}
-              </p>
-            </div>
+            <p className="text-cb-secondary leading-relaxed">
+              {displayNotes}
+            </p>
           ) : isOwner ? (
-            <button
-              onClick={() => setEditingNotes(true)}
-              className="text-sm text-cb-secondary border border-dashed border-cb-border rounded-input px-3 py-1 hover:border-cb-primary hover:text-cb-primary"
-            >
-              + Add notes
-            </button>
+            <p className="text-cb-secondary text-sm italic">No notes yet. Click Edit to add some.</p>
           ) : null}
         </section>
 
