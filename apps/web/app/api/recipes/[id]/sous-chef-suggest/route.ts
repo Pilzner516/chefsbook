@@ -93,10 +93,17 @@ export async function POST(
       }
     }
 
-    // Step C — Build the Haiku prompt
+    // Step C — Determine what is missing SERVER-SIDE
+    const needsIngredients = !ingredients || ingredients.length < 2;
+    const needsSteps = !steps || steps.length === 0;
+
+    if (!needsIngredients && !needsSteps) {
+      return NextResponse.json({ suggestions: {}, hadSourceScrape });
+    }
+
+    // Step D — Build the Haiku prompt with explicit tasks
     let prompt = `You are a culinary assistant. Your job is to complete a recipe that has incomplete data.
 You have been given everything that is already known about the recipe.
-Your task is to suggest ONLY what is missing — do not replace or re-state what already exists.
 Maintain strict fidelity to THIS specific recipe. Do not invent a different recipe.
 Use the recipe title, description, cuisine, and any scraped source content as your primary signals.
 Respond ONLY with a valid JSON object — no markdown, no preamble, no explanation.
@@ -122,41 +129,66 @@ Recipe title: ${recipe.title || 'Untitled'}`;
       prompt += `\nServings: ${recipe.servings}`;
     }
 
-    const ingredientCount = ingredients?.length ?? 0;
-    prompt += `\n\nExisting ingredients (${ingredientCount} found, minimum 2 required):`;
-    if (ingredientCount === 0) {
-      prompt += `\nnone`;
-    } else {
-      prompt += `\n${JSON.stringify(ingredients, null, 2)}`;
-    }
-
-    const stepCount = steps?.length ?? 0;
-    prompt += `\n\nExisting steps (${stepCount} found):`;
-    if (stepCount === 0) {
-      prompt += `\nnone`;
-    } else {
-      prompt += `\n${JSON.stringify(steps, null, 2)}`;
-    }
-
     if (sourceScrape) {
       const truncated = sourceScrape.substring(0, 12000);
       prompt += `\n\nSource page content (scraped):\n${truncated}`;
     }
 
-    prompt += `\n\nWhat is MISSING from this recipe to make it complete and accurate?
-Respond with a JSON object containing only the fields that need to be filled in.
-Only include a field if it is genuinely missing or insufficient.
+    // Build explicit task instructions
+    const tasks: string[] = [];
+
+    if (needsIngredients) {
+      const ingredientCount = ingredients?.length ?? 0;
+      prompt += `\n\nExisting ingredients (${ingredientCount} found, minimum 2 required):`;
+      if (ingredientCount === 0) {
+        prompt += `\nnone`;
+      } else {
+        prompt += `\n${JSON.stringify(ingredients, null, 2)}`;
+      }
+      tasks.push(
+        `Generate a complete and accurate ingredients list for this recipe. ` +
+        `Include ALL ingredients needed — do not stop at 2. ` +
+        `Return them under the "ingredients" key.`
+      );
+    }
+
+    if (needsSteps) {
+      const stepCount = steps?.length ?? 0;
+      prompt += `\n\nExisting steps (${stepCount} found):`;
+      if (stepCount === 0) {
+        prompt += `\nnone`;
+      } else {
+        prompt += `\n${JSON.stringify(steps, null, 2)}`;
+      }
+      tasks.push(
+        `Generate complete step-by-step instructions for this recipe. ` +
+        `Return them under the "steps" key.`
+      );
+    }
+
+    prompt += `\n\n${tasks.join('\n')}
+
+Respond with a JSON object containing only the requested fields.
 Schema:
-{
-  "ingredients": [   // only if fewer than 2 exist, or clearly incomplete given the title/source
+{`;
+
+    if (needsIngredients) {
+      prompt += `
+  "ingredients": [
     { "amount": "2", "unit": "cups", "name": "all-purpose flour", "notes": "" }
-  ],
-  "steps": [         // only if 0 steps exist
+  ]`;
+      if (needsSteps) prompt += ',';
+    }
+
+    if (needsSteps) {
+      prompt += `
+  "steps": [
     { "order": 1, "instruction": "Mix the dry ingredients together." }
-  ]
-}
-If ingredients already look complete, omit the "ingredients" key entirely.
-If steps already exist, omit the "steps" key entirely.`;
+  ]`;
+    }
+
+    prompt += `
+}`;
 
     // Call Claude with Haiku model
     const HAIKU = 'claude-haiku-4-5-20251001';
@@ -176,7 +208,7 @@ If steps already exist, omit the "steps" key entirely.`;
       recipeId: id,
     });
 
-    // Step D — Parse and return
+    // Step E — Parse and return
     let suggestions: SousChefSuggestion;
     try {
       // Extract JSON from response
@@ -192,6 +224,10 @@ If steps already exist, omit the "steps" key entirely.`;
         { status: 500 }
       );
     }
+
+    // Step F — Post-processing guard: strip unwanted keys
+    if (!needsIngredients) delete suggestions.ingredients;
+    if (!needsSteps) delete suggestions.steps;
 
     return NextResponse.json({
       suggestions,
