@@ -1,6 +1,117 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-21 (session Prompt-G — Recipe Status Pills + Visibility Enforcement) TYPE: CODE FIX
+
+### FEATURE 1 — Status pills on recipe cards (grid + list view)
+
+**Files**: apps/web/app/dashboard/page.tsx (lines 545-560 grid, 584-600 list)
+
+**Pills added**:
+- **Incomplete pill** (amber `bg-amber-500`, white text): Shows when recipe fails completeness gate
+  - Text determined by `getIncompletePillText()`: "⚠ Missing ingredients", "⚠ Missing quantities", "⚠ Missing steps", "⚠ Missing ingredients & steps"
+- **Under Review pill** (pomodoro red `bg-cb-primary`, white text): "🔍 Under Review by Chefsbook"
+  - Shows when `copyright_review_pending = true` OR `moderation_status != 'clean'` OR `ai_recipe_verdict = 'flagged'`
+- **Positioning**: Absolute `bottom-2 left-1/2 -translate-x-1/2` (bottom-centre of image container)
+- **Priority**: Under Review pill takes precedence over Incomplete pill
+- **Visibility**: Pills show regardless of which filter is active (not just when "Incomplete" filter selected)
+
+**List view pills**: Smaller text (`text-[9px]`), condensed spacing (`bottom-1 px-2 py-0.5`)
+
+### FEATURE 2 — Status pills on recipe detail hero image
+
+**File**: apps/web/app/recipe/[id]/page.tsx (lines 987-1000)
+
+Same pills as cards, positioned `bottom-2` with `z-20` (above image, below regenerating overlay).
+
+### FEATURE 3 — Completeness helper (shared logic)
+
+**File**: apps/web/lib/recipeCompleteness.ts (NEW)
+
+**Exports**:
+- `getRecipeIncompleteReason(recipe): string | null` — Returns human-readable reason if incomplete, null if complete
+- `isRecipeComplete(recipe): boolean` — Boolean check
+- `getIncompletePillText(recipe): string` — Returns pill text with ⚠ emoji
+
+**Completeness gate definition** (all must be true):
+- `title` is not null/empty
+- `description` is not null/empty
+- `ingredients` array has ≥2 items
+- At least 2 ingredients have a non-null, non-zero `quantity`
+- `steps` array has ≥1 item
+
+**Priority order** (returns most critical gap first):
+1. Missing ingredients & steps (both)
+2. Missing ingredients
+3. Missing quantities
+4. Missing steps
+
+### FEATURE 4 — Visibility toggle enforcement (recipe detail)
+
+**File**: apps/web/app/recipe/[id]/page.tsx (lines 1370-1404)
+
+**Enforcement when clicking Private badge to make recipe public**:
+
+1. **Check if under review**:
+   - Condition: `copyright_review_pending === true` OR `moderation_status !== 'clean'` OR `ai_recipe_verdict === 'flagged'`
+   - Action: Block, show ChefsDialog:
+     - Title: "Recipe is under review"
+     - Message: "This recipe is currently being reviewed by Chefsbook. You'll be able to publish it once the review is complete."
+     - Button: "Got it"
+
+2. **Check if incomplete**:
+   - Condition: `getIncompletePillText()` returns non-empty string
+   - Action: Block, show ChefsDialog:
+     - Title: "Recipe can't be published yet"
+     - Message: "This recipe is missing required information. [specific reason] before it can be shared with the Chefsbook community."
+     - Button: "Got it"
+
+3. **Existing duplicate check** (unchanged)
+
+### FEATURE 5 — Bulk Make Public enforcement
+
+**File**: apps/web/app/api/recipes/bulk-visibility/route.ts (lines 34-73)
+
+**Changes**:
+- Fetch full recipes with `recipe_ingredients` and `recipe_steps` (for enforcement checks)
+- When `visibility = 'public'`, filter out:
+  - Recipes under review (`copyright_review_pending = true` OR `moderation_status != 'clean'` OR `ai_recipe_verdict = 'flagged'`)
+  - Incomplete recipes (via `isRecipeComplete()`)
+- Update only valid recipes
+- Return `{ success: true, updated: N, skipped: M }`
+
+**File**: apps/web/app/dashboard/page.tsx (lines 202-235)
+
+**Updated `handleMakePublic()`**:
+- Shows skipped count in alert: `"N recipe(s) set to public. M recipe(s) couldn't be made public — they have incomplete or flagged content."`
+
+### Flagged/review column names found
+
+**Column**: `copyright_review_pending` (boolean) — primary flag for under review
+**Column**: `moderation_status` (text, default 'clean') — moderation state
+**Column**: `ai_recipe_verdict` (text: 'approved', 'flagged', 'not_a_recipe', 'pending') — AI verdict
+
+### Prompt F bulk enforcement
+
+**Status**: Prompt F was already deployed (session Prompt-F). Bulk enforcement added in this session as specified.
+
+### Completeness helper creation
+
+**File**: `apps/web/lib/recipeCompleteness.ts` created as the single source of truth for completeness logic. Imported in:
+- `apps/web/app/dashboard/page.tsx`
+- `apps/web/app/recipe/[id]/page.tsx`
+- `apps/web/app/api/recipes/bulk-visibility/route.ts`
+
+### Verification
+
+- ✅ TypeScript: `npx tsc --noEmit` clean
+- ✅ Deploy: Files copied to RPi5 via SCP → `npx next build --no-lint` succeeded → `pm2 restart chefsbook-web` online
+- ✅ Smoke tests:
+  - `curl -I https://chefsbk.app/` → HTTP 200
+  - `curl -I https://chefsbk.app/dashboard` → HTTP 200
+
+---
+
 ## 2026-04-21 (session Prompt-E — Notes copyright + Edit UX + Housekeeping) TYPE: CODE FIX ×4
 
 ### FIX 1 — Notes copyright: paraphrase at import time

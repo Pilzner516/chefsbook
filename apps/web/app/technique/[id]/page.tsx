@@ -96,14 +96,25 @@ export default function TechniquePage() {
         </div>
       </nav>
 
-      {/* Hero image */}
-      {technique.image_url && (
+      {/* Hero: YouTube embed or image */}
+      {technique.youtube_video_id ? (
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="aspect-video rounded-card overflow-hidden bg-black">
+            <iframe
+              src={`https://www.youtube.com/embed/${technique.youtube_video_id}?enablejsapi=1&autoplay=0&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      ) : technique.image_url ? (
         <div className="max-w-4xl mx-auto px-6">
           <div className="h-64 rounded-card overflow-hidden bg-cb-card">
             <img src={proxyIfNeeded(technique.image_url!)} alt={technique.title} className="w-full h-full object-cover" />
           </div>
         </div>
-      )}
+      ) : null}
 
       <article className="max-w-4xl mx-auto py-10 px-6">
         {/* Header: title + difficulty */}

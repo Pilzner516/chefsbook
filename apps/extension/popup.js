@@ -213,8 +213,13 @@ async function renderSaveView(token, email) {
     try {
       const data = await importRecipe(pageUrl, html, token);
       saveSection.textContent = '';
-      saveSection.appendChild(el('div', { className: 'status status-success', textContent: 'Saved "' + data.recipe.title + '"' }));
-      const link = el('a', { className: 'view-link', href: API_BASE + '/recipe/' + data.recipe.id, target: '_blank', textContent: 'View recipe \u2192' });
+      // Redirect based on content type (recipe or technique)
+      const contentType = data.contentType || 'recipe';
+      const item = contentType === 'technique' ? data.technique : data.recipe;
+      const itemType = contentType === 'technique' ? 'technique' : 'recipe';
+      const itemName = item.title;
+      saveSection.appendChild(el('div', { className: 'status status-success', textContent: 'Saved "' + itemName + '"' }));
+      const link = el('a', { className: 'view-link', href: API_BASE + '/' + itemType + '/' + item.id, target: '_blank', textContent: 'View ' + itemType + ' →' });
       saveSection.appendChild(link);
     } catch (err) {
       // Never leak raw parser / server-stack text to users — log for devtools,

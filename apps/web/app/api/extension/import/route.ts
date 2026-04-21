@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, suggestTagsForRecipe } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, suggestTagsForRecipe, importFromYouTube, importTechniqueFromYouTube } from '@chefsbook/ai';
 import { logAiCall, isInternalPhotoUrl, normalizeSourceUrl, findDuplicateByUrl } from '@chefsbook/db';
 import { ensureTitle } from '../../import/_utils';
+import { YoutubeTranscript } from 'youtube-transcript';
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -24,6 +25,67 @@ function corsHeaders() {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
+}
+
+function isYouTubeUrl(url: string): boolean {
+  return /(?:youtube\.com\/watch|youtu\.be\/|youtube\.com\/shorts\/)/.test(url);
+}
+
+function extractVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
+async function fetchVideoMetadata(videoId: string) {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) {
+    // Fallback: use oembed for basic metadata
+    try {
+      const res = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+        { signal: AbortSignal.timeout(10000) },
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      return {
+        title: data.title ?? '',
+        description: '',
+        channelTitle: data.author_name ?? '',
+        thumbnails: { high: { url: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` } },
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`,
+      { signal: AbortSignal.timeout(10000) },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.items?.[0]?.snippet ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchTranscript(videoId: string): Promise<string> {
+  try {
+    const entries = await YoutubeTranscript.fetchTranscript(videoId);
+    return entries
+      .map((e) => `[${Math.round(e.offset / 1000)}s] ${e.text}`)
+      .join('\n');
+  } catch {
+    return '';
+  }
 }
 
 export async function OPTIONS() {
@@ -58,6 +120,175 @@ export async function POST(req: Request) {
         duplicate: true,
         existingRecipe: { id: existing.id, title: existing.title },
       }, { headers });
+    }
+  }
+
+  // YouTube URL handling — route to YouTube import logic
+  if (isYouTubeUrl(url)) {
+    try {
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        return Response.json({ error: 'Not a valid YouTube URL' }, { status: 400, headers });
+      }
+
+      const snippet = await fetchVideoMetadata(videoId);
+      if (!snippet) {
+        return Response.json({ error: 'Could not fetch video metadata' }, { status: 502, headers });
+      }
+
+      const thumbnail =
+        snippet.thumbnails.maxres?.url ??
+        snippet.thumbnails.high?.url ??
+        snippet.thumbnails.default?.url ??
+        `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+      const transcript = await fetchTranscript(videoId);
+      const classifyText = `${snippet.title}\n${snippet.description}`.slice(0, 1000);
+      const classification = await classifyContent(classifyText, url);
+
+      if (classification.content_type === 'technique') {
+        const technique = await importTechniqueFromYouTube({
+          videoTitle: snippet.title,
+          description: snippet.description,
+          transcript,
+        });
+
+        if (!technique) {
+          return Response.json({ error: 'Could not extract technique from video' }, { status: 422, headers });
+        }
+
+        const { data: newTechnique, error: techErr } = await db
+          .from('techniques')
+          .insert({
+            user_id: user.id,
+            title: technique.title,
+            description: technique.description,
+            process_steps: technique.process_steps ?? [],
+            tips: technique.tips ?? [],
+            common_mistakes: technique.common_mistakes ?? [],
+            tools_and_equipment: technique.tools_and_equipment ?? [],
+            difficulty: technique.difficulty,
+            source_url: url,
+            source_type: 'youtube',
+            youtube_video_id: videoId,
+            image_url: null,
+          })
+          .select()
+          .single();
+
+        if (techErr || !newTechnique) {
+          return Response.json({ error: techErr?.message ?? 'Insert failed' }, { status: 500, headers });
+        }
+
+        return Response.json({
+          success: true,
+          contentType: 'technique',
+          technique: { id: newTechnique.id, title: newTechnique.title },
+        }, { headers });
+      }
+
+      // Recipe from YouTube
+      const recipe = await importFromYouTube({
+        videoTitle: snippet.title,
+        description: snippet.description,
+        transcript,
+      });
+
+      if (!recipe) {
+        return Response.json({ error: 'Could not extract recipe from video' }, { status: 422, headers });
+      }
+
+      const { data: newRecipe, error: insertErr } = await db
+        .from('recipes')
+        .insert({
+          user_id: user.id,
+          title: recipe.title,
+          description: recipe.description,
+          servings: recipe.servings ?? 4,
+          prep_minutes: recipe.prep_minutes,
+          cook_minutes: recipe.cook_minutes,
+          cuisine: recipe.cuisine,
+          course: recipe.course,
+          source_type: 'youtube',
+          source_url: url,
+          youtube_video_id: videoId,
+          image_url: null,
+          notes: recipe.notes,
+          tags: [],
+        })
+        .select()
+        .single();
+
+      if (insertErr || !newRecipe) {
+        return Response.json({ error: insertErr?.message ?? 'Insert failed' }, { status: 500, headers });
+      }
+
+      if (recipe.ingredients?.length) {
+        await db.from('recipe_ingredients').insert(
+          recipe.ingredients.map((ing: any, i: number) => ({
+            recipe_id: newRecipe.id,
+            user_id: user.id,
+            sort_order: i,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            ingredient: ing.ingredient,
+            preparation: ing.preparation,
+            optional: ing.optional,
+            group_label: ing.group_label,
+          })),
+        );
+      }
+      if (recipe.steps?.length) {
+        await db.from('recipe_steps').insert(
+          recipe.steps.map((step: any) => ({
+            recipe_id: newRecipe.id,
+            user_id: user.id,
+            step_number: step.step_number,
+            instruction: step.instruction,
+            timer_minutes: step.timer_minutes,
+            group_label: step.group_label,
+          })),
+        );
+      }
+
+      // Apply completeness gate + AI verdict
+      try {
+        const { fetchRecipeCompleteness, applyCompletenessGate, applyAiVerdict, logImportAttempt, extractDomain } = await import('@chefsbook/db');
+        const { isActuallyARecipe } = await import('@chefsbook/ai');
+        const completeness = await fetchRecipeCompleteness(newRecipe.id);
+        await applyCompletenessGate(newRecipe.id, completeness, newRecipe.visibility);
+        let verdict: 'approved' | 'flagged' | 'not_a_recipe' = 'approved';
+        let verdictReason = '';
+        if (completeness.isComplete) {
+          const ai = await isActuallyARecipe({
+            title: newRecipe.title,
+            description: recipe.description ?? '',
+            ingredients: (recipe.ingredients ?? []).slice(0, 3).map((i: any) => i.ingredient),
+            steps: (recipe.steps ?? []).slice(0, 1).map((s: any) => s.instruction),
+          });
+          verdict = ai.verdict;
+          verdictReason = ai.reason;
+          await applyAiVerdict(newRecipe.id, verdict, verdictReason, newRecipe.visibility);
+        }
+        await logImportAttempt({
+          userId: user.id,
+          url,
+          domain: extractDomain(url),
+          success: completeness.isComplete && verdict === 'approved',
+          recipeId: newRecipe.id,
+          failureReason: !completeness.isComplete ? completeness.missingFields.join(', ') : verdict !== 'approved' ? verdictReason : null,
+          completeness,
+          aiVerdict: !completeness.isComplete ? 'incomplete' : verdict === 'not_a_recipe' ? 'not_a_recipe' : verdict === 'flagged' ? 'flagged' : 'complete',
+        });
+      } catch {}
+
+      return Response.json({
+        success: true,
+        contentType: 'recipe',
+        recipe: { id: newRecipe.id, title: newRecipe.title },
+      }, { headers });
+    } catch (e: any) {
+      return Response.json({ error: e.message ?? 'YouTube import failed' }, { status: 500, headers });
     }
   }
 

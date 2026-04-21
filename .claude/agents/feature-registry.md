@@ -44,7 +44,8 @@
 | Cook Mode TTS | LIVE | apps/mobile/app/recipe/[id].tsx (CookMode component) | P-208 | Speaker pill toggle (red on/grey off) in header; "Read this step" pill per step card; expo-speech, zero AI calls. Speaks on step navigation when toggle on. Stop on exit. i18n: recipe.ttsToggle + recipe.readStep in all 5 locales. |
 | Save a Copy | LIVE | apps/mobile/app/recipe/, apps/web | 13 | Creates fully independent clone |
 | Recipe visibility (private/public) | LIVE | packages/db, RLS policies | 32, 104 | Default = 'public'; shared_link migrated to public |
-| Recipe privacy toggle | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 35 | |
+| Recipe privacy toggle | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 35, P-G | Enforced: blocks Make Public if incomplete or under review; ChefsDialog with specific reason |
+| Recipe status pills | LIVE | apps/web/dashboard/page.tsx, apps/web/app/recipe/[id]/page.tsx, lib/recipeCompleteness.ts | P-G | Amber incomplete pill (⚠ Missing X), Red under review pill (🔍); bottom-centre on image; shows on cards + detail hero; owner-facing only |
 | Recipe moderation (AI) | LIVE | packages/ai (moderateRecipe) | 41 | Runs on every import + edit |
 | Frozen account banner | LIVE | apps/web/dashboard/layout.tsx, apps/mobile/_layout.tsx | 41 | |
 | Recipe tags (add/remove/AI suggest) | LIVE | apps/mobile/app/recipe/, apps/web | 04 | |
