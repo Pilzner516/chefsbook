@@ -168,10 +168,10 @@ export async function POST(req: Request) {
       const wmMeta = await sharp(watermark).metadata();
       const left = 12;
       const top = (imgMeta.height ?? 512) - (wmMeta.height ?? 36) - 12;
-      imageBuffer = await sharp(imageBuffer)
+      imageBuffer = Buffer.from(await sharp(imageBuffer as Buffer)
         .composite([{ input: watermark, left, top, blend: 'over' }])
         .jpeg({ quality: 88 })
-        .toBuffer();
+        .toBuffer());
     } catch (wmErr) {
       console.warn('[mobile-generate-image] watermark failed, continuing:', wmErr);
     }
