@@ -1,6 +1,16 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-21 (session Prompt-D — Review now link + Sous Chef capitalization) TYPE: CODE FIX
+
+- [Prompt-D] Fixed "Review now →" link on My Recipes incomplete banner — was linking to `?filter=incomplete` but state didn't update when already on dashboard. Added `useEffect` at `apps/web/app/dashboard/page.tsx:66-73` watching `searchParams` to sync `activeFilter` state with URL param. Link now correctly filters to Incomplete recipes and highlights the pill. Filter state pattern: **useState with URL param sync**.
+- [Prompt-D] Fixed capitalization: `"your Sous Chef"` → `"Your Sous Chef"` in two locations:
+  - `apps/web/app/dashboard/scan/page.tsx:717` — Speak a recipe panel description
+  - `apps/web/app/dashboard/speak/page.tsx:139` — Pro gate copy
+- [Prompt-D] Verification: `grep -rn "your Sous Chef" apps/web/app/dashboard/` returns no matches ✅
+- [Prompt-D] TypeScript: `npx tsc --noEmit` clean ✅
+- [Prompt-D] Deploy: files copied to RPi5 via SCP, `npx next build --no-lint` succeeded, `pm2 restart chefsbook-web` online, smoke tests (chefsbk.app + /dashboard) both HTTP 200 ✅
+
 ## 2026-04-21 (deploy infrastructure + landing copy) TYPE: INFRA + COPY
 
 - [2026-04-21] Created `/mnt/chefsbook/deploy-staging.sh` on RPi5 — git pull → clean `.next` + `node_modules/react|react-dom` → `NODE_OPTIONS=--max-old-space-size=1024 npx next build --no-lint` → `pm2 restart chefsbook-web`. Script is idempotent and handles the duplicate-React / SWC warning issues automatically.
