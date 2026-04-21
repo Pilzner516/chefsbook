@@ -24,6 +24,7 @@ import type { CookingNote } from '@chefsbook/db';
 import { formatDuration, formatQuantity, scaleQuantity, cleanIngredientName, CUISINE_LIST, convertIngredient } from '@chefsbook/ui';
 import type { UnitSystem } from '@chefsbook/ui';
 import { useUnits } from '@/lib/useUnits';
+import { getIncompletePillText } from '@/lib/recipeCompleteness';
 
 function formatTimestamp(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -984,6 +985,19 @@ export default function RecipePage() {
                 <p className="text-xs text-cb-secondary">This takes about 10-15 seconds</p>
               </div>
             )}
+            {/* Status pills — bottom-centre */}
+            {(() => {
+              const isUnderReview = (recipe as any).copyright_review_pending === true ||
+                ((recipe as any).moderation_status && (recipe as any).moderation_status !== 'clean') ||
+                (recipe as any).ai_recipe_verdict === 'flagged';
+              const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: recipe.ingredients, steps: recipe.steps });
+              if (isUnderReview) {
+                return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full z-20">🔍 Under Review by Chefsbook</div>;
+              } else if (incompletePillText) {
+                return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-medium px-3 py-1 rounded-full z-20">{incompletePillText}</div>;
+              }
+              return null;
+            })()}
           </div>
         ) : isOwner ? (
           <div className="h-48 rounded-card border-2 border-dashed border-cb-border bg-cb-card flex flex-col items-center justify-center gap-3">
@@ -1357,6 +1371,30 @@ export default function RecipePage() {
                 onClick={async () => {
                   const next = recipe.visibility === 'private' ? 'public' : 'private';
                   if (next === 'public') {
+                    // Check if recipe is flagged/under review
+                    const isUnderReview = (recipe as any).copyright_review_pending === true ||
+                      ((recipe as any).moderation_status && (recipe as any).moderation_status !== 'clean') ||
+                      (recipe as any).ai_recipe_verdict === 'flagged';
+                    if (isUnderReview) {
+                      await alert({
+                        title: 'Recipe is under review',
+                        body: 'This recipe is currently being reviewed by Chefsbook. You\'ll be able to publish it once the review is complete.',
+                        confirmLabel: 'Got it'
+                      });
+                      return;
+                    }
+
+                    // Check if recipe is complete
+                    const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: recipe.ingredients, steps: recipe.steps });
+                    if (incompletePillText) {
+                      await alert({
+                        title: 'Recipe can\'t be published yet',
+                        body: `This recipe is missing required information. ${incompletePillText.replace('⚠ ', '')} before it can be shared with the Chefsbook community.`,
+                        confirmLabel: 'Got it'
+                      });
+                      return;
+                    }
+
                     // Run server-side duplicate check before making public
                     try {
                       const res = await fetch('/api/recipes/check-duplicate', {

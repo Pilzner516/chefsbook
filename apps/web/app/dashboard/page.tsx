@@ -18,6 +18,7 @@ import { useConfirmDialog } from '@/components/useConfirmDialog';
 import ThemePickerModal from '@/components/ThemePickerModal';
 import { IMAGE_THEMES } from '@chefsbook/ai';
 import type { ImageTheme } from '@chefsbook/ai';
+import { getIncompletePillText } from '@/lib/recipeCompleteness';
 
 type ViewMode = 'grid' | 'list' | 'table';
 type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
@@ -225,7 +226,13 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       await loadRecipes();
-      alert(`${privateRecipes.length} recipe${privateRecipes.length > 1 ? 's' : ''} set to public`);
+
+      // Show message with skipped count if any were skipped
+      if (data.skipped > 0) {
+        alert(`${data.updated} recipe${data.updated !== 1 ? 's' : ''} set to public. ${data.skipped} recipe${data.skipped !== 1 ? 's' : ''} couldn't be made public — they have incomplete or flagged content.`);
+      } else {
+        alert(`${data.updated} recipe${data.updated !== 1 ? 's' : ''} set to public`);
+      }
     } catch (e: any) {
       alert(e.message);
     }
@@ -546,6 +553,19 @@ export default function DashboardPage() {
                     {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="ChefsBook" className="w-20 h-20 object-contain opacity-30" />; })()}
                     {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg"><svg className="w-5 h-5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
                     {recipe.visibility === 'private' && <div className="absolute top-2 right-2 bg-white/80 rounded-full p-0.5"><svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg></div>}
+                    {/* Status pills — bottom-centre */}
+                    {(() => {
+                      const isUnderReview = (recipe as any).copyright_review_pending === true ||
+                        ((recipe as any).moderation_status && (recipe as any).moderation_status !== 'clean') ||
+                        (recipe as any).ai_recipe_verdict === 'flagged';
+                      const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: (recipe as any).ingredients, steps: (recipe as any).steps });
+                      if (isUnderReview) {
+                        return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full">🔍 Under Review by Chefsbook</div>;
+                      } else if (incompletePillText) {
+                        return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-medium px-3 py-1 rounded-full">{incompletePillText}</div>;
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold mb-1.5 group-hover:text-cb-primary transition-colors">{translatedTitles[recipe.id] ?? recipe.title}</h3>
@@ -584,6 +604,19 @@ export default function DashboardPage() {
               <div className="w-16 h-16 rounded-input overflow-hidden bg-cb-bg shrink-0 relative">
                 {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30 mx-auto mt-3" />; })()}
                 {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-6 h-6 rounded-full bg-red-600/90 flex items-center justify-center"><svg className="w-3 h-3 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
+                {/* Status pills — bottom-centre (smaller for list view) */}
+                {(() => {
+                  const isUnderReview = (recipe as any).copyright_review_pending === true ||
+                    ((recipe as any).moderation_status && (recipe as any).moderation_status !== 'clean') ||
+                    (recipe as any).ai_recipe_verdict === 'flagged';
+                  const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: (recipe as any).ingredients, steps: (recipe as any).steps });
+                  if (isUnderReview) {
+                    return <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">🔍 Review</div>;
+                  } else if (incompletePillText) {
+                    return <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">{incompletePillText}</div>;
+                  }
+                  return null;
+                })()}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm group-hover:text-cb-primary transition-colors truncate">{translatedTitles[recipe.id] ?? recipe.title}</p>

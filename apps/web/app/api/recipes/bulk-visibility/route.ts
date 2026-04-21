@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { isRecipeComplete } from '@/lib/recipeCompleteness';
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,10 +38,19 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'No recipe IDs provided' }, { status: 400 });
       }
 
-      // Verify ownership of all recipes (prevent IDOR)
+      // Fetch full recipes with ownership check + ingredients + steps (for enforcement)
       const { data: ownedRecipes } = await supabaseAdmin
         .from('recipes')
-        .select('id')
+        .select(`
+          id,
+          title,
+          description,
+          moderation_status,
+          copyright_review_pending,
+          ai_recipe_verdict,
+          recipe_ingredients:recipe_ingredients(quantity, ingredient),
+          recipe_steps:recipe_steps(id)
+        `)
         .eq('user_id', session.user.id)
         .in('id', ids);
 
@@ -48,19 +58,52 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'You do not own all selected recipes' }, { status: 403 });
       }
 
-      // Update visibility for owned recipes
-      const { error } = await supabaseAdmin
-        .from('recipes')
-        .update({ visibility })
-        .eq('user_id', session.user.id)
-        .in('id', ids);
+      // If making public, filter out incomplete and flagged recipes
+      let validIds = ids;
+      let skippedCount = 0;
 
-      if (error) {
-        console.error('Bulk visibility update error:', error);
-        return NextResponse.json({ error: 'Failed to update recipes' }, { status: 500 });
+      if (visibility === 'public') {
+        validIds = ownedRecipes
+          .filter((recipe: any) => {
+            // Skip if flagged/under review
+            const isUnderReview = recipe.copyright_review_pending === true ||
+              (recipe.moderation_status && recipe.moderation_status !== 'clean') ||
+              recipe.ai_recipe_verdict === 'flagged';
+            if (isUnderReview) return false;
+
+            // Skip if incomplete
+            const complete = isRecipeComplete({
+              title: recipe.title,
+              description: recipe.description,
+              ingredients: recipe.recipe_ingredients || [],
+              steps: recipe.recipe_steps || []
+            });
+            return complete;
+          })
+          .map((r: any) => r.id);
+
+        skippedCount = ids.length - validIds.length;
       }
 
-      return NextResponse.json({ success: true, updated: ids.length });
+      // Update only valid recipes
+      if (validIds.length > 0) {
+        const { error } = await supabaseAdmin
+          .from('recipes')
+          .update({ visibility })
+          .eq('user_id', session.user.id)
+          .in('id', validIds);
+
+        if (error) {
+          console.error('Bulk visibility update error:', error);
+          return NextResponse.json({ error: 'Failed to update recipes' }, { status: 500 });
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        updated: validIds.length,
+        skipped: skippedCount
+      });
     }
   } catch (error: any) {
     console.error('Bulk visibility route error:', error);
