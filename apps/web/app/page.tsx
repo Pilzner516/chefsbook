@@ -131,7 +131,7 @@ export default function HomePage() {
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight tracking-tight text-cb-text">
           Your recipes. Your community.<br />
-          <span className="text-cb-primary">The Platform.</span>
+          <span className="text-cb-primary">The Chefs Solution</span>
         </h1>
         <p className="text-cb-secondary text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
           Scan, speak, import, and discover recipes. Plan meals, generate smart shopping lists,
