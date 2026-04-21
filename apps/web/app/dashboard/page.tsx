@@ -562,7 +562,7 @@ export default function DashboardPage() {
                       if (isUnderReview) {
                         return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full">🔍 Under Review by Chefsbook</div>;
                       } else if (incompletePillText) {
-                        return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-medium px-3 py-1 rounded-full">{incompletePillText}</div>;
+                        return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full">{incompletePillText}</div>;
                       }
                       return null;
                     })()}
@@ -613,7 +613,7 @@ export default function DashboardPage() {
                   if (isUnderReview) {
                     return <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">🔍 Review</div>;
                   } else if (incompletePillText) {
-                    return <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">{incompletePillText}</div>;
+                    return <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">{incompletePillText}</div>;
                   }
                   return null;
                 })()}

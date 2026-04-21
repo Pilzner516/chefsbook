@@ -994,7 +994,7 @@ export default function RecipePage() {
               if (isUnderReview) {
                 return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full z-20">🔍 Under Review by Chefsbook</div>;
               } else if (incompletePillText) {
-                return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-medium px-3 py-1 rounded-full z-20">{incompletePillText}</div>;
+                return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full z-20">{incompletePillText}</div>;
               }
               return null;
             })()}
