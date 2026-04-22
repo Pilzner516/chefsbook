@@ -14,7 +14,7 @@ import { RecipeStatusBanner } from '@/components/RecipeStatusBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import { RecipeLightbox } from '@/components/RecipeLightbox';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, isTagBlocked, logTagRemoval } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import type { TranslatedRecipe } from '@chefsbook/ai';
 import { REGEN_PILLS, moderateTag, moderateRecipe } from '@chefsbook/ai';
@@ -500,6 +500,18 @@ export default function RecipePage() {
     if (!recipe || !newTag.trim()) return;
     const tag = newTag.trim().toLowerCase();
     if (recipe.tags.includes(tag)) { setNewTag(''); return; }
+
+    // Check blocked list FIRST (no AI call)
+    const blocked = await isTagBlocked(tag);
+    if (blocked) {
+      await showAlert({
+        title: 'Tag not allowed',
+        body: "That tag isn't allowed on Chefsbook.",
+      });
+      setNewTag('');
+      return;
+    }
+
     const tags = [...recipe.tags, tag];
     await updateRecipe(id, { tags });
     setRecipe({ ...recipe, tags });
@@ -520,10 +532,14 @@ export default function RecipePage() {
           success: true,
         });
         if (result.verdict === 'flagged') {
-          // Remove the tag
+          // Remove the tag and log it
           const filteredTags = tags.filter((t) => t !== tag);
           await updateRecipe(id, { tags: filteredTags });
           setRecipe({ ...recipe, tags: filteredTags });
+
+          // Log the AI moderation removal
+          await logTagRemoval(id, tag, 'ai', result.reason || null, user?.id || null);
+
           await showAlert({
             title: 'Tag removed',
             body: "That tag was removed — it doesn't meet our community guidelines.",
