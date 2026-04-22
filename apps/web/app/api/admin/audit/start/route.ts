@@ -184,12 +184,15 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           for (const finding of flagged) {
             const tagData = batch[finding.index - 1]; // 1-indexed from prompt
             if (!tagData) continue;
+            // For tags, use first recipe_id as content_id (tags don't have their own UUID)
+            const firstRecipeId = tagData.recipe_ids?.[0];
+            if (!firstRecipeId) continue; // Skip if no recipe uses this tag
             findings.push({
               audit_run_id: runId,
               content_type: 'tag',
-              content_id: tagData.tag,
+              content_id: firstRecipeId,
               content_preview: tagData.tag,
-              recipe_id: tagData.recipe_ids?.[0] || null,
+              recipe_id: firstRecipeId,
               recipe_title: `${tagData.recipe_count} recipes use this tag`,
               owner_username: null,
               finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
@@ -361,7 +364,10 @@ async function processAudit(runId: string, scope: string[], mode: string) {
 
     // Insert all findings
     if (findings.length > 0) {
-      await supabaseAdmin.from('content_audit_findings').insert(findings);
+      const { error: insertError } = await supabaseAdmin.from('content_audit_findings').insert(findings);
+      if (insertError) {
+        throw new Error(`Failed to insert findings: ${insertError.message}`);
+      }
     }
 
     // Mark run as complete
