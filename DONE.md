@@ -1,6 +1,29 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-21 (session git-history-cleanup — Prepare Push Bypass) TYPE: INFRASTRUCTURE
+
+### Git history cleanup initiated
+
+**Objective**: Remove Anthropic API keys and Replicate tokens from historical commits to unblock GitHub push protection and enable pushing 5 pending local commits (437e439, 828257a, 08f12a1, 186cd5c, 2eecfee).
+
+**Approach**: Attempted Option C (GitHub bypass) first per user instruction.
+
+**Findings**:
+- Push blocked by GitHub push protection on commit a3b6835 (21 commits back)
+- Secrets detected in docs/prompts files (session documentation, not production code)
+- Anthropic API Key in: 149-generate-recipe-images.md, 151-targeted-recrawl.md, 168-generate-images-test-regen.md
+- Replicate API Token in: 149-generate-recipe-images.md, 156-image-themes-regen.md, 163-fix-stolen-images.md, 168-generate-images-test-regen.md
+
+**Option C (GitHub Bypass) Available**:
+GitHub provides secret allowance URLs (valid for limited time):
+- Anthropic key: https://github.com/Pilzner516/chefsbook/security/secret-scanning/unblock-secret/3Cg4HNgixtAMVURMkzLkblk9K1j
+- Replicate token: https://github.com/Pilzner516/chefsbook/security/secret-scanning/unblock-secret/3Cg4HLziTBQN6Zdc5YL0IY7EcDT
+
+**Status**: Awaiting user to visit URLs and allow secrets, then retry push.
+
+**Next**: After bypass approval, push all 5 commits, pull to RPi5, rebuild web, deploy YouTube classification dialog + extension v1.1.1.
+
 ## 2026-04-22 (session launch-security-credentials — Remove Hardcoded Credentials) TYPE: SECURITY FIX
 
 ### CRITICAL SECURITY ISSUE — Hardcoded login credentials removed

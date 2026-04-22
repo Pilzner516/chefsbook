@@ -352,6 +352,7 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 
 ## Known issues
 
+- **GitHub push protection blocking commits** — 5 local commits (437e439, 828257a, 08f12a1, 186cd5c, 2eecfee) cannot be pushed due to API keys in historical commit a3b6835. GitHub provides bypass URLs valid for limited time: visit security/secret-scanning/unblock-secret links, allow secrets, then retry push. After successful push: pull to RPi5, rebuild web, deploy YouTube dialog + extension v1.1.1.
 - **callClaude maxTokens follow-up:** other callers (cookbookTOC, scanRecipeMultiPage, generateMealPlan, etc.) may need maxTokens raises beyond their defaults — see AGENDA.md "AI ROBUSTNESS FOLLOW-UPS".
 - **Import completeness gate not wired on 2 paths (session 141):** web bookmark batch loop at apps/web/app/dashboard/scan/page.tsx:444 uses createRecipe() directly; cookbook recipe import at apps/web/app/dashboard/cookbooks/[id]/page.tsx:79 uses createRecipe() directly. Both should route through createRecipeWithModeration (web) or call /api/recipes/finalize to get the gate.
 - **Import visibility lock is backend-only (session 141):** applyCompletenessGate sets visibility=private for incomplete recipes, but the UI visibility toggle on recipe detail can still be flipped to public. A UI-side check against is_complete + ai_recipe_verdict='approved' is not yet implemented; the next save/finalize call would re-flag it private on the backend though.
