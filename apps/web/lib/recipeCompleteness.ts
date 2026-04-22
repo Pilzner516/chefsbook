@@ -4,7 +4,13 @@
 export interface RecipeData {
   title?: string | null;
   description?: string | null;
-  ingredients?: Array<{ quantity?: number | null; ingredient?: string }>;
+  ingredients?: Array<{
+    quantity?: number | null;
+    amount?: number | null;
+    ingredient?: string;
+    name?: string;
+    unit?: string | null;
+  }>;
   steps?: Array<any>;
   tags?: string[];
 }
@@ -41,10 +47,19 @@ export function getRecipeIncompleteReason(recipe: RecipeData): string | null {
     return 'Missing ingredients';
   }
 
-  // Check if ingredients have quantities
-  const ingredientsWithQuantity = ingredients.filter(
-    (ing) => ing.quantity != null && ing.quantity > 0
-  );
+  // Check if ingredients have quantities (with unit)
+  // Match backend logic: quantity ?? amount, ingredient ?? name, and unit required
+  const ingredientsWithQuantity = ingredients.filter((ing) => {
+    const qty = ing.quantity ?? ing.amount;
+    const name = ing.ingredient ?? ing.name;
+    return (
+      qty != null &&
+      qty > 0 &&
+      ing.unit &&
+      name &&
+      name.trim() !== ''
+    );
+  });
   if (ingredientsWithQuantity.length < 2) {
     return 'Missing quantities';
   }
