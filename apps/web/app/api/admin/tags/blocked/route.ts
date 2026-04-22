@@ -1,4 +1,4 @@
-import { supabaseAdmin, blockTag, refreshBlockedTagsCache } from '@chefsbook/db';
+import { supabaseAdmin, blockTag, refreshBlockedTagsCache, logTagRemoval } from '@chefsbook/db';
 import { NextRequest } from 'next/server';
 
 /**
@@ -97,10 +97,33 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Add to blocked list
-    await blockTag(tag.trim(), reason || null, user.id);
+    const tagToBlock = tag.trim().toLowerCase();
 
-    return Response.json({ success: true });
+    // Add to blocked list
+    await blockTag(tagToBlock, reason || null, user.id);
+
+    // Find all recipes that have this tag and remove it
+    const { data: recipesWithTag } = await supabaseAdmin
+      .from('recipes')
+      .select('id, tags')
+      .contains('tags', [tagToBlock]);
+
+    let removedCount = 0;
+    for (const recipe of recipesWithTag ?? []) {
+      const newTags = (recipe.tags ?? []).filter((t: string) => t.toLowerCase() !== tagToBlock);
+      if (newTags.length !== (recipe.tags ?? []).length) {
+        await supabaseAdmin
+          .from('recipes')
+          .update({ tags: newTags })
+          .eq('id', recipe.id);
+
+        // Log the removal
+        await logTagRemoval(recipe.id, tagToBlock, 'blocked_list', reason || 'Added to blocked list', user.id);
+        removedCount++;
+      }
+    }
+
+    return Response.json({ success: true, removedFromRecipes: removedCount });
   } catch (err: any) {
     console.error('Admin block tag error:', err);
     return Response.json({ error: err.message }, { status: 500 });

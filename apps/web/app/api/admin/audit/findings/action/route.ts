@@ -1,4 +1,4 @@
-import { supabaseAdmin, blockTag } from '@chefsbook/db';
+import { supabaseAdmin, blockTag, logTagRemoval } from '@chefsbook/db';
 import { NextRequest } from 'next/server';
 
 /**
@@ -146,7 +146,29 @@ export async function POST(req: NextRequest) {
         }
       } else if (action === 'block_tag') {
         if (finding.content_type === 'tag') {
-          await blockTag(finding.content_id, 'Blocked from content audit', user.id);
+          // content_preview contains the actual tag string (content_id is a recipe UUID)
+          const tagToBlock = finding.content_preview;
+          if (!tagToBlock) continue;
+
+          // Block the tag
+          await blockTag(tagToBlock, 'Blocked from content audit', user.id);
+
+          // Find all recipes that have this tag and remove it
+          const { data: recipesWithTag } = await supabaseAdmin
+            .from('recipes')
+            .select('id, tags')
+            .contains('tags', [tagToBlock]);
+
+          for (const recipe of recipesWithTag ?? []) {
+            const newTags = (recipe.tags ?? []).filter((t: string) => t.toLowerCase() !== tagToBlock.toLowerCase());
+            await supabaseAdmin
+              .from('recipes')
+              .update({ tags: newTags })
+              .eq('id', recipe.id);
+
+            // Log the removal
+            await logTagRemoval(recipe.id, tagToBlock, 'admin', 'Blocked from content audit', user.id);
+          }
 
           await supabaseAdmin
             .from('content_audit_findings')

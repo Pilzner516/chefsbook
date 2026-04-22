@@ -53,13 +53,16 @@ export async function logTagRemoval(
   reason: string | null,
   userId: string | null,
 ): Promise<void> {
-  await supabaseAdmin.from('tag_moderation_log').insert({
+  const { error } = await supabaseAdmin.from('tag_moderation_log').insert({
     recipe_id: recipeId,
     tag,
     removed_by: removedBy,
     reason,
     user_id: userId,
   });
+  if (error) {
+    console.error('Failed to log tag removal:', error);
+  }
 }
 
 /**
