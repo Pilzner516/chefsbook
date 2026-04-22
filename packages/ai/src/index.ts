@@ -66,3 +66,4 @@ export type { ImageTheme, ThemeDefinition, RegenPill } from './imageThemes';
 export { suggestTagsForRecipe } from './suggestTagsForRecipe';
 export type { TagSuggestion } from './suggestTagsForRecipe';
 export { importFromText } from './importFromText';
+export { AUDIT_RULES_VERSION, STANDARD_RULES, DEEP_RULES } from './auditRules';
