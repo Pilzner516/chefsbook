@@ -17,6 +17,11 @@ export interface RecipeData {
 
 /**
  * Returns a human-readable reason if the recipe is incomplete, or null if complete.
+ *
+ * IMPORTANT: This is a client-side helper for UI display only. If ingredients/steps
+ * are not loaded (null/undefined/empty), this returns null (defer to DB missing_fields).
+ * Only run the completeness check when ingredient data is fully present.
+ *
  * Priority order (returns the most critical gap first):
  * 1. Missing ingredients & steps (both)
  * 2. Missing ingredients
@@ -24,9 +29,15 @@ export interface RecipeData {
  * 4. Missing steps
  */
 export function getRecipeIncompleteReason(recipe: RecipeData): string | null {
+  // Guard: if ingredients array is not loaded, defer to DB missing_fields
+  // (client-side check only runs when ingredient data is fully present)
+  if (!recipe.ingredients || recipe.ingredients.length === 0) {
+    return null;
+  }
+
   const title = recipe.title?.trim();
   const description = recipe.description?.trim();
-  const ingredients = recipe.ingredients ?? [];
+  const ingredients = recipe.ingredients;
   const steps = recipe.steps ?? [];
 
   // Must have title and description
