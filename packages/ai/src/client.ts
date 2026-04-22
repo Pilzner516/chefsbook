@@ -56,13 +56,21 @@ export async function callClaude(params: {
   }
   content.push({ type: 'text', text: prompt });
 
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Claude API key not found. Set ANTHROPIC_API_KEY or EXPO_PUBLIC_ANTHROPIC_API_KEY environment variable.');
+  }
+
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey(), 'anthropic-version': '2023-06-01' },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content }] }),
   });
 
-  if (!response.ok) throw new Error(`Claude API error: ${response.status}`);
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'Unable to read error response');
+    throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
+  }
   const data = await response.json();
 
   // Store usage for AI logging (fire-and-forget)
