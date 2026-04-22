@@ -1,6 +1,79 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session Prompt-O — Search Social Features) TYPE: FEATURE
+
+### Search page enhancements with social counts and trending tabs
+Complete implementation of like/save counts, popularity sorting, Following tab, and What's New tab.
+
+**Table schemas verified**:
+- `recipes` table has denormalized `like_count INTEGER DEFAULT 0` and `save_count INTEGER DEFAULT 0`
+- `user_follows` table has `follower_id UUID` and `following_id UUID`
+
+**Feature 1 — Like and save counts on search cards**:
+- Recipe cards now display `♥ {like_count}` and `🔖 {save_count}` when counts > 0
+- Counts shown in metadata row alongside cuisine, course, and time
+- Uses existing denormalized columns (no JOIN overhead)
+- Follows getPrimaryPhotos pattern (no regression to image display)
+
+**Feature 2 — Sort by popularity**:
+- Added "Most Popular" option to sort dropdown
+- Orders by `(like_count + save_count) DESC`
+- Applied to all tabs (All Recipes, My Recipes, Following, What's New)
+
+**Feature 3 — Following tab**:
+- New tab shows recipes from chefs the user follows
+- Query: JOINs `recipes` with `user_follows` WHERE `follower_id = current_user`
+- Time filter pills: 7 days / 30 days / 90 days (default: 30)
+- Only shows `visibility = 'public'` recipes
+- Empty state: "No new recipes from chefs you follow in the last {N} days."
+
+**Feature 4 — What's New tab**:
+- New tab shows platform-wide trending recipes
+- Hot score formula: `(like_count + save_count) / (hours_since_posted ^ 0.8)`
+- Client-side calculation (Supabase can't do complex formulas in query)
+- Time filter pills: Last 7 days / Last 30 days / All time (default: 30)
+- Handles edge cases: new recipes with 0 engagement, min 1 hour to avoid division issues
+- Empty state: "No trending recipes yet — be the first to share one!"
+
+**Implementation details**:
+- Scope state expanded from `'all' | 'mine'` to `'all' | 'mine' | 'following' | 'whats-new'`
+- Independent time filter states: `followingTimeFilter` and `whatsNewTimeFilter`
+- Time filters only appear when respective tab is active
+- Following query uses two-step approach: fetch follows first, then query recipes (avoids Supabase nested query limitation)
+- All tabs use same image loading pattern (getPrimaryPhotos + getRecipeImageUrl)
+
+**Guardrails met**:
+- ✅ Never use `recipe.image_url` directly — uses `getPrimaryPhotos()` + `getRecipeImageUrl()`
+- ✅ Following and What's New tabs only show `visibility = 'public'` recipes
+- ✅ Hot score handles edge cases (0 engagement, new recipes)
+- ✅ Time filter state is per-tab (independent selections)
+- ✅ All Recipes and My Recipes tab behavior unchanged
+
+**Deployment**:
+- TypeScript check: `npx tsc --noEmit` passed with 0 errors
+- Code pushed to GitHub (commit 30f1f4c)
+- Pulled on RPi5, rebuilt successfully
+- PM2 restarted, status: online
+- Smoke test: all pages (/, /dashboard, /auth) return HTTP 200
+- Live at https://chefsbk.app/dashboard/search
+
+**Regression checks**:
+These require manual user testing (authentication needed):
+1. Search results still show images — CODE VERIFIED (getPrimaryPhotos pattern intact)
+2. Search results show like/save counts where > 0 — CODE VERIFIED (conditional rendering in place)
+3. All Recipes tab still works — CODE VERIFIED (no changes to existing logic)
+4. My Recipes tab still works — CODE VERIFIED (no changes to existing logic)
+5. Following tab shows recipes from followed chefs — CODE VERIFIED (query implemented correctly)
+6. Following tab time filter changes results — CODE VERIFIED (time filter in query)
+7. What's New tab shows trending recipes — CODE VERIFIED (hot score calculation implemented)
+8. What's New time filter changes results — CODE VERIFIED (time filter in query)
+9. Sort by Most Popular orders correctly — CODE VERIFIED (sort logic implemented)
+10. My Recipes grid images still show — CODE VERIFIED (no changes to image display)
+11. Recipe detail page still works — CODE VERIFIED (no changes to detail page)
+
+NOTE: Regression checks marked as CODE VERIFIED — functional testing requires user login.
+
 ## 2026-04-22 (session Prompt-M — Tag Management System) TYPE: FEATURE
 
 ### Tag moderation system implemented
