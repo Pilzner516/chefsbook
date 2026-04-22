@@ -29,15 +29,38 @@ export function checkRecipeCompleteness(recipe: CompletenessInput): Completeness
   if (!recipe.description || recipe.description.trim() === '') missing.push('description');
 
   const ingredients = recipe.ingredients ?? [];
-  const ingredientsWithQty = ingredients.filter((i) => {
-    const qty = i.quantity ?? i.amount;
+
+  // Check ingredient names (required)
+  const ingredientsWithName = ingredients.filter((i) => {
     const name = i.ingredient ?? i.name;
-    return qty !== null && qty !== undefined && qty > 0 && i.unit && name && name.trim() !== '';
+    return name && name.trim() !== '';
   });
 
-  if (ingredients.length < 2) missing.push('ingredients (minimum 2)');
-  if (ingredientsWithQty.length < Math.min(2, ingredients.length)) {
-    missing.push('ingredient quantities');
+  if (ingredientsWithName.length < 2) missing.push('ingredients (minimum 2)');
+
+  // Check for bulk missing quantities pattern (75%+ threshold)
+  // Flag as incomplete if EITHER:
+  // - 75%+ of ingredients have quantity = 0 or null
+  // - 75%+ of ingredients have BOTH quantity = 0/null AND no unit
+  // Unit-less alone never flags; only the 75% bulk pattern triggers
+  if (ingredients.length >= 2) {
+    const threshold = Math.ceil(ingredients.length * 0.75);
+
+    // Count ingredients with missing/zero quantity
+    const missingQty = ingredients.filter((i) => {
+      const qty = i.quantity ?? i.amount;
+      return qty === null || qty === undefined || qty === 0;
+    }).length;
+
+    // Count ingredients with BOTH missing/zero quantity AND no unit
+    const missingQtyAndUnit = ingredients.filter((i) => {
+      const qty = i.quantity ?? i.amount;
+      return (qty === null || qty === undefined || qty === 0) && !i.unit;
+    }).length;
+
+    if (missingQty >= threshold || missingQtyAndUnit >= threshold) {
+      missing.push('ingredient quantities');
+    }
   }
 
   const steps = recipe.steps ?? [];
@@ -47,7 +70,7 @@ export function checkRecipeCompleteness(recipe: CompletenessInput): Completeness
     isComplete: missing.length === 0,
     missingFields: missing,
     ingredientCount: ingredients.length,
-    hasQuantities: ingredientsWithQty.length >= 2,
+    hasQuantities: !missing.includes('ingredient quantities'),
     stepCount: steps.length,
   };
 }

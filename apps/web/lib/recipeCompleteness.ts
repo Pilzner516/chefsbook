@@ -34,7 +34,12 @@ export function getRecipeIncompleteReason(recipe: RecipeData): string | null {
     return 'Missing title or description';
   }
 
-  const hasIngredients = ingredients.length >= 2;
+  // Check ingredient names (required)
+  const ingredientsWithName = ingredients.filter((ing) => {
+    const name = ing.ingredient ?? ing.name;
+    return name && name.trim() !== '';
+  });
+  const hasIngredients = ingredientsWithName.length >= 2;
   const hasSteps = steps.length >= 1;
 
   // Both missing (highest priority)
@@ -47,21 +52,29 @@ export function getRecipeIncompleteReason(recipe: RecipeData): string | null {
     return 'Missing ingredients';
   }
 
-  // Check if ingredients have quantities (with unit)
-  // Match backend logic: quantity ?? amount, ingredient ?? name, and unit required
-  const ingredientsWithQuantity = ingredients.filter((ing) => {
-    const qty = ing.quantity ?? ing.amount;
-    const name = ing.ingredient ?? ing.name;
-    return (
-      qty != null &&
-      qty > 0 &&
-      ing.unit &&
-      name &&
-      name.trim() !== ''
-    );
-  });
-  if (ingredientsWithQuantity.length < 2) {
-    return 'Missing quantities';
+  // Check for bulk missing quantities pattern (75%+ threshold)
+  // Flag as incomplete if EITHER:
+  // - 75%+ of ingredients have quantity = 0 or null
+  // - 75%+ of ingredients have BOTH quantity = 0/null AND no unit
+  // Unit-less alone never flags; only the 75% bulk pattern triggers
+  if (ingredients.length >= 2) {
+    const threshold = Math.ceil(ingredients.length * 0.75);
+
+    // Count ingredients with missing/zero quantity
+    const missingQty = ingredients.filter((ing) => {
+      const qty = ing.quantity ?? ing.amount;
+      return qty === null || qty === undefined || qty === 0;
+    }).length;
+
+    // Count ingredients with BOTH missing/zero quantity AND no unit
+    const missingQtyAndUnit = ingredients.filter((ing) => {
+      const qty = ing.quantity ?? ing.amount;
+      return (qty === null || qty === undefined || qty === 0) && !ing.unit;
+    }).length;
+
+    if (missingQty >= threshold || missingQtyAndUnit >= threshold) {
+      return 'Missing quantities';
+    }
   }
 
   // Just steps missing
