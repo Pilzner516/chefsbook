@@ -98,6 +98,9 @@ export default function RecipePage() {
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
   const [translating, setTranslating] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [userHasSaved, setUserHasSaved] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [guestEmail, setGuestEmail] = useState('');
   const [guestSubmitting, setGuestSubmitting] = useState(false);
   const [copyrightConfirm, CopyrightDialog] = useConfirmDialog();
@@ -105,8 +108,8 @@ export default function RecipePage() {
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagSubmitting, setFlagSubmitting] = useState(false);
   const [flagSubmitted, setFlagSubmitted] = useState(false);
-  const [selectedFlagType, setSelectedFlagType] = useState<string | null>(null);
-  const [flagComment, setFlagComment] = useState('');
+  const [selectedFlagReasons, setSelectedFlagReasons] = useState<string[]>([]);
+  const [flagDetails, setFlagDetails] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [generationFailed, setGenerationFailed] = useState(false);
@@ -161,6 +164,28 @@ export default function RecipePage() {
           setIsOwner(true);
           listCookingNotes(id).then(setCookingNotes);
           listRecipePhotos(id).then(setUserPhotos);
+        } else if (data) {
+          // Check if non-owner has saved this recipe
+          supabase
+            .from('recipe_saves')
+            .select('id')
+            .eq('recipe_id', id)
+            .eq('user_id', user.id)
+            .maybeSingle()
+            .then(({ data: saveRow }) => {
+              setUserHasSaved(!!saveRow);
+            });
+
+          // Check if user has already flagged this recipe
+          supabase
+            .from('recipe_flags')
+            .select('id')
+            .eq('recipe_id', id)
+            .eq('flagged_by', user.id)
+            .maybeSingle()
+            .then(({ data: flagRow }) => {
+              setFlagSubmitted(!!flagRow);
+            });
         }
       }
       setLoading(false);
@@ -271,6 +296,28 @@ export default function RecipePage() {
     } catch (e: any) {
       showAlert({ title: 'Delete failed', body: e?.message ?? 'Please try again.' });
       setDeleting(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    setRemoving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('recipe_saves')
+        .delete()
+        .eq('recipe_id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Show success toast and redirect
+      router.push('/dashboard');
+    } catch (e: any) {
+      showAlert({ title: 'Remove failed', body: e?.message ?? 'Please try again.' });
+      setRemoving(false);
     }
   };
 
@@ -710,30 +757,42 @@ export default function RecipePage() {
     }
   };
 
-  const handleFlagRecipe = async (flagType: string, reason?: string) => {
-    if (!recipe) return;
+  const handleFlagRecipe = async () => {
+    if (!recipe || selectedFlagReasons.length === 0) return;
     setFlagSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not signed in');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not signed in');
 
       const res = await fetch('/api/recipes/flag', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipeId: recipe.id, flaggedBy: user.id, flagType, reason }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          recipeId: recipe.id,
+          reasons: selectedFlagReasons,
+          details: flagDetails.trim() || null,
+        }),
       });
 
       if (res.status === 409) {
-        alert('You have already flagged this recipe for this reason.');
+        showAlert({ title: 'Already flagged', body: 'You have already flagged this recipe.' });
       } else if (!res.ok) {
         throw new Error('Failed to submit flag');
       } else {
         setFlagSubmitted(true);
         setShowFlagModal(false);
-        // No content changes — users report only, admins act
+        setSelectedFlagReasons([]);
+        setFlagDetails('');
+        showAlert({
+          title: 'Thank you',
+          body: 'Thank you for flagging this recipe. Our team will review it.',
+        });
       }
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message || 'Failed to submit flag. Please try again.' });
     } finally {
       setFlagSubmitting(false);
     }
@@ -961,6 +1020,7 @@ export default function RecipePage() {
               {refreshing ? 'Updating...' : 'Re-import'}
             </button>
           )}
+          {/* Delete button (owner only) */}
           {isOwner && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -972,54 +1032,85 @@ export default function RecipePage() {
               Delete
             </button>
           )}
-          {/* Report button (non-owners only) */}
-          {isLoggedIn && !isOwner && !flagSubmitted && (
+          {/* Remove button (non-owner who saved the recipe) */}
+          {!isOwner && userHasSaved && (
             <button
-              onClick={() => { setShowFlagModal(true); setSelectedFlagType(null); setFlagComment(''); }}
-              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors text-cb-muted"
-              title="Report this recipe"
+              onClick={() => setShowRemoveConfirm(true)}
+              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors text-cb-secondary"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              <span className="hidden sm:inline">Report</span>
+              Remove
             </button>
           )}
-          {/* Report modal */}
+          {/* Flag button (non-owners only) */}
+          {isLoggedIn && !isOwner && (
+            <button
+              onClick={() => {
+                if (flagSubmitted) {
+                  showAlert({ title: 'Already flagged', body: 'You have already flagged this recipe.' });
+                } else {
+                  setShowFlagModal(true);
+                  setSelectedFlagReasons([]);
+                  setFlagDetails('');
+                }
+              }}
+              disabled={flagSubmitted}
+              className={`flex items-center gap-2 border px-4 py-2 rounded-input text-sm font-medium transition-colors ${
+                flagSubmitted
+                  ? 'border-cb-border text-cb-muted bg-cb-bg cursor-not-allowed opacity-60'
+                  : 'border-cb-border text-cb-secondary hover:bg-cb-card'
+              }`}
+              title={flagSubmitted ? 'You have flagged this recipe' : 'Flag this recipe'}
+            >
+              🚩 {flagSubmitted ? 'Flagged' : 'Flag'}
+            </button>
+          )}
+          {/* Flag modal */}
           {showFlagModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowFlagModal(false)}>
               <div className="bg-cb-card rounded-card p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-semibold mb-1">Report this recipe</h3>
-                <p className="text-sm text-cb-secondary mb-4">Why are you reporting this?</p>
+                <h3 className="text-lg font-semibold mb-1">Flag this recipe</h3>
+                <p className="text-sm text-cb-secondary mb-4">Help us keep Chefsbook safe and accurate</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {[
-                    { type: 'copyright', label: 'Potentially copyrighted' },
-                    { type: 'inappropriate', label: 'Inappropriate' },
-                    { type: 'spam', label: 'Spam or misleading' },
-                    { type: 'impersonation', label: 'Impersonation' },
-                    { type: 'adult_content', label: 'Adult content' },
-                    { type: 'other', label: 'Other' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.type}
-                      onClick={() => setSelectedFlagType(selectedFlagType === opt.type ? null : opt.type)}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                        selectedFlagType === opt.type
-                          ? 'bg-cb-primary text-white border-cb-primary'
-                          : 'bg-cb-bg text-cb-text border-cb-border hover:border-cb-primary'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                    'Inappropriate content',
+                    'Copyright violation',
+                    'Missing or incorrect information',
+                    'Spam or self-promotion',
+                    'Duplicate recipe',
+                    'Other',
+                  ].map((reason) => {
+                    const isSelected = selectedFlagReasons.includes(reason);
+                    return (
+                      <button
+                        key={reason}
+                        onClick={() => {
+                          setSelectedFlagReasons((prev) =>
+                            isSelected
+                              ? prev.filter((r) => r !== reason)
+                              : [...prev, reason]
+                          );
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                          isSelected
+                            ? 'bg-cb-primary text-white border-cb-primary'
+                            : 'bg-cb-bg text-cb-text border-cb-border hover:border-cb-primary'
+                        }`}
+                      >
+                        {reason}
+                      </button>
+                    );
+                  })}
                 </div>
                 <textarea
-                  value={flagComment}
-                  onChange={(e) => setFlagComment(e.target.value.slice(0, 500))}
-                  placeholder="Add more details (optional)"
+                  value={flagDetails}
+                  onChange={(e) => setFlagDetails(e.target.value.slice(0, 300))}
+                  placeholder="Additional details (optional)"
                   className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none h-20 mb-1 bg-cb-bg outline-none focus:border-cb-primary"
                 />
-                <p className="text-xs text-cb-muted mb-4 text-right">{flagComment.length}/500</p>
+                <p className="text-xs text-cb-muted mb-4 text-right">{flagDetails.length}/300</p>
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => setShowFlagModal(false)}
@@ -1028,11 +1119,11 @@ export default function RecipePage() {
                     Cancel
                   </button>
                   <button
-                    onClick={() => { if (selectedFlagType) handleFlagRecipe(selectedFlagType, flagComment || undefined); }}
-                    disabled={!selectedFlagType || flagSubmitting}
+                    onClick={handleFlagRecipe}
+                    disabled={selectedFlagReasons.length === 0 || flagSubmitting}
                     className="px-4 py-2 text-sm font-medium bg-cb-primary text-white rounded-input disabled:opacity-40 hover:bg-cb-primary/90 transition-colors"
                   >
-                    {flagSubmitting ? 'Submitting...' : 'Submit Report'}
+                    {flagSubmitting ? 'Submitting...' : 'Submit flag'}
                   </button>
                 </div>
               </div>
@@ -2228,6 +2319,33 @@ export default function RecipePage() {
                 className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove confirmation */}
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
+            <h2 className="text-lg font-bold mb-2">Remove from My Recipes?</h2>
+            <p className="text-cb-secondary text-sm mb-6">
+              This will remove the recipe from your My Recipes but it can always be added again later. Do you want to continue?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowRemoveConfirm(false)}
+                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text"
+              >
+                No
+              </button>
+              <button
+                onClick={handleRemove}
+                disabled={removing}
+                className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {removing ? 'Removing...' : 'Yes, remove it'}
               </button>
             </div>
           </div>
