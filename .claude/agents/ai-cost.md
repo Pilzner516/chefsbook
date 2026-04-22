@@ -13,11 +13,12 @@ exists.
 ## COST HIERARCHY — always use the cheapest option that works
 
 ```
-1. FREE:    Serve from DB cache (recipe_translations, moderation results, etc.)
-2. FREE:    Use bundled locale JSON files for UI strings
-3. CHEAP:   Use claude-haiku-4-5 for simple classification/moderation tasks
-4. MEDIUM:  Use claude-sonnet-4-6 for extraction, generation, translation
-5. EXPENSIVE: Never use claude-opus-4-6 in any automated/background task
+1. FREE:    Check blocked_tags table before calling moderateTag() (session Prompt-M)
+2. FREE:    Serve from DB cache (recipe_translations, moderation results, etc.)
+3. FREE:    Use bundled locale JSON files for UI strings
+4. CHEAP:   Use claude-haiku-4-5 for simple classification/moderation tasks
+5. MEDIUM:  Use claude-sonnet-4-6 for extraction, generation, translation
+6. EXPENSIVE: Never use claude-opus-4-6 in any automated/background task
 ```
 
 **Rule:** Always check if cached data exists before making ANY API call.
@@ -37,7 +38,7 @@ Use the cheapest model that produces acceptable quality:
 | Recipe moderation | claude-haiku-4-5 | Classification, not generation |
 | Recipe moderation (spam detection) | claude-haiku-4-5 | Extends existing moderateRecipe — no new call |
 | Recipe edit re-moderation | claude-haiku-4-5 | Non-blocking re-check on public recipe edits |
-| Tag moderation | claude-haiku-4-5 | Simple clean/flagged classification (~$0.0002/tag) |
+| Tag moderation | claude-haiku-4-5 | Simple clean/flagged classification (~$0.0002/tag). **Blocked list check FIRST** (session Prompt-M) skips API call entirely for known-bad tags. |
 | Profile moderation (bio + display_name) | claude-haiku-4-5 | Simple text appropriateness check (~$0.0002/save) |
 | Cookbook moderation (name + description) | claude-haiku-4-5 | Reuses profile moderation logic (~$0.0002/save) |
 | Dish identification (confidence check) | claude-haiku-4-5 | Classification |

@@ -1,6 +1,63 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session Prompt-M — Tag Management System) TYPE: FEATURE
+
+### Tag moderation system implemented
+Complete tag management system with blocked list, AI moderation logging, and admin UI.
+
+**Database tables** (migrations already applied):
+- `blocked_tags` — admin-curated blocklist with reason and blocker tracking
+- `tag_moderation_log` — audit trail for all tag removals (AI, admin, blocked_list)
+
+**Server-side helpers** (`packages/db/src/queries/tagModeration.ts`):
+- Module-level cache for blocked tags (5-minute TTL, refreshes on block/unblock)
+- Functions: `getBlockedTags()`, `isTagBlocked()`, `logTagRemoval()`, `blockTag()`, `unblockTag()`, `reinstateTag()`
+- Cache exported: `refreshBlockedTagsCache()` called on every block/unblock
+
+**Admin API routes** (all under `/api/admin/tags/`):
+- `GET /api/admin/tags/log` — recent 100 removals with recipe + user info
+- `GET /api/admin/tags/blocked` — all blocked tags with blocker username
+- `POST /api/admin/tags/blocked` — add new blocked tag
+- `DELETE /api/admin/tags/blocked/[id]` — remove blocked tag
+- `POST /api/admin/tags/reinstate` — restore incorrectly removed tag
+
+**Admin UI** (`apps/web/app/admin/tags/page.tsx`):
+- Three sections: Statistics, Blocked Tag List, Recently Removed Tags
+- Statistics: weekly/monthly counts, removals by source, top 10 blocked terms
+- Blocked list: table with add form (tag + reason), unblock button per row
+- Removal log: table with reinstate + block-from-log buttons
+- Added "Tags" link to admin navigation (`apps/web/app/admin/layout.tsx`)
+
+**Tag save integration** (`apps/web/app/recipe/[id]/page.tsx`):
+- `addTag()` now checks `isTagBlocked()` BEFORE calling `moderateTag()` AI
+- Blocked tags rejected immediately with "That tag isn't allowed on Chefsbook" alert
+- AI moderation failures now logged via `logTagRemoval(recipeId, tag, 'ai', reason, userId)`
+- **AI cost savings**: Blocked list check skips Claude API call entirely
+
+**Features shipped**:
+1. ✅ Blocked list check in tag save handler (fast filter, no AI call)
+2. ✅ AI moderation logging on tag removal
+3. ✅ Admin UI with three sections (stats, blocked list, removal log)
+4. ✅ Reinstate action for false positives
+5. ✅ Block-from-log action for repeat offenders
+6. ✅ Module-level cache (5-minute TTL) for performance
+
+**Deployment**:
+- Code pushed to GitHub (commit 19b78a1)
+- Pulled on RPi5, rebuilt, PM2 restarted
+- Admin tags page live at https://chefsbk.app/admin/tags
+
+**Testing status**:
+- ✅ TypeScript check passed (`npx tsc --noEmit`)
+- ✅ Build successful on RPi5
+- ✅ Tables verified via psql (schema correct, empty state)
+- ✅ Admin page loads (confirmed via curl)
+- ⏳ Manual testing pending: add blocked tag, test recipe tag save, verify AI logging, test reinstate
+
+**AI cost impact**:
+Blocked list check prevents unnecessary Claude API calls for known-bad tags. Future sessions should update `.claude/agents/ai-cost.md` with note about this optimization.
+
 ## 2026-04-22 (session Prompt-L — Smart Completeness Banner + System-Enforced Visibility) TYPE: FEATURE
 
 ### Migration applied: `system_locked` column added to recipes table
