@@ -67,3 +67,19 @@ export { suggestTagsForRecipe } from './suggestTagsForRecipe';
 export type { TagSuggestion } from './suggestTagsForRecipe';
 export { importFromText } from './importFromText';
 export { AUDIT_RULES_VERSION, STANDARD_RULES, DEEP_RULES } from './auditRules';
+export {
+  bulkModerateTags,
+  bulkModerateRecipes,
+  bulkModerateComments,
+  bulkModerateProfiles,
+  BATCH_SIZE_TAGS,
+  BATCH_SIZE_RECIPES,
+  BATCH_SIZE_COMMENTS,
+  BATCH_SIZE_PROFILES,
+} from './bulkModerate';
+export type {
+  BulkTagFinding,
+  BulkRecipeFinding,
+  BulkCommentFinding,
+  BulkProfileFinding,
+} from './bulkModerate';

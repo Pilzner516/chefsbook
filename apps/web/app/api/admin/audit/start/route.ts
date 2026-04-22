@@ -1,6 +1,17 @@
 import { supabaseAdmin } from '@chefsbook/db';
-import { AUDIT_RULES_VERSION, STANDARD_RULES, DEEP_RULES } from '@chefsbook/ai';
-import { moderateTag, moderateRecipe, moderateComment, moderateProfile } from '@chefsbook/ai';
+import {
+  AUDIT_RULES_VERSION,
+  STANDARD_RULES,
+  DEEP_RULES,
+  bulkModerateTags,
+  bulkModerateRecipes,
+  bulkModerateComments,
+  bulkModerateProfiles,
+  BATCH_SIZE_TAGS,
+  BATCH_SIZE_RECIPES,
+  BATCH_SIZE_COMMENTS,
+  BATCH_SIZE_PROFILES,
+} from '@chefsbook/ai';
 import { NextRequest } from 'next/server';
 
 /**
@@ -72,12 +83,17 @@ export async function POST(req: NextRequest) {
 }
 
 async function calculateEstimatedCost(scope: string[], mode: string): Promise<number> {
-  const costPerItem: Record<string, number> = {
-    tags: 0.0002,
-    recipes: 0.0004,
-    comments: 0.0001,
-    profiles: 0.0002,
-    cookbooks: 0.0002,
+  // Bulk pricing: cost per batch, not per item
+  // Tags: ~$0.003 per 100-tag batch
+  // Recipes: ~$0.004 per 20-recipe batch
+  // Comments: ~$0.002 per 50-comment batch
+  // Profiles/Cookbooks: ~$0.002 per 50-item batch
+  const costPerBatch: Record<string, { cost: number; batchSize: number }> = {
+    tags: { cost: 0.003, batchSize: BATCH_SIZE_TAGS },
+    recipes: { cost: 0.004, batchSize: BATCH_SIZE_RECIPES },
+    comments: { cost: 0.002, batchSize: BATCH_SIZE_COMMENTS },
+    profiles: { cost: 0.002, batchSize: BATCH_SIZE_PROFILES },
+    cookbooks: { cost: 0.002, batchSize: BATCH_SIZE_PROFILES },
   };
 
   const counts: Record<string, number> = {};
@@ -118,32 +134,18 @@ async function calculateEstimatedCost(scope: string[], mode: string): Promise<nu
   }
 
   const multiplier = mode === 'deep' ? 1.5 : 1.0;
-  const total = scope.reduce((sum, s) => sum + (counts[s] ?? 0) * costPerItem[s], 0) * multiplier;
-  return Math.round(total * 1000000) / 1000000; // Round to 6 decimals
+  const total = scope.reduce((sum, s) => {
+    const cfg = costPerBatch[s];
+    if (!cfg) return sum;
+    const itemCount = counts[s] ?? 0;
+    const batchCount = Math.ceil(itemCount / cfg.batchSize);
+    return sum + batchCount * cfg.cost;
+  }, 0) * multiplier;
+  return Math.round(total * 1000000) / 1000000;
 }
 
 async function processAudit(runId: string, scope: string[], mode: string) {
-  // Retry wrapper with exponential backoff for rate limit errors
-  async function withRetry<T>(fn: () => Promise<T>, itemDesc: string): Promise<T> {
-    let lastError: any;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        return await fn();
-      } catch (error: any) {
-        lastError = error;
-        const is429 = error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit');
-        if (is429 && attempt < 2) {
-          // Exponential backoff: 2s, 4s
-          const delay = 2000 * Math.pow(2, attempt);
-          console.log(`Rate limit hit on ${itemDesc}, retrying in ${delay}ms (attempt ${attempt + 1}/3)`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        } else {
-          throw error;
-        }
-      }
-    }
-    throw lastError;
-  }
+  const BATCH_DELAY_MS = 500;
 
   try {
     const rules = mode === 'deep' ? DEEP_RULES : STANDARD_RULES;
@@ -152,7 +154,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
 
     for (const s of scope) {
       if (s === 'tags') {
-        // Get all recipes and extract unique tags
+        // Get all recipes and extract unique tags with metadata
         const { data } = await supabaseAdmin.from('recipes').select('id, tags, title');
         const tagMap = new Map<string, { count: number; recipe_ids: string[]; title: string }>();
 
@@ -173,12 +175,15 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           sample_title: info.title,
         }));
 
-        for (let i = 0; i < tags.length; i++) {
-          const tagData = tags[i];
-          const result = await withRetry(() => moderateTag(tagData.tag), `tag "${tagData.tag}"`);
-          totalScanned++;
+        // Process in batches
+        for (let i = 0; i < tags.length; i += BATCH_SIZE_TAGS) {
+          const batch = tags.slice(i, i + BATCH_SIZE_TAGS);
+          const flagged = await bulkModerateTags(batch.map(t => t.tag), rules);
+          totalScanned += batch.length;
 
-          if (result.verdict === 'flagged') {
+          for (const finding of flagged) {
+            const tagData = batch[finding.index - 1]; // 1-indexed from prompt
+            if (!tagData) continue;
             findings.push({
               audit_run_id: runId,
               content_type: 'tag',
@@ -188,14 +193,13 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               recipe_title: `${tagData.recipe_count} recipes use this tag`,
               owner_username: null,
               finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
-              reasons: [result.reason || 'Policy violation'],
-              ai_explanation: result.reason,
+              reasons: [finding.reason || 'Policy violation'],
+              ai_explanation: finding.reason,
             });
           }
 
-          // Delay between items to respect rate limits
-          if (i < tags.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+          if (i + BATCH_SIZE_TAGS < tags.length) {
+            await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
           }
         }
       } else if (s === 'recipes') {
@@ -204,38 +208,41 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .select('id, title, description, notes, user_id');
         const recipes = data ?? [];
 
-        for (let i = 0; i < recipes.length; i++) {
-          const recipe = recipes[i];
-          const result = await withRetry(() => moderateRecipe({
-            title: recipe.title,
-            description: recipe.description || '',
-            notes: recipe.notes || '',
-          }), `recipe "${recipe.title}"`);
-          totalScanned++;
+        for (let i = 0; i < recipes.length; i += BATCH_SIZE_RECIPES) {
+          const batch = recipes.slice(i, i + BATCH_SIZE_RECIPES);
+          const flagged = await bulkModerateRecipes(
+            batch.map(r => ({ title: r.title, description: r.description, notes: r.notes })),
+            rules
+          );
+          totalScanned += batch.length;
 
-          // In standard mode, only flag serious/spam; in deep mode, flag mild too
-          const shouldFlag = mode === 'deep'
-            ? result.verdict !== 'clean'
-            : (result.verdict === 'serious' || result.verdict === 'spam');
+          for (const finding of flagged) {
+            const recipe = batch[finding.index - 1];
+            if (!recipe) continue;
 
-          if (shouldFlag) {
-            findings.push({
-              audit_run_id: runId,
-              content_type: 'recipe',
-              content_id: recipe.id,
-              content_preview: recipe.title.substring(0, 80),
-              recipe_id: recipe.id,
-              recipe_title: recipe.title,
-              owner_username: null,
-              finding_severity: result.verdict === 'mild' ? 'deep_only' : 'standard',
-              reasons: [result.verdict],
-              ai_explanation: result.reason || null,
-            });
+            // In standard mode, only flag serious/spam; in deep mode, flag mild too
+            const shouldFlag = mode === 'deep'
+              ? true
+              : (finding.verdict === 'serious' || finding.verdict === 'spam');
+
+            if (shouldFlag) {
+              findings.push({
+                audit_run_id: runId,
+                content_type: 'recipe',
+                content_id: recipe.id,
+                content_preview: recipe.title.substring(0, 80),
+                recipe_id: recipe.id,
+                recipe_title: recipe.title,
+                owner_username: null,
+                finding_severity: finding.verdict === 'mild' ? 'deep_only' : 'standard',
+                reasons: [finding.verdict],
+                ai_explanation: finding.reason || null,
+              });
+            }
           }
 
-          // Delay between items to respect rate limits
-          if (i < recipes.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+          if (i + BATCH_SIZE_RECIPES < recipes.length) {
+            await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
           }
         }
       } else if (s === 'comments') {
@@ -244,33 +251,37 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .select('id, content, recipe_id, user_id');
         const comments = data ?? [];
 
-        for (let i = 0; i < comments.length; i++) {
-          const comment = comments[i];
-          const result = await withRetry(() => moderateComment(comment.content), `comment ${comment.id}`);
-          totalScanned++;
+        for (let i = 0; i < comments.length; i += BATCH_SIZE_COMMENTS) {
+          const batch = comments.slice(i, i + BATCH_SIZE_COMMENTS);
+          const flagged = await bulkModerateComments(batch.map(c => c.content), rules);
+          totalScanned += batch.length;
 
-          const shouldFlag = mode === 'deep'
-            ? result.verdict !== 'clean'
-            : result.verdict === 'serious';
+          for (const finding of flagged) {
+            const comment = batch[finding.index - 1];
+            if (!comment) continue;
 
-          if (shouldFlag) {
-            findings.push({
-              audit_run_id: runId,
-              content_type: 'comment',
-              content_id: comment.id,
-              content_preview: comment.content.substring(0, 80),
-              recipe_id: comment.recipe_id,
-              recipe_title: null,
-              owner_username: null,
-              finding_severity: result.verdict === 'mild' ? 'deep_only' : 'standard',
-              reasons: [result.verdict],
-              ai_explanation: result.reason || null,
-            });
+            const shouldFlag = mode === 'deep'
+              ? true
+              : finding.verdict === 'serious';
+
+            if (shouldFlag) {
+              findings.push({
+                audit_run_id: runId,
+                content_type: 'comment',
+                content_id: comment.id,
+                content_preview: comment.content.substring(0, 80),
+                recipe_id: comment.recipe_id,
+                recipe_title: null,
+                owner_username: null,
+                finding_severity: finding.verdict === 'mild' ? 'deep_only' : 'standard',
+                reasons: [finding.verdict],
+                ai_explanation: finding.reason || null,
+              });
+            }
           }
 
-          // Delay between items to respect rate limits
-          if (i < comments.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+          if (i + BATCH_SIZE_COMMENTS < comments.length) {
+            await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
           }
         }
       } else if (s === 'profiles') {
@@ -280,15 +291,17 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .eq('is_searchable', true);
         const profiles = data ?? [];
 
-        for (let i = 0; i < profiles.length; i++) {
-          const profile = profiles[i];
-          const result = await withRetry(() => moderateProfile({
-            bio: profile.bio || '',
-            display_name: profile.display_name || '',
-          }), `profile ${profile.username}`);
-          totalScanned++;
+        for (let i = 0; i < profiles.length; i += BATCH_SIZE_PROFILES) {
+          const batch = profiles.slice(i, i + BATCH_SIZE_PROFILES);
+          const flagged = await bulkModerateProfiles(
+            batch.map(p => ({ display_name: p.display_name, bio: p.bio })),
+            rules
+          );
+          totalScanned += batch.length;
 
-          if (result.verdict === 'flagged') {
+          for (const finding of flagged) {
+            const profile = batch[finding.index - 1];
+            if (!profile) continue;
             findings.push({
               audit_run_id: runId,
               content_type: 'profile',
@@ -298,14 +311,13 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               recipe_title: null,
               owner_username: profile.username,
               finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
-              reasons: result.flaggedFields,
-              ai_explanation: result.reason || null,
+              reasons: finding.fields,
+              ai_explanation: finding.reason || null,
             });
           }
 
-          // Delay between items to respect rate limits
-          if (i < profiles.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+          if (i + BATCH_SIZE_PROFILES < profiles.length) {
+            await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
           }
         }
       } else if (s === 'cookbooks') {
@@ -315,15 +327,17 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .eq('visibility', 'public');
         const cookbooks = data ?? [];
 
-        for (let i = 0; i < cookbooks.length; i++) {
-          const cookbook = cookbooks[i];
-          const result = await withRetry(() => moderateProfile({
-            bio: cookbook.description || '',
-            display_name: cookbook.name,
-          }), `cookbook "${cookbook.name}"`);
-          totalScanned++;
+        for (let i = 0; i < cookbooks.length; i += BATCH_SIZE_PROFILES) {
+          const batch = cookbooks.slice(i, i + BATCH_SIZE_PROFILES);
+          const flagged = await bulkModerateProfiles(
+            batch.map(c => ({ display_name: c.name, bio: c.description })),
+            rules
+          );
+          totalScanned += batch.length;
 
-          if (result.verdict === 'flagged') {
+          for (const finding of flagged) {
+            const cookbook = batch[finding.index - 1];
+            if (!cookbook) continue;
             findings.push({
               audit_run_id: runId,
               content_type: 'cookbook',
@@ -333,14 +347,13 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               recipe_title: null,
               owner_username: null,
               finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
-              reasons: result.flaggedFields,
-              ai_explanation: result.reason || null,
+              reasons: finding.fields,
+              ai_explanation: finding.reason || null,
             });
           }
 
-          // Delay between items to respect rate limits
-          if (i < cookbooks.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+          if (i + BATCH_SIZE_PROFILES < cookbooks.length) {
+            await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
           }
         }
       }

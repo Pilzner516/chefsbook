@@ -185,3 +185,28 @@ A typical comment moderation call: ~200 tokens in, ~50 tokens out
 A typical recipe translation: ~800 tokens in, ~600 tokens out
 - With Sonnet: ~$0.011 per recipe per language → $11 per 1,000 translations
 - Shared cache means each recipe costs this ONCE EVER, not per user
+
+---
+
+## BULK AUDIT COSTS (Content Health Audit)
+
+The admin Content Health Audit uses bulk moderation functions that process
+many items per API call. This is 70-80% cheaper than per-item moderation.
+
+| Content Type | Batch Size | Cost/Batch | Effective Cost/Item |
+|--------------|------------|------------|---------------------|
+| Tags | 100 | ~$0.003 | ~$0.00003 |
+| Recipes | 20 | ~$0.004 | ~$0.0002 |
+| Comments | 50 | ~$0.002 | ~$0.00004 |
+| Profiles | 50 | ~$0.002 | ~$0.00004 |
+| Cookbooks | 50 | ~$0.002 | ~$0.00004 |
+
+**Example: Full platform scan (200 tags, 100 recipes, 50 comments, 20 profiles)**
+- Bulk approach: ~$0.03 total (9 API calls, ~20 seconds)
+- Per-item approach: ~$0.11 total (370 API calls, ~9 minutes)
+- **Savings: 73% cost, 97% fewer calls, 27x faster**
+
+The bulk functions (`bulkModerateTags`, `bulkModerateRecipes`, etc.) are
+ONLY used by the admin audit tool. Real-time moderation on save still uses
+per-item functions (`moderateTag`, `moderateRecipe`, etc.) for immediate
+feedback.
