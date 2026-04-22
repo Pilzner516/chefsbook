@@ -25,24 +25,33 @@ type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
 /**
  * Format missing_fields from DB into user-friendly pill text.
  * The DB missing_fields is the authoritative source (not client-side checks).
+ *
+ * Database values seen: 'quantities', 'ingredients', 'ingredients (minimum 2)',
+ * 'ingredient quantities', 'steps', 'title', 'description'
  */
 function getIncompletePillFromDB(missingFields: string[] | undefined | null): string {
   if (!missingFields || missingFields.length === 0) return '';
 
+  // Normalize to check for both short and long forms
+  const hasIngredients = missingFields.some(f => f === 'ingredients' || f === 'ingredients (minimum 2)');
+  const hasSteps = missingFields.includes('steps');
+  const hasQuantities = missingFields.some(f => f === 'quantities' || f === 'ingredient quantities');
+  const hasTitleOrDesc = missingFields.includes('title') || missingFields.includes('description');
+
   // Priority order (show the most critical first)
-  if (missingFields.includes('ingredients (minimum 2)') && missingFields.includes('steps')) {
+  if (hasIngredients && hasSteps) {
     return '⚠ Missing ingredients & steps';
   }
-  if (missingFields.includes('ingredients (minimum 2)')) {
+  if (hasIngredients) {
     return '⚠ Missing ingredients';
   }
-  if (missingFields.includes('ingredient quantities')) {
+  if (hasQuantities) {
     return '⚠ Missing quantities';
   }
-  if (missingFields.includes('steps')) {
+  if (hasSteps) {
     return '⚠ Missing steps';
   }
-  if (missingFields.includes('title') || missingFields.includes('description')) {
+  if (hasTitleOrDesc) {
     return '⚠ Missing title or description';
   }
 
