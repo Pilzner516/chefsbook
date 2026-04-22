@@ -1,6 +1,44 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session Prompt-K2 — Admin Flagged Queue + AI Spam Detection) TYPE: CODE FIX
+
+### FIXED: recipe_flags schema mismatch preventing AI spam auto-flagging
+
+**Context**: Prompt K2 was already implemented (admin flagged recipes queue UI and AI spam detection in moderateRecipe), but auto-flagging was broken due to schema mismatch.
+
+**Bug**: Code tried to insert/query columns that don't exist in database:
+- Used `reasons` (array) → actual column: `flag_type` (text)
+- Used `details` → actual column: `reason`
+- Used `admin_notes` → actual column: `admin_note`
+
+**Root cause**: Code was written before database schema finalized; schema used different column names but code was never updated.
+
+**Files fixed**:
+1. `apps/web/lib/saveWithModeration.ts` (lines 106-112)
+   - Auto-flag spam inserts now use `flag_type: 'spam'` and `reason: 'Auto-detected by AI proctor'`
+2. `apps/web/app/api/admin/flags/route.ts` (line 73-76)
+   - Query selects `flag_type, reason` instead of `reasons, details`
+3. `apps/web/app/api/admin/flags/[recipeId]/action/route.ts`
+   - All `admin_notes` → `admin_note` (4 occurrences)
+4. `apps/web/app/admin/flagged-recipes/page.tsx`
+   - Interface updated: `flag_type: string`, `reason: string | null`
+   - `aggregateReasons()` now counts `flag.flag_type` instead of iterating array
+   - Flag detail drawer renders single `flag_type` pill instead of mapping array
+
+**Verification**:
+- TypeScript: `npx tsc --noEmit` passes with 0 errors
+- Database: Verified schema has `flag_type`, `reason`, `admin_note` columns
+- Deployed: RPi5 build successful, PM2 restart successful, HTTP 200 on all pages
+
+**Feature status**:
+- ✅ Feature 3 (Admin flagged recipes queue): Already built, now schema-correct
+- ✅ Feature 4 (AI spam detection): Already in moderateRecipe, auto-flagging now works
+
+**Impact**: When AI detects spam (via existing moderateRecipe prompt), auto-flagging will now succeed instead of failing silently. Admins can review and action via `/admin/flagged-recipes`.
+
+**No migration needed**: `flagged_by` is already nullable in production schema.
+
 ## 2026-04-21 (session git-history-cleanup — Prepare Push Bypass) TYPE: INFRASTRUCTURE
 
 ### Git history cleanup initiated
