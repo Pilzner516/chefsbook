@@ -1,5 +1,6 @@
-import { supabase } from '../client';
+import { supabase, supabaseAdmin } from '../client';
 import type { Recipe, RecipeIngredient, RecipeStep, RecipeWithDetails, ScannedRecipe } from '../types';
+import { fetchRecipeCompleteness } from './completeness';
 
 export async function getRecipe(id: string): Promise<RecipeWithDetails | null> {
   const { data: recipe } = await supabase
@@ -261,6 +262,27 @@ export async function updateRecipe(
     .single();
 
   if (error || !data) throw error ?? new Error('Failed to update recipe');
+
+  // Re-check completeness if title, description, or notes were updated
+  const affectsCompleteness = ['title', 'description', 'notes'].some(
+    (field) => cleaned[field] !== undefined
+  );
+  if (affectsCompleteness) {
+    try {
+      const result = await fetchRecipeCompleteness(id);
+      await supabaseAdmin
+        .from('recipes')
+        .update({
+          is_complete: result.isComplete,
+          missing_fields: result.missingFields,
+          completeness_checked_at: new Date().toISOString(),
+        })
+        .eq('id', id);
+    } catch {
+      // Completeness re-check failure should not block recipe update
+    }
+  }
+
   return data as Recipe;
 }
 
@@ -285,6 +307,22 @@ export async function replaceIngredients(
   const { data } = await supabase.from('recipe_ingredients').insert(rows).select();
   // Invalidate translation cache
   await supabase.from('recipe_translations').delete().eq('recipe_id', recipeId);
+
+  // Re-check completeness after replacing ingredients
+  try {
+    const result = await fetchRecipeCompleteness(recipeId);
+    await supabaseAdmin
+      .from('recipes')
+      .update({
+        is_complete: result.isComplete,
+        missing_fields: result.missingFields,
+        completeness_checked_at: new Date().toISOString(),
+      })
+      .eq('id', recipeId);
+  } catch {
+    // Completeness re-check failure should not block ingredient save
+  }
+
   return (data ?? []) as RecipeIngredient[];
 }
 
@@ -306,6 +344,22 @@ export async function replaceSteps(
   const { data } = await supabase.from('recipe_steps').insert(rows).select();
   // Invalidate translation cache
   await supabase.from('recipe_translations').delete().eq('recipe_id', recipeId);
+
+  // Re-check completeness after replacing steps
+  try {
+    const result = await fetchRecipeCompleteness(recipeId);
+    await supabaseAdmin
+      .from('recipes')
+      .update({
+        is_complete: result.isComplete,
+        missing_fields: result.missingFields,
+        completeness_checked_at: new Date().toISOString(),
+      })
+      .eq('id', recipeId);
+  } catch {
+    // Completeness re-check failure should not block step save
+  }
+
   return (data ?? []) as RecipeStep[];
 }
 
