@@ -27,9 +27,11 @@ export class ClaudeJsonParseError extends Error {
 }
 
 export function getApiKey(): string {
+  // Server-side: prefer ANTHROPIC_API_KEY (EXPO_PUBLIC_ is for mobile client)
+  // Client-side (mobile): use EXPO_PUBLIC_ANTHROPIC_API_KEY
   return (
-    process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ??
-    process.env.ANTHROPIC_API_KEY ?? ''
+    process.env.ANTHROPIC_API_KEY ??
+    process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY ?? ''
   );
 }
 
