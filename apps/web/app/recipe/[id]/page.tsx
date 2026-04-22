@@ -414,7 +414,49 @@ export default function RecipePage() {
           success: true,
         });
 
-        if (result.verdict === 'mild' || result.verdict === 'serious') {
+        if (result.verdict === 'spam') {
+          // Handle spam detection: flag and create recipe_flags entry
+          await updateRecipe(id, {
+            visibility: 'private',
+            moderation_status: 'flagged',
+            ai_recipe_verdict: 'spam',
+            moderation_flag_reason: result.reason ?? 'Auto-detected spam',
+            moderation_flagged_at: new Date().toISOString(),
+          } as any);
+
+          // Auto-create a recipe_flags row via API
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+              await fetch('/api/recipes/flag', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  recipeId: id,
+                  reasons: ['Spam or self-promotion'],
+                  details: 'Auto-detected by AI proctor',
+                  aiGenerated: true, // Special flag to bypass user check
+                }),
+              });
+            }
+          } catch {
+            // Flag creation failure should not block
+          }
+
+          setRecipe({
+            ...updatedRecipe,
+            visibility: 'private',
+            moderation_status: 'flagged',
+          } as any);
+
+          await showAlert({
+            title: 'Recipe flagged',
+            body: "Your recipe has been flagged for potential spam content and hidden while our team reviews it.",
+          });
+        } else if (result.verdict === 'mild' || result.verdict === 'serious') {
           // Hide recipe and update local state
           await updateRecipe(id, {
             visibility: 'private',

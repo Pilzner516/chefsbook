@@ -9,6 +9,7 @@ const NAV = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/flags', label: 'Flagged Comments' },
+  { href: '/admin/flagged-recipes', label: 'Flagged Recipes' },
   { href: '/admin/recipes', label: 'Recipes' },
   { href: '/admin/promos', label: 'Promo Codes' },
   { href: '/admin/limits', label: 'Plan Limits' },

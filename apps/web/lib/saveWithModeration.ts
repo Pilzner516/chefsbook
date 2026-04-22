@@ -91,32 +91,57 @@ export async function createRecipeWithModeration(
     });
 
     if (moderation.verdict !== 'clean') {
-      // Check if AI auto-moderation is enabled
-      let aiAutoEnabled = true;
-      try {
-        const { data: setting } = await supabaseAdmin
-          .from('system_settings')
-          .select('value')
-          .eq('key', 'ai_auto_moderation_enabled')
-          .single();
-        aiAutoEnabled = setting?.value === 'true';
-      } catch { /* default to enabled if setting missing */ }
+      // Handle spam detection separately
+      if (moderation.verdict === 'spam') {
+        // Set moderation status and AI verdict
+        await updateRecipe(created.id, {
+          moderation_status: 'flagged',
+          ai_recipe_verdict: 'spam',
+          moderation_flag_reason: moderation.reason ?? 'Auto-detected spam',
+          moderation_flagged_at: new Date().toISOString(),
+        } as any);
 
-      // Always record the moderation status
-      const updates: Partial<Recipe> = {
-        moderation_status: moderation.verdict === 'mild' ? 'flagged_mild' : 'flagged_serious',
-        moderation_flag_reason: moderation.reason ?? null,
-        moderation_flagged_at: new Date().toISOString(),
-      };
-
-      // Auto-act ONLY on serious + toggle ON. Mild = flag only, never auto-hide.
-      if (moderation.verdict === 'serious' && aiAutoEnabled) {
-        updates.visibility = 'private';
-        await updateRecipe(created.id, updates);
-        await freezeUserRecipes(userId, moderation.reason ?? 'Serious recipe violation');
+        // Auto-create a recipe_flags row
+        try {
+          await supabaseAdmin.from('recipe_flags').insert({
+            recipe_id: created.id,
+            flagged_by: null, // null = AI proctor
+            reasons: ['Spam or self-promotion'],
+            details: 'Auto-detected by AI proctor',
+            status: 'pending',
+          });
+        } catch {
+          // Flag creation failure should not block recipe
+        }
       } else {
-        // Flag only — no visibility change, no freeze
-        await updateRecipe(created.id, updates);
+        // Handle mild/serious verdicts
+        // Check if AI auto-moderation is enabled
+        let aiAutoEnabled = true;
+        try {
+          const { data: setting } = await supabaseAdmin
+            .from('system_settings')
+            .select('value')
+            .eq('key', 'ai_auto_moderation_enabled')
+            .single();
+          aiAutoEnabled = setting?.value === 'true';
+        } catch { /* default to enabled if setting missing */ }
+
+        // Always record the moderation status
+        const updates: Partial<Recipe> = {
+          moderation_status: moderation.verdict === 'mild' ? 'flagged_mild' : 'flagged_serious',
+          moderation_flag_reason: moderation.reason ?? null,
+          moderation_flagged_at: new Date().toISOString(),
+        };
+
+        // Auto-act ONLY on serious + toggle ON. Mild = flag only, never auto-hide.
+        if (moderation.verdict === 'serious' && aiAutoEnabled) {
+          updates.visibility = 'private';
+          await updateRecipe(created.id, updates);
+          await freezeUserRecipes(userId, moderation.reason ?? 'Serious recipe violation');
+        } else {
+          // Flag only — no visibility change, no freeze
+          await updateRecipe(created.id, updates);
+        }
       }
     }
   } catch {

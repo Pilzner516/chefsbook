@@ -8,7 +8,7 @@ import { supabaseAdmin } from '@chefsbook/db';
  */
 export async function POST(req: Request) {
   try {
-    const { recipeId, reasons, details } = await req.json();
+    const { recipeId, reasons, details, aiGenerated } = await req.json();
 
     if (!recipeId || !reasons || !Array.isArray(reasons) || reasons.length === 0) {
       return Response.json({ error: 'recipeId and at least one reason required' }, { status: 400 });
@@ -28,34 +28,33 @@ export async function POST(req: Request) {
       return Response.json({ error: `Invalid reasons: ${invalidReasons.join(', ')}` }, { status: 400 });
     }
 
-    // Get authenticated user from service role client (no RLS)
-    // The client must pass the user ID explicitly since we're using supabaseAdmin
-    const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(req.headers.get('x-user-id') || '');
+    let flaggedBy: string | null = null;
 
-    // For now, extract user from request body (client-side auth check)
-    // In production, validate via auth header
-    const { data: { user: authUser } } = await supabaseAdmin.auth.getUser(
-      req.headers.get('authorization')?.replace('Bearer ', '') || ''
-    );
+    // If not AI-generated, require authenticated user
+    if (!aiGenerated) {
+      const { data: { user: authUser } } = await supabaseAdmin.auth.getUser(
+        req.headers.get('authorization')?.replace('Bearer ', '') || ''
+      );
 
-    const flaggedBy = authUser?.id;
-    if (!flaggedBy) {
-      return Response.json({ error: 'Not authenticated' }, { status: 401 });
+      flaggedBy = authUser?.id ?? null;
+      if (!flaggedBy) {
+        return Response.json({ error: 'Not authenticated' }, { status: 401 });
+      }
+
+      // Check if user already flagged this recipe
+      const { data: existingFlag } = await supabaseAdmin
+        .from('recipe_flags')
+        .select('id')
+        .eq('recipe_id', recipeId)
+        .eq('flagged_by', flaggedBy)
+        .maybeSingle();
+
+      if (existingFlag) {
+        return Response.json({ error: 'You have already flagged this recipe' }, { status: 409 });
+      }
     }
 
-    // Check if user already flagged this recipe
-    const { data: existingFlag } = await supabaseAdmin
-      .from('recipe_flags')
-      .select('id')
-      .eq('recipe_id', recipeId)
-      .eq('flagged_by', flaggedBy)
-      .maybeSingle();
-
-    if (existingFlag) {
-      return Response.json({ error: 'You have already flagged this recipe' }, { status: 409 });
-    }
-
-    // Insert flag
+    // Insert flag (flaggedBy will be null for AI-generated flags)
     const { data: flag, error: flagError } = await supabaseAdmin
       .from('recipe_flags')
       .insert({

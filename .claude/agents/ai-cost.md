@@ -35,6 +35,7 @@ Use the cheapest model that produces acceptable quality:
 | Comment reply moderation | claude-haiku-4-5 | Same as comment moderation, includes parent_id |
 | Username family-friendly check | claude-haiku-4-5 | Simple yes/no classification |
 | Recipe moderation | claude-haiku-4-5 | Classification, not generation |
+| Recipe moderation (spam detection) | claude-haiku-4-5 | Extends existing moderateRecipe — no new call |
 | Recipe edit re-moderation | claude-haiku-4-5 | Non-blocking re-check on public recipe edits |
 | Tag moderation | claude-haiku-4-5 | Simple clean/flagged classification (~$0.0002/tag) |
 | Profile moderation (bio + display_name) | claude-haiku-4-5 | Simple text appropriateness check (~$0.0002/save) |

@@ -230,6 +230,8 @@
 | Copyright review admin | LIVE | /admin/copyright, /api/admin (copyright actions) | 147 | Approve (auto-restore previous visibility) / Remove (permanent private + DM) / Dismiss; flagger reputation shown |
 | Copyright visibility lock | LIVE | apps/web/app/recipe/[id]/page.tsx | 147, 148 | Visibility toggle disabled while copyright_review_pending=true; amber banner for owner; ONLY set by admin action, never by user flag |
 | AI moderation toggle | LIVE | system_settings table, /admin/settings, saveWithModeration.ts | 148 | ON/OFF toggle; serious+ON=auto-hide; serious+OFF=flag-only; mild=always flag-only |
+| AI spam detection | LIVE | packages/ai (moderateRecipe), apps/web/lib/saveWithModeration.ts | P-K2 | Extends existing moderateRecipe call with spam signals (no new AI cost); auto-creates recipe_flags with flagged_by=null (AI Proctor) |
+| Admin flagged recipes queue | LIVE | /admin/flagged-recipes, /api/admin/flags/route.ts, /api/admin/flags/[recipeId]/action/route.ts | P-K2 | Lists recipes with pending flags; actions: Make Private/Hide/Delete/Dismiss; flag detail drawer shows AI Proctor for null flagged_by |
 
 ---
 

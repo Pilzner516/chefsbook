@@ -1,7 +1,7 @@
 import { callClaude, extractJSON, HAIKU } from './client';
 
 export type RecipeModerationResult = {
-  verdict: 'clean' | 'mild' | 'serious';
+  verdict: 'clean' | 'mild' | 'serious' | 'spam';
   reason?: string | null;
   flagged_fields?: string[];
 };
@@ -18,6 +18,13 @@ Rules:
 - Must be genuinely food/cooking related
 - Family-friendly — suitable for children to read
 
+Also flag as 'spam' if the content shows these signals:
+- Title or description promoting a product, service, or website unrelated to cooking
+- Embedded URLs, phone numbers, or contact information in description/notes
+- Keyword stuffing: unnatural repetition of search terms
+- Content clearly unrelated to food or cooking
+- Promotional language ("buy now", "click here", "visit us at")
+
 Recipe to review:
 Title: "{{title}}"
 Description: "{{description}}"
@@ -29,10 +36,11 @@ Classify as:
 - "clean": no violations — normal cooking recipe
 - "mild": borderline content, slightly inappropriate but not severe (flag for review but save the recipe)
 - "serious": clear profanity, sexual/violent content, hate speech, completely non-food content used to post offensive material (hide recipe immediately)
+- "spam": promotional content, URLs, contact info, keyword stuffing, or content clearly unrelated to cooking (flag for admin review)
 
 Return JSON only:
 {
-  "verdict": "clean" | "mild" | "serious",
+  "verdict": "clean" | "mild" | "serious" | "spam",
   "reason": "brief explanation if not clean, null if clean",
   "flagged_fields": ["title", "description"]
 }`;
