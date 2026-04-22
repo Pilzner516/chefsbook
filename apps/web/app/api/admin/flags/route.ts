@@ -71,8 +71,8 @@ export async function GET(req: NextRequest) {
             .from('recipe_flags')
             .select(`
               id,
-              reasons,
-              details,
+              flag_type,
+              reason,
               created_at,
               flagged_by,
               user_profiles(username)

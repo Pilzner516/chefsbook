@@ -56,7 +56,7 @@ export async function POST(
             status: 'reviewed',
             reviewed_by: user.id,
             reviewed_at: new Date().toISOString(),
-            admin_notes: adminNotes || 'Made private',
+            admin_note: adminNotes || 'Made private',
           })
           .eq('recipe_id', recipeId)
           .eq('status', 'pending');
@@ -76,7 +76,7 @@ export async function POST(
             status: 'reviewed',
             reviewed_by: user.id,
             reviewed_at: new Date().toISOString(),
-            admin_notes: adminNotes || 'Hidden',
+            admin_note: adminNotes || 'Hidden',
           })
           .eq('recipe_id', recipeId)
           .eq('status', 'pending');
@@ -98,7 +98,7 @@ export async function POST(
             status: 'reviewed',
             reviewed_by: user.id,
             reviewed_at: new Date().toISOString(),
-            admin_notes: adminNotes || 'Dismissed',
+            admin_note: adminNotes || 'Dismissed',
           })
           .eq('recipe_id', recipeId)
           .eq('status', 'pending');

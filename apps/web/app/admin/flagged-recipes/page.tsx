@@ -7,8 +7,8 @@ import ChefsDialog from '@/components/ChefsDialog';
 
 interface FlagDetail {
   id: string;
-  reasons: string[];
-  details: string | null;
+  flag_type: string;
+  reason: string | null;
   created_at: string;
   flagged_by: string | null;
   user_profiles?: { username: string } | null;
@@ -97,9 +97,7 @@ export default function FlaggedRecipesPage() {
   const aggregateReasons = (flags: FlagDetail[]): Map<string, number> => {
     const counts = new Map<string, number>();
     flags.forEach((flag) => {
-      flag.reasons.forEach((reason) => {
-        counts.set(reason, (counts.get(reason) || 0) + 1);
-      });
+      counts.set(flag.flag_type, (counts.get(flag.flag_type) || 0) + 1);
     });
     return counts;
   };
@@ -323,17 +321,12 @@ export default function FlaggedRecipesPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {flag.reasons.map((reason, i) => (
-                      <span
-                        key={i}
-                        className="inline-block px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs"
-                      >
-                        {reason}
-                      </span>
-                    ))}
+                    <span className="inline-block px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs">
+                      {flag.flag_type}
+                    </span>
                   </div>
-                  {flag.details && (
-                    <p className="text-sm text-gray-700 mt-2">{flag.details}</p>
+                  {flag.reason && (
+                    <p className="text-sm text-gray-700 mt-2">{flag.reason}</p>
                   )}
                 </div>
               ))}

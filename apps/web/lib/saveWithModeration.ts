@@ -106,8 +106,8 @@ export async function createRecipeWithModeration(
           await supabaseAdmin.from('recipe_flags').insert({
             recipe_id: created.id,
             flagged_by: null, // null = AI proctor
-            reasons: ['Spam or self-promotion'],
-            details: 'Auto-detected by AI proctor',
+            flag_type: 'spam',
+            reason: 'Auto-detected by AI proctor',
             status: 'pending',
           });
         } catch {
