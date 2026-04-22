@@ -1,6 +1,394 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session launch-moderation-audit — AI Moderation System Audit) TYPE: DIAGNOSTIC
+
+### OBJECTIVE
+Complete audit of AI moderation system to identify what IS and IS NOT currently being moderated before writing any new moderation code.
+
+---
+
+### Q1 — HOW CURRENT MODERATION WORKS
+
+#### Recipe Moderation (`moderateRecipe`)
+
+**Location**: `packages/ai/src/moderateRecipe.ts`, called from `apps/web/lib/saveWithModeration.ts`
+
+**Trigger**: At import/creation time via `createRecipeWithModeration()` — runs ONCE when recipe is first created
+
+**Fields checked**:
+- title (full)
+- description (first 200 chars)
+- ingredients (first 5, ingredient name only)
+- steps (first 3, first 100 chars of each instruction)
+- notes (first 200 chars)
+
+**Model**: HAIKU (~$0.0001-0.0003 per recipe)
+
+**Verdicts**:
+- `clean`: no violations, no action taken
+- `mild`: borderline content → sets `moderation_status='flagged_mild'` + stores reason, does NOT auto-hide
+- `serious`: clear violations → sets `moderation_status='flagged_serious'` + auto-hide (visibility='private') + freeze user recipes IF `system_settings.ai_auto_moderation_enabled = true`
+
+**Storage**: `recipes` table columns:
+- `moderation_status` (text: 'clean', 'flagged_mild', 'flagged_serious')
+- `moderation_flag_reason` (text)
+- `moderation_flagged_at` (timestamp)
+- `moderation_reviewed_by` (uuid, for proctor/admin review)
+
+**Rules checked**:
+- No profanity/swearing (any language)
+- No hate speech or discrimination
+- No sexual or violent content
+- No dangerous activities
+- No spam/off-topic content
+- Must be food/cooking related
+- Family-friendly (suitable for children)
+
+#### Comment Moderation (`moderateComment`)
+
+**Location**: `packages/ai/src/moderateComment.ts`, called from `apps/web/components/RecipeComments.tsx`
+
+**Trigger**: Every new top-level comment post (line 62). **IMPORTANT**: Replies are NOT moderated (line 98, always status='visible')
+
+**Fields checked**: Comment content only (max 500 chars per CHECK constraint)
+
+**Model**: HAIKU (~$0.0001 per comment)
+
+**Verdicts**:
+- `clean`: status='visible', no flag
+- `mild`: status='visible', flagged (flag_severity='mild', flag_source='ai', stores reason)
+- `serious`: status='hidden_pending_review', flagged
+
+**Storage**: `recipe_comments` table columns:
+- `status` (text: 'visible', 'hidden_pending_review', 'approved')
+- `flag_severity` (text: 'mild', 'serious')
+- `flag_source` (text: 'ai', 'user')
+- `flag_reason` (text)
+- `flagged_at` (timestamp)
+- `reviewed_by` (uuid)
+
+**Rules checked**:
+- No swearing/profanity (any language)
+- No hate speech or discrimination
+- No personal attacks or harassment
+- No spam or promotional content
+- No off-topic content
+- No sexual or violent content
+- Must be family-friendly
+
+**Known issue**: Line 70 comment says "Moderation unavailable on web (CORS)" — AI moderation may fail silently on web, comment posts anyway
+
+#### Username Moderation (`isUsernameFamilyFriendly`)
+
+**Location**: `packages/ai/src/usernameCheck.ts`, called from `apps/web/app/auth/page.tsx` at signup
+
+**Trigger**: During signup, before username is saved
+
+**Model**: HAIKU (~$0.0001 per check)
+
+**Non-blocking**: Returns `true` on AI failure — does NOT block signup if AI check fails
+
+**Rules checked**:
+- No profanity or swear words (any language)
+- No hate speech or discriminatory terms
+- No sexual references
+- No violent references
+- Common cooking/food terms always acceptable
+- Names, numbers, common words acceptable
+
+**Additional validation**: Database CHECK constraint enforces `^[a-z0-9_]{3,20}$` format
+
+---
+
+### Q2 — MODERATION COVERAGE TABLE
+
+| User-Generated Field | Moderated? | Model | Publicly Visible? | Re-moderated on Edit? | Notes |
+|---------------------|------------|-------|-------------------|----------------------|-------|
+| **Recipe title** (at import) | YES | Haiku | YES | NO | Only checked once at creation |
+| **Recipe title** (user edits after import) | NO | - | YES | NO | Direct updateRecipe(), no moderation |
+| **Recipe description** (at import) | YES (first 200 chars) | Haiku | YES | NO | Only checked once at creation |
+| **Recipe description** (user edits) | NO | - | YES | NO | Direct updateRecipe(), no moderation |
+| **Recipe ingredients** (at import) | YES (first 5, names only) | Haiku | YES | NO | Quantities not checked |
+| **Recipe ingredients** (user edits) | NO | - | YES | NO | Direct replaceIngredients(), no moderation |
+| **Recipe steps** (at import) | YES (first 3, 100 chars each) | Haiku | YES | NO | Only checked once at creation |
+| **Recipe steps** (user edits) | NO | - | YES | NO | Direct replaceSteps(), no moderation |
+| **Recipe notes** (at import) | YES (first 200 chars) | Haiku | Owner only | NO | Private field |
+| **Recipe notes** (user edits) | NO | - | Owner only | NO | Direct updateRecipe(), no moderation |
+| **Recipe tags** | NO | - | YES | NO | **COMPLETELY UNMODERATED** — stored as text[], no validation, no profanity filter |
+| **Comments (top-level)** | YES | Haiku | YES (unless serious) | N/A | Serious = hidden immediately |
+| **Comments (replies)** | NO | - | YES | N/A | **NOT MODERATED AT ALL** |
+| **Cookbook name** | NO | - | YES (if visibility=public) | NO | No moderation on creation or edit |
+| **Cookbook description** | NO | - | YES (if visibility=public) | NO | No moderation on creation or edit |
+| **User profile bio** | NO | - | YES | NO | 160 char limit, no moderation |
+| **User display_name** | NO | - | YES | NO | No moderation, can be changed anytime |
+| **Username** | YES (at signup) | Haiku | YES | NO | Also has regex constraint ^[a-z0-9_]{3,20}$ |
+| **Direct messages** | NO | - | Recipient only | NO | No moderation mentioned in code |
+| **Cooking notes** | NO | - | Owner only | NO | Private to recipe owner |
+
+---
+
+### Q3 — TAGS SPECIFICALLY
+
+**Storage**: `text[]` ARRAY column on `recipes` table (verified via `\d recipes`)
+
+**Separate table**: NO — confirmed via `SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tags')` returned `false`
+
+**Validation**: NONE
+
+**Can user create offensive tags**: YES — no blocklist, no profanity filter, no AI check
+
+**Public visibility**: YES — tags appear on all public recipe pages
+
+**Sample tags observed** (from DB query):
+- Food terms: chocolate, chicken, bread, eggs, asian, dessert, baking
+- Site domains: bettycrocker.com, bonappetit.com, delish.com
+- System tags: ChefsBook-v2 (crawler tag), _unresolved (auto-generated title marker)
+- Descriptive: easy, family-friendly, comfort-food, crowd-pleasing
+
+**Risk level**: HIGH — tags are:
+- Publicly visible on all recipe cards and detail pages
+- User-created free text with zero validation
+- Searchable/filterable
+- Could contain profanity, hate speech, spam domains
+
+---
+
+### Q4 — MODERATION TRIGGER TIMING
+
+**Recipe moderation timing**:
+- Runs DURING `createRecipeWithModeration()` call
+- BEFORE the recipe is saved to the database
+- Happens ONCE at import/creation time
+- Does NOT run when visibility changes from private → public
+
+**On edit (post-publication)**:
+- Title edits: `updateRecipe(id, { title })` — NO moderation
+- Description edits: `updateRecipe(id, { description })` — NO moderation
+- Ingredient edits: `replaceIngredients()` — NO moderation
+- Step edits: `replaceSteps()` — NO moderation
+- Notes edits: `updateRecipe(id, { notes })` — NO moderation
+- Tag edits: `updateRecipe(id, { tags })` — NO moderation
+- Course/cuisine edits: `updateRecipe()` — NO moderation
+
+**Attack vector identified**: User can:
+1. Import a clean recipe (passes moderation)
+2. Make it public
+3. Edit title/description/steps to add profanity
+4. Content is now publicly visible with no re-moderation
+
+**Visibility changes**: When user clicks private → public toggle, there is NO moderation check. Only checks:
+- Completeness gate (title, description, 2+ ingredients w/qty, 1+ steps, 1+ tag)
+- Is under review (copyright_review_pending, moderation_status != 'clean', ai_recipe_verdict='flagged')
+- But does NOT re-run AI moderation on current content
+
+---
+
+### Q5 — COMMENT MODERATION DETAILS
+
+**Top-level comments** (line 53-92 in RecipeComments.tsx):
+- Moderation runs on EVERY post
+- HAIKU model
+- Try/catch — if moderation fails, comment posts anyway (line 69)
+- Serious verdict → status='hidden_pending_review'
+- Mild verdict → status='visible' but flagged
+- Creates notification to recipe owner (if not self-comment)
+
+**Replies** (line 94-123 in RecipeComments.tsx):
+- NO moderation at all (line 98)
+- Always saved with status='visible'
+- Creates notification to parent commenter
+
+**Fields checked**: Content only
+- Comment text is trimmed, max 500 chars (DB constraint)
+- Username, user metadata NOT checked
+- Parent context NOT checked
+
+**Blocking behavior**:
+- Serious: Hidden immediately, requires proctor/admin review to approve
+- Mild: Visible immediately, flagged for later review
+- Clean: Visible, no flag
+
+**Known bug**: Comment at line 70 says "Moderation unavailable on web (CORS)" — suggests AI moderation may fail on web client
+
+---
+
+### Q6 — PRIORITIZED MODERATION GAPS
+
+**CRITICAL GAPS** (publicly visible, no moderation, high abuse potential):
+
+1. **Recipe edits after publication** (HIGHEST RISK)
+   - User can import clean recipe, make public, then edit title/description/steps to add profanity
+   - No re-moderation on ANY edit
+   - Publicly visible immediately
+   - Attack vector: Import "Chocolate Cake", publish, edit title to offensive content
+
+2. **Recipe tags** (HIGH RISK)
+   - Completely unmoderated, user-created free text
+   - Publicly visible on all recipe cards and search results
+   - No profanity filter, no validation
+   - Can add offensive terms, spam domains, hate speech
+   - Example: User can tag recipe with profanity and it displays publicly
+
+3. **Comment replies** (MEDIUM-HIGH RISK)
+   - Not moderated at all (only top-level comments are checked)
+   - Publicly visible
+   - Can be used to bypass moderation by replying instead of top-level commenting
+
+**HIGH-VISIBILITY GAPS** (publicly visible on profiles):
+
+4. **User bio** (MEDIUM RISK)
+   - 160 chars max, publicly visible on chef profile
+   - No moderation on creation or edit
+   - Can change anytime without check
+
+5. **User display_name** (MEDIUM RISK)
+   - Publicly visible on all comments, recipe credits, profile
+   - No moderation (only username is checked at signup)
+   - Can change anytime without check
+
+6. **Cookbook name** (LOW-MEDIUM RISK)
+   - Publicly visible if cookbook visibility=public
+   - No moderation on creation or edit
+   - Less visible than recipes but still public
+
+7. **Cookbook description** (LOW-MEDIUM RISK)
+   - Publicly visible if cookbook visibility=public
+   - No moderation
+
+**LOWER-RISK GAPS** (less visible or private):
+
+8. **Recipe notes** (LOW RISK)
+   - Private to owner, not publicly visible
+   - Checked at import (first 200 chars) but not on edit
+
+9. **Direct messages** (UNKNOWN RISK)
+   - No moderation found in codebase
+   - Private to sender/recipient
+   - Could be harassment vector
+
+10. **Cooking notes** (MINIMAL RISK)
+    - Private to recipe owner
+    - Not publicly visible
+
+---
+
+### ADDITIONAL FINDINGS
+
+**System settings toggle**: `system_settings.ai_auto_moderation_enabled`
+- Controls whether serious verdicts auto-hide recipes + freeze user
+- If OFF: serious verdicts still flag but do NOT auto-hide or freeze
+- Mild verdicts NEVER auto-hide (always flag-only)
+
+**Recipes frozen mechanism**: When user has serious violation:
+- `recipes_frozen = true` on user_profiles
+- `recipes_frozen_reason` stores violation reason
+- All user's recipes become private
+
+**Moderation columns on recipes**:
+- `ai_recipe_verdict` (text: 'approved', 'flagged', 'not_a_recipe', 'pending')
+- `moderation_status` (text: 'clean', 'flagged_mild', 'flagged_serious')
+- `copyright_review_pending` (boolean)
+- ALL checked in visibility enforcement (Prompt-G)
+
+**No moderation on user_profiles except**:
+- `recipes_flagged_count` (integer) — tracks count but no moderation_status column
+- No `is_suspended_for_profile_content` or similar
+
+---
+
+### RECOMMENDATIONS (for future sessions)
+
+**Immediate (launch blockers)**:
+1. Add re-moderation on recipe edits (at minimum: title, description on public recipes)
+2. Add tag validation/filtering before display
+3. Add comment reply moderation (same flow as top-level)
+
+**High priority**:
+4. Add bio/display_name moderation on save
+5. Add cookbook name/description moderation on creation
+6. Consider re-moderation when visibility changes private → public
+
+**Nice to have**:
+7. Add direct message moderation
+8. Add cooking notes moderation (even though private, prevents abuse)
+
+**Technical debt**:
+9. Fix CORS issue causing web comment moderation to fail silently
+10. Add logging for moderation failures (currently swallowed in try/catch)
+
+---
+
+### DATABASE SCHEMA VERIFICATION
+
+**Ran queries**:
+```sql
+-- Confirmed moderation columns on recipes
+SELECT column_name, data_type FROM information_schema.columns 
+WHERE table_name = 'recipes' 
+AND column_name IN ('ai_recipe_verdict', 'moderation_status', 'copyright_review_pending', 'flagged', 'tags');
+-- Result: ai_recipe_verdict (text), moderation_status (text), copyright_review_pending (boolean), tags (ARRAY)
+
+-- Confirmed no separate tags table
+SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tags');
+-- Result: false
+
+-- Checked recipe_comments structure
+\d recipe_comments
+-- Confirmed: status, flag_severity, flag_source, flag_reason, flagged_at columns exist
+
+-- Checked user_profiles for moderation columns
+SELECT column_name, data_type FROM information_schema.columns 
+WHERE table_name = 'user_profiles' 
+AND (column_name LIKE '%moderat%' OR column_name LIKE '%flag%' OR column_name LIKE '%review%');
+-- Result: Only recipes_flagged_count (integer)
+
+-- Sampled tags
+SELECT DISTINCT unnest(tags) as tag FROM recipes WHERE tags IS NOT NULL LIMIT 50;
+-- Result: Mix of food terms, site domains, system tags — no obviously offensive content in sample
+```
+
+---
+
+### FILES ANALYZED
+
+**Moderation code**:
+- `packages/ai/src/moderateRecipe.ts` (recipe moderation function)
+- `packages/ai/src/moderateComment.ts` (comment moderation function)
+- `packages/ai/src/usernameCheck.ts` (username validation)
+- `apps/web/lib/saveWithModeration.ts` (moderation orchestration)
+- `apps/web/components/RecipeComments.tsx` (comment posting with moderation)
+
+**Edit handlers checked**:
+- `apps/web/app/recipe/[id]/page.tsx` (recipe edit handlers — NO re-moderation found)
+- `apps/web/app/dashboard/settings/page.tsx` (profile edit handlers — NO moderation found)
+
+**Database schema**:
+- `recipes` table (via \d recipes on RPi5)
+- `recipe_comments` table (via \d recipe_comments)
+- `user_profiles` table (via \d user_profiles)
+- `cookbooks` table (via \d cookbooks)
+
+---
+
+### SESSION OUTCOME
+
+**Type**: DIAGNOSTIC ONLY — no code changes made
+
+**Deliverable**: Complete moderation audit report documenting:
+- All current moderation points (3 functions: recipe, comment, username)
+- All unmoderated publicly-visible fields (11 identified)
+- Critical gaps prioritized by risk (recipe edits, tags, reply comments = top 3)
+- Attack vectors identified (edit-after-publish, reply-instead-of-comment, tag abuse)
+- System architecture understood (toggle, freeze mechanism, storage columns)
+
+**Next steps**: Use this audit as basis for:
+1. Launch readiness assessment (which gaps are blockers?)
+2. Moderation enhancement roadmap
+3. Prioritized implementation plan
+
+---
+
 ## 2026-04-21 (session Prompt-I — YouTube Classification + Tags Gate Fix) TYPE: CODE FIX
 
 ### AUDIT 1 — Tags removed from completeness gate (DEPLOYED)
