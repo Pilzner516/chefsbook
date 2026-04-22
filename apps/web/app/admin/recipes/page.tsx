@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
@@ -15,6 +17,8 @@ interface FlaggedRecipe {
   moderation_flagged_at: string | null;
   visibility: string;
   created_at: string;
+  system_locked: boolean;
+  ai_recipe_verdict: string | null;
 }
 
 interface RecipeRow {
@@ -28,6 +32,8 @@ interface RecipeRow {
   created_at: string;
   duplicate_of: string | null;
   is_canonical: boolean;
+  system_locked: boolean;
+  ai_recipe_verdict: string | null;
 }
 
 interface DuplicateRow {
@@ -45,6 +51,15 @@ type SortKey = 'title' | 'submitter' | 'visibility' | 'moderation_status' | 'cre
 type SortDir = 'asc' | 'desc';
 type SearchMode = 'title' | 'username';
 type Tab = 'all' | 'duplicates';
+
+function getRecipeStatus(r: RecipeRow): string {
+  if (r.system_locked) return '🔒 Incomplete';
+  if (r.moderation_status === 'hidden') return '👁 Hidden';
+  if (r.moderation_status === 'flagged_mild' || r.moderation_status === 'flagged_serious') return '🚩 Flagged';
+  if (r.ai_recipe_verdict === 'spam') return '🚩 Spam';
+  if (r.visibility === 'private' && !r.system_locked) return 'Private';
+  return 'Clean';
+}
 
 export default function RecipeModerationPage() {
   const [flagged, setFlagged] = useState<FlaggedRecipe[]>([]);
@@ -312,7 +327,7 @@ export default function RecipeModerationPage() {
                     ) : <span className="text-xs text-gray-400">Unknown</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-600 text-xs capitalize">{r.visibility}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{r.moderation_status ?? 'clean'}</td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{getRecipeStatus(r)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => hideRecipe(r.id)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100">Hide</button>
