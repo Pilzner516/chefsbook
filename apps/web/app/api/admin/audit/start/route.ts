@@ -123,6 +123,28 @@ async function calculateEstimatedCost(scope: string[], mode: string): Promise<nu
 }
 
 async function processAudit(runId: string, scope: string[], mode: string) {
+  // Retry wrapper with exponential backoff for rate limit errors
+  async function withRetry<T>(fn: () => Promise<T>, itemDesc: string): Promise<T> {
+    let lastError: any;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        lastError = error;
+        const is429 = error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit');
+        if (is429 && attempt < 2) {
+          // Exponential backoff: 2s, 4s
+          const delay = 2000 * Math.pow(2, attempt);
+          console.log(`Rate limit hit on ${itemDesc}, retrying in ${delay}ms (attempt ${attempt + 1}/3)`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
+  }
+
   try {
     const rules = mode === 'deep' ? DEEP_RULES : STANDARD_RULES;
     const findings: any[] = [];
@@ -155,7 +177,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           const batch = tags.slice(i, i + 10);
           await Promise.all(
             batch.map(async (tagData: any) => {
-              const result = await moderateTag(tagData.tag);
+              const result = await withRetry(() => moderateTag(tagData.tag), `tag "${tagData.tag}"`);
               totalScanned++;
 
               if (result.verdict === 'flagged') {
@@ -174,7 +196,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               }
             })
           );
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       } else if (s === 'recipes') {
         const { data } = await supabaseAdmin
@@ -186,11 +208,11 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           const batch = recipes.slice(i, i + 10);
           await Promise.all(
             batch.map(async (recipe: any) => {
-              const result = await moderateRecipe({
+              const result = await withRetry(() => moderateRecipe({
                 title: recipe.title,
                 description: recipe.description || '',
                 notes: recipe.notes || '',
-              });
+              }), `recipe "${recipe.title}"`);
               totalScanned++;
 
               // In standard mode, only flag serious/spam; in deep mode, flag mild too
@@ -214,7 +236,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               }
             })
           );
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       } else if (s === 'comments') {
         const { data } = await supabaseAdmin
@@ -226,7 +248,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           const batch = comments.slice(i, i + 10);
           await Promise.all(
             batch.map(async (comment: any) => {
-              const result = await moderateComment(comment.content);
+              const result = await withRetry(() => moderateComment(comment.content), `comment ${comment.id}`);
               totalScanned++;
 
               const shouldFlag = mode === 'deep'
@@ -249,7 +271,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               }
             })
           );
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       } else if (s === 'profiles') {
         const { data } = await supabaseAdmin
@@ -262,10 +284,10 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           const batch = profiles.slice(i, i + 10);
           await Promise.all(
             batch.map(async (profile: any) => {
-              const result = await moderateProfile({
+              const result = await withRetry(() => moderateProfile({
                 bio: profile.bio || '',
                 display_name: profile.display_name || '',
-              });
+              }), `profile ${profile.username}`);
               totalScanned++;
 
               if (result.verdict === 'flagged') {
@@ -284,7 +306,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               }
             })
           );
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       } else if (s === 'cookbooks') {
         const { data } = await supabaseAdmin
@@ -297,10 +319,10 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           const batch = cookbooks.slice(i, i + 10);
           await Promise.all(
             batch.map(async (cookbook: any) => {
-              const result = await moderateProfile({
+              const result = await withRetry(() => moderateProfile({
                 bio: cookbook.description || '',
                 display_name: cookbook.name,
-              });
+              }), `cookbook "${cookbook.name}"`);
               totalScanned++;
 
               if (result.verdict === 'flagged') {
@@ -319,7 +341,7 @@ async function processAudit(runId: string, scope: string[], mode: string) {
               }
             })
           );
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
     }
@@ -341,11 +363,18 @@ async function processAudit(runId: string, scope: string[], mode: string) {
       .eq('id', runId);
   } catch (error: any) {
     console.error('Audit processing error:', error);
+
+    // Provide better error message for rate limits
+    const is429 = error.message?.includes('429') || error.message?.toLowerCase().includes('rate limit');
+    const errorMessage = is429
+      ? 'Rate limit hit — try again in a few minutes. Consider reducing scan scope.'
+      : error.message;
+
     await supabaseAdmin
       .from('content_audit_runs')
       .update({
         status: 'failed',
-        error_message: error.message,
+        error_message: errorMessage,
         completed_at: new Date().toISOString(),
       })
       .eq('id', runId);
