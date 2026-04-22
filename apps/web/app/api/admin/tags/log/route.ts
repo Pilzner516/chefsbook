@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         reason,
         created_at,
         reinstated,
-        recipes!inner(title, user_id, user_profiles!inner(username))
+        recipes!inner(title, user_id, user_profiles!recipes_user_id_fkey(username))
       `)
       .order('created_at', { ascending: false })
       .limit(100);
