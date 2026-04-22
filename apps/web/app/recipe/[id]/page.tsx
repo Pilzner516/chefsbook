@@ -10,7 +10,7 @@ import LikeButton from '@/components/LikeButton';
 import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
-import { RefreshFromSourceBanner } from '@/components/RefreshFromSourceBanner';
+import { RecipeStatusBanner } from '@/components/RecipeStatusBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import { RecipeLightbox } from '@/components/RecipeLightbox';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
@@ -1550,12 +1550,14 @@ export default function RecipePage() {
             </div>
           </div>
         )}
-        {/* Refresh-from-source banner on incomplete imports */}
-        {isLoggedIn && recipe && (recipe as any).is_complete === false && (
-          <RefreshFromSourceBanner
+        {/* Recipe status banner — incomplete OR flagged (owner-only) */}
+        {isOwner && recipe && ((recipe as any).is_complete === false || (recipe as any).moderation_status === 'flagged' || (recipe as any).ai_recipe_verdict === 'flagged') && (
+          <RecipeStatusBanner
             recipeId={recipe.id}
             sourceUrl={recipe.source_url}
             missingFields={((recipe as any).missing_fields ?? []) as string[]}
+            moderationStatus={(recipe as any).moderation_status}
+            aiRecipeVerdict={(recipe as any).ai_recipe_verdict}
             onRefreshed={() => window.location.reload()}
           />
         )}
@@ -1628,6 +1630,16 @@ export default function RecipePage() {
             {isOwner && !((recipe as any).copyright_review_pending || (recipe as any).copyright_removed) && (
               <button
                 onClick={async () => {
+                  // Check if system-locked (enforced private due to incompleteness)
+                  if ((recipe as any).system_locked) {
+                    await alert({
+                      title: 'Recipe locked',
+                      body: 'Complete this recipe to publish it. The system will automatically restore visibility once all required fields are filled in.',
+                      confirmLabel: 'Got it'
+                    });
+                    return;
+                  }
+
                   const next = recipe.visibility === 'private' ? 'public' : 'private';
                   if (next === 'public') {
                     // Check if recipe is flagged/under review
@@ -1643,16 +1655,7 @@ export default function RecipePage() {
                       return;
                     }
 
-                    // Check if recipe is complete
-                    const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: recipe.ingredients, steps: recipe.steps });
-                    if (incompletePillText) {
-                      await alert({
-                        title: 'Recipe can\'t be published yet',
-                        body: `This recipe is missing required information. ${incompletePillText.replace('⚠ ', '')} before it can be shared with the Chefsbook community.`,
-                        confirmLabel: 'Got it'
-                      });
-                      return;
-                    }
+                    // Completeness check removed — enforceCompleteness now handles this server-side
 
                     // Run server-side duplicate check before making public
                     try {
@@ -1674,13 +1677,25 @@ export default function RecipePage() {
                 }}
                 className={`shrink-0 mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                   recipe.visibility === 'private'
-                    ? 'border-red-300 text-red-500 bg-red-50 hover:bg-red-100'
-                    : 'border-cb-green/30 text-cb-green bg-cb-green/5 hover:bg-cb-green/10'
+                    ? (recipe as any).system_locked
+                      ? 'border-gray-300 text-gray-500 bg-gray-100 cursor-not-allowed opacity-75'
+                      : 'border-red-300 text-red-500 bg-red-50 hover:bg-red-100 cursor-pointer'
+                    : 'border-cb-green/30 text-cb-green bg-cb-green/5 hover:bg-cb-green/10 cursor-pointer'
                 }`}
-                title={recipe.visibility === 'private' ? 'Only you can see this recipe' : 'Anyone with the link can view this recipe'}
+                title={
+                  (recipe as any).system_locked
+                    ? 'Complete this recipe to publish it'
+                    : recipe.visibility === 'private'
+                    ? 'Only you can see this recipe'
+                    : 'Anyone with the link can view this recipe'
+                }
               >
                 {recipe.visibility === 'private' ? (
-                  <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>Private</>
+                  (recipe as any).system_locked ? (
+                    <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>🔒 Locked</>
+                  ) : (
+                    <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>Private</>
+                  )
                 ) : (
                   <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12.75 3.03v.568c0 .334.148.65.405.864l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 0 1-1.161.886l-.143.048a1.107 1.107 0 0 0-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 0 1-1.652.928l-.679-.906a1.125 1.125 0 0 0-1.906.172L4.5 15.75l-.612.153M12.75 3.031a9 9 0 0 1 6.69 14.036m0 0-.177-.529A2.25 2.25 0 0 0 17.128 15H16.5l-.324-.324a1.453 1.453 0 0 0-2.328.377l-.036.073a1.586 1.586 0 0 1-.982.816l-.99.282c-.55.157-.894.702-.8 1.267l.073.438c.08.474.49.821.97.821.846 0 1.598.542 1.865 1.345l.215.643m5.276-3.67a9.012 9.012 0 0 1-5.276 3.67m0 0a9 9 0 0 1-10.275-4.835M15.75 9c0 .896-.393 1.7-1.016 2.25" /></svg>Public</>
                 )}

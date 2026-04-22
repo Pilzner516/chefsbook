@@ -422,3 +422,57 @@ export async function getUserIncompleteRecipes(userId: string): Promise<
     created_at: string;
   }>;
 }
+
+/**
+ * System-enforced visibility on every save (Prompt L).
+ * Re-checks completeness and enforces:
+ * - If incomplete + public → set private, system_locked = true
+ * - If complete + system_locked → restore user's default visibility, clear lock
+ * - If complete + not locked → leave visibility unchanged
+ */
+export async function enforceCompleteness(recipeId: string, userId: string): Promise<void> {
+  // Fetch recipe data including current visibility and system_locked status
+  const { data: recipe } = await supabaseAdmin
+    .from('recipes')
+    .select('id, visibility, system_locked')
+    .eq('id', recipeId)
+    .single();
+
+  if (!recipe) return;
+
+  // Re-run completeness check
+  const completeness = await fetchRecipeCompleteness(recipeId);
+
+  const update: Record<string, unknown> = {
+    is_complete: completeness.isComplete,
+    missing_fields: completeness.missingFields,
+    completeness_checked_at: new Date().toISOString(),
+  };
+
+  if (!completeness.isComplete) {
+    // Recipe fails completeness
+    if (recipe.visibility === 'public') {
+      // Force private and lock
+      update.visibility = 'private';
+      update.system_locked = true;
+    }
+    // If already private, just update missing_fields (don't change lock status)
+  } else {
+    // Recipe passes completeness
+    if (recipe.system_locked) {
+      // Auto-restore visibility from user's default preference
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('default_visibility')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const userDefault = profile?.default_visibility ?? 'public';
+      update.visibility = userDefault;
+      update.system_locked = false;
+    }
+    // If not system_locked, leave visibility unchanged (user-chosen)
+  }
+
+  await supabaseAdmin.from('recipes').update(update).eq('id', recipeId);
+}

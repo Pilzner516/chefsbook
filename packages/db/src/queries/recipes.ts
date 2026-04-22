@@ -1,6 +1,6 @@
 import { supabase, supabaseAdmin } from '../client';
 import type { Recipe, RecipeIngredient, RecipeStep, RecipeWithDetails, ScannedRecipe } from '../types';
-import { fetchRecipeCompleteness } from './completeness';
+import { fetchRecipeCompleteness, enforceCompleteness } from './completeness';
 
 export async function getRecipe(id: string): Promise<RecipeWithDetails | null> {
   const { data: recipe } = await supabase
@@ -263,21 +263,13 @@ export async function updateRecipe(
 
   if (error || !data) throw error ?? new Error('Failed to update recipe');
 
-  // Re-check completeness if title, description, or notes were updated
+  // Re-check completeness and enforce visibility if title, description, or notes were updated
   const affectsCompleteness = ['title', 'description', 'notes'].some(
     (field) => cleaned[field] !== undefined
   );
   if (affectsCompleteness) {
     try {
-      const result = await fetchRecipeCompleteness(id);
-      await supabaseAdmin
-        .from('recipes')
-        .update({
-          is_complete: result.isComplete,
-          missing_fields: result.missingFields,
-          completeness_checked_at: new Date().toISOString(),
-        })
-        .eq('id', id);
+      await enforceCompleteness(id, data.user_id);
     } catch {
       // Completeness re-check failure should not block recipe update
     }
@@ -308,17 +300,9 @@ export async function replaceIngredients(
   // Invalidate translation cache
   await supabase.from('recipe_translations').delete().eq('recipe_id', recipeId);
 
-  // Re-check completeness after replacing ingredients
+  // Re-check completeness and enforce visibility after replacing ingredients
   try {
-    const result = await fetchRecipeCompleteness(recipeId);
-    await supabaseAdmin
-      .from('recipes')
-      .update({
-        is_complete: result.isComplete,
-        missing_fields: result.missingFields,
-        completeness_checked_at: new Date().toISOString(),
-      })
-      .eq('id', recipeId);
+    await enforceCompleteness(recipeId, userId);
   } catch {
     // Completeness re-check failure should not block ingredient save
   }
@@ -345,17 +329,9 @@ export async function replaceSteps(
   // Invalidate translation cache
   await supabase.from('recipe_translations').delete().eq('recipe_id', recipeId);
 
-  // Re-check completeness after replacing steps
+  // Re-check completeness and enforce visibility after replacing steps
   try {
-    const result = await fetchRecipeCompleteness(recipeId);
-    await supabaseAdmin
-      .from('recipes')
-      .update({
-        is_complete: result.isComplete,
-        missing_fields: result.missingFields,
-        completeness_checked_at: new Date().toISOString(),
-      })
-      .eq('id', recipeId);
+    await enforceCompleteness(recipeId, userId);
   } catch {
     // Completeness re-check failure should not block step save
   }
