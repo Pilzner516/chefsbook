@@ -131,13 +131,14 @@ ssh rasp@rpi5-eth "psql postgresql://supabase_admin:<pw>@localhost:5432/postgres
 
 ## Quick Reference: Top Gotchas
 
-These five mistakes recur across sessions — check before writing any code:
+These mistakes recur across sessions — check before writing any code:
 
 1. **Web Supabase URL = `https://api.chefsbk.app`** (NOT `http://100.110.47.62:8000`) — mixed content blocks WebSocket on HTTPS pages. Mobile still uses the direct IP.
 2. **Server-to-server fetches = `http://localhost:3000`** (NOT the `req.url` origin) — tunnel URL returns HTML error pages instead of JSON on timeout.
 3. **Delete stale APK JS bundle before rebuilding**: `rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`
 4. **After `expo prebuild --clean`**: re-add `android.enableJetifier=true` to `gradle.properties` + re-apply signing config to `build.gradle` (both get wiped).
 5. **New table migration**: always `docker restart supabase-rest` on RPi5 after applying, or PostgREST returns "table not found in schema cache".
+6. **Recipe images**: primary images live in `recipe_user_photos` table, NOT `recipes.image_url`. Any component rendering recipe cards MUST use `getPrimaryPhotos()` + `getRecipeImageUrl(primaryPhoto, fallbackUrl)`. Never render `recipe.image_url` directly — most recipes will show placeholder. This applies to every new page, component, or search result that displays recipe cards.
 
 ## Environment variables (in .env.local at monorepo root)
 
