@@ -173,30 +173,30 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           sample_title: info.title,
         }));
 
-        for (let i = 0; i < tags.length; i += 10) {
-          const batch = tags.slice(i, i + 10);
-          await Promise.all(
-            batch.map(async (tagData: any) => {
-              const result = await withRetry(() => moderateTag(tagData.tag), `tag "${tagData.tag}"`);
-              totalScanned++;
+        for (let i = 0; i < tags.length; i++) {
+          const tagData = tags[i];
+          const result = await withRetry(() => moderateTag(tagData.tag), `tag "${tagData.tag}"`);
+          totalScanned++;
 
-              if (result.verdict === 'flagged') {
-                findings.push({
-                  audit_run_id: runId,
-                  content_type: 'tag',
-                  content_id: tagData.tag,
-                  content_preview: tagData.tag,
-                  recipe_id: tagData.recipe_ids?.[0] || null,
-                  recipe_title: `${tagData.recipe_count} recipes use this tag`,
-                  owner_username: null,
-                  finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
-                  reasons: [result.reason || 'Policy violation'],
-                  ai_explanation: result.reason,
-                });
-              }
-            })
-          );
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (result.verdict === 'flagged') {
+            findings.push({
+              audit_run_id: runId,
+              content_type: 'tag',
+              content_id: tagData.tag,
+              content_preview: tagData.tag,
+              recipe_id: tagData.recipe_ids?.[0] || null,
+              recipe_title: `${tagData.recipe_count} recipes use this tag`,
+              owner_username: null,
+              finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
+              reasons: [result.reason || 'Policy violation'],
+              ai_explanation: result.reason,
+            });
+          }
+
+          // Delay between items to respect rate limits
+          if (i < tags.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
       } else if (s === 'recipes') {
         const { data } = await supabaseAdmin
@@ -204,39 +204,39 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .select('id, title, description, notes, user_id');
         const recipes = data ?? [];
 
-        for (let i = 0; i < recipes.length; i += 10) {
-          const batch = recipes.slice(i, i + 10);
-          await Promise.all(
-            batch.map(async (recipe: any) => {
-              const result = await withRetry(() => moderateRecipe({
-                title: recipe.title,
-                description: recipe.description || '',
-                notes: recipe.notes || '',
-              }), `recipe "${recipe.title}"`);
-              totalScanned++;
+        for (let i = 0; i < recipes.length; i++) {
+          const recipe = recipes[i];
+          const result = await withRetry(() => moderateRecipe({
+            title: recipe.title,
+            description: recipe.description || '',
+            notes: recipe.notes || '',
+          }), `recipe "${recipe.title}"`);
+          totalScanned++;
 
-              // In standard mode, only flag serious/spam; in deep mode, flag mild too
-              const shouldFlag = mode === 'deep'
-                ? result.verdict !== 'clean'
-                : (result.verdict === 'serious' || result.verdict === 'spam');
+          // In standard mode, only flag serious/spam; in deep mode, flag mild too
+          const shouldFlag = mode === 'deep'
+            ? result.verdict !== 'clean'
+            : (result.verdict === 'serious' || result.verdict === 'spam');
 
-              if (shouldFlag) {
-                findings.push({
-                  audit_run_id: runId,
-                  content_type: 'recipe',
-                  content_id: recipe.id,
-                  content_preview: recipe.title.substring(0, 80),
-                  recipe_id: recipe.id,
-                  recipe_title: recipe.title,
-                  owner_username: null,
-                  finding_severity: result.verdict === 'mild' ? 'deep_only' : 'standard',
-                  reasons: [result.verdict],
-                  ai_explanation: result.reason || null,
-                });
-              }
-            })
-          );
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (shouldFlag) {
+            findings.push({
+              audit_run_id: runId,
+              content_type: 'recipe',
+              content_id: recipe.id,
+              content_preview: recipe.title.substring(0, 80),
+              recipe_id: recipe.id,
+              recipe_title: recipe.title,
+              owner_username: null,
+              finding_severity: result.verdict === 'mild' ? 'deep_only' : 'standard',
+              reasons: [result.verdict],
+              ai_explanation: result.reason || null,
+            });
+          }
+
+          // Delay between items to respect rate limits
+          if (i < recipes.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
       } else if (s === 'comments') {
         const { data } = await supabaseAdmin
@@ -244,34 +244,34 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .select('id, content, recipe_id, user_id');
         const comments = data ?? [];
 
-        for (let i = 0; i < comments.length; i += 10) {
-          const batch = comments.slice(i, i + 10);
-          await Promise.all(
-            batch.map(async (comment: any) => {
-              const result = await withRetry(() => moderateComment(comment.content), `comment ${comment.id}`);
-              totalScanned++;
+        for (let i = 0; i < comments.length; i++) {
+          const comment = comments[i];
+          const result = await withRetry(() => moderateComment(comment.content), `comment ${comment.id}`);
+          totalScanned++;
 
-              const shouldFlag = mode === 'deep'
-                ? result.verdict !== 'clean'
-                : result.verdict === 'serious';
+          const shouldFlag = mode === 'deep'
+            ? result.verdict !== 'clean'
+            : result.verdict === 'serious';
 
-              if (shouldFlag) {
-                findings.push({
-                  audit_run_id: runId,
-                  content_type: 'comment',
-                  content_id: comment.id,
-                  content_preview: comment.content.substring(0, 80),
-                  recipe_id: comment.recipe_id,
-                  recipe_title: null,
-                  owner_username: null,
-                  finding_severity: result.verdict === 'mild' ? 'deep_only' : 'standard',
-                  reasons: [result.verdict],
-                  ai_explanation: result.reason || null,
-                });
-              }
-            })
-          );
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (shouldFlag) {
+            findings.push({
+              audit_run_id: runId,
+              content_type: 'comment',
+              content_id: comment.id,
+              content_preview: comment.content.substring(0, 80),
+              recipe_id: comment.recipe_id,
+              recipe_title: null,
+              owner_username: null,
+              finding_severity: result.verdict === 'mild' ? 'deep_only' : 'standard',
+              reasons: [result.verdict],
+              ai_explanation: result.reason || null,
+            });
+          }
+
+          // Delay between items to respect rate limits
+          if (i < comments.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
       } else if (s === 'profiles') {
         const { data } = await supabaseAdmin
@@ -280,33 +280,33 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .eq('is_searchable', true);
         const profiles = data ?? [];
 
-        for (let i = 0; i < profiles.length; i += 10) {
-          const batch = profiles.slice(i, i + 10);
-          await Promise.all(
-            batch.map(async (profile: any) => {
-              const result = await withRetry(() => moderateProfile({
-                bio: profile.bio || '',
-                display_name: profile.display_name || '',
-              }), `profile ${profile.username}`);
-              totalScanned++;
+        for (let i = 0; i < profiles.length; i++) {
+          const profile = profiles[i];
+          const result = await withRetry(() => moderateProfile({
+            bio: profile.bio || '',
+            display_name: profile.display_name || '',
+          }), `profile ${profile.username}`);
+          totalScanned++;
 
-              if (result.verdict === 'flagged') {
-                findings.push({
-                  audit_run_id: runId,
-                  content_type: 'profile',
-                  content_id: profile.id,
-                  content_preview: `${profile.display_name || profile.username}`,
-                  recipe_id: null,
-                  recipe_title: null,
-                  owner_username: profile.username,
-                  finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
-                  reasons: result.flaggedFields,
-                  ai_explanation: result.reason || null,
-                });
-              }
-            })
-          );
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (result.verdict === 'flagged') {
+            findings.push({
+              audit_run_id: runId,
+              content_type: 'profile',
+              content_id: profile.id,
+              content_preview: `${profile.display_name || profile.username}`,
+              recipe_id: null,
+              recipe_title: null,
+              owner_username: profile.username,
+              finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
+              reasons: result.flaggedFields,
+              ai_explanation: result.reason || null,
+            });
+          }
+
+          // Delay between items to respect rate limits
+          if (i < profiles.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
       } else if (s === 'cookbooks') {
         const { data } = await supabaseAdmin
@@ -315,33 +315,33 @@ async function processAudit(runId: string, scope: string[], mode: string) {
           .eq('visibility', 'public');
         const cookbooks = data ?? [];
 
-        for (let i = 0; i < cookbooks.length; i += 10) {
-          const batch = cookbooks.slice(i, i + 10);
-          await Promise.all(
-            batch.map(async (cookbook: any) => {
-              const result = await withRetry(() => moderateProfile({
-                bio: cookbook.description || '',
-                display_name: cookbook.name,
-              }), `cookbook "${cookbook.name}"`);
-              totalScanned++;
+        for (let i = 0; i < cookbooks.length; i++) {
+          const cookbook = cookbooks[i];
+          const result = await withRetry(() => moderateProfile({
+            bio: cookbook.description || '',
+            display_name: cookbook.name,
+          }), `cookbook "${cookbook.name}"`);
+          totalScanned++;
 
-              if (result.verdict === 'flagged') {
-                findings.push({
-                  audit_run_id: runId,
-                  content_type: 'cookbook',
-                  content_id: cookbook.id,
-                  content_preview: cookbook.name.substring(0, 80),
-                  recipe_id: null,
-                  recipe_title: null,
-                  owner_username: null,
-                  finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
-                  reasons: result.flaggedFields,
-                  ai_explanation: result.reason || null,
-                });
-              }
-            })
-          );
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (result.verdict === 'flagged') {
+            findings.push({
+              audit_run_id: runId,
+              content_type: 'cookbook',
+              content_id: cookbook.id,
+              content_preview: cookbook.name.substring(0, 80),
+              recipe_id: null,
+              recipe_title: null,
+              owner_username: null,
+              finding_severity: mode === 'deep' ? 'deep_only' : 'standard',
+              reasons: result.flaggedFields,
+              ai_explanation: result.reason || null,
+            });
+          }
+
+          // Delay between items to respect rate limits
+          if (i < cookbooks.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
       }
     }
