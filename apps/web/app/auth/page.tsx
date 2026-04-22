@@ -13,8 +13,8 @@ const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 export default function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('login');
-  const [email, setEmail] = useState('a@aol.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [username, setUsernameVal] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const [promoCode, setPromoCode] = useState('');
