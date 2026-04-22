@@ -133,6 +133,12 @@ export interface Recipe {
   version_number: number;
   version_label: string | null;
   is_parent: boolean;
+  is_complete: boolean;
+  missing_fields: string[];
+  completeness_checked_at: string | null;
+  ai_recipe_verdict: 'approved' | 'flagged' | 'not_a_recipe' | 'pending' | null;
+  ai_verdict_reason: string | null;
+  ai_verdict_at: string | null;
   created_at: string;
   updated_at: string;
 }

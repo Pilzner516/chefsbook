@@ -18,10 +18,37 @@ import { useConfirmDialog } from '@/components/useConfirmDialog';
 import ThemePickerModal from '@/components/ThemePickerModal';
 import { IMAGE_THEMES } from '@chefsbook/ai';
 import type { ImageTheme } from '@chefsbook/ai';
-import { getIncompletePillText } from '@/lib/recipeCompleteness';
 
 type ViewMode = 'grid' | 'list' | 'table';
 type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
+
+/**
+ * Format missing_fields from DB into user-friendly pill text.
+ * The DB missing_fields is the authoritative source (not client-side checks).
+ */
+function getIncompletePillFromDB(missingFields: string[] | undefined | null): string {
+  if (!missingFields || missingFields.length === 0) return '';
+
+  // Priority order (show the most critical first)
+  if (missingFields.includes('ingredients (minimum 2)') && missingFields.includes('steps')) {
+    return '⚠ Missing ingredients & steps';
+  }
+  if (missingFields.includes('ingredients (minimum 2)')) {
+    return '⚠ Missing ingredients';
+  }
+  if (missingFields.includes('ingredient quantities')) {
+    return '⚠ Missing quantities';
+  }
+  if (missingFields.includes('steps')) {
+    return '⚠ Missing steps';
+  }
+  if (missingFields.includes('title') || missingFields.includes('description')) {
+    return '⚠ Missing title or description';
+  }
+
+  // Fallback for any other missing fields
+  return '⚠ Incomplete';
+}
 
 function getStoredView(): ViewMode {
   if (typeof window === 'undefined') return 'grid';
@@ -558,7 +585,7 @@ export default function DashboardPage() {
                       const isUnderReview = (recipe as any).copyright_review_pending === true ||
                         ((recipe as any).moderation_status && (recipe as any).moderation_status !== 'clean') ||
                         (recipe as any).ai_recipe_verdict === 'flagged';
-                      const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: (recipe as any).ingredients, steps: (recipe as any).steps });
+                      const incompletePillText = getIncompletePillFromDB((recipe as any).missing_fields);
                       if (isUnderReview) {
                         return <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-xs font-medium px-3 py-1 rounded-full">🔍 Under Review by Chefsbook</div>;
                       } else if (incompletePillText) {
@@ -609,7 +636,7 @@ export default function DashboardPage() {
                   const isUnderReview = (recipe as any).copyright_review_pending === true ||
                     ((recipe as any).moderation_status && (recipe as any).moderation_status !== 'clean') ||
                     (recipe as any).ai_recipe_verdict === 'flagged';
-                  const incompletePillText = getIncompletePillText({ title: recipe.title, description: recipe.description, ingredients: (recipe as any).ingredients, steps: (recipe as any).steps });
+                  const incompletePillText = getIncompletePillFromDB((recipe as any).missing_fields);
                   if (isUnderReview) {
                     return <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-cb-primary text-white text-[9px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap">🔍 Review</div>;
                   } else if (incompletePillText) {
