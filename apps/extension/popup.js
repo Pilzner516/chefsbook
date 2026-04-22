@@ -219,7 +219,9 @@ async function renderSaveView(token, email) {
       const itemType = contentType === 'technique' ? 'technique' : 'recipe';
       const itemName = item.title;
       saveSection.appendChild(el('div', { className: 'status status-success', textContent: 'Saved "' + itemName + '"' }));
-      const link = el('a', { className: 'view-link', href: API_BASE + '/' + itemType + '/' + item.id, target: '_blank', textContent: 'View ' + itemType + ' →' });
+      // Include ?new=1&contentType= so the detail page can show one-time notice
+      const detailUrl = API_BASE + '/' + itemType + '/' + item.id + '?new=1&contentType=' + contentType;
+      const link = el('a', { className: 'view-link', href: detailUrl, target: '_blank', textContent: 'View ' + itemType + ' →' });
       saveSection.appendChild(link);
     } catch (err) {
       // Never leak raw parser / server-stack text to users — log for devtools,

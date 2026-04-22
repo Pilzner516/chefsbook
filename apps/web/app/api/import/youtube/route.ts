@@ -102,7 +102,7 @@ function extractImageUrl(html: string, pageUrl: string): string | null {
 }
 
 export async function POST(req: Request) {
-  const { url, forceType } = await req.json();
+  const { url, forceType, classifyOnly } = await req.json();
 
   if (!url || typeof url !== 'string') {
     return Response.json({ error: 'URL is required' }, { status: 400 });
@@ -158,6 +158,18 @@ export async function POST(req: Request) {
     // Step 4: Classify content
     const classifyText = `${snippet.title}\n${snippet.description}`.slice(0, 1000);
     const contentType = forceType ?? (await classifyContent(classifyText, url)).content_type;
+
+    // If classify-only mode, return classification without extraction
+    if (classifyOnly) {
+      return Response.json({
+        contentType,
+        videoId,
+        title: snippet.title,
+        description: snippet.description?.slice(0, 500) || null,
+        channelName: snippet.channelTitle,
+        thumbnail,
+      });
+    }
 
     if (contentType === 'technique') {
       const technique = await importTechniqueFromYouTube({

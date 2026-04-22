@@ -170,9 +170,95 @@ export default function ScanPage() {
         if (!proceed) { setLoading(null); return; }
       }
 
-      const endpoint = isYouTubeUrl(url) ? '/api/import/youtube' : '/api/import/url';
-      // Pass user's preferred language for import-time translation
       const storedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('chefsbook-language') : null;
+
+      // YouTube-specific flow with classification confirmation
+      if (isYouTubeUrl(url)) {
+        // Step 1: Classify without extracting
+        const classifyRes = await fetch('/api/import/youtube', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, classifyOnly: true }),
+        });
+        const classifyData = await classifyRes.json();
+        if (!classifyRes.ok) throw new Error(classifyData.error || 'Classification failed');
+
+        const aiSuggestedType = classifyData.contentType;
+        const otherType = aiSuggestedType === 'recipe' ? 'technique' : 'recipe';
+        const capitalizedSuggested = aiSuggestedType.charAt(0).toUpperCase() + aiSuggestedType.slice(1);
+        const capitalizedOther = otherType.charAt(0).toUpperCase() + otherType.slice(1);
+
+        // Step 2: Show confirmation dialog
+        const confirmed = await confirm({
+          icon: '🧑‍🍳', // chef emoji
+          title: "Your Sous Chef's best guess",
+          body: `This looks like a **${capitalizedSuggested}** to us. Does that look right?`,
+          confirmLabel: `Yes, it's a ${capitalizedSuggested}`,
+          cancelLabel: `No, it's a ${capitalizedOther}`,
+        });
+
+        const confirmedType = confirmed ? aiSuggestedType : otherType;
+
+        // Step 3: Extract with confirmed type
+        const extractRes = await fetch('/api/import/youtube', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, forceType: confirmedType, userLanguage: storedLang || 'en' }),
+        });
+        const data = await extractRes.json();
+        if (!extractRes.ok) throw new Error(data.error || 'Import failed');
+
+        // Route based on confirmed type
+        if (confirmedType === 'technique' && !data.videoOnly) {
+          const technique = await createTechnique(user.id, {
+            ...data.technique,
+            source_url: url,
+            source_type: 'youtube',
+            youtube_video_id: data.videoId ?? null,
+            image_url: data.thumbnail ?? null,
+          });
+          router.push(`/technique/${technique.id}`);
+          setLoading(null);
+          return;
+        } else if (data.videoOnly) {
+          const { recipe } = await createRecipeWithModeration(user.id, {
+            title: data.title,
+            description: data.description,
+            servings: null,
+            prep_minutes: null,
+            cook_minutes: null,
+            cuisine: null,
+            course: null,
+            ingredients: [],
+            steps: [],
+            notes: null,
+            source_type: 'youtube',
+            source_url: url,
+            image_url: data.thumbnail,
+            youtube_video_id: data.videoId,
+            channel_name: data.channelName,
+            video_only: true,
+          });
+          router.push(`/recipe/${recipe.id}`);
+          setLoading(null);
+          return;
+        } else {
+          const recipeData = {
+            ...data.recipe,
+            source_url: url,
+            image_url: data.thumbnail ?? undefined,
+            youtube_video_id: data.videoId ?? undefined,
+            channel_name: data.channelName ?? undefined,
+          };
+          const { recipe } = await createRecipeWithModeration(user.id, recipeData);
+          router.push(`/recipe/${recipe.id}`);
+          setLoading(null);
+          return;
+        }
+      }
+
+      // Non-YouTube URL import flow (unchanged)
+      const endpoint = '/api/import/url';
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

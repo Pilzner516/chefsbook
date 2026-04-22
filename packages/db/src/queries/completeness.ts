@@ -43,9 +43,6 @@ export function checkRecipeCompleteness(recipe: CompletenessInput): Completeness
   const steps = recipe.steps ?? [];
   if (steps.length < 1) missing.push('steps');
 
-  const tags = recipe.tags ?? [];
-  if (tags.length < 1) missing.push('tags');
-
   return {
     isComplete: missing.length === 0,
     missingFields: missing,

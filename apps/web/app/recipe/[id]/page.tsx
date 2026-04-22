@@ -111,6 +111,8 @@ export default function RecipePage() {
   const [generationFailed, setGenerationFailed] = useState(false);
   const [showChangeImageModal, setShowChangeImageModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showExtensionNotice, setShowExtensionNotice] = useState(false);
+  const [extensionContentType, setExtensionContentType] = useState<string>('recipe');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -120,6 +122,16 @@ export default function RecipePage() {
       '*',
     );
   }, []);
+
+  useEffect(() => {
+    // Check for ?new=1 query param to show extension import notice
+    const isNewImport = searchParams.get('new') === '1';
+    const contentType = searchParams.get('contentType') || 'recipe';
+    if (isNewImport) {
+      setShowExtensionNotice(true);
+      setExtensionContentType(contentType);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     (async () => {
@@ -1289,6 +1301,29 @@ export default function RecipePage() {
         {flagSubmitted && (
           <div className="mb-4 p-3 bg-green-50 border border-green-300 rounded-card text-sm text-green-800">
             Thanks for your report. We&apos;ll review it shortly. &#10003;
+          </div>
+        )}
+        {/* Extension import one-time notice */}
+        {showExtensionNotice && (
+          <div className="rounded-card border border-blue-200 bg-blue-50 px-4 py-3 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-xl leading-none" aria-hidden>ℹ️</span>
+              <div className="flex-1">
+                <div className="font-medium text-blue-900">
+                  Your Sous Chef imported this as a {extensionContentType.charAt(0).toUpperCase() + extensionContentType.slice(1)}
+                </div>
+                <div className="mt-1 text-sm text-blue-800">
+                  If that&apos;s not right, you can convert it using the Re-import button below.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowExtensionNotice(false)}
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm bg-blue-600 text-white rounded-full px-3 py-1 hover:bg-blue-700"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {/* Refresh-from-source banner on incomplete imports */}
