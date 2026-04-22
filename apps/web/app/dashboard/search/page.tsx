@@ -34,7 +34,9 @@ export default function SearchPage() {
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
 
   // Scope toggle
-  const [scope, setScope] = useState<'all' | 'mine'>('all');
+  const [scope, setScope] = useState<'all' | 'mine' | 'following' | 'whats-new'>('all');
+  const [followingTimeFilter, setFollowingTimeFilter] = useState(30);
+  const [whatsNewTimeFilter, setWhatsNewTimeFilter] = useState(30);
 
   // Filters
   const [cuisineFilter, setCuisineFilter] = useState(searchParams.get('cuisine') ?? '');
@@ -42,7 +44,7 @@ export default function SearchPage() {
   const [sourceFilter, setSourceFilter] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [timeFilter, setTimeFilter] = useState(0);
-  const [sort, setSort] = useState<'relevance' | 'newest' | 'az' | 'time'>('relevance');
+  const [sort, setSort] = useState<'relevance' | 'newest' | 'az' | 'time' | 'popular'>('relevance');
   const [ingredientFilter, setIngredientFilter] = useState('');
   const [ingredientPills, setIngredientPills] = useState<string[]>([]);
   const [dietaryFilters, setDietaryFilters] = useState<string[]>([]);
@@ -56,7 +58,7 @@ export default function SearchPage() {
       const timer = setTimeout(() => doSearch(), 300);
       return () => clearTimeout(timer);
     }
-  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope]);
+  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter]);
 
   // Auto-tag state
   const [taggingCount, setTaggingCount] = useState<number | null>(null);
@@ -98,7 +100,58 @@ export default function SearchPage() {
 
     let recipeResults: Recipe[];
 
-    if (ingredientPills.length > 0) {
+    // Following tab
+    if (scope === 'following') {
+      const days = followingTimeFilter;
+
+      // First, get the list of users being followed
+      const { data: follows } = await supabase
+        .from('user_follows')
+        .select('following_id')
+        .eq('follower_id', userId);
+
+      const followingIds = (follows ?? []).map(f => f.following_id);
+
+      if (followingIds.length === 0) {
+        recipeResults = [];
+      } else {
+        const { data } = await supabase
+          .from('recipes')
+          .select('*')
+          .in('user_id', followingIds)
+          .eq('visibility', 'public')
+          .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        recipeResults = (data ?? []) as Recipe[];
+      }
+    }
+    // What's New tab
+    else if (scope === 'whats-new') {
+      const days = whatsNewTimeFilter;
+      let query = supabase
+        .from('recipes')
+        .select('*, hot_score:like_count')
+        .eq('visibility', 'public');
+
+      if (days > 0) {
+        query = query.gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+      }
+
+      const { data, error } = await query
+        .order('like_count', { ascending: false })
+        .limit(50);
+
+      // Calculate hot score client-side since we can't do complex formulas in Supabase query
+      recipeResults = ((data ?? []) as Recipe[]).map(r => {
+        const hoursSincePosted = Math.max(1, (Date.now() - new Date(r.created_at).getTime()) / (1000 * 60 * 60));
+        const hotScore = ((r.like_count ?? 0) + (r.save_count ?? 0)) / Math.pow(hoursSincePosted, 0.8);
+        return { ...r, hot_score: hotScore };
+      }).sort((a, b) => (b.hot_score ?? 0) - (a.hot_score ?? 0));
+    }
+    // All Recipes or My Recipes tabs
+    else if (ingredientPills.length > 0) {
       // Ingredient search: intersect results
       recipeResults = await searchByIngredient(ingredientPills[0], userId);
       for (let i = 1; i < ingredientPills.length; i++) {
@@ -160,6 +213,7 @@ export default function SearchPage() {
     if (sort === 'newest') list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     if (sort === 'az') list.sort((a, b) => a.title.localeCompare(b.title));
     if (sort === 'time') list.sort((a, b) => (a.total_minutes ?? 999) - (b.total_minutes ?? 999));
+    if (sort === 'popular') list.sort((a, b) => ((b.like_count ?? 0) + (b.save_count ?? 0)) - ((a.like_count ?? 0) + (a.save_count ?? 0)));
     return list;
   }, [recipes, sort, timeFilter]);
 
@@ -294,7 +348,67 @@ export default function SearchPage() {
           >
             My Recipes
           </button>
+          <button
+            onClick={() => setScope('following')}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${scope === 'following' ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+          >
+            Following
+          </button>
+          <button
+            onClick={() => setScope('whats-new')}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${scope === 'whats-new' ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+          >
+            What's New
+          </button>
         </div>
+
+        {/* Time filter for Following tab */}
+        {scope === 'following' && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setFollowingTimeFilter(7)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${followingTimeFilter === 7 ? 'bg-cb-primary/20 text-cb-primary' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+            >
+              7 days
+            </button>
+            <button
+              onClick={() => setFollowingTimeFilter(30)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${followingTimeFilter === 30 ? 'bg-cb-primary/20 text-cb-primary' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+            >
+              30 days
+            </button>
+            <button
+              onClick={() => setFollowingTimeFilter(90)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${followingTimeFilter === 90 ? 'bg-cb-primary/20 text-cb-primary' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+            >
+              90 days
+            </button>
+          </div>
+        )}
+
+        {/* Time filter for What's New tab */}
+        {scope === 'whats-new' && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setWhatsNewTimeFilter(7)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${whatsNewTimeFilter === 7 ? 'bg-cb-primary/20 text-cb-primary' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+            >
+              Last 7 days
+            </button>
+            <button
+              onClick={() => setWhatsNewTimeFilter(30)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${whatsNewTimeFilter === 30 ? 'bg-cb-primary/20 text-cb-primary' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+            >
+              Last 30 days
+            </button>
+            <button
+              onClick={() => setWhatsNewTimeFilter(0)}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${whatsNewTimeFilter === 0 ? 'bg-cb-primary/20 text-cb-primary' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+            >
+              All time
+            </button>
+          </div>
+        )}
 
         {/* Search bar */}
         <div className="relative mb-4">
@@ -345,6 +459,7 @@ export default function SearchPage() {
             <option value="newest">Newest</option>
             <option value="az">A-Z</option>
             <option value="time">Cook Time</option>
+            <option value="popular">Most Popular</option>
           </select>
         </div>
 
@@ -352,8 +467,16 @@ export default function SearchPage() {
           <div className="text-center text-cb-secondary py-16">Searching...</div>
         ) : sorted.length === 0 && techniques.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-cb-secondary mb-2">No recipes found</p>
-            {activeFilters.length > 0 && <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); }} className="text-cb-primary text-sm hover:underline">Clear all filters</button>}
+            {scope === 'following' ? (
+              <p className="text-cb-secondary">No new recipes from chefs you follow in the last {followingTimeFilter} days.</p>
+            ) : scope === 'whats-new' ? (
+              <p className="text-cb-secondary">No trending recipes yet — be the first to share one!</p>
+            ) : (
+              <>
+                <p className="text-cb-secondary mb-2">No recipes found</p>
+                {activeFilters.length > 0 && <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); }} className="text-cb-primary text-sm hover:underline">Clear all filters</button>}
+              </>
+            )}
           </div>
         ) : (
           <div>
@@ -390,6 +513,8 @@ export default function SearchPage() {
                         {recipe.cuisine && <span className="bg-cb-primary/10 text-cb-primary px-1.5 py-0.5 rounded">{recipe.cuisine}</span>}
                         {recipe.course && <span className="bg-cb-green/10 text-cb-green px-1.5 py-0.5 rounded">{recipe.course}</span>}
                         {recipe.total_minutes != null && recipe.total_minutes > 0 && <span>{formatDuration(recipe.total_minutes)}</span>}
+                        {(recipe.like_count ?? 0) > 0 && <span>♥ {recipe.like_count}</span>}
+                        {(recipe.save_count ?? 0) > 0 && <span>🔖 {recipe.save_count}</span>}
                       </div>
                     </div>
                   </div>
