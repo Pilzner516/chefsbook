@@ -1,4 +1,5 @@
 import { callClaude, extractJSON, HAIKU } from './client';
+import { shouldExcludeFromModeration } from '@chefsbook/db';
 
 export type TagModerationResult = {
   verdict: 'clean' | 'flagged';
@@ -16,6 +17,11 @@ Tag: "{{tag}}"
 Respond with JSON only: { "verdict": "clean" | "flagged", "reason": "..." }`;
 
 export async function moderateTag(tag: string): Promise<TagModerationResult> {
+  // Skip source domain tags and system tags — always considered clean
+  if (shouldExcludeFromModeration(tag)) {
+    return { verdict: 'clean' };
+  }
+
   const prompt = TAG_MODERATION_PROMPT.replace('{{tag}}', tag.replace(/"/g, '\\"'));
   const text = await callClaude({ prompt, maxTokens: 100, model: HAIKU });
   return extractJSON<TagModerationResult>(text);

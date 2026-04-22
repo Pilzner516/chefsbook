@@ -1,5 +1,6 @@
 import { jsonrepair } from 'jsonrepair';
 import { callClaude, HAIKU } from './client';
+import { shouldExcludeFromModeration } from '@chefsbook/db';
 
 // Batch sizes for each content type
 const BATCH_SIZE_TAGS = 100;
@@ -54,7 +55,18 @@ export async function bulkModerateTags(
 ): Promise<BulkTagFinding[]> {
   if (tags.length === 0) return [];
 
-  const tagList = tags.map((t, i) => `${i + 1}. "${t.replace(/"/g, '\\"')}"`).join('\n');
+  // Filter out source domain tags and system tags, but track original indices
+  const filteredTags: Array<{ tag: string; originalIndex: number }> = [];
+  for (let i = 0; i < tags.length; i++) {
+    if (!shouldExcludeFromModeration(tags[i])) {
+      filteredTags.push({ tag: tags[i], originalIndex: i });
+    }
+  }
+
+  // If all tags are excluded, return empty
+  if (filteredTags.length === 0) return [];
+
+  const tagList = filteredTags.map((t, i) => `${i + 1}. "${t.tag.replace(/"/g, '\\"')}"`).join('\n');
 
   const prompt = `You are a content moderator for a family-friendly cooking platform.
 Review this list of recipe tags for policy violations.
@@ -72,7 +84,16 @@ Return JSON ONLY — an array of FLAGGED items (omit clean items):
 If ALL tags are clean, return: []`;
 
   const text = await callClaude({ prompt, maxTokens: 1500, model: HAIKU });
-  return parseJsonResponse<BulkTagFinding[]>(text);
+  const aiFindings = parseJsonResponse<BulkTagFinding[]>(text);
+
+  // Map AI's 1-based indices back to original 1-based indices
+  return aiFindings.map(finding => {
+    const filtered = filteredTags[finding.index - 1];
+    return {
+      ...finding,
+      index: filtered ? filtered.originalIndex + 1 : finding.index,
+    };
+  });
 }
 
 export async function bulkModerateRecipes(

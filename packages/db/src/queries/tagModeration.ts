@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../client';
+import { shouldExcludeFromModeration } from '../tagFilters';
 
 // Module-level cache for blocked tags (refreshed every 5 minutes)
 let blockedTagsCache: string[] = [];
@@ -31,8 +32,13 @@ export function refreshBlockedTagsCache(): void {
 
 /**
  * Check if a tag is in the blocked list (case-insensitive).
+ * Source domain tags and system tags are never considered blocked.
  */
 export async function isTagBlocked(tag: string): Promise<boolean> {
+  // Source domain tags and system tags are never blocked
+  if (shouldExcludeFromModeration(tag)) {
+    return false;
+  }
   const blocked = await getBlockedTags();
   return blocked.includes(tag.toLowerCase());
 }

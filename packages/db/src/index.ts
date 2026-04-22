@@ -18,6 +18,7 @@ export * from './queries/stores';
 export * from './queries/messages';
 export * from './queries/completeness';
 export * from './queries/tagModeration';
+export * from './tagFilters';
 export * from './subscriptions';
 export * from './shopping/deduplication';
 export * from './queries/aiUsage';
