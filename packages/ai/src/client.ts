@@ -1,10 +1,24 @@
 import { jsonrepair } from 'jsonrepair';
+import pLimit from 'p-limit';
 
 const SONNET = 'claude-sonnet-4-20250514';
 const HAIKU = 'claude-haiku-4-5-20251001';
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
+// Global concurrency limiter — prevents hitting Anthropic's concurrent connection limit.
+// All callClaude() calls share this limiter regardless of caller.
+const MAX_CONCURRENT = 2;
+const QUEUE_TIMEOUT_MS = 30000;
+const limit = pLimit(MAX_CONCURRENT);
+
 export { SONNET, HAIKU };
+
+export class ClaudeQueueTimeoutError extends Error {
+  constructor() {
+    super(`Claude API request timed out waiting in queue (>${QUEUE_TIMEOUT_MS / 1000}s). Too many concurrent AI requests.`);
+    this.name = 'ClaudeQueueTimeoutError';
+  }
+}
 
 export class ClaudeTruncatedError extends Error {
   readonly stopReason: string;
@@ -63,35 +77,46 @@ export async function callClaude(params: {
     throw new Error('Claude API key not found. Set ANTHROPIC_API_KEY or EXPO_PUBLIC_ANTHROPIC_API_KEY environment variable.');
   }
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content }] }),
+  // Queue timeout: reject if waiting too long for a slot
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new ClaudeQueueTimeoutError()), QUEUE_TIMEOUT_MS);
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => 'Unable to read error response');
-    throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
-  }
-  const data = await response.json();
+  // Execute through the global concurrency limiter
+  const apiCall = limit(async () => {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'user', content }] }),
+    });
 
-  // Store usage for AI logging (fire-and-forget)
-  const usage = data.usage;
-  if (usage) {
-    _lastUsage = {
-      inputTokens: usage.input_tokens ?? 0,
-      outputTokens: usage.output_tokens ?? 0,
-      model: model === HAIKU ? 'haiku' : 'sonnet',
-    };
-  }
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => 'Unable to read error response');
+      throw new Error(`Claude API error: ${response.status} - ${errorBody}`);
+    }
+    const data = await response.json();
 
-  // Truncation: never hand a cut-off response to JSON.parse — the array/object
-  // will be unterminated and every caller would silently misparse.
-  if (data.stop_reason === 'max_tokens') {
-    throw new ClaudeTruncatedError(data.stop_reason);
-  }
+    // Store usage for AI logging (fire-and-forget)
+    const usage = data.usage;
+    if (usage) {
+      _lastUsage = {
+        inputTokens: usage.input_tokens ?? 0,
+        outputTokens: usage.output_tokens ?? 0,
+        model: model === HAIKU ? 'haiku' : 'sonnet',
+      };
+    }
 
-  return data.content?.[0]?.text ?? '';
+    // Truncation: never hand a cut-off response to JSON.parse — the array/object
+    // will be unterminated and every caller would silently misparse.
+    if (data.stop_reason === 'max_tokens') {
+      throw new ClaudeTruncatedError(data.stop_reason);
+    }
+
+    return data.content?.[0]?.text ?? '';
+  });
+
+  // Race the API call against the queue timeout
+  return Promise.race([apiCall, timeoutPromise]);
 }
 
 // Token usage from the last callClaude — consumed once by logAiCall wrappers
