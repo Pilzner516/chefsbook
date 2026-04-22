@@ -29,25 +29,30 @@ export async function GET(req: NextRequest) {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get blocked tags with blocker info
+    // Get blocked tags
     const { data: blocked, error } = await supabaseAdmin
       .from('blocked_tags')
-      .select(`
-        id,
-        tag,
-        reason,
-        created_at,
-        user_profiles!blocked_tags_blocked_by_fkey(username)
-      `)
+      .select('id, tag, reason, created_at, blocked_by')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+
+    // Get unique user IDs
+    const userIds = [...new Set((blocked ?? []).map(b => b.blocked_by).filter(Boolean))];
+
+    // Fetch user profiles
+    const { data: profiles } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, username')
+      .in('id', userIds);
+
+    const profileMap = new Map((profiles ?? []).map(p => [p.id, p.username]));
 
     const formatted = (blocked ?? []).map(b => ({
       id: b.id,
       tag: b.tag,
       reason: b.reason,
-      blockedBy: (b.user_profiles as any)?.username,
+      blockedBy: profileMap.get(b.blocked_by) || null,
       createdAt: b.created_at,
     }));
 
