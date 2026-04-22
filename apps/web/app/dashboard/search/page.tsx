@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, listRecipes, listTechniques, searchByIngredient } from '@chefsbook/db';
+import { supabase, listRecipes, listTechniques, searchByIngredient, getPrimaryPhotos } from '@chefsbook/db';
 import type { Recipe, Technique } from '@chefsbook/db';
 import { formatDuration, DIETARY_FLAGS } from '@chefsbook/ui';
-import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
+import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 
 const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread'];
 const SOURCES = [
@@ -31,6 +31,7 @@ export default function SearchPage() {
   const [techniques, setTechniques] = useState<Technique[]>([]);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
 
   // Scope toggle
   const [scope, setScope] = useState<'all' | 'mine'>('all');
@@ -136,6 +137,12 @@ export default function SearchPage() {
     const techResults = query ? await listTechniques({ userId, search: query, limit: 20 }) : [];
     setRecipes(recipeResults);
     setTechniques(techResults);
+
+    // Fetch primary photos for all recipes
+    if (recipeResults.length > 0) {
+      getPrimaryPhotos(recipeResults.map((r) => r.id)).then(setPrimaryPhotos);
+    }
+
     setLoading(false);
   };
 
@@ -371,7 +378,10 @@ export default function SearchPage() {
                 <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="group">
                   <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-cb-primary/50 transition-colors">
                     <div className="h-36 bg-cb-bg overflow-hidden relative">
-                      {recipe.image_url ? <img src={proxyIfNeeded(recipe.image_url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="" className="w-20 h-20 object-contain opacity-30 mx-auto mt-6" />}
+                      {(() => {
+                        const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url);
+                        return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="" className="w-20 h-20 object-contain opacity-30 mx-auto mt-6" />;
+                      })()}
                       {recipe.visibility === 'private' && <div className="absolute top-2 right-2"><svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg></div>}
                     </div>
                     <div className="p-3">
