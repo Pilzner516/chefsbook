@@ -586,7 +586,7 @@ export default function DashboardPage() {
                 <div className={`bg-cb-card border rounded-card overflow-hidden transition-colors relative ${isSelected ? 'border-cb-primary ring-2 ring-cb-primary/30' : 'border-cb-border hover:border-cb-primary/50'}`}>
                   {selectMode && (<div className="absolute top-3 left-3 z-10"><span className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? 'bg-cb-primary border-cb-primary text-white' : 'bg-white/80 border-cb-border'}`}>{isSelected && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>}</span></div>)}
                   <div className="h-40 bg-cb-bg overflow-hidden flex items-center justify-center relative">
-                    {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="ChefsBook" className="w-20 h-20 object-contain opacity-30" />; })()}
+                    {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url, recipe.youtube_video_id); return imgUrl ? <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="ChefsBook" className="w-20 h-20 object-contain opacity-30" />; })()}
                     {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg"><svg className="w-5 h-5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
                     {recipe.visibility === 'private' && <div className="absolute top-2 right-2 bg-white/80 rounded-full p-0.5"><svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg></div>}
                     {/* Status pills — bottom-centre */}
@@ -638,7 +638,7 @@ export default function DashboardPage() {
           {sorted.map((recipe) => (
             <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="flex items-center gap-4 bg-cb-card border border-cb-border rounded-input px-4 py-2.5 hover:border-cb-primary/50 transition-colors group">
               <div className="w-16 h-16 rounded-input overflow-hidden bg-cb-bg shrink-0 relative">
-                {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30 mx-auto mt-3" />; })()}
+                {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url, recipe.youtube_video_id); return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30 mx-auto mt-3" />; })()}
                 {recipe.youtube_video_id && <div className="absolute inset-0 flex items-center justify-center"><div className="w-6 h-6 rounded-full bg-red-600/90 flex items-center justify-center"><svg className="w-3 h-3 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></div></div>}
                 {/* Status pills — bottom-centre (smaller for list view) */}
                 {(() => {
@@ -707,7 +707,7 @@ export default function DashboardPage() {
                 <tr key={recipe.id} className={`border-b border-cb-border/50 hover:bg-cb-bg/50 transition-colors ${i % 2 === 1 ? 'bg-cb-bg/30' : ''}`}>
                   <td className="px-3 py-1.5">
                     <Link href={`/recipe/${recipe.id}`}>
-                      {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url); return imgUrl ? <img src={imgUrl} alt="" className="w-8 h-8 rounded object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 rounded object-contain opacity-30" />; })()}
+                      {(() => { const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url, recipe.youtube_video_id); return imgUrl ? <img src={imgUrl} alt="" className="w-8 h-8 rounded object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 rounded object-contain opacity-30" />; })()}
                     </Link>
                   </td>
                   <td className="px-3 py-1.5"><Link href={`/recipe/${recipe.id}`} className="font-medium hover:text-cb-primary">{translatedTitles[recipe.id] ?? recipe.title}</Link></td>

@@ -502,7 +502,7 @@ export default function SearchPage() {
                   <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-cb-primary/50 transition-colors">
                     <div className="h-36 bg-cb-bg overflow-hidden relative">
                       {(() => {
-                        const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url);
+                        const imgUrl = getRecipeImageUrl(primaryPhotos[recipe.id], recipe.image_url, recipe.youtube_video_id);
                         return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <img src={CHEFS_HAT_URL} alt="" className="w-20 h-20 object-contain opacity-30 mx-auto mt-6" />;
                       })()}
                       {recipe.visibility === 'private' && <div className="absolute top-2 right-2"><svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg></div>}

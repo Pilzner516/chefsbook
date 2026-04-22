@@ -2,16 +2,40 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const CHEFS_HAT = '/images/chefs-hat.png';
 
 /**
+ * Get the YouTube thumbnail URL for a video ID.
+ * Try maxresdefault first (1080p), fall back to hqdefault (720p) if not available.
+ * Note: maxresdefault may not exist for all videos, but we can't pre-check.
+ * The browser will handle the fallback via onerror.
+ */
+export function getYouTubeThumbnail(videoId: string): string {
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+}
+
+/**
+ * Get the fallback YouTube thumbnail (720p) for videos without maxresdefault.
+ */
+export function getYouTubeThumbnailFallback(videoId: string): string {
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+/**
  * Get the best image URL for a recipe, with proxy for Supabase storage URLs.
- * Priority: primaryPhotoUrl > imageUrl > null
+ * Priority: primaryPhotoUrl > imageUrl > YouTube thumbnail > null
  */
 export function getRecipeImageUrl(
   primaryPhotoUrl: string | null | undefined,
   imageUrl: string | null | undefined,
+  youtubeVideoId?: string | null | undefined,
 ): string | null {
   const url = primaryPhotoUrl ?? imageUrl ?? null;
-  if (!url) return null;
-  return proxyIfNeeded(url);
+  if (url) return proxyIfNeeded(url);
+
+  // Fallback to YouTube thumbnail if available
+  if (youtubeVideoId) {
+    return getYouTubeThumbnail(youtubeVideoId);
+  }
+
+  return null;
 }
 
 /**
