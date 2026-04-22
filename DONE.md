@@ -1,6 +1,64 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session Prompt-L — Smart Completeness Banner + System-Enforced Visibility) TYPE: FEATURE
+
+### Migration applied: `system_locked` column added to recipes table
+- `ALTER TABLE recipes ADD COLUMN IF NOT EXISTS system_locked BOOLEAN DEFAULT FALSE;`
+- Confirmed via psql query
+- PostgREST schema cache restarted (`docker restart supabase-rest`)
+
+### Server-side enforcement function created
+- **File**: `packages/db/src/queries/completeness.ts`
+- **Function**: `enforceCompleteness(recipeId, userId)`
+- **Logic**:
+  - Re-runs `fetchRecipeCompleteness(recipeId)`
+  - If incomplete + public → sets `visibility = 'private'`, `system_locked = true`
+  - If complete + `system_locked = true` → restores user's `default_visibility`, clears `system_locked`
+  - If complete + not locked → leaves visibility unchanged (user-chosen)
+
+### Save handlers updated to call `enforceCompleteness()`
+All three DB functions now enforce completeness on every save:
+1. **`updateRecipe()`** (packages/db/src/queries/recipes.ts:249) — when title, description, or notes updated
+2. **`replaceIngredients()`** (packages/db/src/queries/recipes.ts:289) — after ingredient replacement
+3. **`replaceSteps()`** (packages/db/src/queries/recipes.ts:329) — after step replacement
+
+### Merged smart banner component
+- **File**: `apps/web/components/RecipeStatusBanner.tsx`
+- **Replaces**: `RefreshFromSourceBanner` (old component still exists but no longer used)
+- **Variants**:
+  - **Incomplete** (amber): Shows specific missing fields, offers Refresh/Paste/Sous Chef buttons
+  - **Incomplete (title/description missing)**: Shows "Edit title" / "Edit description" guidance, no Sous Chef button
+  - **Flagged/under review** (red): Shows "under review" message, no action buttons
+- **Owner-only**: Never shown to non-owners viewing public recipes
+- **Wired in**: `apps/web/app/recipe/[id]/page.tsx` line 1555
+
+### Private badge locked UX
+- **When `system_locked = true`**:
+  - Badge shows "🔒 Locked" (grey, greyed out)
+  - Click shows dialog: "Complete this recipe to publish it"
+  - Tooltip: "Complete this recipe to publish it"
+  - No longer allows user to toggle visibility
+- **When `system_locked = false`**:
+  - Badge works normally (user can toggle private/public)
+- **Updated in**: `apps/web/app/recipe/[id]/page.tsx` (visibility toggle button)
+
+### One-time sweep executed
+- SQL: `UPDATE recipes SET visibility = 'private', system_locked = true WHERE visibility = 'public' AND (is_complete = false OR (missing_fields IS NOT NULL AND array_length(missing_fields, 1) > 0));`
+- **Result**: 15 recipes updated
+- Verified: `SELECT COUNT(*) FROM recipes WHERE visibility = 'private' AND system_locked = true;` → 15 rows
+
+### TypeScript + Deployment
+- ✅ `npx tsc --noEmit` passed with 0 errors
+- ✅ Pushed to GitHub, pulled to RPi5
+- ✅ Build successful (35 pages compiled)
+- ✅ PM2 restart successful, status = online
+- ✅ Site verified: HTTP 200 on `/` and `/dashboard`
+
+### TYPE: FEATURE (system-enforced completeness replaces client-side blocking)
+- **What changed**: Previously, incompleteness was checked client-side and blocked with a dialog. Now the system automatically forces recipes private server-side and auto-restores visibility when completed.
+- **Why it prevents recurrence**: Every save handler (`updateRecipe`, `replaceIngredients`, `replaceSteps`) now calls `enforceCompleteness()` which runs server-side with full DB access. Incomplete recipes can never stay public — the gate is enforced on every field save.
+
 ## 2026-04-22 (session Prompt-K2 — Admin Flagged Queue + AI Spam Detection) TYPE: CODE FIX
 
 ### FIXED: recipe_flags schema mismatch preventing AI spam auto-flagging
