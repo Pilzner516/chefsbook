@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@chefsbook/db';
+import { supabase, logAiCallFromClient } from '@chefsbook/db';
+import { moderateProfile } from '@chefsbook/ai';
 import { proxyIfNeeded } from '@/lib/recipeImage';
 import ImportActivityCard from '@/components/ImportActivityCard';
 
@@ -44,6 +45,11 @@ export default function SettingsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
+
+      // Store previous values for potential revert
+      const prevDisplayName = displayName;
+      const prevBio = bio;
+
       const { error } = await supabase.from('user_profiles').update({
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
@@ -51,6 +57,46 @@ export default function SettingsPage() {
       if (error) throw error;
       setMessage('Saved');
       setTimeout(() => setMessage(''), 2000);
+
+      // Non-blocking profile moderation (fire-and-forget)
+      (async () => {
+        try {
+          const result = await moderateProfile({
+            bio: bio.trim() || undefined,
+            display_name: displayName.trim() || undefined,
+          });
+
+          await logAiCallFromClient({
+            userId: user.id,
+            action: 'moderate_profile',
+            model: 'haiku',
+            tokensIn: 100,
+            tokensOut: 50,
+            success: true,
+          });
+
+          if (result.verdict === 'flagged') {
+            // Revert flagged fields
+            const revertUpdates: any = {};
+            if (result.flaggedFields.includes('bio')) {
+              revertUpdates.bio = prevBio.trim() || null;
+              setBio(prevBio);
+            }
+            if (result.flaggedFields.includes('display_name')) {
+              revertUpdates.display_name = prevDisplayName.trim() || null;
+              setDisplayName(prevDisplayName);
+            }
+
+            if (Object.keys(revertUpdates).length > 0) {
+              await supabase.from('user_profiles').update(revertUpdates).eq('id', user.id);
+              setMessage("Your profile update was removed — it doesn't meet our community guidelines.");
+              setTimeout(() => setMessage(''), 4000);
+            }
+          }
+        } catch {
+          // Moderation unavailable (CORS) or error — changes stay
+        }
+      })();
     } catch (e: any) {
       setMessage(e.message);
     } finally {

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { callClaude, extractJSON, consumeLastUsage, suggestTagsForRecipe } from '@chefsbook/ai';
+import { callClaude, extractJSON, consumeLastUsage, suggestTagsForRecipe, moderateTag } from '@chefsbook/ai';
 import { logAiCall, fetchRecipeCompleteness, applyCompletenessGate } from '@chefsbook/db';
 
 function getServiceClient() {
@@ -64,8 +64,30 @@ export async function POST(req: Request) {
       if ((!r.cuisine || r.cuisine === '') && result.cuisine) updates.cuisine = result.cuisine;
       if ((!r.course || r.course === '') && result.course) updates.course = result.course;
       const existing: string[] = r.tags ?? [];
-      const newTags = result.tags.filter((t) => !existing.includes(t));
-      if (newTags.length > 0) updates.tags = [...existing, ...newTags];
+      let newTags = result.tags.filter((t) => !existing.includes(t));
+
+      // Moderate tags at import time (blocking — before save)
+      const cleanTags: string[] = [];
+      for (const tag of newTags) {
+        try {
+          const modResult = await moderateTag(tag);
+          await logAiCall({
+            userId: user.id,
+            action: 'moderate_tag',
+            model: 'haiku',
+            recipeId: r.id,
+            success: true,
+          });
+          if (modResult.verdict === 'clean') {
+            cleanTags.push(tag);
+          }
+        } catch {
+          // On moderation failure, allow the tag (don't block import)
+          cleanTags.push(tag);
+        }
+      }
+
+      if (cleanTags.length > 0) updates.tags = [...existing, ...cleanTags];
 
       if (Object.keys(updates).length > 0) {
         // Remove _incomplete tag if present — auto-tag may have made the recipe complete
@@ -156,7 +178,29 @@ export async function POST(req: Request) {
         if (result.tags?.length) {
           const existing = recipe.tags ?? [];
           const newTags = result.tags.map((t: string) => t.toLowerCase().trim()).filter((t: string) => !existing.includes(t));
-          if (newTags.length > 0) updates.tags = [...existing, ...newTags];
+
+          // Moderate tags at import time (blocking)
+          const cleanTags: string[] = [];
+          for (const tag of newTags) {
+            try {
+              const modResult = await moderateTag(tag);
+              await logAiCall({
+                userId: user?.id ?? null,
+                action: 'moderate_tag',
+                model: 'haiku',
+                recipeId: recipe.id,
+                success: true,
+              });
+              if (modResult.verdict === 'clean') {
+                cleanTags.push(tag);
+              }
+            } catch {
+              // On moderation failure, allow the tag
+              cleanTags.push(tag);
+            }
+          }
+
+          if (cleanTags.length > 0) updates.tags = [...existing, ...cleanTags];
         }
 
         if (Object.keys(updates).length > 0) {

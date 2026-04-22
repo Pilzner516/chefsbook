@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase, listCookbooks, listRecipes, createCookbook } from '@chefsbook/db';
+import { supabase, listCookbooks, listRecipes, createCookbook, logAiCallFromClient } from '@chefsbook/db';
+import { moderateProfile } from '@chefsbook/ai';
 import type { Cookbook, Recipe } from '@chefsbook/db';
 import Link from 'next/link';
 import { proxyIfNeeded } from '@/lib/recipeImage';
@@ -55,7 +56,8 @@ export default function CookbooksPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
-      await createCookbook(user.id, {
+      const visibility = 'private' as 'public' | 'private'; // Default to private
+      const createdCookbook = await createCookbook(user.id, {
         title: form.title.trim(),
         author: form.author.trim() || null,
         publisher: form.publisher.trim() || null,
@@ -70,10 +72,41 @@ export default function CookbooksPage() {
         total_recipes: null,
         toc_fetched: false,
         toc_fetched_at: null,
-        visibility: 'private',
+        visibility,
       });
       setShowModal(false);
       setForm({ title: '', author: '', publisher: '', year: '', isbn: '', location: '', notes: '', cover_url: '', description: '', google_books_id: '' });
+
+      // Non-blocking cookbook moderation (only if public)
+      if (visibility === 'public') {
+        (async () => {
+          try {
+            const result = await moderateProfile({
+              bio: form.description || undefined,
+              display_name: form.title.trim(),
+            });
+
+            await logAiCallFromClient({
+              userId: user.id,
+              action: 'moderate_cookbook',
+              model: 'haiku',
+              tokensIn: 100,
+              tokensOut: 50,
+              success: true,
+            });
+
+            if (result.verdict === 'flagged') {
+              // Set cookbook visibility to private
+              await supabase.from('cookbooks').update({ visibility: 'private' }).eq('id', createdCookbook.id);
+              setFormError("Your cookbook has been hidden — the name or description doesn't meet our community guidelines.");
+              setTimeout(() => setFormError(''), 4000);
+            }
+          } catch {
+            // Moderation unavailable (CORS) or error — cookbook stays as is
+          }
+        })();
+      }
+
       await loadCookbooks();
     } catch (e: any) {
       setFormError(e.message);

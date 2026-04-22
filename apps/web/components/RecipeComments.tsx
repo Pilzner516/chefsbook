@@ -96,7 +96,22 @@ export default function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, c
     if (!replyText.trim() || !userId || posting) return;
     setPosting(true);
     try {
-      const saved = await postComment(recipeId, userId, replyText.trim(), 'visible', undefined, undefined, undefined, parentComment.id);
+      let status = 'visible';
+      let flagSeverity: string | undefined;
+      let flagSource: string | undefined;
+      let flagReason: string | undefined;
+      try {
+        const mod = await moderateComment(replyText.trim());
+        if (mod.verdict === 'serious') status = 'hidden_pending_review';
+        if (mod.verdict !== 'clean') {
+          flagSeverity = mod.verdict;
+          flagSource = 'ai';
+          flagReason = mod.reason ?? undefined;
+        }
+      } catch {
+        // Moderation unavailable on web (CORS)
+      }
+      const saved = await postComment(recipeId, userId, replyText.trim(), status, flagSeverity, flagSource, flagReason, parentComment.id);
       // Notify parent commenter (reply notification)
       if (parentComment.user_id !== userId) {
         createNotification({

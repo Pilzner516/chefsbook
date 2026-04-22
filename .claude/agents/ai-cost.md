@@ -32,8 +32,13 @@ Use the cheapest model that produces acceptable quality:
 | Task | Model | Reason |
 |------|-------|--------|
 | Comment moderation | claude-haiku-4-5 | Binary clean/mild/serious — simple classification |
+| Comment reply moderation | claude-haiku-4-5 | Same as comment moderation, includes parent_id |
 | Username family-friendly check | claude-haiku-4-5 | Simple yes/no classification |
 | Recipe moderation | claude-haiku-4-5 | Classification, not generation |
+| Recipe edit re-moderation | claude-haiku-4-5 | Non-blocking re-check on public recipe edits |
+| Tag moderation | claude-haiku-4-5 | Simple clean/flagged classification (~$0.0002/tag) |
+| Profile moderation (bio + display_name) | claude-haiku-4-5 | Simple text appropriateness check (~$0.0002/save) |
+| Cookbook moderation (name + description) | claude-haiku-4-5 | Reuses profile moderation logic (~$0.0002/save) |
 | Dish identification (confidence check) | claude-haiku-4-5 | Classification |
 | Auto-tagging | claude-haiku-4-5 | Short output, simple task |
 | Recipe title translation | claude-haiku-4-5 | Title-only, all 4 languages in one call (~$0.0002/recipe) |

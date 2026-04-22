@@ -17,7 +17,8 @@ import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
 import type { TranslatedRecipe } from '@chefsbook/ai';
-import { REGEN_PILLS } from '@chefsbook/ai';
+import { REGEN_PILLS, moderateTag, moderateRecipe } from '@chefsbook/ai';
+import { logAiCallFromClient } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import type { RecipeWithDetails, RecipeIngredient, RecipeStep, ShoppingList, RecipeUserPhoto } from '@chefsbook/db';
 import type { CookingNote } from '@chefsbook/db';
@@ -341,6 +342,57 @@ export default function RecipePage() {
 
   const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread', 'other'] as const;
 
+  // Helper: Re-moderate public recipe after text edit (non-blocking)
+  const reModerateIfPublic = (updatedRecipe: RecipeWithDetails) => {
+    if (updatedRecipe.visibility !== 'public') return;
+
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const result = await moderateRecipe({
+          title: updatedRecipe.title,
+          description: updatedRecipe.description,
+          ingredients: updatedRecipe.ingredients?.map((i) => ({ ingredient: i.ingredient })),
+          steps: updatedRecipe.steps?.map((s) => ({ instruction: s.instruction })),
+          notes: updatedRecipe.notes,
+        });
+
+        await logAiCallFromClient({
+          userId: user?.id,
+          action: 'moderate_recipe_edit',
+          model: 'haiku',
+          tokensIn: 200,
+          tokensOut: 50,
+          recipeId: id,
+          success: true,
+        });
+
+        if (result.verdict === 'mild' || result.verdict === 'serious') {
+          // Hide recipe and update local state
+          await updateRecipe(id, {
+            visibility: 'private',
+            moderation_status: result.verdict === 'serious' ? 'flagged_serious' : 'flagged_mild',
+            moderation_flag_reason: result.reason ?? null,
+            moderation_flagged_at: new Date().toISOString(),
+          });
+
+          setRecipe({
+            ...updatedRecipe,
+            visibility: 'private',
+            moderation_status: result.verdict === 'serious' ? 'flagged_serious' : 'flagged_mild',
+          });
+
+          await showAlert({
+            title: 'Recipe hidden',
+            body: "Your recipe has been hidden while our team reviews a recent edit. You'll be notified when it's cleared.",
+          });
+        }
+      } catch {
+        // Moderation unavailable (CORS) or error — recipe stays public
+      }
+    })();
+  };
+
   const saveCourse = async (course: string | null) => {
     if (!recipe) return;
     await updateRecipe(id, { course: course as any });
@@ -363,6 +415,35 @@ export default function RecipePage() {
     await updateRecipe(id, { tags });
     setRecipe({ ...recipe, tags });
     setNewTag('');
+
+    // Non-blocking tag moderation (fire-and-forget)
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const result = await moderateTag(tag);
+        await logAiCallFromClient({
+          userId: user?.id,
+          action: 'moderate_tag',
+          model: 'haiku',
+          tokensIn: 50,
+          tokensOut: 30,
+          recipeId: id,
+          success: true,
+        });
+        if (result.verdict === 'flagged') {
+          // Remove the tag
+          const filteredTags = tags.filter((t) => t !== tag);
+          await updateRecipe(id, { tags: filteredTags });
+          setRecipe({ ...recipe, tags: filteredTags });
+          await showAlert({
+            title: 'Tag removed',
+            body: "That tag was removed — it doesn't meet our community guidelines.",
+          });
+        }
+      } catch {
+        // Moderation unavailable on web (CORS) or other error — tag stays
+      }
+    })();
   };
 
   const removeTag = async (tag: string) => {
@@ -375,24 +456,30 @@ export default function RecipePage() {
   const saveTitle = async (title: string) => {
     if (!recipe || !title.trim()) return;
     await updateRecipe(id, { title: title.trim() });
-    setRecipe({ ...recipe, title: title.trim() });
+    const updated = { ...recipe, title: title.trim() };
+    setRecipe(updated);
     setEditingTitle(false);
+    reModerateIfPublic(updated);
   };
 
   const saveDescription = async (desc: string) => {
     if (!recipe) return;
     const val = desc.trim() || null;
     await updateRecipe(id, { description: val });
-    setRecipe({ ...recipe, description: val });
+    const updated = { ...recipe, description: val };
+    setRecipe(updated);
     setEditingDesc(false);
+    reModerateIfPublic(updated);
   };
 
   const saveNotes = async (notes: string) => {
     if (!recipe) return;
     const val = notes.trim() || null;
     await updateRecipe(id, { notes: val });
-    setRecipe({ ...recipe, notes: val });
+    const updated = { ...recipe, notes: val };
+    setRecipe(updated);
     setEditingNotes(false);
+    reModerateIfPublic(updated);
   };
 
   const startEditIngredients = () => {
@@ -436,8 +523,10 @@ export default function RecipePage() {
           group_label: row.group_label.trim() || null,
         }));
       const saved = await replaceIngredients(recipe.id, user.id, parsed);
-      setRecipe({ ...recipe, ingredients: saved });
+      const updated = { ...recipe, ingredients: saved };
+      setRecipe(updated);
       setEditingIngredients(false);
+      reModerateIfPublic(updated);
     } finally {
       setSaving(false);
     }
@@ -476,8 +565,10 @@ export default function RecipePage() {
           group_label: null,
         }));
       const saved = await replaceSteps(recipe.id, user.id, parsed);
-      setRecipe({ ...recipe, steps: saved });
+      const updated = { ...recipe, steps: saved };
+      setRecipe(updated);
       setEditingSteps(false);
+      reModerateIfPublic(updated);
     } finally {
       setSaving(false);
     }

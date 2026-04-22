@@ -47,6 +47,11 @@
 | Recipe privacy toggle | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 35, P-G | Enforced: blocks Make Public if incomplete or under review; ChefsDialog with specific reason |
 | Recipe status pills | LIVE | apps/web/dashboard/page.tsx, apps/web/app/recipe/[id]/page.tsx, lib/recipeCompleteness.ts | P-G | Amber incomplete pill (⚠ Missing X), Red under review pill (🔍); bottom-centre on image; shows on cards + detail hero; owner-facing only |
 | Recipe moderation (AI) | LIVE | packages/ai (moderateRecipe) | 41 | Runs on every import + edit |
+| Recipe edit re-moderation | LIVE | apps/web/app/recipe/[id]/page.tsx (reModerateIfPublic) | P-J | Non-blocking re-moderation on public recipe edits (title/desc/ingredients/steps/notes); auto-hides if flagged/serious |
+| Tag moderation | LIVE | packages/ai (moderateTag), apps/web/app/recipe/[id]/page.tsx, apps/web/app/api/recipes/auto-tag/route.ts | P-J | Async on user-added tags; blocking on import-time tags; removes flagged tags |
+| Comment reply moderation | LIVE | apps/web/components/RecipeComments.tsx (handleReply) | P-J | Same moderation as top-level comments; CORS try/catch |
+| Profile moderation (bio/display_name) | LIVE | packages/ai (moderateProfile), apps/web/app/dashboard/settings/page.tsx | P-J | Non-blocking; reverts flagged fields |
+| Cookbook moderation (name/description) | LIVE | packages/ai (moderateProfile reuse), apps/web/app/dashboard/cookbooks/page.tsx | P-J | Non-blocking; sets visibility=private if flagged (only when public) |
 | Frozen account banner | LIVE | apps/web/dashboard/layout.tsx, apps/mobile/_layout.tsx | 41 | |
 | Recipe tags (add/remove/AI suggest) | LIVE | apps/mobile/app/recipe/, apps/web | 04 | |
 | Recipe translation (5 languages) | LIVE | packages/ai (translateRecipe, translateRecipeTitle), /api/recipes/translate, /api/recipes/translate-title, recipe_translations table | 12, 114, 127 | Two-tier: title-only on import (HAIKU, fire-and-forget), full on detail open (Sonnet, lazy with banner); is_title_only column; cached per recipe+language; backfill script at scripts/backfill-translations.mjs |
