@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       return Response.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get recent removals with recipe and user info
+    // Get recent removals with recipe info
     const { data: logs, error } = await supabaseAdmin
       .from('tag_moderation_log')
       .select(`
@@ -40,20 +40,31 @@ export async function GET(req: NextRequest) {
         reason,
         created_at,
         reinstated,
-        recipes!inner(title, user_id, user_profiles!recipes_user_id_fkey(username))
+        recipes!inner(title, user_id)
       `)
       .order('created_at', { ascending: false })
       .limit(100);
 
     if (error) throw error;
 
+    // Get unique user IDs from recipes
+    const userIds = [...new Set((logs ?? []).map(log => (log.recipes as any)?.user_id).filter(Boolean))];
+
+    // Fetch user profiles
+    const { data: profiles } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, username')
+      .in('id', userIds);
+
+    const profileMap = new Map((profiles ?? []).map(p => [p.id, p.username]));
+
     // Format response
     const formatted = (logs ?? []).map(log => ({
       id: log.id,
       tag: log.tag,
       recipeId: log.recipe_id,
-      recipeTitle: (log.recipes as any).title,
-      recipeOwner: (log.recipes as any).user_profiles?.username,
+      recipeTitle: (log.recipes as any)?.title,
+      recipeOwner: profileMap.get((log.recipes as any)?.user_id) || 'Unknown',
       removedBy: log.removed_by,
       reason: log.reason,
       createdAt: log.created_at,
