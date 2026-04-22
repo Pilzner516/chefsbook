@@ -1,6 +1,45 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session Prompt-P — Content Audit Performance & Logging) TYPE: CODE FIX
+
+### Content Health Audit robustness and cost optimization
+Fixed 429 rate limits, added bulk batch processing, fixed findings table, added tag exclusions, wired moderation logging.
+
+**Fix 1 — Concurrent connection rate limiting** (`packages/ai/src/client.ts`):
+- Added p-limit with MAX_CONCURRENT=2 to prevent Anthropic 429 errors
+- 30-second queue timeout with ClaudeQueueTimeoutError
+- All callClaude() calls now pass through the limiter
+
+**Fix 2 — Bulk batch processing** (`packages/ai/src/bulkModerate.ts` - NEW FILE):
+- Created bulk moderation functions: tags (100/batch), recipes (20/batch), comments (50/batch), profiles (50/batch)
+- Single Claude call per batch instead of per-item (~73% cost reduction, ~27x faster)
+- Uses Haiku model for classification tasks
+- parseJsonResponse() with jsonrepair fallback for robustness
+
+**Fix 3 — Tag filtering** (`packages/db/src/tagFilters.ts` - NEW FILE):
+- Source domain tags (*.com, *.net, *.org, etc.) excluded from moderation
+- System tags (_* and chefsbook*) excluded from moderation
+- `shouldExcludeFromModeration()` used in both single-tag and bulk moderation paths
+- Applied to isTagBlocked() to prevent false positives
+
+**Fix 4 — Findings table empty bug** (`apps/web/app/api/admin/audit/start/route.ts`):
+- Root cause: content_id for tags was string (tag name) but column required UUID
+- Fix: content_id now uses first recipe_id that has the tag
+- Added explicit insert error checking (Supabase was failing silently with {data, error})
+
+**Fix 5 — Tag moderation logging** (multiple files):
+- `logTagRemoval()` was defined but never called in admin routes
+- Added calls to block_tag action in findings/action/route.ts
+- Added calls to POST blocked tag route when blocking removes tags from recipes
+- Added error logging to logTagRemoval() for debugging
+- tag_moderation_log now populated with audit trail
+
+**Deployment**:
+- TypeScript check passed
+- Deployed to RPi5, PM2 restarted
+- Site verified live at chefsbk.app
+
 ## 2026-04-22 (session Prompt-O — Search Social Features) TYPE: FEATURE
 
 ### Search page enhancements with social counts and trending tabs
