@@ -41,6 +41,7 @@
 | Recipe detail (read mode) | LIVE | apps/web/app/recipe/[id]/, apps/mobile/app/recipe/ | 01 | |
 | Recipe detail (edit mode) | LIVE | same as above | 03 | |
 | Recipe versioning | LIVE | packages/db, apps/mobile, apps/web | 06 | parent_recipe_id, version_number |
+| YouTube thumbnail fallback | LIVE | apps/web/lib/recipeImage.ts, dashboard + search cards | SESSION_NUM | Recipes with youtube_video_id but no photo show maxresdefault.jpg thumbnail; fallback chain: primary photo → image_url → YouTube thumb → chef hat |
 | Cook Mode TTS | LIVE | apps/mobile/app/recipe/[id].tsx (CookMode component) | P-208 | Speaker pill toggle (red on/grey off) in header; "Read this step" pill per step card; expo-speech, zero AI calls. Speaks on step navigation when toggle on. Stop on exit. i18n: recipe.ttsToggle + recipe.readStep in all 5 locales. |
 | Save a Copy | LIVE | apps/mobile/app/recipe/, apps/web | 13 | Creates fully independent clone |
 | Recipe visibility (private/public) | LIVE | packages/db, RLS policies | 32, 104 | Default = 'public'; shared_link migrated to public |
