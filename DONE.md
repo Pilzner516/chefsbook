@@ -1,6 +1,70 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-21 (session Prompt-I — YouTube Classification + Tags Gate Fix) TYPE: CODE FIX
+
+### AUDIT 1 — Tags removed from completeness gate (DEPLOYED)
+
+**File**: packages/db/src/queries/completeness.ts (lines 46-47 removed)
+
+**Issue found**: The Michelin Stock recipe showed "This recipe is missing tags" banner despite having complete ingredients, description, and steps. Investigation revealed tags were incorrectly included in the backend completeness check.
+
+**Decision**: Tags are NOT part of the completeness gate. The gate checks:
+- title (not null/empty)
+- description (not null/empty)
+- 2+ ingredients with quantities
+- 1+ steps
+
+Tags are helpful but optional and do NOT block publishing.
+
+**Fix applied**:
+- Removed `const tags = recipe.tags ?? []; if (tags.length < 1) missing.push('tags');` from checkRecipeCompleteness()
+- Tags NO LONGER populate the `missing_fields` array
+- Tags NO LONGER affect the `is_complete` flag
+- Tags NO LONGER block visibility changes or trigger status pills
+
+**Verification**: 
+- Grep on Pi confirms tags check removed (only type definition and select remain)
+- Recent recipe imports show no tags in missing_fields
+- Build successful, PM2 restarted online, smoke tests passed (homepage + dashboard HTTP 200)
+
+**Note**: Existing recipes with `missing_fields={tags}` retain old data until re-evaluated. New imports and any recipe passing through the completeness gate will correctly exclude tags.
+
+### FEATURE 1 — YouTube classification confirmation dialog (LOCAL ONLY - NOT DEPLOYED)
+
+**Status**: Coded and committed locally (commit 437e439) but NOT deployed to Pi due to GitHub push protection blocking the push (old commits contain API keys).
+
+**Changes made locally**:
+1. **API endpoint** (`apps/web/app/api/import/youtube/route.ts`):
+   - Added `classifyOnly` parameter support
+   - When true, returns classification without extraction
+   
+2. **Scan page** (`apps/web/app/dashboard/scan/page.tsx`):
+   - Two-step YouTube import flow: classify → confirm → extract
+   - ChefsDialog shows AI suggestion: "This looks like a [Recipe/Technique] to us. Does that look right?"
+   - User confirms or corrects classification before save
+   - Confirmed type passed as `forceType` to extraction call
+   
+3. **Extension redirect** (`apps/extension/popup.js`):
+   - Redirect URL includes `?new=1&contentType=[recipe|technique]`
+   - Enables one-time notice on detail page
+   
+4. **Recipe detail notice** (`apps/web/app/recipe/[id]/page.tsx`):
+   - Checks for `?new=1` query param
+   - Shows one-time dismissible blue banner: "Your Sous Chef imported this as a [type]. If that's not right, you can convert it using the Re-import button below."
+   - "Got it" button dismisses (no localStorage, just session state)
+
+**Implementation choice**: Option A (classify-first with query param) — cleaner API separation, fewer changes to existing flow.
+
+**Deployment blocked**: GitHub secret scanning detected Anthropic API keys in old commits (a3b6835904... and others), blocking all pushes. The current commit (437e439) contains no secrets, but the repo history has them.
+
+**Next steps for deployment**:
+1. Resolve GitHub secret scanning issue (clean history or bypass)
+2. Push commit 437e439 to origin
+3. Pull on Pi and rebuild
+4. Test YouTube import flow end-to-end
+5. Update feature-registry.md
+
 ## 2026-04-21 (session Prompt-G — Recipe Status Pills + Visibility Enforcement) TYPE: CODE FIX
 
 ### FEATURE 1 — Status pills on recipe cards (grid + list view)
