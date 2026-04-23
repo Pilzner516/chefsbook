@@ -4,23 +4,34 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { supabase } from '@chefsbook/db';
 import type { User } from '@supabase/supabase-js';
+import type { DropResult } from '@hello-pangea/dnd';
 import { LANGUAGES, PRIORITY_LANGUAGES, SUPPORTED_LANGUAGES } from '@chefsbook/ui';
 import type { UnitSystem } from '@chefsbook/ui';
 import { activateLanguage } from '@/lib/i18n';
 import { useUnits } from '@/lib/useUnits';
 
-const navItems = [
-  { href: '/dashboard/search', label: 'Search', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg> },
-  { href: '/dashboard', label: 'Recipes', countKey: 'recipes' as const, icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg> },
-  { href: '/dashboard/techniques', label: 'Techniques', countKey: 'techniques' as const, icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg> },
-  { href: '/dashboard/cookbooks', label: 'Cookbooks', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" /></svg> },
-  { href: '/dashboard/shop', label: 'Shopping', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg> },
-  { href: '/dashboard/plan', label: 'Meal Plan', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg> },
-  { href: '/dashboard/scan', label: 'Import & Scan', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" /></svg> },
-  { href: '/dashboard/speak', label: 'Speak a Recipe', pro: true, icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg> },
-  { href: '/dashboard/messages', label: 'Messages', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg> },
+type NavItemConfig = {
+  key: string;
+  href: string;
+  label: string;
+  countKey?: 'recipes' | 'techniques';
+  pro?: boolean;
+  icon: React.ReactNode;
+};
+
+const DEFAULT_NAV_ITEMS: NavItemConfig[] = [
+  { key: 'search', href: '/dashboard/search', label: 'Search', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg> },
+  { key: 'my-recipes', href: '/dashboard', label: 'Recipes', countKey: 'recipes', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg> },
+  { key: 'my-techniques', href: '/dashboard/techniques', label: 'Techniques', countKey: 'techniques', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg> },
+  { key: 'my-cookbooks', href: '/dashboard/cookbooks', label: 'Cookbooks', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" /></svg> },
+  { key: 'shopping', href: '/dashboard/shop', label: 'Shopping', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg> },
+  { key: 'meal-plan', href: '/dashboard/plan', label: 'Meal Plan', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg> },
+  { key: 'import-scan', href: '/dashboard/scan', label: 'Import & Scan', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" /></svg> },
+  { key: 'speak-recipe', href: '/dashboard/speak', label: 'Speak a Recipe', pro: true, icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg> },
+  { key: 'messages', href: '/dashboard/messages', label: 'Messages', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg> },
 ];
 
 const NAV_ONBOARD: Record<string, string> = {
@@ -46,6 +57,8 @@ export default function Sidebar({ user }: { user: User | null }) {
   const [langOpen, setLangOpen] = useState(false);
   const [langSearch, setLangSearch] = useState('');
   const langRef = useRef<HTMLDivElement>(null);
+  const [navOrder, setNavOrder] = useState<string[] | null>(null);
+  const [orderedNavItems, setOrderedNavItems] = useState<NavItemConfig[]>(DEFAULT_NAV_ITEMS);
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar_collapsed');
@@ -98,6 +111,38 @@ export default function Sidebar({ user }: { user: User | null }) {
     });
   }, [user]);
 
+  // Load user's nav order preference
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('user_profiles').select('nav_order').eq('id', user.id).single().then(({ data }) => {
+      setNavOrder(data?.nav_order ?? null);
+    });
+  }, [user]);
+
+  // Reorder nav items based on nav_order
+  useEffect(() => {
+    if (!navOrder) {
+      setOrderedNavItems(DEFAULT_NAV_ITEMS);
+      return;
+    }
+    // Build a map of all nav items by key
+    const itemMap = new Map(DEFAULT_NAV_ITEMS.map(item => [item.key, item]));
+    // Order items according to nav_order, then append any missing items
+    const ordered: NavItemConfig[] = [];
+    for (const key of navOrder) {
+      const item = itemMap.get(key);
+      if (item) {
+        ordered.push(item);
+        itemMap.delete(key);
+      }
+    }
+    // Append any items not in nav_order (new features added after user set their order)
+    for (const item of itemMap.values()) {
+      ordered.push(item);
+    }
+    setOrderedNavItems(ordered);
+  }, [navOrder]);
+
   const langCode = (language || 'en').toUpperCase().slice(0, 3);
   const supportedLangs = LANGUAGES.filter((l) => SUPPORTED_LANGUAGES.includes(l.code));
   const priorityLangs = supportedLangs.filter((l) => PRIORITY_LANGUAGES.includes(l.code));
@@ -110,6 +155,41 @@ export default function Sidebar({ user }: { user: User | null }) {
     const next = !collapsed;
     setCollapsed(next);
     localStorage.setItem('sidebar_collapsed', String(next));
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination || !user) return;
+    const items = Array.from(orderedNavItems);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    setOrderedNavItems(items);
+    const newOrder = items.map(item => item.key);
+    setNavOrder(newOrder);
+    // Save to database
+    try {
+      await fetch('/api/user/nav-order', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ navOrder: newOrder }),
+      });
+    } catch (err) {
+      console.error('Failed to save nav order:', err);
+    }
+  };
+
+  const resetNavOrder = async () => {
+    if (!user) return;
+    setNavOrder(null);
+    setOrderedNavItems(DEFAULT_NAV_ITEMS);
+    try {
+      await fetch('/api/user/nav-order', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ navOrder: null }),
+      });
+    } catch (err) {
+      console.error('Failed to reset nav order:', err);
+    }
   };
 
   return (
@@ -167,29 +247,70 @@ export default function Sidebar({ user }: { user: User | null }) {
         )}
       </div>
 
-      <nav className="flex-1 p-2 space-y-0.5">
-        {navItems.map((item) => {
-          const active = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
-          const count = (item as any).countKey ? counts[(item as any).countKey as keyof typeof counts] : null;
-          return (
-            <Link key={item.label} href={item.href} data-onboard={NAV_ONBOARD[item.label]} className={`flex items-center gap-3 px-3 py-2.5 rounded-input text-sm font-medium transition-colors ${active ? 'bg-cb-primary/10 text-cb-primary' : 'text-cb-secondary hover:text-cb-text hover:bg-cb-bg'}`} title={collapsed ? (NAV_KEYS[item.label] ? t(NAV_KEYS[item.label]) : item.label) : undefined}>
-              {item.icon}
-              {!collapsed && (
-                <>
-                  <span className="flex-1">{NAV_KEYS[item.label] ? t(NAV_KEYS[item.label]) : item.label}</span>
-                  {(item as any).pro && <span className="text-[8px] font-bold bg-amber-100 text-amber-700 px-1 py-0.5 rounded">PRO</span>}
-                  {count != null && count > 0 && <span className="text-[10px] text-cb-secondary">{count}</span>}
-                  {item.label === 'Messages' && unreadMessages > 0 && (
-                    <span className="bg-cb-primary text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
-                      {unreadMessages > 99 ? '99+' : unreadMessages}
-                    </span>
-                  )}
-                </>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="nav-items">
+          {(provided) => (
+            <nav
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="flex-1 p-2 space-y-0.5"
+            >
+              {orderedNavItems.map((item, index) => {
+                const active = pathname === item.href || (item.href === '/dashboard' && pathname === '/dashboard');
+                const count = item.countKey ? counts[item.countKey] : null;
+                return (
+                  <Draggable key={item.key} draggableId={item.key} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`${snapshot.isDragging ? 'opacity-50' : ''}`}
+                      >
+                        <Link
+                          href={item.href}
+                          data-onboard={NAV_ONBOARD[item.label]}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-input text-sm font-medium transition-colors ${active ? 'bg-cb-primary/10 text-cb-primary' : 'text-cb-secondary hover:text-cb-text hover:bg-cb-bg'}`}
+                          title={collapsed ? (NAV_KEYS[item.label] ? t(NAV_KEYS[item.label]) : item.label) : undefined}
+                        >
+                          {!collapsed && (
+                            <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-cb-muted hover:text-cb-text">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                              </svg>
+                            </div>
+                          )}
+                          {item.icon}
+                          {!collapsed && (
+                            <>
+                              <span className="flex-1">{NAV_KEYS[item.label] ? t(NAV_KEYS[item.label]) : item.label}</span>
+                              {item.pro && <span className="text-[8px] font-bold bg-amber-100 text-amber-700 px-1 py-0.5 rounded">PRO</span>}
+                              {count != null && count > 0 && <span className="text-[10px] text-cb-secondary">{count}</span>}
+                              {item.label === 'Messages' && unreadMessages > 0 && (
+                                <span className="bg-cb-primary text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                                  {unreadMessages > 99 ? '99+' : unreadMessages}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </Link>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+              {!collapsed && navOrder && (
+                <button
+                  onClick={resetNavOrder}
+                  className="text-xs text-cb-muted hover:text-cb-primary px-3 py-1.5 w-full text-left"
+                >
+                  Reset to default order
+                </button>
               )}
-            </Link>
-          );
-        })}
-      </nav>
+            </nav>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       <div className="p-2 border-t border-cb-border space-y-1">
         {/* Unit toggle */}

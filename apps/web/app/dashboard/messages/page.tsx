@@ -21,6 +21,7 @@ export default function MessagesPage() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [flagging, setFlagging] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +29,17 @@ export default function MessagesPage() {
     supabase.auth.getSession().then(({ data }) => {
       const uid = data.session?.user?.id ?? null;
       setUserId(uid);
-      if (uid) getConversationList(uid).then((c) => { setConvos(c); setLoading(false); });
+      if (uid) {
+        getConversationList(uid)
+          .then((c) => { setConvos(c); })
+          .catch((err) => { setError(err?.message ?? 'Failed to load conversations'); })
+          .finally(() => { setLoading(false); });
+      } else {
+        setLoading(false);
+      }
+    }).catch((err) => {
+      setError(err?.message ?? 'Failed to get session');
+      setLoading(false);
     });
   }, []);
 
@@ -95,6 +106,8 @@ export default function MessagesPage() {
   };
 
   if (loading) return <div className="p-8 text-cb-secondary">Loading messages...</div>;
+  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
+  if (!userId) return <div className="p-8 text-cb-secondary">Please sign in to view messages.</div>;
 
   return (
     <div className="flex h-[calc(100vh-64px)]">
