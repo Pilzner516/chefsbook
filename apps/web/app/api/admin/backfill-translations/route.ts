@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, translateRecipeTitle, saveTitleOnlyTranslations } from '@chefsbook/db';
+import { supabaseAdmin, saveTitleOnlyTranslations } from '@chefsbook/db';
+import { translateRecipeTitle } from '@chefsbook/ai';
 
 export const maxDuration = 300; // 5 minutes
 
