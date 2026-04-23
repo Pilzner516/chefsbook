@@ -63,40 +63,6 @@ export default function SearchPage() {
     }
   }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter, i18n.language]);
 
-  // Auto-tag state
-  const [taggingCount, setTaggingCount] = useState<number | null>(null);
-  const [tagging, setTagging] = useState(false);
-  const [tagResult, setTagResult] = useState<{ total: number; updated: number } | null>(null);
-
-  useEffect(() => {
-    if (userId) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          fetch('/api/recipes/auto-tag', { headers: { Authorization: `Bearer ${session.access_token}` } })
-            .then((r) => r.json())
-            .then((d) => setTaggingCount(d.needsTagging ?? 0))
-            .catch(() => {});
-        }
-      });
-    }
-  }, [userId]);
-
-  const startAutoTag = async () => {
-    setTagging(true);
-    setTagResult(null);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    try {
-      const res = await fetch('/api/recipes/auto-tag', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const data = await res.json();
-      setTagResult(data);
-      doSearch(); // Refresh results
-    } catch {} finally { setTagging(false); }
-  };
-
   const doSearch = async () => {
     if (!userId) return;
     setLoading(true);
@@ -201,6 +167,8 @@ export default function SearchPage() {
       const lang = i18n.language;
       if (lang && lang !== 'en') {
         getBatchTranslatedTitles(recipeResults.map((r) => r.id), lang).then(setTranslatedTitles);
+      } else {
+        setTranslatedTitles({}); // Clear translations when switching back to English
       }
     }
 
@@ -429,22 +397,6 @@ export default function SearchPage() {
             className="w-full bg-cb-card border border-cb-border rounded-card pl-11 pr-4 py-3.5 text-base placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
           />
         </div>
-
-        {/* Auto-tag button */}
-        {taggingCount != null && taggingCount > 0 && !tagResult && (
-          <div className="flex items-center justify-between bg-cb-bg rounded-card p-3 mb-4">
-            <p className="text-xs text-cb-secondary">{taggingCount} recipe{taggingCount !== 1 ? 's' : ''} missing cuisine or course tags</p>
-            <button onClick={startAutoTag} disabled={tagging} className="bg-cb-primary text-white px-4 py-1.5 rounded-full text-xs font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5">
-              {tagging ? 'Tagging...' : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>Auto-tag all</>}
-            </button>
-          </div>
-        )}
-        {tagResult && (
-          <div className="bg-cb-green/10 text-cb-green rounded-card p-3 mb-4 text-xs">
-            Auto-tagging complete: {tagResult.updated} of {tagResult.total} recipes updated
-            <button onClick={() => setTagResult(null)} className="ml-2 underline">Dismiss</button>
-          </div>
-        )}
 
         {/* Active filters */}
         {activeFilters.length > 0 && (
