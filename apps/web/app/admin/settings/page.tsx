@@ -30,6 +30,7 @@ export default function AdminSettingsPage() {
   useEffect(() => { load(); }, []);
 
   const aiEnabled = settings['ai_auto_moderation_enabled']?.value === 'true';
+  const botProtectionEnabled = settings['bot_protection_enabled']?.value === 'true';
 
   const toggleAiModeration = async () => {
     setSaving(true);
@@ -47,7 +48,24 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const toggleBotProtection = async () => {
+    setSaving(true);
+    try {
+      await adminPost({
+        action: 'updateSetting',
+        key: 'bot_protection_enabled',
+        value: botProtectionEnabled ? 'false' : 'true',
+      });
+      await load();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const lastChanged = settings['ai_auto_moderation_enabled']?.updated_at;
+  const botProtectionLastChanged = settings['bot_protection_enabled']?.updated_at;
 
   if (loading) return <p className="text-gray-500">Loading...</p>;
 
@@ -90,6 +108,43 @@ export default function AdminSettingsPage() {
           <p><strong>Threshold:</strong> Serious violations only (never mild)</p>
           {lastChanged && (
             <p><strong>Last changed:</strong> {new Date(lastChanged).toLocaleString()}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Bot Protection */}
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 max-w-xl">
+        <h2 className="text-lg font-semibold mb-2">Security</h2>
+        <h3 className="text-base font-medium mb-2">Bot Protection (Cloudflare Turnstile)</h3>
+        <p className="text-sm text-gray-600 mb-2">
+          Blocks bots on signup and login. Enable in production. Requires real Turnstile keys in .env.local
+        </p>
+
+        <div className="flex items-center gap-4 mb-4">
+          <button
+            onClick={toggleBotProtection}
+            disabled={saving}
+            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              botProtectionEnabled ? 'bg-cb-green' : 'bg-gray-300'
+            } ${saving ? 'opacity-50' : ''}`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                botProtectionEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-semibold ${botProtectionEnabled ? 'text-cb-green' : 'text-gray-500'}`}>
+            {botProtectionEnabled ? 'ON' : 'OFF'}
+          </span>
+        </div>
+
+        <div className="text-xs text-gray-400 space-y-1">
+          <p><strong>When OFF:</strong> All signups/logins pass through without Turnstile</p>
+          <p><strong>When ON:</strong> Cloudflare Turnstile enforced on every signup/login</p>
+          <p><strong>Note:</strong> Honeypot and disposable email checks always run regardless of this setting</p>
+          {botProtectionLastChanged && (
+            <p><strong>Last changed:</strong> {new Date(botProtectionLastChanged).toLocaleString()}</p>
           )}
         </div>
       </div>
