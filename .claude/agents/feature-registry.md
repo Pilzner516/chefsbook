@@ -1,5 +1,5 @@
 # ChefsBook Feature Registry
-# Updated: 2026-04-23 (Prompt V2)
+# Updated: 2026-04-23 (Prompt U)
 # Purpose: Read this before modifying ANY existing feature.
 #           Update this before running /wrapup on ANY session.
 #
@@ -47,8 +47,10 @@
 | YouTube thumbnail fallback | LIVE | apps/web/lib/recipeImage.ts, dashboard + search cards | SESSION_NUM | Recipes with youtube_video_id but no photo show maxresdefault.jpg thumbnail; fallback chain: primary photo → image_url → YouTube thumb → chef hat |
 | Cook Mode TTS | LIVE | apps/mobile/app/recipe/[id].tsx (CookMode component) | P-208 | Speaker pill toggle (red on/grey off) in header; "Read this step" pill per step card; expo-speech, zero AI calls. Speaks on step navigation when toggle on. Stop on exit. i18n: recipe.ttsToggle + recipe.readStep in all 5 locales. |
 | Save a Copy | LIVE | apps/mobile/app/recipe/, apps/web | 13 | Creates fully independent clone |
-| Recipe visibility (private/public) | LIVE | packages/db, RLS policies | 32, 104 | Default = 'public'; shared_link migrated to public |
+| Recipe visibility (private/public) | LIVE | packages/db, RLS policies | 32, 104, P-U | Default = 'public'; shared_link migrated to public; private recipes visible to savers via RLS |
 | Recipe privacy toggle | LIVE | apps/web/app/recipe/[id]/, apps/mobile | 35, P-G | Enforced: blocks Make Public if incomplete or under review; ChefsDialog with specific reason |
+| Recipe deletion (owner) | LIVE | /api/recipes/[id] DELETE, recipe/[id]/page.tsx | P-U | Owner blocked if others have saved; shows "Make it private" option; uses recipe_saves count check |
+| Recipe deletion (admin) | LIVE | /api/recipes/[id]?adminDelete=true | P-U | Admin nuclear delete; shows saver count in confirmation; cascade deletes all related rows |
 | Recipe status pills | LIVE | apps/web/dashboard/page.tsx, apps/web/app/recipe/[id]/page.tsx, lib/recipeCompleteness.ts | P-G | Amber incomplete pill (⚠ Missing X), Red under review pill (🔍); bottom-centre on image; shows on cards + detail hero; owner-facing only |
 | Recipe moderation (AI) | LIVE | packages/ai (moderateRecipe) | 41 | Runs on every import + edit |
 | Recipe edit re-moderation | LIVE | apps/web/app/recipe/[id]/page.tsx (reModerateIfPublic) | P-J | Non-blocking re-moderation on public recipe edits (title/desc/ingredients/steps/notes); auto-hides if flagged/serious |

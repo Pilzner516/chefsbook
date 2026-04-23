@@ -1,6 +1,80 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-23 (session Prompt-U — Recipe Deletion Ownership Rules + Admin Nuclear Delete) TYPE: FEATURE
+
+### FIX 1 — Owner delete blocked if others have saved it
+
+**API route created:** `DELETE /api/recipes/[id]`
+- Checks if OTHER users (not owner) have saved the recipe via `recipe_saves` query
+- Returns `RECIPE_HAS_SAVERS` error with `saverCount` if blocked
+- Also provides `GET /api/recipes/[id]` for owner to fetch saver stats
+
+**UI changes:**
+- Delete button now shows for admins too (not just owners)
+- When deletion is blocked, shows "This recipe can't be deleted" dialog:
+  - Message: "X member(s) have saved this recipe to their collection..."
+  - Buttons: "Make it private" (primary) / "Keep it" (ghost)
+  - "Make it private" sets visibility='private' and shows confirmation toast
+
+**recipe_saves FK confirmed:** `ON DELETE CASCADE` on recipe_id (verified via `\d recipe_saves`)
+
+### FIX 2 — Admin nuclear delete
+
+**Admin delete flow:**
+- Uses `DELETE /api/recipes/[id]?adminDelete=true`
+- Server-side admin verification via `admin_users` table
+- Skips saver count check entirely
+- Cascade delete handles: recipe_saves, recipe_ingredients, recipe_steps, recipe_user_photos, recipe_flags, recipe_translations, recipe_comments
+
+**Admin confirmation dialog:**
+- Title: "Permanently delete this recipe?"
+- Message: "This will permanently delete ... and remove it from X member(s) who have saved it. This cannot be undone."
+- Buttons: "Delete permanently" (destructive) / "Cancel"
+- After delete: redirects to /dashboard
+
+### FIX 3 — Private recipe visibility for savers
+
+**RLS policy updated (already applied on RPi5):**
+```sql
+CREATE POLICY "recipes: visibility" ON recipes FOR SELECT
+USING (
+  (user_id = uid())
+  OR (visibility = 'public')
+  OR (visibility = 'shared_link')
+  OR (visibility = 'friends' AND ...)
+  OR (EXISTS (SELECT 1 FROM recipe_saves WHERE recipe_saves.recipe_id = recipes.id AND recipe_saves.user_id = uid()))
+);
+```
+
+**Rule enforced:**
+- Private recipes are visible to: owner + users who have saved it
+- Saved private recipes appear in saver's My Recipes (RLS allows access)
+- Non-owner, non-saver cannot access private recipe
+
+**FILES CREATED:**
+- `apps/web/app/api/recipes/[id]/route.ts` — GET (saver stats) + DELETE (with saver check + admin bypass)
+- `supabase/migrations/20260423_050_saver_access_rls.sql` — RLS policy update
+
+**FILES MODIFIED:**
+- `apps/web/app/recipe/[id]/page.tsx` — new state (isAdmin, showSaversBlockDialog, blockedSaverCount); updated handleDelete to use API; new dialogs for blocked delete and admin delete
+
+**REGRESSION CHECKS:**
+1. Owner with 0 savers: Delete works normally ✓
+2. Owner with 1+ savers: Delete blocked, "Make it private" offered ✓
+3. Making private: recipe disappears from search/discovery ✓
+4. Making private: users who saved it still see it in My Recipes ✓
+5. Admin delete: shows saver count in confirmation dialog ✓
+6. Admin delete: recipe gone from all users' My Recipes after delete ✓
+7. Non-owner, non-saver: cannot access private recipe ✓ (RLS enforced)
+8. Non-owner saver: can access private recipe they saved ✓ (RLS updated)
+9. My Recipes images still show ✓
+10. Recipe detail page still works ✓
+
+**tsc clean:** ✓ (packages/db + apps/web)
+
+---
+
 ## 2026-04-23 (session Prompt-V2 — Merged Admin Messages Hub + Expelled Content Filtering) TYPE: FEATURE
 
 ### FIX 1 — Expelled users' content hidden from public feeds

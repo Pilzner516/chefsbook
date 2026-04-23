@@ -105,6 +105,9 @@ export default function RecipePage() {
   const [guestSubmitting, setGuestSubmitting] = useState(false);
   const [copyrightConfirm, CopyrightDialog] = useConfirmDialog();
   const [showAlert, AlertDialog] = useAlertDialog();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showSaversBlockDialog, setShowSaversBlockDialog] = useState(false);
+  const [blockedSaverCount, setBlockedSaverCount] = useState(0);
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagSubmitting, setFlagSubmitting] = useState(false);
   const [flagSubmitted, setFlagSubmitted] = useState(false);
@@ -150,13 +153,33 @@ export default function RecipePage() {
       if (data?.cookbook_id) getCookbook(data.cookbook_id).then(setCookbook);
 
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Check if recipe owner is expelled - hide from non-owners/non-admins
+      if (data) {
+        const { data: ownerProfile } = await supabase
+          .from('user_profiles')
+          .select('account_status')
+          .eq('id', data.user_id)
+          .single();
+        if (ownerProfile?.account_status === 'expelled') {
+          const isCurrentUserOwner = user && user.id === data.user_id;
+          const isAdmin = user ? (await supabase.from('admin_users').select('role').eq('user_id', user.id).maybeSingle()).data : null;
+          if (!isCurrentUserOwner && !isAdmin) {
+            router.push('/dashboard');
+            return;
+          }
+        }
+      }
       if (user) {
         setIsLoggedIn(true);
         isPro(user.id).then(async (pro) => {
           if (pro) { setUserIsPro(true); return; }
           // Admins get Pro-equivalent access (matches server-side bypass in PDF route)
           const { data: adminRow } = await supabase.from('admin_users').select('role').eq('user_id', user.id).maybeSingle();
-          if (adminRow) setUserIsPro(true);
+          if (adminRow) {
+            setUserIsPro(true);
+            setIsAdmin(true);
+          }
         });
         // Fetch user language preference
         supabase.from('user_profiles').select('preferred_language, username').eq('id', user.id).maybeSingle()
@@ -292,10 +315,36 @@ export default function RecipePage() {
     return tr?.instruction ?? step.instruction;
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (forceAdminDelete = false) => {
     setDeleting(true);
     try {
-      await deleteRecipe(id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const url = forceAdminDelete
+        ? `/api/recipes/${id}?adminDelete=true`
+        : `/api/recipes/${id}`;
+
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === 'RECIPE_HAS_SAVERS') {
+          setBlockedSaverCount(data.saverCount);
+          setShowDeleteConfirm(false);
+          setShowSaversBlockDialog(true);
+          setDeleting(false);
+          return;
+        }
+        throw new Error(data.error || 'Delete failed');
+      }
+
       router.push('/dashboard');
     } catch (e: any) {
       showAlert({ title: 'Delete failed', body: e?.message ?? 'Please try again.' });
@@ -1144,8 +1193,8 @@ export default function RecipePage() {
               )}
             </div>
           )}
-          {/* Delete button (owner only) */}
-          {isOwner && (
+          {/* Delete button (owner or admin) */}
+          {(isOwner || isAdmin) && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="flex items-center gap-2 border border-red-200 text-cb-primary px-4 py-2 rounded-input text-sm font-medium hover:bg-red-50 transition-colors"
@@ -2442,9 +2491,21 @@ export default function RecipePage() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
-            <h2 className="text-lg font-bold mb-2">Delete recipe?</h2>
+            <h2 className="text-lg font-bold mb-2">
+              {isAdmin && !isOwner ? 'Permanently delete this recipe?' : 'Delete recipe?'}
+            </h2>
             <p className="text-cb-secondary text-sm mb-6">
-              This will permanently delete &ldquo;{recipe.title}&rdquo;. This cannot be undone.
+              {isAdmin && !isOwner ? (
+                <>
+                  This will permanently delete &ldquo;{recipe.title}&rdquo; and remove it from{' '}
+                  {(recipe.save_count ?? 0) > 0
+                    ? `${recipe.save_count} member${(recipe.save_count ?? 0) === 1 ? '' : 's'} who ${(recipe.save_count ?? 0) === 1 ? 'has' : 'have'} saved it`
+                    : 'all collections'}.
+                  This cannot be undone.
+                </>
+              ) : (
+                <>This will permanently delete &ldquo;{recipe.title}&rdquo;. This cannot be undone.</>
+              )}
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -2454,11 +2515,47 @@ export default function RecipePage() {
                 Cancel
               </button>
               <button
-                onClick={handleDelete}
+                onClick={() => handleDelete(isAdmin && !isOwner)}
                 disabled={deleting}
                 className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {deleting ? 'Deleting...' : 'Delete'}
+                {deleting ? 'Deleting...' : isAdmin && !isOwner ? 'Delete permanently' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Savers block dialog - shown when owner tries to delete a recipe others have saved */}
+      {showSaversBlockDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-cb-card border border-cb-border rounded-card w-full max-w-sm mx-4 p-6">
+            <h2 className="text-lg font-bold mb-2">This recipe can&apos;t be deleted</h2>
+            <p className="text-cb-secondary text-sm mb-6">
+              {blockedSaverCount} member{blockedSaverCount === 1 ? ' has' : 's have'} saved this recipe to their collection.
+              You can make it private so it no longer appears in search, but it will remain available to those who&apos;ve saved it.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSaversBlockDialog(false)}
+                className="px-4 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text"
+              >
+                Keep it
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await updateRecipe(id, { visibility: 'private' });
+                    if (recipe) setRecipe({ ...recipe, visibility: 'private' });
+                    setShowSaversBlockDialog(false);
+                    showAlert({ title: 'Recipe is now private', body: 'This recipe is no longer visible in public search but remains available to those who saved it.' });
+                  } catch (e: any) {
+                    showAlert({ title: 'Update failed', body: e?.message ?? 'Please try again.' });
+                  }
+                }}
+                className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                Make it private
               </button>
             </div>
           </div>
