@@ -69,12 +69,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError) {
-      console.error('[admin/users/create] Failed to create auth user:', authError);
+      console.error('[admin/users/create] FULL AUTH ERROR:', JSON.stringify(authError, null, 2));
+      console.error('[admin/users/create] Auth error message:', authError.message);
+      console.error('[admin/users/create] Auth error status:', authError.status);
+      console.error('[admin/users/create] Auth error name:', authError.name);
       // Check for specific error messages
       if (authError.message?.includes('already registered')) {
         return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 });
       }
-      return NextResponse.json({ error: authError.message || 'Failed to create user account' }, { status: 500 });
+      return NextResponse.json({
+        error: `Failed to create auth user: ${authError.message}`,
+        details: authError
+      }, { status: 500 });
     }
 
     if (!authData.user) {
