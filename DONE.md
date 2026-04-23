@@ -1,6 +1,85 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-23 (session Prompt-P — Bot Protection) TYPE: FEATURE
+
+### Three-layer bot protection on web signup and login forms
+
+**FEATURE 1 — Cloudflare Turnstile (invisible CAPTCHA)** (`apps/web/app/auth/page.tsx`):
+- Installed `@marsidev/react-turnstile` package (v1.0.2)
+- Added Turnstile widget to both signup and login forms
+- Widget type: Managed (invisible, non-intrusive)
+- Created `/api/auth/verify-turnstile` route for server-side token verification
+- Submit button disabled until Turnstile succeeds
+- Shows "Verifying you're human..." message while token pending
+- Graceful fallback: if NEXT_PUBLIC_TURNSTILE_SITE_KEY not set, widget doesn't render (no errors)
+- Test keys set in dev `.env.local` (always pass): site key `1x00000000000000000000AA`, secret key `1x0000000000000000000000000000000AA`
+- Production placeholder keys set in RPi5 `.env.local` with detailed instructions
+
+**FEATURE 2 — Honeypot field** (`apps/web/app/auth/page.tsx`):
+- Hidden input field using CSS (`position:absolute, opacity:0, height:0, overflow:hidden, pointerEvents:none`)
+- NOT using `display:none` or `hidden` attribute (bots detect those)
+- Field name: "website" (common bot target)
+- If filled on submission: silent fake success, no account created, shows "Account created! Check your email..." message
+- Bot never knows it was blocked — prevents bot operators from detecting and bypassing protection
+
+**FEATURE 3 — Disposable email check** (`apps/web/lib/disposableEmails.ts`):
+- Created blocklist of 40+ known disposable/throwaway email domains
+- Includes: mailinator, guerrillamail, temp-mail, yopmail, trashmail, maildrop, 10minutemail, etc.
+- Client-side check (fast, no API call)
+- User-friendly error: "Please use a permanent email address to sign up."
+- Runs before Turnstile check (fail fast)
+
+**Files created**:
+- `apps/web/lib/disposableEmails.ts` — 40-domain blocklist + isDisposableEmail() helper
+- `apps/web/lib/turnstile.ts` — verifyTurnstile() server-side helper
+- `apps/web/app/api/auth/verify-turnstile/route.ts` — POST endpoint for token verification
+- `apps/web/.env.local` — Turnstile test keys (gitignored)
+
+**Files modified**:
+- `apps/web/app/auth/page.tsx` — integrated all three bot protection layers
+
+**Deployment**:
+- TypeScript check passed (npx tsc --noEmit)
+- Pushed to GitHub (commit 6e8d78e)
+- Pulled on RPi5, installed dependencies (@marsidev/react-turnstile)
+- Created `.env.local` on RPi5 with placeholder keys and instructions
+- Built with NODE_OPTIONS=--max-old-space-size=768 (successful)
+- PM2 restarted, status: online
+- Smoke tests: /, /auth, /dashboard all return HTTP 200
+
+**Regression checks (10 of 10 CODE VERIFIED)**:
+1. ✓ Signup form renders without errors (code verified — no conditional rendering breaks)
+2. ✓ Turnstile widget appears when NEXT_PUBLIC_TURNSTILE_SITE_KEY set (conditional render in place)
+3. ✓ Disposable email check blocks mailinator.com (isDisposableEmail logic verified)
+4. ✓ Normal email passes disposable check (logic verified)
+5. ✓ Login form has Turnstile widget (same component used for both modes)
+6. ✓ With test keys: signup should complete (test keys always return success=true)
+7. ✓ Honeypot filled: silent fake success (code shows mode='login' + message without supabase call)
+8. ✓ My Recipes page still works (no changes to dashboard)
+9. ✓ Recipe detail page still works (no changes to recipe pages)
+10. ✓ Existing logged-in sessions unaffected (no changes to session handling)
+
+**IMPORTANT — Action required by admin (Bob)**:
+Until real Cloudflare Turnstile keys are added, bot protection is DISABLED.
+
+**To enable bot protection in production**:
+1. Go to https://dash.cloudflare.com/ and log in
+2. Navigate to: Turnstile (in left sidebar)
+3. Click "Add widget"
+4. Widget type: **Managed** (invisible, non-intrusive)
+5. Domain: **chefsbk.app**
+6. Copy **Site Key** → NEXT_PUBLIC_TURNSTILE_SITE_KEY
+7. Copy **Secret Key** → TURNSTILE_SECRET_KEY
+8. SSH to RPi5: `ssh rasp@rpi5-eth`
+9. Edit file: `nano /mnt/chefsbook/repo/apps/web/.env.local`
+10. Replace placeholder values with real keys from step 6-7
+11. Save file (Ctrl+O, Enter, Ctrl+X)
+12. Restart web server: `pm2 restart chefsbook-web`
+13. Verify bot protection working: visit https://chefsbk.app/auth, try to sign up (Turnstile widget should appear)
+
+**Cost this session**: $0 (no AI calls, pure code changes)
+
 ## 2026-04-23 (session Prompt-S — Messages Load Fix + Nav Reordering) TYPE: CODE FIX + FEATURE
 
 ### Three fixes for web app: messages loading, search translations, and sidebar nav reordering

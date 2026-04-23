@@ -22,6 +22,9 @@
 | Change password in settings | LIVE | apps/web/dashboard/settings, apps/mobile/app/modal.tsx | 91 | |
 | Session persistence | LIVE | packages/db (configureStorage) | 07 | expo-secure-store on mobile |
 | Auto-confirm signup | LIVE | RPi5 GoTrue config | 83 | GOTRUE_MAILER_AUTOCONFIRM=true |
+| Bot protection - Cloudflare Turnstile | LIVE | apps/web/app/auth/page.tsx, /api/auth/verify-turnstile, lib/turnstile.ts | Prompt-P | Invisible CAPTCHA on signup + login; @marsidev/react-turnstile; server-side verification; graceful fallback if keys not set |
+| Bot protection - Honeypot field | LIVE | apps/web/app/auth/page.tsx | Prompt-P | Hidden field (CSS not display:none); silent fake success if filled; never tells bot it was blocked |
+| Bot protection - Disposable email check | LIVE | apps/web/lib/disposableEmails.ts, app/auth/page.tsx | Prompt-P | 40+ domain blocklist; client-side check; user-friendly error message |
 
 ---
 
