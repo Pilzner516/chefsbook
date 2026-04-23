@@ -89,19 +89,22 @@ export async function POST(req: NextRequest) {
 
     console.log('[admin/users/create] Auth user created:', authData.user.id);
 
-    // Create user_profiles row
-    const { error: profileError } = await supabaseAdmin.from('user_profiles').insert({
-      id: authData.user.id,
-      username,
-      display_name: displayName || username,
-      plan_tier: plan,
-    });
+    // Update user_profiles row (auto-created by trigger on auth.users insert)
+    // The trigger creates a basic profile, we update it with admin-specified values
+    const { error: profileError } = await supabaseAdmin
+      .from('user_profiles')
+      .update({
+        username,
+        display_name: displayName || username,
+        plan_tier: plan,
+      })
+      .eq('id', authData.user.id);
 
     if (profileError) {
-      console.error('[admin/users/create] Failed to create user profile:', profileError);
-      // Attempt to delete the auth user if profile creation fails
+      console.error('[admin/users/create] Failed to update user profile:', profileError);
+      // Attempt to delete the auth user if profile update fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to update user profile' }, { status: 500 });
     }
 
     // If role is admin, insert into admin_users table
