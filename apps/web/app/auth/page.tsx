@@ -2,8 +2,10 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { supabase, checkUsernameAvailable, setUsername, applyPromoCode } from '@chefsbook/db';
 import { isUsernameFamilyFriendly } from '@chefsbook/ai';
+import { isDisposableEmail } from '@/lib/disposableEmails';
 import Link from 'next/link';
 
 type Mode = 'login' | 'signup' | 'forgot';
@@ -22,6 +24,8 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
+  const [honeypot, setHoneypot] = useState('');
 
   const handleUsernameChange = (text: string) => {
     const lower = text.toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -42,6 +46,49 @@ export default function AuthPage() {
     setLoading(true);
     setError('');
     setMessage('');
+
+    // Honeypot check — silently fail if filled
+    if (honeypot.length > 0) {
+      // Bot detected — fake success without creating account
+      setMessage('Account created! Check your email to confirm, then sign in.');
+      setMode('login');
+      setLoading(false);
+      return;
+    }
+
+    // Disposable email check (signup only)
+    if (mode === 'signup' && isDisposableEmail(email)) {
+      setError('Please use a permanent email address to sign up.');
+      setLoading(false);
+      return;
+    }
+
+    // Turnstile verification
+    if (!turnstileToken) {
+      setError('Please complete the verification challenge.');
+      setLoading(false);
+      return;
+    }
+
+    // Verify Turnstile token server-side
+    try {
+      const verifyRes = await fetch('/api/auth/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setError('Verification failed. Please try again.');
+        setTurnstileToken(''); // Reset token to force re-verification
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError('Verification failed. Please try again.');
+      setLoading(false);
+      return;
+    }
 
     if (mode === 'signup') {
       if (usernameStatus !== 'available') {
@@ -229,9 +276,43 @@ export default function AuthPage() {
                 />
               </div>
             )}
+
+            {/* Honeypot field — hidden from real users */}
+            <div style={{
+              position: 'absolute',
+              opacity: 0,
+              height: 0,
+              overflow: 'hidden',
+              pointerEvents: 'none'
+            }} aria-hidden="true">
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
+            {/* Cloudflare Turnstile */}
+            {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <div className="flex flex-col items-center">
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken('')}
+                  onExpire={() => setTurnstileToken('')}
+                />
+                {!turnstileToken && (
+                  <p className="text-xs text-cb-muted mt-2">Verifying you&apos;re human...</p>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (!turnstileToken && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)}
               className="w-full bg-cb-primary text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading
