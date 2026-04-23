@@ -1,6 +1,48 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-22 (session Prompt-Q — Translation System & YouTube Thumbnails) TYPE: CODE FIX
+
+### YouTube thumbnail fallback and translation system verification
+Fixed recipe images for YouTube imports, added translations to search page, verified efficient DB-only translation architecture.
+
+**Fix 1 — YouTube thumbnail fallback** (`apps/web/lib/recipeImage.ts`):
+- Added `getYouTubeThumbnail(videoId)` function returning maxresdefault.jpg URL
+- Modified `getRecipeImageUrl()` to accept optional `youtubeVideoId` parameter
+- Fallback chain: primary photo → image_url → YouTube thumbnail → null (chef hat placeholder)
+- Updated dashboard page.tsx to pass `recipe.youtube_video_id` to all three views (grid, list, table)
+
+**Fix 2 — Search page translations** (`apps/web/app/dashboard/search/page.tsx`):
+- Added `translatedTitles` state and `getBatchTranslatedTitles()` call matching dashboard pattern
+- CRITICAL: Added `i18n.language` to useEffect dependency array
+- Timing bug fix: translations now load when i18next initializes user's language preference
+- Render: `{translatedTitles[recipe.id] ?? recipe.title}` shows translated title when available
+
+**Fix 3 — Translation backfill** (`apps/web/app/api/admin/backfill-translations/route.ts`):
+- Created new API endpoint to backfill missing recipe translations
+- Queries recipes without French translations (proxy for untranslated)
+- For each: calls `translateRecipeTitle()` (HAIKU, ~$0.0002/recipe)
+- Saves via `saveTitleOnlyTranslations()` to `recipe_translations` table
+- Successfully backfilled 30 missing recipes (cost: $0.0060)
+
+**Architecture verification**:
+- CONFIRMED: `getBatchTranslatedTitles()` is a pure database SELECT query (no AI calls)
+- CONFIRMED: Titles pre-translated during import and stored for all 4 languages (fr/es/it/de)
+- CONFIRMED: Language switching triggers DB query only (efficient, zero AI cost)
+- CONFIRMED: Recipe detail full translations lazy-loaded on first open, then cached
+- System designed for cost efficiency and fast response times
+
+**Files modified**:
+- `apps/web/lib/recipeImage.ts` — added YouTube thumbnail support
+- `apps/web/app/dashboard/page.tsx` — pass youtube_video_id to image helper
+- `apps/web/app/dashboard/search/page.tsx` — added translation support + dependency fix
+- `apps/web/app/api/admin/backfill-translations/route.ts` — NEW FILE
+
+**Deployment**:
+- TypeScript check passed
+- Changes deployed to RPi5, PM2 restarted
+- Verified working at chefsbk.app
+
 ## 2026-04-22 (session Prompt-P — Content Audit Performance & Logging) TYPE: CODE FIX
 
 ### Content Health Audit robustness and cost optimization
