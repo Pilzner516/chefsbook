@@ -61,7 +61,7 @@ export default function SearchPage() {
       const timer = setTimeout(() => doSearch(), 300);
       return () => clearTimeout(timer);
     }
-  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter]);
+  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter, i18n.language]);
 
   // Auto-tag state
   const [taggingCount, setTaggingCount] = useState<number | null>(null);
