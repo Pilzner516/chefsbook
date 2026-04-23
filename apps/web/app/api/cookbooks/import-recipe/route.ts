@@ -1,4 +1,4 @@
-import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness, callClaude, extractJSON } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness, callClaude, extractJSON, moderateCategoricalFields } from '@chefsbook/ai';
 import { fetchWithFallback } from '../../import/_utils';
 
 const RECIPE_SITES = [
@@ -96,6 +96,26 @@ export async function POST(req: Request) {
       const { complete } = checkJsonLdCompleteness(jsonLd);
 
       if (complete && jsonLd) {
+        // Moderate before returning
+        try {
+          const moderated = await moderateCategoricalFields(
+            'pending-cookbook-jsonld',
+            'system',
+            {
+              tags: (jsonLd as any).tags,
+              cuisine: (jsonLd as any).cuisine,
+              course: (jsonLd as any).course,
+            }
+          );
+          (jsonLd as any).tags = moderated.tags;
+          (jsonLd as any).cuisine = moderated.cuisine ?? undefined;
+          (jsonLd as any).course = moderated.course ?? undefined;
+          if (moderated.removed.length > 0) {
+            console.log('[cookbooks/import-recipe/jsonld] Moderation removed:', moderated.removed);
+          }
+        } catch (modErr) {
+          console.error('[cookbooks/import-recipe/jsonld] Moderation failed:', modErr);
+        }
         return Response.json({ recipe: { ...jsonLd, source_type: 'url' }, sourceUrl: recipeUrl, method: 'json-ld' });
       }
 
@@ -104,6 +124,26 @@ export async function POST(req: Request) {
       if (text.length > 500) {
         const recipe = await importFromUrl(text, recipeUrl);
         if (recipe?.title && recipe?.ingredients?.length > 0) {
+          // Moderate before returning
+          try {
+            const moderated = await moderateCategoricalFields(
+              'pending-cookbook-web',
+              'system',
+              {
+                tags: (recipe as any).tags,
+                cuisine: (recipe as any).cuisine,
+                course: (recipe as any).course,
+              }
+            );
+            (recipe as any).tags = moderated.tags;
+            (recipe as any).cuisine = moderated.cuisine ?? undefined;
+            (recipe as any).course = moderated.course ?? undefined;
+            if (moderated.removed.length > 0) {
+              console.log('[cookbooks/import-recipe/web] Moderation removed:', moderated.removed);
+            }
+          } catch (modErr) {
+            console.error('[cookbooks/import-recipe/web] Moderation failed:', modErr);
+          }
           return Response.json({ recipe, sourceUrl: recipeUrl, method: 'claude-web' });
         }
       }
@@ -144,6 +184,27 @@ export async function POST(req: Request) {
     const missingQty = recipe.ingredients.filter((i: any) => i.quantity == null).length;
     if (missingQty > recipe.ingredients.length * 0.5) {
       return Response.json({ recipe: null, method: 'failed' });
+    }
+
+    // Moderate before returning
+    try {
+      const moderated = await moderateCategoricalFields(
+        'pending-cookbook-generate',
+        'system',
+        {
+          tags: recipe.tags,
+          cuisine: recipe.cuisine,
+          course: recipe.course,
+        }
+      );
+      recipe.tags = moderated.tags;
+      recipe.cuisine = moderated.cuisine ?? undefined;
+      recipe.course = moderated.course ?? undefined;
+      if (moderated.removed.length > 0) {
+        console.log('[cookbooks/import-recipe/generate] Moderation removed:', moderated.removed);
+      }
+    } catch (modErr) {
+      console.error('[cookbooks/import-recipe/generate] Moderation failed:', modErr);
     }
 
     return Response.json({ recipe, sourceUrl: null, method: 'claude-generate' });

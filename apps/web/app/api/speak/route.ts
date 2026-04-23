@@ -1,4 +1,4 @@
-import { formatVoiceRecipe, consumeLastUsage } from '@chefsbook/ai';
+import { formatVoiceRecipe, consumeLastUsage, moderateCategoricalFields } from '@chefsbook/ai';
 import { logAiCall } from '@chefsbook/db';
 
 export async function POST(req: Request) {
@@ -13,6 +13,27 @@ export async function POST(req: Request) {
     const recipe = await formatVoiceRecipe(transcript);
     if (!recipe) {
       return Response.json({ error: 'Could not extract a recipe from the transcript. Try speaking with more detail.' }, { status: 422 });
+    }
+
+    // Moderate categorical fields before returning
+    try {
+      const moderated = await moderateCategoricalFields(
+        'pending-speak',
+        'system',
+        {
+          tags: (recipe as any).tags,
+          cuisine: (recipe as any).cuisine,
+          course: (recipe as any).course,
+        }
+      );
+      (recipe as any).tags = moderated.tags;
+      (recipe as any).cuisine = moderated.cuisine ?? undefined;
+      (recipe as any).course = moderated.course ?? undefined;
+      if (moderated.removed.length > 0) {
+        console.log('[speak] Moderation removed:', moderated.removed);
+      }
+    } catch (modErr) {
+      console.error('[speak] Moderation failed:', modErr);
     }
 
     const u = consumeLastUsage();

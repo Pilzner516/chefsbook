@@ -8,7 +8,7 @@ import {
   logImportAttempt,
   extractDomain,
 } from '@chefsbook/db';
-import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness, isActuallyARecipe } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness, isActuallyARecipe, moderateCategoricalFields } from '@chefsbook/ai';
 import { fetchWithFallback } from '../../import/_utils';
 
 /**
@@ -91,6 +91,28 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Moderate fresh categorical fields before merging
+    let moderatedFresh = { ...fresh };
+    try {
+      const moderated = await moderateCategoricalFields(
+        recipeId,
+        recipe.user_id,
+        {
+          tags: fresh.tags,
+          cuisine: fresh.cuisine,
+          course: fresh.course,
+        }
+      );
+      moderatedFresh.tags = moderated.tags;
+      moderatedFresh.cuisine = moderated.cuisine;
+      moderatedFresh.course = moderated.course;
+      if (moderated.removed.length > 0) {
+        console.log('[recipes/refresh] Moderation removed:', moderated.removed);
+      }
+    } catch (modErr) {
+      console.error('[recipes/refresh] Moderation failed:', modErr);
+    }
+
     // 2. Merge — never overwrite existing complete fields
     const { data: existingIngredients } = await supabaseAdmin
       .from('recipe_ingredients')
@@ -105,14 +127,14 @@ export async function POST(req: NextRequest) {
     let ingredientsAdded = 0;
     let stepsAdded = 0;
 
-    if (!recipe.description && fresh.description) update.description = fresh.description;
-    if (!recipe.servings && fresh.servings) update.servings = fresh.servings;
-    if (!recipe.prep_minutes && fresh.prep_minutes) update.prep_minutes = fresh.prep_minutes;
-    if (!recipe.cook_minutes && fresh.cook_minutes) update.cook_minutes = fresh.cook_minutes;
-    if (!recipe.cuisine && fresh.cuisine) update.cuisine = fresh.cuisine;
-    if (!recipe.course && fresh.course) update.course = fresh.course;
-    if (fresh.tags?.length) {
-      const merged = Array.from(new Set([...(recipe.tags ?? []), ...fresh.tags]));
+    if (!recipe.description && moderatedFresh.description) update.description = moderatedFresh.description;
+    if (!recipe.servings && moderatedFresh.servings) update.servings = moderatedFresh.servings;
+    if (!recipe.prep_minutes && moderatedFresh.prep_minutes) update.prep_minutes = moderatedFresh.prep_minutes;
+    if (!recipe.cook_minutes && moderatedFresh.cook_minutes) update.cook_minutes = moderatedFresh.cook_minutes;
+    if (!recipe.cuisine && moderatedFresh.cuisine) update.cuisine = moderatedFresh.cuisine;
+    if (!recipe.course && moderatedFresh.course) update.course = moderatedFresh.course;
+    if (moderatedFresh.tags?.length) {
+      const merged = Array.from(new Set([...(recipe.tags ?? []), ...moderatedFresh.tags]));
       update.tags = merged;
     }
 
@@ -120,8 +142,8 @@ export async function POST(req: NextRequest) {
       await supabaseAdmin.from('recipes').update(update).eq('id', recipeId);
     }
 
-    if (!existingIngredients?.length && fresh.ingredients?.length) {
-      const rows = fresh.ingredients.map((ing: any, i: number) => ({
+    if (!existingIngredients?.length && moderatedFresh.ingredients?.length) {
+      const rows = moderatedFresh.ingredients.map((ing: any, i: number) => ({
         recipe_id: recipeId,
         user_id: recipe.user_id,
         sort_order: i,
@@ -136,8 +158,8 @@ export async function POST(req: NextRequest) {
       ingredientsAdded = rows.length;
     }
 
-    if (!existingSteps?.length && fresh.steps?.length) {
-      const rows = fresh.steps.map((s: any, i: number) => ({
+    if (!existingSteps?.length && moderatedFresh.steps?.length) {
+      const rows = moderatedFresh.steps.map((s: any, i: number) => ({
         recipe_id: recipeId,
         user_id: recipe.user_id,
         step_number: s.step_number ?? i + 1,

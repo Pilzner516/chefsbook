@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness, moderateCategoricalFields } from '@chefsbook/ai';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
 
 function extractImageUrl(html: string, pageUrl: string): string | null {
@@ -89,6 +89,30 @@ async function processQueue(jobId: string, userId: string) {
         if (generated) tags.push('_unresolved');
         if (isIncomplete) tags.push('_incomplete');
 
+        // Moderate categorical fields before DB insert
+        let moderatedTags = tags;
+        let moderatedCuisine = recipe.cuisine;
+        let moderatedCourse = recipe.course;
+        try {
+          const moderated = await moderateCategoricalFields(
+            'pending-batch-import',
+            userId,
+            {
+              tags,
+              cuisine: recipe.cuisine,
+              course: recipe.course,
+            }
+          );
+          moderatedTags = moderated.tags;
+          moderatedCuisine = moderated.cuisine;
+          moderatedCourse = moderated.course;
+          if (moderated.removed.length > 0) {
+            console.log('[batch/import] Moderation removed:', moderated.removed);
+          }
+        } catch (modErr) {
+          console.error('[batch/import] Moderation failed:', modErr);
+        }
+
         const { data: newRecipe, error: insertErr } = await db
           .from('recipes')
           .insert({
@@ -98,13 +122,13 @@ async function processQueue(jobId: string, userId: string) {
             servings: recipe.servings ?? 4,
             prep_minutes: recipe.prep_minutes,
             cook_minutes: recipe.cook_minutes,
-            cuisine: recipe.cuisine,
-            course: recipe.course,
+            cuisine: moderatedCuisine,
+            course: moderatedCourse,
             source_type: 'url',
             source_url: row.url,
             image_url: imageUrl,
             notes: recipe.notes,
-            tags,
+            tags: moderatedTags,
             bookmark_folder: row.folder_name,
             import_job_id: jobId,
           })

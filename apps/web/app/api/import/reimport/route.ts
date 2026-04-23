@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, extractJsonLdRecipe, checkJsonLdCompleteness, moderateCategoricalFields } from '@chefsbook/ai';
 import { fetchWithFallback } from '../_utils';
 
 function getServiceClient() {
@@ -58,6 +58,28 @@ async function processReimports(recipeIds: string[]) {
         extracted = await importFromUrl(text, recipe.source_url);
       }
 
+      // Moderate extracted categorical fields before using as fallbacks
+      let moderatedExtractedCuisine = extracted.cuisine;
+      let moderatedExtractedCourse = extracted.course;
+      try {
+        const moderated = await moderateCategoricalFields(
+          recipeId,
+          recipe.user_id,
+          {
+            tags: [],  // reimport preserves user tags
+            cuisine: extracted.cuisine,
+            course: extracted.course,
+          }
+        );
+        moderatedExtractedCuisine = moderated.cuisine;
+        moderatedExtractedCourse = moderated.course;
+        if (moderated.removed.length > 0) {
+          console.log('[reimport] Moderation removed:', moderated.removed);
+        }
+      } catch (modErr) {
+        console.error('[reimport] Moderation failed:', modErr);
+      }
+
       // Only update AI-derived fields — preserve user edits (tags, notes, cuisine, course)
       const updates: Record<string, any> = {
         title: extracted.title || recipe.title,
@@ -65,8 +87,8 @@ async function processReimports(recipeIds: string[]) {
         servings: extracted.servings ?? recipe.servings,
         prep_minutes: extracted.prep_minutes ?? recipe.prep_minutes,
         cook_minutes: extracted.cook_minutes ?? recipe.cook_minutes,
-        cuisine: recipe.cuisine || extracted.cuisine,
-        course: recipe.course || extracted.course,
+        cuisine: recipe.cuisine || moderatedExtractedCuisine,
+        course: recipe.course || moderatedExtractedCourse,
         image_url: recipe.image_url || imageUrl || null,
       };
 

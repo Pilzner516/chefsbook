@@ -1,4 +1,4 @@
-import { importFromYouTube, importFromUrl, stripHtml, classifyContent, importTechniqueFromYouTube } from '@chefsbook/ai';
+import { importFromYouTube, importFromUrl, stripHtml, classifyContent, importTechniqueFromYouTube, moderateCategoricalFields } from '@chefsbook/ai';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { fetchWithFallback } from '../_utils';
 
@@ -136,6 +136,27 @@ export async function POST(req: Request) {
         if (text.length > 500) {
           const recipe = await importFromUrl(text, recipeUrl);
           if (recipe?.title && recipe?.ingredients?.length) {
+            // Moderate categorical fields before returning
+            try {
+              const moderated = await moderateCategoricalFields(
+                'pending-import-youtube-linked',
+                'system',
+                {
+                  tags: (recipe as any).tags,
+                  cuisine: recipe.cuisine ?? undefined,
+                  course: recipe.course ?? undefined,
+                }
+              );
+              (recipe as any).tags = moderated.tags;
+              (recipe as any).cuisine = moderated.cuisine;
+              (recipe as any).course = moderated.course;
+              if (moderated.removed.length > 0) {
+                console.log('[import/youtube/linked] Moderation removed:', moderated.removed);
+              }
+            } catch (modErr) {
+              console.error('[import/youtube/linked] Moderation failed:', modErr);
+            }
+
             return Response.json({
               contentType: 'recipe',
               videoOnly: false,
@@ -219,6 +240,27 @@ export async function POST(req: Request) {
         thumbnail,
         tags: snippet.tags?.slice(0, 10) ?? [],
       });
+    }
+
+    // Moderate categorical fields before returning
+    try {
+      const moderated = await moderateCategoricalFields(
+        'pending-import-youtube',
+        'system',
+        {
+          tags: (recipe as any).tags,
+          cuisine: recipe.cuisine ?? undefined,
+          course: recipe.course ?? undefined,
+        }
+      );
+      (recipe as any).tags = moderated.tags;
+      (recipe as any).cuisine = moderated.cuisine;
+      (recipe as any).course = moderated.course;
+      if (moderated.removed.length > 0) {
+        console.log('[import/youtube] Moderation removed:', moderated.removed);
+      }
+    } catch (modErr) {
+      console.error('[import/youtube] Moderation failed:', modErr);
     }
 
     return Response.json({

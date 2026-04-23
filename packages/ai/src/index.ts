@@ -46,6 +46,8 @@ export { moderateMessage } from './moderateMessage';
 export type { MessageModerationResult } from './moderateMessage';
 export { moderateTag } from './moderateTag';
 export type { TagModerationResult } from './moderateTag';
+export { moderateCategoricalFields } from './moderateCategoricalFields';
+export type { CategoricalFields, ModerationResult as CategoricalModerationResult } from './moderateCategoricalFields';
 export { moderateProfile } from './moderateProfile';
 export type { ProfileModerationResult } from './moderateProfile';
 export { isUsernameFamilyFriendly } from './usernameCheck';

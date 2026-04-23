@@ -1,4 +1,4 @@
-import { callClaude, extractJSON, detectLanguage, translateRecipeContent } from '@chefsbook/ai';
+import { callClaude, extractJSON, detectLanguage, translateRecipeContent, moderateCategoricalFields } from '@chefsbook/ai';
 
 const EXTRACT_PROMPT = `You are a recipe extraction expert. The following text was extracted from a file.
 Find ALL recipes in this content. For each recipe found, extract:
@@ -88,9 +88,34 @@ export async function POST(req: Request) {
         prep_minutes: parseInt(row.prep_time || row.prep_minutes) || null,
         cook_minutes: parseInt(row.cook_time || row.cook_minutes) || null,
         notes: row.notes || row.Notes || null,
+        tags: (row.tags || row.Tags || '').split(/[,;]/).filter(Boolean).map((t: string) => t.trim()) || [],
         source_type: 'manual' as const,
         section_hint: null,
       }));
+
+      // Moderate each recipe before returning
+      for (let i = 0; i < recipes.length; i++) {
+        try {
+          const moderated = await moderateCategoricalFields(
+            `pending-csv-${i}`,
+            'system',
+            {
+              tags: recipes[i].tags,
+              cuisine: recipes[i].cuisine,
+              course: recipes[i].course,
+            }
+          );
+          recipes[i].tags = moderated.tags;
+          recipes[i].cuisine = moderated.cuisine;
+          recipes[i].course = moderated.course;
+          if (moderated.removed.length > 0) {
+            console.log(`[import/file/csv/${i}] Moderation removed:`, moderated.removed);
+          }
+        } catch (modErr) {
+          console.error(`[import/file/csv/${i}] Moderation failed:`, modErr);
+        }
+      }
+
       return Response.json({ fileType, recipes, total: recipes.length });
     } else if (ext === 'json' || mimeType === 'application/json') {
       fileType = 'JSON';
@@ -110,9 +135,34 @@ export async function POST(req: Request) {
           prep_minutes: item.prep_minutes || item.prepTime || null,
           cook_minutes: item.cook_minutes || item.cookTime || null,
           notes: item.notes || null,
+          tags: item.tags || [],
           source_type: 'manual' as const,
           section_hint: null,
         }));
+
+        // Moderate each recipe before returning
+        for (let i = 0; i < recipes.length; i++) {
+          try {
+            const moderated = await moderateCategoricalFields(
+              `pending-json-${i}`,
+              'system',
+              {
+                tags: recipes[i].tags,
+                cuisine: recipes[i].cuisine,
+                course: recipes[i].course,
+              }
+            );
+            recipes[i].tags = moderated.tags;
+            recipes[i].cuisine = moderated.cuisine;
+            recipes[i].course = moderated.course;
+            if (moderated.removed.length > 0) {
+              console.log(`[import/file/json/${i}] Moderation removed:`, moderated.removed);
+            }
+          } catch (modErr) {
+            console.error(`[import/file/json/${i}] Moderation failed:`, modErr);
+          }
+        }
+
         return Response.json({ fileType, recipes, total: recipes.length });
       } catch {
         text = jsonText; // Fall through to Claude extraction
@@ -146,6 +196,29 @@ export async function POST(req: Request) {
           recipes[i] = await translateRecipeContent(recipes[i], 'en', srcLang);
         }
       } catch { /* translation failure non-blocking */ }
+    }
+
+    // Moderate each recipe before returning
+    for (let i = 0; i < recipes.length; i++) {
+      try {
+        const moderated = await moderateCategoricalFields(
+          `pending-file-${i}`,
+          'system',
+          {
+            tags: recipes[i].tags,
+            cuisine: recipes[i].cuisine,
+            course: recipes[i].course,
+          }
+        );
+        recipes[i].tags = moderated.tags;
+        recipes[i].cuisine = moderated.cuisine;
+        recipes[i].course = moderated.course;
+        if (moderated.removed.length > 0) {
+          console.log(`[import/file/${fileType}/${i}] Moderation removed:`, moderated.removed);
+        }
+      } catch (modErr) {
+        console.error(`[import/file/${fileType}/${i}] Moderation failed:`, modErr);
+      }
     }
 
     return Response.json({ fileType, recipes, total: recipes.length });

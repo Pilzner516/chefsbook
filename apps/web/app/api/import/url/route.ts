@@ -1,6 +1,6 @@
 // TODO(web): replicate multi-page scan support (mobile sends up to 5 page images in single Claude Vision call)
 // TODO(web): show "Add cover photo?" prompt after import when no image returned
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, consumeLastUsage } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, consumeLastUsage, moderateCategoricalFields } from '@chefsbook/ai';
 import type { ImportCompleteness } from '@chefsbook/ai';
 import { supabaseAdmin, getSiteBlockStatus, extractDomain, recordSiteDiscovery, logImportAttempt, logAiCall, isUserThrottled, normalizeSourceUrl, findDuplicateByUrl } from '@chefsbook/db';
 import { preflightUrl, fetchWithFallback, ensureTitle } from '../_utils';
@@ -181,6 +181,29 @@ export async function POST(req: Request) {
     // Tag incomplete recipes
     if (!completeness.complete || generated) {
       recipe.tags = [...(recipe.tags ?? []), '_incomplete'];
+    }
+
+    // ── Moderate categorical fields (tags, cuisine, course) ──
+    try {
+      const moderated = await moderateCategoricalFields(
+        'pending-import-url', // temp ID for logging
+        'system',             // no user context at extraction time
+        {
+          tags: recipe.tags,
+          cuisine: recipe.cuisine,
+          course: recipe.course,
+        }
+      );
+      recipe.tags = moderated.tags;
+      recipe.cuisine = moderated.cuisine;
+      recipe.course = moderated.course;
+      // Log removals for visibility (fire and forget)
+      if (moderated.removed.length > 0) {
+        console.log('[import/url] Moderation removed:', moderated.removed);
+      }
+    } catch (modErr) {
+      // Non-blocking: moderation failure shouldn't block import
+      console.error('[import/url] Moderation failed:', modErr);
     }
 
     // Track import site stats + recalculate rating (fire and forget)

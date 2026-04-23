@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, suggestTagsForRecipe, importFromYouTube, importTechniqueFromYouTube } from '@chefsbook/ai';
+import { importFromUrl, stripHtml, classifyContent, importTechnique, extractJsonLdRecipe, checkJsonLdCompleteness, detectLanguage, translateRecipeContent, describeSourceImage, suggestTagsForRecipe, importFromYouTube, importTechniqueFromYouTube, moderateCategoricalFields } from '@chefsbook/ai';
 import { logAiCall, isInternalPhotoUrl, normalizeSourceUrl, findDuplicateByUrl } from '@chefsbook/db';
 import { ensureTitle } from '../../import/_utils';
 import { YoutubeTranscript } from 'youtube-transcript';
@@ -198,6 +198,30 @@ export async function POST(req: Request) {
         return Response.json({ error: 'Could not extract recipe from video' }, { status: 422, headers });
       }
 
+      // Moderate categorical fields before DB insert
+      let moderatedCuisine: string | null = recipe.cuisine ?? null;
+      let moderatedCourse: string | null = recipe.course ?? null;
+      let moderatedTags: string[] = [];
+      try {
+        const moderated = await moderateCategoricalFields(
+          'pending-extension-youtube',
+          user.id,
+          {
+            tags: (recipe as any).tags ?? [],
+            cuisine: recipe.cuisine ?? undefined,
+            course: recipe.course ?? undefined,
+          }
+        );
+        moderatedCuisine = moderated.cuisine ?? null;
+        moderatedCourse = moderated.course ?? null;
+        moderatedTags = moderated.tags;
+        if (moderated.removed.length > 0) {
+          console.log('[extension/youtube] Moderation removed:', moderated.removed);
+        }
+      } catch (modErr) {
+        console.error('[extension/youtube] Moderation failed:', modErr);
+      }
+
       const { data: newRecipe, error: insertErr } = await db
         .from('recipes')
         .insert({
@@ -207,14 +231,14 @@ export async function POST(req: Request) {
           servings: recipe.servings ?? 4,
           prep_minutes: recipe.prep_minutes,
           cook_minutes: recipe.cook_minutes,
-          cuisine: recipe.cuisine,
-          course: recipe.course,
+          cuisine: moderatedCuisine,
+          course: moderatedCourse,
           source_type: 'youtube',
           source_url: url,
           youtube_video_id: videoId,
           image_url: null,
           notes: recipe.notes,
-          tags: [],
+          tags: moderatedTags,
         })
         .select()
         .single();
@@ -414,6 +438,30 @@ export async function POST(req: Request) {
       }
     }
 
+    // Moderate categorical fields before DB insert
+    let moderatedTags = tags;
+    let moderatedCuisine = recipe.cuisine;
+    let moderatedCourse = recipe.course;
+    try {
+      const moderated = await moderateCategoricalFields(
+        'pending-extension-url',
+        user.id,
+        {
+          tags,
+          cuisine: recipe.cuisine,
+          course: recipe.course,
+        }
+      );
+      moderatedTags = moderated.tags;
+      moderatedCuisine = moderated.cuisine;
+      moderatedCourse = moderated.course;
+      if (moderated.removed.length > 0) {
+        console.log('[extension/url] Moderation removed:', moderated.removed);
+      }
+    } catch (modErr) {
+      console.error('[extension/url] Moderation failed:', modErr);
+    }
+
     const { data: newRecipe, error: insertErr } = await db
       .from('recipes')
       .insert({
@@ -423,8 +471,8 @@ export async function POST(req: Request) {
         servings: recipe.servings ?? 4,
         prep_minutes: recipe.prep_minutes,
         cook_minutes: recipe.cook_minutes,
-        cuisine: recipe.cuisine,
-        course: recipe.course,
+        cuisine: moderatedCuisine,
+        course: moderatedCourse,
         source_type: 'url',
         source_url: url,
         image_url: safeImageUrl,
@@ -432,7 +480,7 @@ export async function POST(req: Request) {
         source_image_description: sourceImageDescription,
         source_url_normalized: normalizedUrl,
         notes: recipe.notes,
-        tags,
+        tags: moderatedTags,
         source_language: sourceLanguage,
         translated_from: sourceLanguage !== 'en' ? sourceLanguage : null,
       })
@@ -483,12 +531,35 @@ export async function POST(req: Request) {
             description: recipe.description ?? null,
             ingredients: (recipe.ingredients ?? []).map((i: any) => i.ingredient).filter(Boolean),
           });
+
+          // Moderate suggested categorical fields before updating
+          let moderatedSuggestion = { ...suggestion };
+          try {
+            const moderated = await moderateCategoricalFields(
+              newRecipe.id,
+              user.id,
+              {
+                tags: suggestion.tags,
+                cuisine: suggestion.cuisine ?? undefined,
+                course: suggestion.course ?? undefined,
+              }
+            );
+            moderatedSuggestion.tags = moderated.tags;
+            moderatedSuggestion.cuisine = moderated.cuisine;
+            moderatedSuggestion.course = moderated.course;
+            if (moderated.removed.length > 0) {
+              console.log('[extension/auto-tag] Moderation removed:', moderated.removed);
+            }
+          } catch (modErr) {
+            console.error('[extension/auto-tag] Moderation failed:', modErr);
+          }
+
           const updates: Record<string, unknown> = {};
-          if (!newRecipe.cuisine && suggestion.cuisine) updates.cuisine = suggestion.cuisine;
-          if (!newRecipe.course && suggestion.course) updates.course = suggestion.course;
-          const newTags = suggestion.tags.filter((t) => !tags.includes(t));
+          if (!newRecipe.cuisine && moderatedSuggestion.cuisine) updates.cuisine = moderatedSuggestion.cuisine;
+          if (!newRecipe.course && moderatedSuggestion.course) updates.course = moderatedSuggestion.course;
+          const newTags = moderatedSuggestion.tags.filter((t) => !moderatedTags.includes(t));
           if (newTags.length > 0) {
-            const merged = [...tags, ...newTags].filter((t: string) => t !== '_incomplete');
+            const merged = [...moderatedTags, ...newTags].filter((t: string) => t !== '_incomplete');
             updates.tags = merged;
           }
           if (Object.keys(updates).length > 0) {
