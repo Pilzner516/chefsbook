@@ -256,6 +256,7 @@
 | FloatingTabBar (mobile) | LIVE | apps/mobile/components/FloatingTabBar.tsx, apps/mobile/app/_layout.tsx | 01, 203 | 5 tabs with i18n labels. Session 203: mounted at root Stack (not inside (tabs) Tabs layout) so it persists on detail screens (recipe/[id], cookbook/[id], chef/[id], share/[token]). Hidden on /, /auth/*, /modal, /messages. |
 | Branded launch splash (3s min) | LIVE | apps/mobile/app/_layout.tsx (SplashOverlay) | 203 | expo-splash-screen preventAutoHideAsync at module scope; React overlay shows chef-hat asset + "ChefsBook" serif wordmark + "Welcome to ChefsBook" tagline for SPLASH_MIN_MS=3000. Warm resume never re-shows. |
 | Web loading splash | LIVE | apps/web/app/loading.tsx | P-209 | Next.js Suspense fallback: cream #faf7f0, chef hat from /images/chefs-hat.png, ChefsBook Georgia serif wordmark, Welcome tagline. Zero network calls, all assets local. |
+| Sidebar nav reordering (web) | LIVE | apps/web/components/Sidebar.tsx, /api/user/nav-order, user_profiles.nav_order | Prompt-S | @hello-pangea/dnd drag-and-drop; grip icon handles; persists to nav_order TEXT[] column; reset button clears; fixed items (Settings, Sign out, Admin, Extension) non-draggable |
 
 ---
 

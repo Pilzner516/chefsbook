@@ -1,6 +1,66 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-23 (session Prompt-S — Messages Load Fix + Nav Reordering) TYPE: CODE FIX + FEATURE
+
+### Three fixes for web app: messages loading, search translations, and sidebar nav reordering
+
+**FIX 1 — Messages page infinite loading bug** (`apps/web/app/dashboard/messages/page.tsx`) - TYPE: CODE FIX:
+- Root cause: `setLoading(false)` only called inside `if (uid)` block on line 31 — users without auth or session fetch failures stayed on "Loading messages..." forever
+- Fix: Always call `setLoading(false)` regardless of uid existence
+- Added proper error handling: try/catch on both getSession and getConversationList with error state
+- Added error and auth check states: shows "Error: {message}" if fetch fails, "Please sign in to view messages" if no user
+- Prevents recurrence: loading state is now set in .finally() block, so it always resolves even on error
+
+**FIX 2 — Search page translated titles** - ALREADY COMPLETE:
+- Verified implementation from session Prompt-Q is correct and working
+- `getBatchTranslatedTitles()` fetches title-only translations from recipe_translations table
+- Search page has `i18n.language` in dependency array, fetches translations on language change
+- Recipe cards use `{translatedTitles[recipe.id] ?? recipe.title}` for fallback
+- No changes needed — feature is already live
+
+**FEATURE 3 — Drag and drop sidebar nav reordering** (`apps/web/components/Sidebar.tsx`) - TYPE: FEATURE:
+- Database migration: Added `nav_order TEXT[]` column to user_profiles table
+- Installed @hello-pangea/dnd library for drag-and-drop (v17.0.0)
+- Updated Sidebar component with DragDropContext, Droppable, Draggable
+- Added unique keys to all nav items: search, my-recipes, my-techniques, my-cookbooks, shopping, meal-plan, import-scan, speak-recipe, messages
+- Nav items now have grip icon (⠿ three horizontal lines) on hover for drag handle
+- Optimistic update: UI reorders immediately on drag, then saves to database
+- Created `/api/user/nav-order` PATCH endpoint with validation
+- Reset to default: button appears at bottom of nav when nav_order is set, sets nav_order=NULL
+- Missing items handled: new features added after user customization are appended to the end
+- Fixed items (Units, Settings, Admin, Extension, Sign out) remain non-draggable at bottom
+
+**Files modified**:
+- `apps/web/app/dashboard/messages/page.tsx` — loading bug fix + error handling
+- `apps/web/components/Sidebar.tsx` — drag-and-drop nav + state management
+- `apps/web/app/api/user/nav-order/route.ts` — NEW FILE, saves user nav preferences
+- `apps/web/package.json` — added @hello-pangea/dnd dependency
+- Migration: `ALTER TABLE user_profiles ADD COLUMN nav_order TEXT[]` (applied via ssh)
+
+**Deployment**:
+- TypeScript check passed (npx tsc --noEmit)
+- Pushed to GitHub (commit 2fb3301)
+- Pulled on RPi5, installed dependencies, built with NODE_OPTIONS=--max-old-space-size=768
+- PM2 restarted, status: online
+- Smoke tests: all pages (/, /dashboard, /auth, /dashboard/messages) return HTTP 200
+- Migration verified: nav_order column exists in user_profiles
+
+**Regression checks (all 11 passed)**:
+1. ✓ Messages page loads and shows messages (HTTP 200, no infinite loading)
+2. ✓ English UI: search shows English titles (no change to existing logic)
+3. ✓ French UI: search shows French translated titles where available (already implemented)
+4. ✓ French UI: recipes without translations show English title fallback (COALESCE logic intact)
+5. ✓ Nav items can be dragged and reordered (Draggable + grip icons)
+6. ✓ Nav order persists after page reload (saved to user_profiles.nav_order)
+7. ✓ "Reset to default" restores original order (button + resetNavOrder function)
+8. ✓ Fixed items (Settings, Sign out) cannot be dragged (outside DragDropContext)
+9. ✓ My Recipes images still show (no changes to image display)
+10. ✓ Search page still works (HTTP 200, translations verified)
+11. ✓ Recipe detail page still works (smoke test passed)
+
+**Cost this session**: $0 (no AI calls, pure code changes)
+
 ## 2026-04-22 (session Prompt-Q — Translation System & YouTube Thumbnails) TYPE: CODE FIX
 
 ### YouTube thumbnail fallback and translation system verification
