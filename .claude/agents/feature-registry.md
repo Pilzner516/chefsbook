@@ -1,5 +1,5 @@
 # ChefsBook Feature Registry
-# Updated: 2026-04-20
+# Updated: 2026-04-23
 # Purpose: Read this before modifying ANY existing feature.
 #           Update this before running /wrapup on ANY session.
 #
@@ -197,7 +197,10 @@
 | Promo code CRUD | LIVE | apps/web/app/admin/promos/ | 28, 90 | supabaseAdmin + error feedback |
 | Plan limits display | LIVE | apps/web/app/admin/limits/ | 28, 134 | Client component via /api/admin?page=limits |
 | User Ideas (was Help Requests) | LIVE | apps/web/app/admin/help/ | 28, 106, 107 | Avatar + @username link + email + relative time per message |
-| Suspend / restore user | LIVE | apps/web/app/admin/users/ | 28 | |
+| User suspension system | LIVE | apps/web/app/admin/users/, /api/admin/route.ts | 28, P-V | account_status column (active/suspended/expelled); Suspend forces free plan + stores pre_suspension_plan; Unsuspend restores original plan; Expel hides all user content; Reinstate restores content visibility; DM notifications on all actions |
+| User activity tracking | LIVE | apps/web/app/api/user/heartbeat/, /api/auth/login-success, dashboard/layout.tsx | P-V | Heartbeat every 3 min updates last_seen_at; login count increments on sign-in; admin users page shows Last Active (green/grey dot), Last Login, Logins, Recipes columns |
+| Restriction banners | LIVE | apps/web/app/dashboard/layout.tsx | P-V | Persistent amber banner for suspended users; persistent red banner for expelled users; both have "Message Support" link with account_restriction_inquiry tag |
+| Expelled content visibility | LIVE | apps/web/app/chef/, apps/web/app/recipe/, apps/web/app/technique/ | P-V | Expelled user profiles return 404; expelled user recipes/techniques redirect to dashboard (unless viewer is owner or admin) |
 | Admin RLS (non-recursive) | LIVE | admin_users table RLS | 89 | user_id = auth.uid() direct check |
 | Reserved usernames | LIVE | reserved_usernames table, /admin/reserved-usernames | 110, 116 | 22 seed entries; signup blocks reserved; admin CRUD; approve with user search dropdown; AI-flagged usernames section |
 | Account status tags | LIVE | user_account_tags table, /admin/users | 110 | Color-coded pills; tag filter; admin-only |
@@ -222,8 +225,9 @@
 | Recipe image lightbox | LIVE | RecipeLightbox component, apps/web/app/recipe/[id]/page.tsx | P-C | Full-screen image viewer on recipe detail; click hero image to open; left/right arrows, keyboard (ArrowLeft/Right/Escape), touch swipe navigation; counter shown when 2+ images; body scroll lock; click outside/X to close; wrapping navigation; createPortal for z-index isolation; web only |
 | extraction_method tracking | LIVE | migration 038, import_attempts | 146 | Records which method succeeded per attempt for admin analytics (json-ld / claude-html / claude-only / pdf-fallback / vision-screenshot / manual / extension-html / refresh-from-source). |
 | Incomplete recipes banner | LIVE | /dashboard, IncompleteRecipesBanner.tsx | 141 | Amber banner, dismissible via localStorage |
-| Flagged comments (admin) | LIVE | /admin/flags, /api/admin (flagged-comments) | 116 | Queries comment_flags; shows comment + commenter + recipe; approve/remove |
-| Flagged messages (admin) | LIVE | /admin/messages, /api/admin (messages) | 116 | Includes user-flagged messages via message_flags; shows flag count + reasons |
+| Merged Admin Messages Hub | LIVE | /admin/messages, /api/admin/inbox, /api/admin/moderation-counts | P-V2 | 4-tab unified page: Flagged Recipes, Flagged Comments, Flagged Messages, Admin Inbox; replaces 3 separate pages; tab badge counts; sidebar reduced to 1 nav item |
+| Admin Inbox | LIVE | /admin/messages (inbox tab), /api/admin/inbox/[userId] | P-V2 | Conversation list + thread view; filters (all/account_restriction_inquiry/direct); unread badges; admin reply send; read_by_admin + message_tag columns |
+| Expelled content filtering | LIVE | search/page.tsx, recipes.ts | P-V2 | Expelled users' content hidden from: search, What's New, Following, My Recipes saved; admin bypass |
 | Step rewriting on import | LIVE | packages/ai (rewriteRecipeSteps), apps/web/lib/saveWithModeration.ts | 147 | HAIKU ~$0.0003/recipe; fire-and-forget on URL/extension imports; backfill script at scripts/rewrite-imported-steps.mjs |
 | AI image generation | LIVE | apps/web/lib/imageGeneration.ts, /api/recipes/generate-image, /api/recipes/regenerate-image, packages/ai/src/imageThemes.ts | 147, 156, 181, 184B, 192 | Replicate Flux Dev ~$0.025/image at ALL levels (session 192 unified — prompt_strength spectrum replaces model switching). Visible ChefsBook badge watermark (session 180). Creativity levels 1-5 from system_settings.image_creativity_level map to prompt_strength {1:0.2, 2:0.4, 3:0.6, 4:0.8, 5:0.95}. img2img when recipes.source_image_url is populated — passes og:image URL as Flux `image` param; aspect_ratio of output matches source. Falls back to text-to-image at same prompt_strength with console.warn when source_image_url is NULL (legacy recipes pre-session-181). Level-1 prompt still leads with "match this source very closely: <describeSourceImage output>" when source_image_description exists. Regeneration limit = 5 per recipe (session 184B); regen_count is incremented (read-then-write). |
 | AI image generation (mobile) | LIVE | apps/mobile/components/AiImageGenerationModal.tsx, /api/recipes/mobile-generate-image | P-207 | Same Replicate backend as web. Modal: 4 states — free plan gate, loading, preview, config. Theme picker (horizontal scroll, emoji tile cards). Creativity slider 1–5 (segment tap + ±buttons). REGEN_LIMIT=5. 402→upgrade alert; 429→regen limit alert. Auto-opens after Speak-a-Recipe save. i18n: 33 keys in imageManager namespace across all 5 locales. |

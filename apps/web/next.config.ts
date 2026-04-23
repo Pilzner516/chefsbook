@@ -38,6 +38,20 @@ const nextConfig: NextConfig = {
       { protocol: 'http', hostname: '**' },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/admin/flagged-recipes',
+        destination: '/admin/messages?tab=recipes',
+        permanent: true,
+      },
+      {
+        source: '/admin/flags',
+        destination: '/admin/messages?tab=comments',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

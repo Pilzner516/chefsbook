@@ -51,9 +51,23 @@ export default function SearchPage() {
   const [ingredientFilter, setIngredientFilter] = useState('');
   const [ingredientPills, setIngredientPills] = useState<string[]>([]);
   const [dietaryFilters, setDietaryFilters] = useState<string[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [expelledUserIds, setExpelledUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => { if (user) setUserId(user.id); });
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id);
+        // Check if user is admin
+        supabase.from('admin_users').select('role').eq('user_id', user.id).maybeSingle()
+          .then(({ data }) => { if (data) setIsAdmin(true); });
+      }
+    });
+    // Fetch expelled user IDs for content filtering
+    supabase.from('user_profiles').select('id').eq('account_status', 'expelled')
+      .then(({ data }) => {
+        if (data) setExpelledUserIds(new Set(data.map((u: any) => u.id)));
+      });
   }, []);
 
   useEffect(() => {
@@ -62,6 +76,12 @@ export default function SearchPage() {
       return () => clearTimeout(timer);
     }
   }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter, i18n.language]);
+
+  // Filter out expelled users' content (unless viewer is admin)
+  const filterExpelledContent = <T extends { user_id: string }>(items: T[]): T[] => {
+    if (isAdmin) return items;
+    return items.filter((item) => !expelledUserIds.has(item.user_id));
+  };
 
   const doSearch = async () => {
     if (!userId) return;
@@ -84,16 +104,22 @@ export default function SearchPage() {
       if (followingIds.length === 0) {
         recipeResults = [];
       } else {
-        const { data } = await supabase
-          .from('recipes')
-          .select('*')
-          .in('user_id', followingIds)
-          .eq('visibility', 'public')
-          .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .order('created_at', { ascending: false })
-          .limit(100);
+        // Filter out expelled users from following list
+        const activeFollowingIds = isAdmin ? followingIds : followingIds.filter(id => !expelledUserIds.has(id));
+        if (activeFollowingIds.length === 0) {
+          recipeResults = [];
+        } else {
+          const { data } = await supabase
+            .from('recipes')
+            .select('*')
+            .in('user_id', activeFollowingIds)
+            .eq('visibility', 'public')
+            .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+            .order('created_at', { ascending: false })
+            .limit(100);
 
-        recipeResults = (data ?? []) as Recipe[];
+          recipeResults = (data ?? []) as Recipe[];
+        }
       }
     }
     // What's New tab
@@ -113,7 +139,9 @@ export default function SearchPage() {
         .limit(50);
 
       // Calculate hot score client-side since we can't do complex formulas in Supabase query
-      recipeResults = ((data ?? []) as Recipe[]).map(r => {
+      // Filter out expelled users' recipes
+      const filteredData = filterExpelledContent((data ?? []) as Recipe[]);
+      recipeResults = filteredData.map(r => {
         const hoursSincePosted = Math.max(1, (Date.now() - new Date(r.created_at).getTime()) / (1000 * 60 * 60));
         const hotScore = ((r.like_count ?? 0) + (r.save_count ?? 0)) / Math.pow(hoursSincePosted, 0.8);
         return { ...r, hot_score: hotScore };
@@ -128,6 +156,10 @@ export default function SearchPage() {
         const ids = new Set(more.map((r) => r.id));
         recipeResults = recipeResults.filter((r) => ids.has(r.id));
       }
+      // Filter out expelled users' recipes (for public results)
+      if (scope === 'all') {
+        recipeResults = filterExpelledContent(recipeResults);
+      }
       // Apply text search client-side
       if (query) {
         const q = query.toLowerCase();
@@ -136,7 +168,7 @@ export default function SearchPage() {
       if (cuisineFilter) recipeResults = recipeResults.filter((r) => r.cuisine === cuisineFilter);
       if (courseFilter) recipeResults = recipeResults.filter((r) => r.course === courseFilter);
     } else {
-      recipeResults = await listRecipes({
+      let results = await listRecipes({
         userId,
         search: query || undefined,
         cuisine: cuisineFilter || undefined,
@@ -147,6 +179,11 @@ export default function SearchPage() {
         includePublic: scope === 'all',
         limit: 100,
       });
+      // Filter out expelled users' recipes (for public results)
+      if (scope === 'all') {
+        results = filterExpelledContent(results);
+      }
+      recipeResults = results;
     }
 
     // Dietary filter
@@ -156,7 +193,9 @@ export default function SearchPage() {
       );
     }
 
-    const techResults = query ? await listTechniques({ userId, search: query, limit: 20 }) : [];
+    let techResults = query ? await listTechniques({ userId, search: query, limit: 20 }) : [];
+    // Filter out expelled users' techniques
+    techResults = filterExpelledContent(techResults);
     setRecipes(recipeResults);
     setTechniques(techResults);
 

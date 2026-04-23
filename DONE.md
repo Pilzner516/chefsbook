@@ -1,6 +1,154 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-23 (session Prompt-V2 — Merged Admin Messages Hub + Expelled Content Filtering) TYPE: FEATURE
+
+### FIX 1 — Expelled users' content hidden from public feeds
+
+**QUERIES UPDATED with expelled user filter:**
+- Search results (both recipe and technique queries)
+- What's New tab (hot score + recent queries)
+- Following tab (followed users' recipes)
+- My Recipes saved recipes (listRecipes + listPublicRecipes in packages/db)
+- Ingredient search results
+
+**Implementation:**
+- Client-side Set-based filtering via `expelledUserIds` state
+- Admin bypass: admins see all content (isAdmin check skips filter)
+- Query-level filter in packages/db/src/queries/recipes.ts using inner join:
+  ```typescript
+  .select('*, user_profiles!inner(account_status)')
+  .neq('user_profiles.account_status', 'expelled')
+  ```
+
+### FEATURE 2 — Merged Admin Messages & Flags Hub
+
+**New unified page at `/admin/messages` with 4 tabs:**
+
+1. **Flagged Recipes tab** — migrated from /admin/flagged-recipes
+2. **Flagged Comments tab** — migrated from /admin/flags  
+3. **Flagged Messages tab** — migrated from existing messages view
+4. **Admin Inbox tab** (NEW) — conversation list + message thread UI
+
+**Admin Inbox features:**
+- Lists conversations with users who have account_restriction_inquiry tag
+- Lists admin-to-user DM threads
+- Unread badge counts per conversation
+- Full conversation thread view on selection
+- Admin reply input + send functionality
+- Filter: All | account_restriction_inquiry | Direct messages
+
+**Database migration (already applied):**
+```sql
+ALTER TABLE direct_messages ADD COLUMN read_by_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE direct_messages ADD COLUMN message_tag TEXT DEFAULT NULL;
+-- constraint: message_tag IN ('account_restriction_inquiry', 'admin_outreach', 'general')
+-- indexes: idx_dm_admin_inbox, idx_dm_message_tag
+```
+
+**API routes created:**
+- `GET /api/admin/inbox` — list admin conversations
+- `GET/POST /api/admin/inbox/[userId]` — get/send messages with user
+- `POST /api/admin/inbox/[userId]/read` — mark conversation as read
+- `GET /api/admin/moderation-counts` — badge counts for all tabs
+
+**Admin sidebar updated:**
+- 3 items (Flagged Comments, Flagged Recipes, Messages) → 1 "Messages & Flags"
+- Nav item links to /admin/messages
+
+**Redirects added (next.config.ts):**
+- `/admin/flagged-recipes` → `/admin/messages?tab=recipes`
+- `/admin/flags` → `/admin/messages?tab=comments`
+
+**FILES CREATED:**
+- `apps/web/app/api/admin/inbox/route.ts`
+- `apps/web/app/api/admin/inbox/[userId]/route.ts`
+- `apps/web/app/api/admin/inbox/[userId]/read/route.ts`
+- `apps/web/app/api/admin/moderation-counts/route.ts`
+- `supabase/migrations/20260423_049_admin_inbox.sql`
+
+**FILES MODIFIED:**
+- `apps/web/app/admin/messages/page.tsx` — complete rewrite as 4-tab hub
+- `apps/web/app/admin/layout.tsx` — 3 nav items → 1 "Messages & Flags"
+- `apps/web/next.config.ts` — added redirects
+- `apps/web/app/dashboard/search/page.tsx` — expelled content filtering
+- `packages/db/src/queries/recipes.ts` — expelled filter in listRecipes + listPublicRecipes
+
+**tsc clean:** ✓ (packages/db + apps/web)
+
+---
+
+## 2026-04-23 (session Prompt-V — User Suspension/Expulsion System) TYPE: FEATURE
+
+### User account status system + admin controls + activity tracking
+
+**DATABASE MIGRATIONS (already applied on RPi5):**
+```sql
+ALTER TABLE user_profiles ADD COLUMN account_status TEXT DEFAULT 'active' CHECK (account_status IN ('active', 'suspended', 'expelled'));
+ALTER TABLE user_profiles ADD COLUMN pre_suspension_plan TEXT DEFAULT NULL;
+ALTER TABLE user_profiles ADD COLUMN status_changed_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE user_profiles ADD COLUMN status_changed_by UUID REFERENCES auth.users(id);
+ALTER TABLE user_profiles ADD COLUMN status_reason TEXT DEFAULT NULL;
+ALTER TABLE user_profiles ADD COLUMN last_seen_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE user_profiles ADD COLUMN login_count INTEGER DEFAULT 0;
+```
+
+**FEATURE 1 — Admin suspend/expel buttons:**
+- Admin Users page: Suspend/Unsuspend/Expel/Reinstate buttons per user row
+- Buttons show based on current account_status (active/suspended/expelled)
+- ChefsDialog confirmations with warning messages
+- API routes added to `/api/admin/route.ts`:
+  - `suspendUser`: Stores pre_suspension_plan, forces free plan, sends DM notification
+  - `unsuspendUser`: Restores original plan from pre_suspension_plan
+  - `expelUser`: Sets expelled status, sends DM notification
+  - `reinstateUser`: Restores active status, sends DM notification
+- Status badges (Suspended/Expelled) shown next to display_name in Users table
+
+**FEATURE 2 — Content visibility enforcement for expelled users:**
+- `/chef/[username]/page.tsx`: Expelled user profiles return 404
+- `/recipe/[id]/page.tsx`: Redirects to dashboard if owner is expelled (unless viewer is owner or admin)
+- `/technique/[id]/page.tsx`: Same expelled owner check as recipes
+
+**FEATURE 3 — User-facing restriction banners:**
+- Dashboard layout shows persistent banner for suspended/expelled users
+- Suspended banner (amber): "Your account has been restricted to the Free plan..."
+- Expelled banner (red): "Your account has been restricted... Your content is temporarily hidden..."
+- Both banners have "Message Support" button linking to compose with tag=account_restriction_inquiry
+
+**FEATURE 5 — Activity indicators:**
+- Heartbeat API: `PATCH /api/user/heartbeat` updates last_seen_at
+- Dashboard layout sends heartbeat on mount and every 3 minutes
+- Login count tracking: `POST /api/auth/login-success` increments login_count after successful login
+- Admin Users page new columns:
+  - Last Active: last_seen_at with green/grey online indicator (5 min threshold)
+  - Last Login: from auth.users.last_sign_in_at
+  - Logins: login_count column
+  - Recipes: count of recipes owned by user
+- Admin API updated to return recipe_count and last_sign_in_at for each user
+
+**FILES CREATED:**
+- `apps/web/app/api/user/heartbeat/route.ts` — Heartbeat endpoint
+- `apps/web/app/api/auth/login-success/route.ts` — Login count increment endpoint
+
+**FILES MODIFIED:**
+- `apps/web/app/api/admin/route.ts` — Added suspendUser, unsuspendUser, expelUser, reinstateUser actions + recipe counts + last_sign_in_at
+- `apps/web/app/admin/users/page.tsx` — New buttons, status badges, activity columns, dialogs
+- `apps/web/app/dashboard/layout.tsx` — Heartbeat effect, accountStatus state, restriction banners
+- `apps/web/app/auth/page.tsx` — Call login-success API after sign in
+- `apps/web/app/chef/[username]/page.tsx` — Expelled user check
+- `apps/web/app/recipe/[id]/page.tsx` — Expelled owner check
+- `apps/web/app/technique/[id]/page.tsx` — Expelled owner check
+
+**PARTIAL/NOT YET IMPLEMENTED:**
+- Feature 4: Merged Admin Messages & Flags hub (4 tabs) — requires new page, not started
+- Admin Inbox tab (account_restriction_inquiry messages, admin DMs) — not started
+- Update admin sidebar nav to merge flagged items — not started
+- Content visibility in search feeds — not yet filtered (only chef profile + detail pages done)
+
+**tsc clean:** ✓
+
+---
+
 ## 2026-04-23 (session Prompt-R — Convert Recipe ↔ Technique) TYPE: FEATURE
 
 ### Move content type via Re-import dropdown

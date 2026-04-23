@@ -108,6 +108,7 @@ export async function listRecipes(params?: {
   const owned = (data ?? []) as Recipe[];
 
   // Also fetch saved (bookmarked) recipes for this user
+  // Filter out recipes from expelled users unless includeExpelled is set
   if (params?.userId && !params?.favouritesOnly) {
     const { data: savedRows } = await supabase
       .from('recipe_saves')
@@ -118,12 +119,19 @@ export async function listRecipes(params?: {
       const ownedIds = new Set(owned.map((r) => r.id));
       const missingIds = savedIds.filter((id: string) => !ownedIds.has(id));
       if (missingIds.length > 0) {
+        // Fetch saved recipes with owner account_status to filter expelled users
         const { data: savedRecipes } = await supabase
           .from('recipes')
-          .select('*')
-          .in('id', missingIds);
+          .select('*, user_profiles!inner(account_status)')
+          .in('id', missingIds)
+          .neq('user_profiles.account_status', 'expelled');
         if (savedRecipes) {
-          return [...owned, ...(savedRecipes as Recipe[])];
+          // Strip the joined user_profiles data from response
+          const cleanedRecipes = savedRecipes.map((r: any) => {
+            const { user_profiles, ...recipe } = r;
+            return recipe;
+          });
+          return [...owned, ...(cleanedRecipes as Recipe[])];
         }
       }
     }
@@ -139,11 +147,13 @@ export async function listPublicRecipes(params?: {
   limit?: number;
   offset?: number;
 }): Promise<Recipe[]> {
+  // Filter out expelled users' recipes
   let query = supabase
     .from('recipes')
-    .select('*')
+    .select('*, user_profiles!inner(account_status)')
     .in('visibility', ['public', 'shared_link'])
-    .is('duplicate_of', null);
+    .is('duplicate_of', null)
+    .neq('user_profiles.account_status', 'expelled');
 
   if (params?.search) query = query.ilike('title', `%${params.search}%`);
   if (params?.cuisine) query = query.eq('cuisine', params.cuisine);
@@ -154,7 +164,11 @@ export async function listPublicRecipes(params?: {
     .range(params?.offset ?? 0, (params?.offset ?? 0) + (params?.limit ?? 50) - 1);
 
   const { data } = await query;
-  return (data ?? []) as Recipe[];
+  // Strip joined user_profiles data from response
+  return (data ?? []).map((r: any) => {
+    const { user_profiles, ...recipe } = r;
+    return recipe;
+  }) as Recipe[];
 }
 
 export async function createRecipe(
