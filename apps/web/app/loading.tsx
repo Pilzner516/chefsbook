@@ -12,28 +12,36 @@ export default function Loading() {
         zIndex: 9999,
       }}
     >
-      <img
-        src="/images/chefs-hat.png"
-        alt="ChefsBook"
-        width={120}
-        height={120}
-        style={{ marginBottom: 24, objectFit: 'contain' }}
-      />
-      <span
+      <div
         style={{
-          fontFamily: 'Georgia, serif',
-          fontSize: 36,
-          fontWeight: 700,
-          color: '#1a1a1a',
-          letterSpacing: '-0.5px',
-          marginBottom: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          marginBottom: 24,
         }}
       >
-        ChefsBook
-      </span>
+        <span
+          style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: 36,
+            fontWeight: 700,
+            letterSpacing: '-0.5px',
+          }}
+        >
+          <span style={{ color: '#ce2b37' }}>Chefs</span>
+          <span style={{ color: '#1a1a1a' }}>book</span>
+        </span>
+        <img
+          src="/images/chefs-hat.png"
+          alt=""
+          width={48}
+          height={48}
+          style={{ objectFit: 'contain' }}
+        />
+      </div>
       <span
         style={{
-          fontFamily: 'Georgia, serif',
+          fontFamily: 'Inter, sans-serif',
           fontSize: 16,
           fontWeight: 400,
           color: '#7a6a5a',
