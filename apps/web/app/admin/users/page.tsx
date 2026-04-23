@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { PlanTier } from '@chefsbook/db';
+import { supabase } from '@chefsbook/db';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
 
 interface UserRow {
@@ -65,6 +66,19 @@ export default function UsersPage() {
   const [bulkProgress, setBulkProgress] = useState<string | null>(null);
   const [tagPopover, setTagPopover] = useState<string | null>(null);
 
+  // Create account modal state
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [createEmail, setCreateEmail] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [createUsername, setCreateUsername] = useState('');
+  const [createDisplayName, setCreateDisplayName] = useState('');
+  const [createPlan, setCreatePlan] = useState<'free' | 'chef' | 'family' | 'pro'>('free');
+  const [createRole, setCreateRole] = useState<'user' | 'admin'>('user');
+  const [createSendWelcome, setCreateSendWelcome] = useState(false);
+  const [createShowPassword, setCreateShowPassword] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -95,6 +109,74 @@ export default function UsersPage() {
   };
 
   useEffect(() => { load(); }, [search, planFilter]);
+
+  const createAccount = async () => {
+    setCreateError(null);
+
+    // Validate fields
+    if (!createEmail || !createPassword || !createUsername) {
+      setCreateError('Please fill in all required fields');
+      return;
+    }
+
+    if (createPassword.length < 8) {
+      setCreateError('Password must be at least 8 characters');
+      return;
+    }
+
+    setCreateSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('/api/admin/users/create', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: createEmail,
+          password: createPassword,
+          username: createUsername,
+          displayName: createDisplayName,
+          plan: createPlan,
+          role: createRole,
+          sendWelcomeEmail: createSendWelcome,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create account');
+      }
+
+      const result = await response.json();
+
+      // Close modal and reset form
+      setShowCreateAccount(false);
+      setCreateEmail('');
+      setCreatePassword('');
+      setCreateUsername('');
+      setCreateDisplayName('');
+      setCreatePlan('free');
+      setCreateRole('user');
+      setCreateSendWelcome(false);
+      setCreateShowPassword(false);
+
+      // Show success message
+      setError(null);
+      alert(`Account created for ${result.email}`);
+
+      // Reload users list
+      load();
+    } catch (e: any) {
+      setCreateError(e.message ?? 'Failed to create account. Please try again.');
+    }
+    setCreateSaving(false);
+  };
 
   const toggleSuspend = async (user: UserRow) => {
     setError(null);
@@ -248,7 +330,18 @@ export default function UsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">User Management</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+        <button
+          onClick={() => setShowCreateAccount(true)}
+          className="bg-cb-primary text-white px-4 py-2 rounded-md text-sm font-semibold hover:opacity-90 transition flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Create Account
+        </button>
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3 mb-4">
@@ -435,6 +528,147 @@ export default function UsersPage() {
             <div className="flex gap-2 justify-end">
               <button onClick={() => setShowBulkMessage(false)} className="text-sm text-gray-500 px-4 py-2">Cancel</button>
               <button onClick={sendBulk} disabled={messageSending || !messageText.trim()} className="bg-cb-primary text-white px-4 py-2 rounded-md text-sm font-semibold disabled:opacity-50">{messageSending ? 'Sending...' : `Send to ${selected.size}`}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Account Modal */}
+      {showCreateAccount && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowCreateAccount(false)}>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-lg mb-4">Create Account</h3>
+
+            {createError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-3 py-2 mb-4">
+                {createError}
+              </div>
+            )}
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={createEmail}
+                  onChange={(e) => setCreateEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={createShowPassword ? 'text' : 'password'}
+                    value={createPassword}
+                    onChange={(e) => setCreatePassword(e.target.value)}
+                    placeholder="Minimum 8 characters"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCreateShowPassword(!createShowPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    {createShowPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={createUsername}
+                  onChange={(e) => setCreateUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  placeholder="username"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={createDisplayName}
+                  onChange={(e) => setCreateDisplayName(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Plan <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={createPlan}
+                  onChange={(e) => setCreatePlan(e.target.value as 'free' | 'chef' | 'family' | 'pro')}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="free">Free</option>
+                  <option value="chef">Chef</option>
+                  <option value="family">Family</option>
+                  <option value="pro">Pro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={createRole}
+                  onChange={(e) => setCreateRole(e.target.value as 'user' | 'admin')}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="sendWelcome"
+                  checked={createSendWelcome}
+                  onChange={(e) => setCreateSendWelcome(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="sendWelcome" className="text-sm text-gray-700">
+                  Send welcome email
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowCreateAccount(false);
+                  setCreateError(null);
+                }}
+                className="text-sm text-gray-500 px-4 py-2"
+                disabled={createSaving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createAccount}
+                disabled={createSaving || !createEmail || !createPassword || !createUsername}
+                className="bg-cb-primary text-white px-4 py-2 rounded-md text-sm font-semibold disabled:opacity-50"
+              >
+                {createSaving ? 'Creating...' : 'Create Account'}
+              </button>
             </div>
           </div>
         </div>

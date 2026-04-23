@@ -110,11 +110,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setAdminNavOrder(newOrder);
     // Save to database
     try {
-      await fetch('/api/admin/nav-order', {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found for admin nav order save');
+        return;
+      }
+      const response = await fetch('/api/admin/nav-order', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ adminNavOrder: newOrder }),
       });
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to save admin nav order:', error);
+      } else {
+        console.log('Admin nav order saved successfully');
+      }
     } catch (err) {
       console.error('Failed to save admin nav order:', err);
     }
@@ -125,11 +139,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setAdminNavOrder(null);
     setOrderedNavItems(DEFAULT_REORDERABLE_NAV);
     try {
-      await fetch('/api/admin/nav-order', {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found for admin nav order reset');
+        return;
+      }
+      const response = await fetch('/api/admin/nav-order', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ adminNavOrder: null }),
       });
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to reset admin nav order:', error);
+      } else {
+        console.log('Admin nav order reset successfully');
+      }
     } catch (err) {
       console.error('Failed to reset admin nav order:', err);
     }
