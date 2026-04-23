@@ -1,5 +1,5 @@
 # ChefsBook Feature Registry
-# Updated: 2026-04-23
+# Updated: 2026-04-23 (Prompt V2)
 # Purpose: Read this before modifying ANY existing feature.
 #           Update this before running /wrapup on ANY session.
 #
