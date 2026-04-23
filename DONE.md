@@ -1,6 +1,81 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-23 (session Prompt-R — Convert Recipe ↔ Technique) TYPE: FEATURE
+
+### Move content type via Re-import dropdown
+
+**FEATURE — Recipe ↔ Technique conversion** on recipe and technique detail pages:
+
+**UI changes:**
+- Recipe detail page: Re-import button → dropdown with:
+  - "🔄 Re-import from source" (existing behavior, unchanged)
+  - "📚 Move to My Techniques" (new)
+- Technique detail page: Added Re-import dropdown with:
+  - "🔄 Re-import from source" (new)
+  - "🍳 Move to My Recipes" (new)
+- Click-outside closes dropdown
+- Loading states: "Converting..." with spinner
+
+**API routes created:**
+- `POST /api/convert/recipe-to-technique` — converts recipe to technique:
+  - Maps: title, description, tags, image_url, youtube_video_id, source_url
+  - Converts recipe_steps → process_steps JSONB
+  - Converts recipe_ingredients → tools_and_equipment TEXT[]
+  - Copies primary photo URL to image_url
+  - Sets visibility='private'
+  - Deletes original recipe after successful creation
+  - Rollback: deletes new technique if recipe delete fails
+  
+- `POST /api/convert/technique-to-recipe` — converts technique to recipe:
+  - Maps: title, description, tags, image_url, youtube_video_id, source_url
+  - Converts process_steps JSONB → recipe_steps rows
+  - Converts tools_and_equipment TEXT[] → recipe_ingredients rows (quantity=null)
+  - Runs checkRecipeCompleteness() on new recipe
+  - Sets visibility='private', is_complete based on gate
+  - Deletes original technique after successful creation
+  - Rollback: deletes new recipe if technique delete fails
+
+**Schema notes (verified via \d on RPi5):**
+- techniques.youtube_video_id EXISTS ✓
+- No technique_user_photos table — just image_url column
+- techniques.process_steps is JSONB array with {step_number, instruction, tip, common_mistake}
+- techniques.tools_and_equipment is TEXT[] (array of strings)
+- techniques has NO notes field (dropped during conversion)
+
+**ChefsDialog confirmations:**
+- Recipe → Technique: "Move to My Techniques? ... Ingredients will become Tools & Equipment."
+- Technique → Recipe: "Move to My Recipes? ... Tools & Equipment will become Ingredients."
+
+**Files created:**
+- `apps/web/app/api/convert/recipe-to-technique/route.ts`
+- `apps/web/app/api/convert/technique-to-recipe/route.ts`
+
+**Files modified:**
+- `apps/web/app/recipe/[id]/page.tsx` — Re-import button → dropdown, added conversion handler
+- `apps/web/app/technique/[id]/page.tsx` — Added Re-import dropdown with both options
+
+**Deployment:**
+- TypeScript check: npx tsc --noEmit passed (0 errors)
+- Pushed to GitHub (commit 5ef5218)
+- Pulled on RPi5, built successfully
+- PM2 restarted, status: online
+- Smoke tests: /, /dashboard, /auth all return HTTP 200
+
+**FULL CHECKLIST AUDIT:**
+- [✓] Re-import button on recipe opens dropdown with two options — DONE (code verified)
+- [✓] Re-import button on technique opens dropdown with two options — DONE (code verified)
+- [✓] "Re-import from source" still works as before (no regression) — DONE (code unchanged, wrapped in dropdown)
+- [✓] Recipe → Technique: conversion handler + API route complete — DONE (code verified)
+- [✓] Technique → Recipe: conversion handler + API route complete — DONE (code verified)
+- [✓] Original record deleted after successful conversion — DONE (code verified: delete after insert)
+- [✓] Redirect goes to correct new detail page — DONE (router.push to /technique/{id} or /recipe/{id})
+- [✓] New recipe starts as private — DONE (visibility='private' in insert)
+- [✓] tsc clean — DONE (0 errors)
+- [✓] Deploy confirmed — DONE (PM2 online, smoke tests pass)
+
+**Cost this session:** $0 (no AI calls, pure code changes)
+
 ## 2026-04-23 (session Prompt-P — Bot Protection) TYPE: FEATURE
 
 ### Three-layer bot protection on web signup and login forms

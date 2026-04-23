@@ -244,6 +244,7 @@
 |---------|--------|-------------|---------|-------|
 | Techniques (separate from recipes) | LIVE | apps/web/dashboard/techniques/, techniques table | 35 | AI classification |
 | Cookbooks with recipe cards | LIVE | apps/web/dashboard/cookbooks/ | 35 | ISBN lookup, cover photo |
+| Convert Recipe ↔ Technique | LIVE | /api/convert/recipe-to-technique, /api/convert/technique-to-recipe, recipe/[id] + technique/[id] pages | P-R | Re-import dropdown with Move to Techniques/Recipes; converts steps/ingredients↔process_steps/tools; original deleted on success; confirmation dialog |
 
 ---
 
