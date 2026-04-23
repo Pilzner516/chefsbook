@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, getTechnique, deleteTechnique, getRecipe } from '@chefsbook/db';
 import type { Technique, TechniqueStep, Recipe } from '@chefsbook/db';
 import { proxyIfNeeded } from '@/lib/recipeImage';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: 'bg-green-100 text-green-700',
@@ -22,6 +23,12 @@ export default function TechniquePage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [relatedRecipes, setRelatedRecipes] = useState<Recipe[]>([]);
+  const [showReimportMenu, setShowReimportMenu] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [convertConfirm, ConvertDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
+  const reimportMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -46,10 +53,74 @@ export default function TechniquePage() {
       await deleteTechnique(id);
       router.push('/dashboard');
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Delete failed', body: e?.message ?? 'Please try again.' });
       setDeleting(false);
     }
   };
+
+  const handleRefresh = async () => {
+    if (!technique?.source_url) return;
+    setRefreshing(true);
+    setShowReimportMenu(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      const res = await fetch('/api/import/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: technique.source_url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Re-import failed');
+      if (data.needsBrowserExtraction) {
+        throw new Error(data.message || 'This site blocks server imports. Install the ChefsBook browser extension and try again.');
+      }
+      showAlert({ title: 'Re-import started', body: 'The technique is being refreshed from the source.' });
+    } catch (e: any) {
+      showAlert({ title: 'Re-import failed', body: e?.message ?? 'Please try again.' });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleConvertToRecipe = async () => {
+    const confirmed = await convertConfirm({
+      title: 'Move to My Recipes?',
+      body: 'This will convert this technique into a recipe. Your title, description, steps, notes, tags, and photos will carry over. Tools & Equipment will become Ingredients. The original technique will be deleted. This cannot be undone.',
+      confirmLabel: 'Yes, move it',
+      cancelLabel: 'Cancel',
+    });
+    if (!confirmed) return;
+
+    setConverting(true);
+    setShowReimportMenu(false);
+    try {
+      const res = await fetch('/api/convert/technique-to-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ techniqueId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Conversion failed');
+      router.push(`/recipe/${data.recipeId}`);
+    } catch (e: any) {
+      showAlert({ title: 'Conversion failed', body: e?.message ?? 'Please try again.' });
+      setConverting(false);
+    }
+  };
+
+  // Close reimport menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (reimportMenuRef.current && !reimportMenuRef.current.contains(e.target as Node)) {
+        setShowReimportMenu(false);
+      }
+    };
+    if (showReimportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showReimportMenu]);
 
   if (loading) {
     return (
@@ -86,6 +157,41 @@ export default function TechniquePage() {
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="text-cb-secondary hover:text-cb-text text-sm font-medium">Dashboard</Link>
           {isOwner && (
+            <div className="relative" ref={reimportMenuRef}>
+              <button
+                onClick={() => setShowReimportMenu(!showReimportMenu)}
+                disabled={refreshing || converting}
+                className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors disabled:opacity-50"
+              >
+                <svg className={`w-4 h-4 ${refreshing || converting ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                </svg>
+                {refreshing ? 'Updating...' : converting ? 'Converting...' : 'Re-import'}
+                <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {showReimportMenu && (
+                <div className="absolute right-0 mt-1 w-56 bg-white border border-cb-border rounded-input shadow-lg z-20">
+                  {technique?.source_url && (
+                    <button
+                      onClick={handleRefresh}
+                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-cb-bg flex items-center gap-2"
+                    >
+                      <span>🔄</span> Re-import from source
+                    </button>
+                  )}
+                  <button
+                    onClick={handleConvertToRecipe}
+                    className={`w-full px-4 py-2.5 text-left text-sm hover:bg-cb-bg flex items-center gap-2 ${technique?.source_url ? 'border-t border-cb-border' : ''}`}
+                  >
+                    <span>🍳</span> Move to My Recipes
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {isOwner && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="flex items-center gap-2 border border-red-200 text-cb-primary px-4 py-2 rounded-input text-sm font-medium hover:bg-red-50 transition-colors"
@@ -117,6 +223,8 @@ export default function TechniquePage() {
       ) : null}
 
       <article className="max-w-4xl mx-auto py-10 px-6">
+        <ConvertDialog />
+        <AlertDialog />
         {/* Header: title + difficulty */}
         <div className="flex items-start gap-3 mb-4">
           <h1 className="text-3xl font-bold flex-1">{technique.title}</h1>

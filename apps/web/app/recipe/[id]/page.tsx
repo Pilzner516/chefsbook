@@ -117,7 +117,11 @@ export default function RecipePage() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showExtensionNotice, setShowExtensionNotice] = useState(false);
   const [extensionContentType, setExtensionContentType] = useState<string>('recipe');
+  const [showReimportMenu, setShowReimportMenu] = useState(false);
+  const [converting, setConverting] = useState(false);
+  const [convertConfirm, ConvertDialog] = useConfirmDialog();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const reimportMenuRef = useRef<HTMLDivElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
   const seekYouTube = useCallback((seconds: number) => {
@@ -386,6 +390,45 @@ export default function RecipePage() {
       setRefreshing(false);
     }
   };
+
+  const handleConvertToTechnique = async () => {
+    const confirmed = await convertConfirm({
+      title: 'Move to My Techniques?',
+      body: 'This will convert this recipe into a technique. Your title, description, steps, notes, tags, and photos will carry over. Ingredients will become Tools & Equipment. The original recipe will be deleted. This cannot be undone.',
+      confirmLabel: 'Yes, move it',
+      cancelLabel: 'Cancel',
+    });
+    if (!confirmed) return;
+
+    setConverting(true);
+    setShowReimportMenu(false);
+    try {
+      const res = await fetch('/api/convert/recipe-to-technique', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipeId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Conversion failed');
+      router.push(`/technique/${data.techniqueId}`);
+    } catch (e: any) {
+      showAlert({ title: 'Conversion failed', body: e?.message ?? 'Please try again.' });
+      setConverting(false);
+    }
+  };
+
+  // Close reimport menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (reimportMenuRef.current && !reimportMenuRef.current.contains(e.target as Node)) {
+        setShowReimportMenu(false);
+      }
+    };
+    if (showReimportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showReimportMenu]);
 
   const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread', 'other'] as const;
 
@@ -1066,17 +1109,40 @@ export default function RecipePage() {
               {recipe.is_favourite ? 'Favourited' : 'Favourite'}
             </button>
           )}
-          {isOwner && recipe?.source_url && (
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors disabled:opacity-50"
-            >
-              <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
-              </svg>
-              {refreshing ? 'Updating...' : 'Re-import'}
-            </button>
+          {isOwner && (
+            <div className="relative" ref={reimportMenuRef}>
+              <button
+                onClick={() => setShowReimportMenu(!showReimportMenu)}
+                disabled={refreshing || converting}
+                className="flex items-center gap-2 border border-cb-border px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-card transition-colors disabled:opacity-50"
+              >
+                <svg className={`w-4 h-4 ${refreshing || converting ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
+                </svg>
+                {refreshing ? 'Updating...' : converting ? 'Converting...' : 'Re-import'}
+                <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {showReimportMenu && (
+                <div className="absolute right-0 mt-1 w-56 bg-white border border-cb-border rounded-input shadow-lg z-20">
+                  {recipe?.source_url && (
+                    <button
+                      onClick={() => { setShowReimportMenu(false); handleRefresh(); }}
+                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-cb-bg flex items-center gap-2"
+                    >
+                      <span>🔄</span> Re-import from source
+                    </button>
+                  )}
+                  <button
+                    onClick={handleConvertToTechnique}
+                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-cb-bg flex items-center gap-2 border-t border-cb-border"
+                  >
+                    <span>📚</span> Move to My Techniques
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           {/* Delete button (owner only) */}
           {isOwner && (
@@ -1509,6 +1575,7 @@ export default function RecipePage() {
       <article className="max-w-4xl mx-auto py-10 px-6">
         <CopyrightDialog />
         <AlertDialog />
+        <ConvertDialog />
         {/* Copyright review banner (owner only) */}
         {isOwner && (recipe as any).copyright_review_pending && (
           <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-card">
