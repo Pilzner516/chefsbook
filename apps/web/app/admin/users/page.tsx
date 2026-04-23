@@ -78,6 +78,10 @@ export default function UsersPage() {
   const [createShowPassword, setCreateShowPassword] = useState(false);
   const [createSaving, setCreateSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -165,6 +169,8 @@ export default function UsersPage() {
       setCreateRole('user');
       setCreateSendWelcome(false);
       setCreateShowPassword(false);
+      setEmailAvailable(null);
+      setUsernameAvailable(null);
 
       // Show success message
       setError(null);
@@ -176,6 +182,66 @@ export default function UsersPage() {
       setCreateError(e.message ?? 'Failed to create account. Please try again.');
     }
     setCreateSaving(false);
+  };
+
+  const checkEmailAvailability = async (email: string) => {
+    if (!email || !email.includes('@')) {
+      setEmailAvailable(null);
+      return;
+    }
+
+    setEmailChecking(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error('No session found for email check');
+        return;
+      }
+
+      const response = await fetch(`/api/admin/users/check-email?email=${encodeURIComponent(email)}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setEmailAvailable(result.available);
+      }
+    } catch (err) {
+      console.error('Failed to check email availability:', err);
+    }
+    setEmailChecking(false);
+  };
+
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setUsernameChecking(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.error('No session found for username check');
+        return;
+      }
+
+      const response = await fetch(`/api/admin/users/check-username?username=${encodeURIComponent(username)}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setUsernameAvailable(result.available);
+      }
+    } catch (err) {
+      console.error('Failed to check username availability:', err);
+    }
+    setUsernameChecking(false);
   };
 
   const toggleSuspend = async (user: UserRow) => {
@@ -550,13 +616,34 @@ export default function UsersPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="email"
-                  value={createEmail}
-                  onChange={(e) => setCreateEmail(e.target.value)}
-                  placeholder="user@example.com"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={createEmail}
+                    onChange={(e) => {
+                      setCreateEmail(e.target.value);
+                      setEmailAvailable(null);
+                    }}
+                    onBlur={(e) => checkEmailAvailability(e.target.value)}
+                    placeholder="user@example.com"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-28"
+                  />
+                  {emailChecking && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      Checking...
+                    </span>
+                  )}
+                  {!emailChecking && emailAvailable === true && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 font-medium">
+                      ✓ Available
+                    </span>
+                  )}
+                  {!emailChecking && emailAvailable === false && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-red-600 font-medium">
+                      ✗ Already registered
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -585,13 +672,34 @@ export default function UsersPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Username <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={createUsername}
-                  onChange={(e) => setCreateUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                  placeholder="username"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={createUsername}
+                    onChange={(e) => {
+                      setCreateUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+                      setUsernameAvailable(null);
+                    }}
+                    onBlur={(e) => checkUsernameAvailability(e.target.value)}
+                    placeholder="username"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm pr-28"
+                  />
+                  {usernameChecking && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      Checking...
+                    </span>
+                  )}
+                  {!usernameChecking && usernameAvailable === true && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 font-medium">
+                      ✓ Available
+                    </span>
+                  )}
+                  {!usernameChecking && usernameAvailable === false && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-red-600 font-medium">
+                      ✗ Already taken
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -656,6 +764,8 @@ export default function UsersPage() {
                 onClick={() => {
                   setShowCreateAccount(false);
                   setCreateError(null);
+                  setEmailAvailable(null);
+                  setUsernameAvailable(null);
                 }}
                 className="text-sm text-gray-500 px-4 py-2"
                 disabled={createSaving}
@@ -664,7 +774,7 @@ export default function UsersPage() {
               </button>
               <button
                 onClick={createAccount}
-                disabled={createSaving || !createEmail || !createPassword || !createUsername}
+                disabled={createSaving || !createEmail || !createPassword || !createUsername || emailAvailable === false || usernameAvailable === false}
                 className="bg-cb-primary text-white px-4 py-2 rounded-md text-sm font-semibold disabled:opacity-50"
               >
                 {createSaving ? 'Creating...' : 'Create Account'}
