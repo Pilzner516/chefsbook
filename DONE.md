@@ -1,6 +1,39 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Avatar + Domain Tags) TYPE: FIX
+
+### FIX 1 — Sidebar avatar now displays correctly
+
+**Problem:** Sidebar showed user's email initial instead of profile photo, even though avatar worked on Settings page.
+
+**Fix:** Updated Sidebar.tsx to use `proxyIfNeeded()` for consistency with Settings page. Both now use identical image proxy logic.
+
+**Files changed:** `apps/web/components/Sidebar.tsx`
+
+### FIX 2 — Domain tags removed from import pipeline
+
+**Problem:** Imported recipes had source domain names (bonappetit.com, seriouseats.com, etc.) appearing as clickable tag pills.
+
+**Root cause:** Claude occasionally extracted domain names from page content as tags, even though the prompt didn't request them.
+
+**Fixes applied:**
+1. Updated Claude prompt in `importFromUrl.ts` to explicitly exclude domain names from tags
+2. Added `filterDomainTags()` utility in `packages/ai/src/client.ts`
+3. Applied filter in 4 extraction points: `importFromUrl`, `importUrlFull`, `scanRecipe`, `scanRecipeMultiPage`
+4. SQL migration cleaned up 13 existing recipes with domain tags
+
+**Domain tag regex:** `^[a-zA-Z0-9-]+\.(com|org|net|io|co|uk|fr|de|app|me|tv|us|ca|au|nz)$`
+
+**Verification:**
+- `SELECT COUNT(*) ... WHERE tag matches domain pattern` = 0 (down from 13)
+- TypeScript: packages/ai + apps/web clean
+- Deploy: live at chefsbk.app
+
+**Commit:** `dbc7574` — fix(web): sidebar avatar + remove domain tags from imports
+
+---
+
 ## 2026-04-24 (session maxTokens Audit) TYPE: FIX
 
 ### Raised maxTokens for truncation-prone callClaude callers
