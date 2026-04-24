@@ -1,6 +1,42 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Verified Badge Redesign) TYPE: FEATURE
+
+### CHANGE 1 — VerifiedChefBadge redesigned as Twitter-style checkmark
+
+**Updated:** `components/VerifiedChefBadge.tsx`
+- Replaced fork/knife/spoon SVG with simple red checkmark in circle
+- Red (#ce2b37) circular background with thin white border
+- White checkmark inside (Twitter-style proportions)
+- Sizes updated: sm (16px inline), md (20px cards), lg (32px profile)
+- Badge renders inline next to @username on same baseline
+- Tooltip unchanged: "Verified Chef · Recognized by Chefsbook"
+
+### CHANGE 2 — "Verified Member · Since [Month Year]" on profile pages
+
+**Updated:** `/chef/[username]` and `/dashboard/chef/[username]`
+- New text line below @username + badge row
+- Only shows when user has "Verified Chef" tag
+- Styled: text-sm text-cb-muted (small grey text)
+- Format: "Verified Member · Since April 2026"
+
+### CHANGE 3 — Badge shows on recipe detail attribution
+
+**Updated:** `/recipe/[id]/page.tsx`
+- Added ownerTags state + fetch from user_account_tags
+- Badge appears inline next to @username in attribution pill
+- Uses sm (16px) size for inline display
+
+**Verified working at:**
+- https://chefsbk.app/chef/pilzner — red checkmark badge next to @pilzner, "Verified Member · Since" text below
+- Recipe detail pages — red checkmark badge in attribution line for verified chefs
+
+**TypeScript:** Clean
+**Deployment:** Live at chefsbk.app
+
+---
+
 ## 2026-04-23 (session Prompt-W — Chef Public Profiles + Badge System) TYPE: FEATURE
 
 ### FIX 1 — Verified Chef Badge Component
