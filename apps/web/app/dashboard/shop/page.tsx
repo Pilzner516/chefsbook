@@ -18,7 +18,7 @@ import {
   togglePin,
 } from '@chefsbook/db';
 import type { ShoppingList, ShoppingListItem } from '@chefsbook/db';
-import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import StoreAvatar from '@/components/StoreAvatar';
 import { getUserStores } from '@chefsbook/db';
@@ -37,6 +37,7 @@ const DEPT_LABELS: Record<string, string> = {
 
 export default function ShopPage() {
   const [confirm, ConfirmDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const { units: unitSystem } = useUnits();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [currentList, setCurrentList] = useState<(ShoppingList & { items: ShoppingListItem[] }) | null>(null);
@@ -114,7 +115,7 @@ export default function ShopPage() {
       const data = await getShoppingList(id);
       setCurrentList(data);
     } catch (err: any) {
-      alert('Failed to open list: ' + (err.message ?? 'Unknown error'));
+      showAlert({ title: 'Error', body: 'Failed to open list: ' + (err.message ?? 'Unknown error') });
     }
   };
 
@@ -169,7 +170,7 @@ export default function ShopPage() {
       await loadLists();
       if (list?.id) openList(list.id);
     } catch (err: any) {
-      alert('Failed to create list: ' + (err.message ?? 'Please try again.'));
+      showAlert({ title: 'Error', body: 'Failed to create list: ' + (err.message ?? 'Please try again.') });
     }
   };
 
@@ -479,6 +480,7 @@ export default function ShopPage() {
           <button onClick={handleAddManual} disabled={!newItemText.trim()} className="bg-cb-primary text-white px-4 py-2 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Add</button>
         </div>
         <ConfirmDialog />
+        <AlertDialog />
       </div>
     );
   }

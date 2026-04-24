@@ -87,7 +87,7 @@ export default function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, c
       setText('');
       await loadComments();
     } catch (e: any) {
-      alert(e.message ?? 'Failed to post comment');
+      showAlert({ title: 'Error', body: e.message ?? 'Failed to post comment' });
     }
     setPosting(false);
   };

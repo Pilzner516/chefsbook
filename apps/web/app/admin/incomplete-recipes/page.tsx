@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 interface IncompleteRecipe {
   id: string;
@@ -21,6 +22,7 @@ interface IncompleteRecipe {
 }
 
 export default function IncompleteRecipesPage() {
+  const [confirm, ConfirmDialog] = useConfirmDialog();
   const [recipes, setRecipes] = useState<IncompleteRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,8 @@ export default function IncompleteRecipesPage() {
   const [bulk, setBulk] = useState<{ total: number; refreshed: number; needsExtension: number; failed: number } | null>(null);
   const [bulkRunning, setBulkRunning] = useState(false);
   const bulkRefresh = async () => {
-    if (!confirm('Refresh every incomplete recipe with a source URL? This runs 1/5s and may take several minutes.')) return;
+    const ok = await confirm({ icon: '🔄', title: 'Refresh All?', body: 'Refresh every incomplete recipe with a source URL? This runs 1/5s and may take several minutes.', confirmLabel: 'Refresh All' });
+    if (!ok) return;
     setBulkRunning(true);
     setBulk(null);
     try {
@@ -71,7 +74,8 @@ export default function IncompleteRecipesPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm('Remove this recipe? This cannot be undone.')) return;
+    const ok = await confirm({ icon: '🗑️', title: 'Remove Recipe?', body: 'This cannot be undone.', confirmLabel: 'Remove' });
+    if (!ok) return;
     try {
       await adminPost({ action: 'deleteRecipe', recipeId: id });
       load();
@@ -171,6 +175,7 @@ export default function IncompleteRecipesPage() {
           {recipes.length === 0 && <p className="p-8 text-center text-gray-500">No incomplete recipes 🎉</p>}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

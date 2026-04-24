@@ -183,7 +183,7 @@ export default function UsersPage() {
 
       // Show success message
       setError(null);
-      alert(`Account created for ${result.email}`);
+      showAlert({ title: 'Success', body: `Account created for ${result.email}` });
 
       // Reload users list
       load();

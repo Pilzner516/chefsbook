@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@chefsbook/db';
 import { SousChefSuggestModal } from './SousChefSuggestModal';
+import { useConfirmDialog } from './useConfirmDialog';
 
 interface Props {
   recipeId: string;
@@ -25,6 +26,7 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
   const [showSousChefModal, setShowSousChefModal] = useState(false);
   const [sousChefSuggestions, setSousChefSuggestions] = useState<any>(null);
   const [hadSourceScrape, setHadSourceScrape] = useState(false);
+  const [confirm, ConfirmDialog] = useConfirmDialog();
 
   if (!sourceUrl || missingFields.length === 0) return null;
 
@@ -215,9 +217,11 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
 
         if (hasMinIngredients && hasSteps && hasTitle && hasDescription) {
           // Show publish dialog
-          const shouldPublish = window.confirm(
-            'Your recipe is ready to share with the Chefsbook community. Would you like to publish it?'
-          );
+          const shouldPublish = await confirm({
+            title: 'Publish Recipe',
+            body: 'Your recipe is ready to share with the Chefsbook community. Would you like to publish it?',
+            confirmLabel: 'Publish',
+          });
 
           if (shouldPublish) {
             await supabase
@@ -356,6 +360,7 @@ export function RefreshFromSourceBanner({ recipeId, sourceUrl, missingFields, on
           onSave={handleSousChefSave}
         />
       )}
+      <ConfirmDialog />
     </div>
   );
 }

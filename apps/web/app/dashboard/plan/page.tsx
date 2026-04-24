@@ -9,7 +9,7 @@ import MealPlanWizard from '@/components/MealPlanWizard';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import ChefsDialog from '@/components/ChefsDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MEAL_SLOTS = ['breakfast', 'brunch', 'lunch', 'dinner', 'snack'] as const;
@@ -229,6 +229,7 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
 
 export default function PlanPage() {
   const [confirmMismatch, ConfirmMismatchDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date();
@@ -358,7 +359,7 @@ export default function PlanPage() {
       if (items.length > 0) await addIngredientsToList(listId, items);
       setShowShopModal(false);
     } catch (e: any) {
-      alert(e?.message ?? 'Failed to add items');
+      showAlert({ title: 'Error', body: e?.message ?? 'Failed to add items' });
     } finally { setAddingToShop(false); }
   };
 
@@ -414,7 +415,7 @@ export default function PlanPage() {
       if (items.length > 0) await addIngredientsToList(listId, items);
       setDayShopDate(null);
     } catch (e: any) {
-      alert(e?.message ?? 'Failed to add items');
+      showAlert({ title: 'Error', body: e?.message ?? 'Failed to add items' });
     } finally { setAddingToShop(false); }
   };
 
@@ -654,6 +655,7 @@ export default function PlanPage() {
         </div>
       )}
       <ConfirmMismatchDialog />
+      <AlertDialog />
     </div>
   );
 }

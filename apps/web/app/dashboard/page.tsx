@@ -14,7 +14,7 @@ import FeedbackCard from '@/components/FeedbackCard';
 import NotificationBell from '@/components/NotificationBell';
 import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
 import VisibilityHintBanner from '@/components/VisibilityHintBanner';
-import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import ThemePickerModal from '@/components/ThemePickerModal';
 import { IMAGE_THEMES } from '@chefsbook/ai';
 import type { ImageTheme } from '@chefsbook/ai';
@@ -72,6 +72,7 @@ export default function DashboardPage() {
   const { i18n } = useTranslation();
   const searchParams = useSearchParams();
   const [confirm, ConfirmDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [search, setSearch] = useState('');
@@ -178,7 +179,7 @@ export default function DashboardPage() {
         setSelected(new Set());
       }, data.started * 3000 + 2000);
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
       setBulkAction(null);
     }
   };
@@ -194,7 +195,7 @@ export default function DashboardPage() {
       }
       await loadRecipes();
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
     }
     setBulkAction(null);
     setSelectMode(false);
@@ -227,9 +228,9 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       await loadRecipes();
-      alert(`${publicRecipes.length} recipe${publicRecipes.length > 1 ? 's' : ''} set to private`);
+      showAlert({ title: 'Success', body: `${publicRecipes.length} recipe${publicRecipes.length > 1 ? 's' : ''} set to private` });
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
     }
     setBulkAction(null);
     setSelectMode(false);
@@ -265,12 +266,12 @@ export default function DashboardPage() {
 
       // Show message with skipped count if any were skipped
       if (data.skipped > 0) {
-        alert(`${data.updated} recipe${data.updated !== 1 ? 's' : ''} set to public. ${data.skipped} recipe${data.skipped !== 1 ? 's' : ''} couldn't be made public — they have incomplete or flagged content.`);
+        showAlert({ title: 'Partially Complete', body: `${data.updated} recipe${data.updated !== 1 ? 's' : ''} set to public. ${data.skipped} recipe${data.skipped !== 1 ? 's' : ''} couldn't be made public — they have incomplete or flagged content.` });
       } else {
-        alert(`${data.updated} recipe${data.updated !== 1 ? 's' : ''} set to public`);
+        showAlert({ title: 'Success', body: `${data.updated} recipe${data.updated !== 1 ? 's' : ''} set to public` });
       }
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
     }
     setBulkAction(null);
     setSelectMode(false);
@@ -310,7 +311,7 @@ export default function DashboardPage() {
     try {
       const full = await getRecipe(recipeId);
       if (!full || !full.ingredients.length) {
-        alert('This recipe has no ingredients to add');
+        showAlert({ title: 'No Ingredients', body: 'This recipe has no ingredients to add' });
         return;
       }
       const items = full.ingredients.map((ing) => ({
@@ -324,7 +325,7 @@ export default function DashboardPage() {
       await addIngredientsToList(listId, items);
       setCartRecipeId(null);
     } catch (e: any) {
-      alert(e?.message ?? 'Failed to add items');
+      showAlert({ title: 'Error', body: e?.message ?? 'Failed to add items' });
     } finally {
       setCartLoading(false);
     }
@@ -773,6 +774,7 @@ export default function DashboardPage() {
         </div>
       )}
       <ConfirmDialog />
+      <AlertDialog />
       {showThemePicker && (
         <ThemePickerModal
           currentTheme={imageTheme}

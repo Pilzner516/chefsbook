@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, getUserStores, createStore, createShoppingList } from '@chefsbook/db';
 import type { Store } from '@chefsbook/db';
+import { useAlertDialog } from './useConfirmDialog';
 
 interface Props {
   onCreated: (listId: string) => void;
@@ -17,6 +18,7 @@ export default function StorePickerDialog({ onCreated, onCancel }: Props) {
   const [newStoreName, setNewStoreName] = useState('');
   const [creating, setCreating] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [showAlert, AlertDialog] = useAlertDialog();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -54,7 +56,7 @@ export default function StorePickerDialog({ onCreated, onCancel }: Props) {
       });
       onCreated(list.id);
     } catch (e: any) {
-      alert('Failed to create list: ' + (e.message ?? ''));
+      showAlert({ title: 'Error', body: 'Failed to create list: ' + (e.message ?? '') });
     }
     setCreating(false);
   };
@@ -117,6 +119,7 @@ export default function StorePickerDialog({ onCreated, onCancel }: Props) {
             {creating ? '...' : 'Create List'}
           </button>
         </div>
+        <AlertDialog />
       </div>
     </div>
   );

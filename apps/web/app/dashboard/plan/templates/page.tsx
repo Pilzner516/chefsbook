@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, listRecipes, addMealPlan } from '@chefsbook/db';
 import type { Recipe, MealSlot } from '@chefsbook/db';
+import { useAlertDialog } from '@/components/useConfirmDialog';
 
 interface TemplateSlot {
   day: number; // 0=Mon ... 6=Sun
@@ -37,6 +38,7 @@ function saveTemplates(templates: MenuTemplate[]) {
 
 export default function MenuTemplatesPage() {
   const router = useRouter();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const [templates, setTemplates] = useState<MenuTemplate[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [creating, setCreating] = useState(false);
@@ -140,7 +142,7 @@ export default function MenuTemplatesPage() {
 
       router.push('/dashboard/plan');
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
     } finally {
       setDeploying(null);
     }
@@ -430,6 +432,7 @@ export default function MenuTemplatesPage() {
           ))}
         </div>
       )}
+      <AlertDialog />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase, getConversationList, getConversation, sendMessage, markMessagesRead, flagMessage } from '@chefsbook/db';
 import type { ConversationPreview, DirectMessage } from '@chefsbook/db';
 import { moderateMessage } from '@chefsbook/ai';
+import { useAlertDialog } from '@/components/useConfirmDialog';
 
 function timeAgo(d: string) {
   const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -14,6 +15,7 @@ function timeAgo(d: string) {
 }
 
 export default function MessagesPage() {
+  const [showAlert, AlertDialog] = useAlertDialog();
   const [userId, setUserId] = useState<string | null>(null);
   const [convos, setConvos] = useState<ConversationPreview[]>([]);
   const [selected, setSelected] = useState<ConversationPreview | null>(null);
@@ -91,9 +93,9 @@ export default function MessagesPage() {
       setText('');
       setConvos((prev) => prev.map((c) => c.other_user_id === selected.other_user_id ? { ...c, last_message: text.trim().slice(0, 80), last_message_at: new Date().toISOString() } : c));
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-      if (modStatus === 'serious') alert('Your message was flagged and hidden for review.');
+      if (modStatus === 'serious') showAlert({ title: 'Message Flagged', body: 'Your message was flagged and hidden for review.' });
     } catch (e: any) {
-      alert(e.message ?? 'Failed to send');
+      showAlert({ title: 'Error', body: e.message ?? 'Failed to send' });
     }
     setSending(false);
   };
@@ -102,7 +104,7 @@ export default function MessagesPage() {
     if (!userId) return;
     await flagMessage(msgId, userId, reason);
     setFlagging(null);
-    alert('Thanks for reporting.');
+    showAlert({ title: 'Reported', body: 'Thanks for reporting.' });
   };
 
   if (loading) return <div className="p-8 text-cb-secondary">Loading messages...</div>;
@@ -239,6 +241,7 @@ export default function MessagesPage() {
           </>
         )}
       </div>
+      <AlertDialog />
     </div>
   );
 }

@@ -5,8 +5,10 @@ import { supabase, logAiCallFromClient } from '@chefsbook/db';
 import { moderateProfile } from '@chefsbook/ai';
 import { proxyIfNeeded } from '@/lib/recipeImage';
 import ImportActivityCard from '@/components/ImportActivityCard';
+import { useConfirmDialog } from '@/components/useConfirmDialog';
 
 export default function SettingsPage() {
+  const [confirm, ConfirmDialog] = useConfirmDialog();
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
@@ -307,7 +309,7 @@ export default function SettingsPage() {
                 return;
               }
 
-              const confirmed = window.confirm(`Make all recipes private?\n\nThis will set all your public recipes to private. They won't be visible to other members until you change them back to Public. Are you sure?`);
+              const confirmed = await confirm({ icon: '🔒', title: 'Make all recipes private?', body: `This will set all your public recipes to private. They won't be visible to other members until you change them back to Public.`, confirmLabel: 'Make Private' });
               if (!confirmed) return;
 
               setSaving(true);
@@ -389,6 +391,7 @@ export default function SettingsPage() {
         <h2 className="text-sm font-bold text-cb-primary mb-2">Danger Zone</h2>
         <button disabled className="border border-red-200 text-cb-primary px-4 py-2 rounded-input text-sm font-medium opacity-50 cursor-not-allowed">Delete Account (coming soon)</button>
       </section>
+      <ConfirmDialog />
     </div>
   );
 }

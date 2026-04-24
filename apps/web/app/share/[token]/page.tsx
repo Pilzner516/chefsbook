@@ -8,8 +8,10 @@ import { getRecipeByShareToken, cloneRecipe, supabase } from '@chefsbook/db';
 import type { RecipeWithDetails } from '@chefsbook/db';
 import { formatDuration, formatQuantity, scaleQuantity } from '@chefsbook/ui';
 import { proxyIfNeeded } from '@/lib/recipeImage';
+import { useAlertDialog } from '@/components/useConfirmDialog';
 
 export default function SharedRecipePage() {
+  const [showAlert, AlertDialog] = useAlertDialog();
   const { token } = useParams<{ token: string }>();
   const searchParams = useSearchParams();
   const refUsername = searchParams.get('ref');
@@ -50,6 +52,7 @@ export default function SharedRecipePage() {
       <main className="min-h-screen bg-cb-bg">
         <Nav />
         <div className="text-center text-cb-secondary py-20">Loading recipe...</div>
+        <AlertDialog />
       </main>
     );
   }
@@ -75,6 +78,7 @@ export default function SharedRecipePage() {
             Go to Chefsbook
           </Link>
         </div>
+        <AlertDialog />
       </main>
     );
   }
@@ -266,7 +270,7 @@ export default function SharedRecipePage() {
                     setSaved(true);
                     setTimeout(() => router.push(`/recipe/${newId}`), 1000);
                   } catch (e: any) {
-                    alert(e.message ?? 'Failed to save recipe');
+                    showAlert({ title: 'Error', body: e.message ?? 'Failed to save recipe' });
                   } finally {
                     setSaving(false);
                   }
@@ -294,6 +298,7 @@ export default function SharedRecipePage() {
         </Link>{' '}
         — Your recipes, beautifully organised
       </footer>
+      <AlertDialog />
     </main>
   );
 }

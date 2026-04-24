@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { supabase, createRecipe, createTechnique, checkRecipeLimit, saveRecipe } from '@chefsbook/db';
 import { scanRecipe } from '@chefsbook/ai';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
-import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 
 // ─── Bookmark types ─────────────────────────────────────────────
 
@@ -33,6 +33,7 @@ type BookmarkPhase = 'idle' | 'checking' | 'preview' | 'importing' | 'done';
 
 export default function ScanPage() {
   const [confirm, ConfirmDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const router = useRouter();
 
   // Image / URL state
@@ -127,7 +128,7 @@ export default function ScanPage() {
       const base64 = await fileToBase64(file);
       const scanned = await scanRecipe(base64, file.type || 'image/jpeg');
       const { recipe, moderation } = await createRecipeWithModeration(user.id, scanned);
-      if (moderation.verdict !== 'clean') alert(moderation.verdict === 'mild' ? 'Recipe saved but is under review.' : 'Recipe flagged — your account is under review.');
+      if (moderation.verdict !== 'clean') showAlert({ title: 'Under Review', body: moderation.verdict === 'mild' ? 'Recipe saved but is under review.' : 'Recipe flagged — your account is under review.' });
       router.push(`/recipe/${recipe.id}`);
     } catch (e: any) {
       setError(e.message);
@@ -1186,6 +1187,7 @@ export default function ScanPage() {
         )}
       </div>
       <ConfirmDialog />
+      <AlertDialog />
     </div>
   );
 }

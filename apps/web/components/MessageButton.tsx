@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase, sendMessage } from '@chefsbook/db';
 import { moderateMessage } from '@chefsbook/ai';
 import ChefsDialog from './ChefsDialog';
+import { useAlertDialog } from './useConfirmDialog';
 
 export default function MessageButton({ targetUserId, targetUsername }: { targetUserId: string; targetUsername: string | null }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -11,6 +12,7 @@ export default function MessageButton({ targetUserId, targetUsername }: { target
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [showAlert, AlertDialog] = useAlertDialog();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -31,7 +33,7 @@ export default function MessageButton({ targetUserId, targetUsername }: { target
       setText('');
       setTimeout(() => { setSent(false); setShowCompose(false); }, 2000);
     } catch (e: any) {
-      alert(e.message ?? 'Failed to send');
+      showAlert({ title: 'Error', body: e.message ?? 'Failed to send' });
     }
     setSending(false);
   };
@@ -71,6 +73,7 @@ export default function MessageButton({ targetUserId, targetUsername }: { target
           { label: sending ? 'Sending...' : 'Send', variant: 'positive', onClick: handleSend },
         ]}
       />
+      <AlertDialog />
     </>
   );
 }

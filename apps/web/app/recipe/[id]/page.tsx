@@ -793,7 +793,7 @@ export default function RecipePage() {
       setShowShoppingModal(false);
       setAddConfirm({ count: result.total, listName: shoppingLists.find((l) => l.id === listId)?.name ?? 'list', listId });
     } catch (e: any) {
-      alert(e?.message ?? 'Failed to add items');
+      showAlert({ title: 'Error', body: e?.message ?? 'Failed to add items' });
     }
   };
 
@@ -809,7 +809,7 @@ export default function RecipePage() {
       setNewStoreName('');
       setShowNewListForm(false);
     } catch (e: any) {
-      alert(e?.message ?? 'Failed to create shopping list');
+      showAlert({ title: 'Error', body: e?.message ?? 'Failed to create shopping list' });
     }
   };
 
@@ -864,7 +864,7 @@ export default function RecipePage() {
           const result = await checkRes.json();
           watermarkRisk = result.risk_level;
           if (result.risk_level === 'high') {
-            alert('This image appears to be from another site and may be copyrighted. Please upload your own photo or use "Generate image" to create a unique AI image for this recipe.');
+            showAlert({ title: 'Copyright Warning', body: 'This image appears to be from another site and may be copyrighted. Please upload your own photo or use "Generate image" to create a unique AI image for this recipe.' });
             setUploading(false);
             return;
           }
@@ -888,7 +888,7 @@ export default function RecipePage() {
       await updateRecipe(id, { image_url: publicUrl });
       setRecipe({ ...recipe, image_url: publicUrl });
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
     } finally {
       setUploading(false);
     }
@@ -908,7 +908,7 @@ export default function RecipePage() {
       // The image will be generated in the background
       setRecipe({ ...recipe, image_generation_status: 'generating' } as any);
     } catch (e: any) {
-      alert(e.message);
+      showAlert({ title: 'Error', body: e.message });
     } finally {
       setGeneratingImage(false);
     }
@@ -1109,7 +1109,7 @@ export default function RecipePage() {
                     const url = `https://chefsbk.app/recipe/${recipe.id}`;
                     await navigator.clipboard.writeText(url);
                     setShowShareMenu(false);
-                    alert('Link copied to clipboard!');
+                    showAlert({ title: 'Success', body: 'Link copied to clipboard!' });
                   }}
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2"
                 >
@@ -1119,7 +1119,7 @@ export default function RecipePage() {
                   onClick={() => {
                     setShowShareMenu(false);
                     if (!userIsPro) {
-                      alert('PDF export requires the Pro plan. Upgrade in Settings.');
+                      showAlert({ title: 'PDF Export', body: 'PDF export requires the Pro plan. Upgrade in Settings.' });
                       return;
                     }
                     setPdfIncludeImage(true);
@@ -1136,7 +1136,7 @@ export default function RecipePage() {
                   <button
                     onClick={() => {
                       setShowShareMenu(false);
-                      if (!userIsPro) { alert('Social sharing is a Pro feature.'); return; }
+                      if (!userIsPro) { showAlert({ title: 'Pro Feature', body: 'Social sharing is a Pro feature.' }); return; }
                       setShowSocialShare(true);
                     }}
                     className={`w-full text-left px-4 py-2.5 text-sm hover:bg-cb-bg flex items-center gap-2 ${!userIsPro ? 'text-cb-muted' : ''}`}
@@ -1448,7 +1448,7 @@ export default function RecipePage() {
             });
             if (!res.ok) {
               const body = await res.json().catch(() => ({}));
-              alert(body.error || 'Failed to regenerate');
+              showAlert({ title: 'Error', body: body.error || 'Failed to regenerate' });
               setRegenerating(false);
               return;
             }
@@ -1459,7 +1459,7 @@ export default function RecipePage() {
               if (attempts > 20) {
                 clearInterval(poll);
                 setRegenerating(false);
-                alert('Image generation is taking longer than expected. Refresh the page in a minute.');
+                showAlert({ title: 'Image Generation', body: 'Image generation is taking longer than expected. Refresh the page in a minute.' });
                 return;
               }
               try {
@@ -1475,7 +1475,7 @@ export default function RecipePage() {
                 } else if (status === 'failed') {
                   clearInterval(poll);
                   setRegenerating(false);
-                  alert('Image generation failed. Please try again.');
+                  showAlert({ title: 'Error', body: 'Image generation failed. Please try again.' });
                 }
               } catch { /* keep polling */ }
             }, 1500);
@@ -1609,7 +1609,7 @@ export default function RecipePage() {
                         const photo = await addRecipePhoto(id, user.id, path, publicUrl);
                         setUserPhotos((prev) => [...prev, photo]);
                       } catch (err: any) {
-                        alert(err?.message ?? 'Upload failed');
+                        showAlert({ title: 'Upload Error', body: err?.message ?? 'Upload failed' });
                       } finally {
                         setUploadingPhoto(false);
                       }
@@ -2477,7 +2477,7 @@ export default function RecipePage() {
                     await saveRecipe(recipe.id, user.id);
                     setCloned(true);
                   } catch (e: any) {
-                    alert(e.message ?? 'Failed to save recipe');
+                    showAlert({ title: 'Error', body: e.message ?? 'Failed to save recipe' });
                   }
                   setCloning(false);
                 }}
@@ -2793,7 +2793,7 @@ export default function RecipePage() {
                   setDownloadingPdf(true);
                   try {
                     const { data: { session } } = await supabase.auth.getSession();
-                    if (!session?.access_token) { alert('Please sign in to download PDFs.'); return; }
+                    if (!session?.access_token) { showAlert({ title: 'PDF Export', body: 'Please sign in to download PDFs.' }); return; }
                     const params = new URLSearchParams();
                     if (!pdfIncludeImage) params.set('includeImage', 'false');
                     if (!pdfIncludeComments) params.set('includeComments', 'false');
@@ -2802,8 +2802,8 @@ export default function RecipePage() {
                       headers: { Authorization: `Bearer ${session.access_token}` },
                     });
                     if (!res.ok) {
-                      if (res.status === 403) alert('PDF export requires the Pro plan.');
-                      else alert('PDF generation failed. Please try again.');
+                      if (res.status === 403) showAlert({ title: 'PDF Export', body: 'PDF export requires the Pro plan.' });
+                      else showAlert({ title: 'PDF Export', body: 'PDF generation failed. Please try again.' });
                       return;
                     }
                     const blob = await res.blob();
@@ -2817,7 +2817,7 @@ export default function RecipePage() {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                   } catch {
-                    alert('PDF generation failed. Please try again.');
+                    showAlert({ title: 'PDF Export', body: 'PDF generation failed. Please try again.' });
                   } finally {
                     setDownloadingPdf(false);
                   }

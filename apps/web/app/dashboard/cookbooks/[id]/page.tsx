@@ -7,10 +7,11 @@ import { supabase, getCookbook, listCookbookRecipes, deleteCookbook, matchCookbo
 import type { Cookbook, CookbookRecipe } from '@chefsbook/db';
 import RecipeReviewPanel from '@/components/RecipeReviewPanel';
 import { proxyIfNeeded } from '@/lib/recipeImage';
-import { useConfirmDialog } from '@/components/useConfirmDialog';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 
 export default function CookbookDetailPage() {
   const [confirm, ConfirmDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [cookbook, setCookbook] = useState<Cookbook | null>(null);
@@ -91,7 +92,7 @@ export default function CookbookDetailPage() {
       setReviewCbRecipe(null);
       router.push(`/recipe/${saved.id}`);
     } catch (e: any) {
-      alert(e?.message ?? 'Failed to save recipe');
+      showAlert({ title: 'Error', body: e?.message ?? 'Failed to save recipe' });
     } finally {
       setReviewSaving(false);
     }
@@ -281,6 +282,7 @@ export default function CookbookDetailPage() {
         </div>
       ) : null}
       <ConfirmDialog />
+      <AlertDialog />
     </div>
   );
 }
