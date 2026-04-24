@@ -58,15 +58,19 @@ export default function DashboardChefPage() {
   const [activeTab, setActiveTab] = useState<TabId>('recipes');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [visibleRecipes, setVisibleRecipes] = useState(12);
+  const [publicRecipeCount, setPublicRecipeCount] = useState(0);
+  const [privateRecipeCount, setPrivateRecipeCount] = useState(0);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setCurrentUserId(data.session?.user?.id ?? null);
+      setAuthChecked(true);
     });
   }, []);
 
   useEffect(() => {
-    if (!username) return;
+    if (!username || !authChecked) return;
     (async () => {
       // Fetch profile
       const { data: p } = await supabase
@@ -79,6 +83,8 @@ export default function DashboardChefPage() {
       if (p.account_status === 'expelled') { setNotFound(true); setLoading(false); return; }
       setProfile(p as Profile);
 
+      const isOwnProfile = currentUserId === p.id;
+
       // Fetch user tags
       const { data: userTags } = await supabase
         .from('user_account_tags')
@@ -86,17 +92,33 @@ export default function DashboardChefPage() {
         .eq('user_id', p.id);
       setTags((userTags ?? []).map((t: { tag: string }) => t.tag));
 
-      // Fetch public recipes
-      const { data: r } = await supabase
+      // Fetch recipes - all if own profile, public only if viewing another user
+      let recipeQuery = supabase
         .from('recipes')
         .select('*')
         .eq('user_id', p.id)
-        .in('visibility', ['public', 'shared_link'])
         .is('parent_recipe_id', null)
         .is('duplicate_of', null)
         .order('created_at', { ascending: false });
+
+      if (!isOwnProfile) {
+        recipeQuery = recipeQuery.in('visibility', ['public', 'shared_link']);
+      }
+
+      const { data: r } = await recipeQuery;
       const recipeList = (r ?? []) as Recipe[];
       setRecipes(recipeList);
+
+      // Calculate public/private counts for own profile
+      if (isOwnProfile) {
+        const publicCount = recipeList.filter(rec => rec.visibility === 'public' || rec.visibility === 'shared_link').length;
+        const privateCount = recipeList.filter(rec => rec.visibility === 'private' || rec.visibility === 'friends').length;
+        setPublicRecipeCount(publicCount);
+        setPrivateRecipeCount(privateCount);
+      } else {
+        setPublicRecipeCount(recipeList.length);
+        setPrivateRecipeCount(0);
+      }
 
       // Fetch primary photos for recipes
       if (recipeList.length > 0) {
@@ -122,27 +144,37 @@ export default function DashboardChefPage() {
       const total = (likesData ?? []).reduce((sum: number, r: { like_count: number | null }) => sum + (r.like_count ?? 0), 0);
       setTotalLikes(total);
 
-      // Fetch public techniques
-      const { data: tech } = await supabase
+      // Fetch techniques - all if own profile, public only if viewing another user
+      let techQuery = supabase
         .from('techniques')
         .select('*')
         .eq('user_id', p.id)
-        .in('visibility', ['public', 'shared_link'])
         .order('created_at', { ascending: false });
+
+      if (!isOwnProfile) {
+        techQuery = techQuery.in('visibility', ['public', 'shared_link']);
+      }
+
+      const { data: tech } = await techQuery;
       setTechniques((tech ?? []) as Technique[]);
 
-      // Fetch public cookbooks
-      const { data: cb } = await supabase
+      // Fetch cookbooks - all if own profile, public only if viewing another user
+      let cbQuery = supabase
         .from('cookbooks')
         .select('*')
         .eq('user_id', p.id)
-        .eq('visibility', 'public')
         .order('created_at', { ascending: false });
+
+      if (!isOwnProfile) {
+        cbQuery = cbQuery.eq('visibility', 'public');
+      }
+
+      const { data: cb } = await cbQuery;
       setCookbooks((cb ?? []) as Cookbook[]);
 
       setLoading(false);
     })();
-  }, [username]);
+  }, [username, authChecked, currentUserId]);
 
   if (loading) return <div className="p-8 text-cb-secondary">Loading profile...</div>;
   if (notFound) return <div className="p-8 text-cb-muted">Profile not found.</div>;
@@ -282,7 +314,13 @@ export default function DashboardChefPage() {
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            {tab === 'recipes' && recipes.length > 0 && <span className="ml-1 text-cb-muted">({recipes.length})</span>}
+            {tab === 'recipes' && recipes.length > 0 && (
+              <span className="ml-1 text-cb-muted">
+                ({isOwnProfile && privateRecipeCount > 0
+                  ? `${publicRecipeCount} public · ${privateRecipeCount} private`
+                  : recipes.length})
+              </span>
+            )}
             {tab === 'techniques' && techniques.length > 0 && <span className="ml-1 text-cb-muted">({techniques.length})</span>}
             {tab === 'cookbooks' && cookbooks.length > 0 && <span className="ml-1 text-cb-muted">({cookbooks.length})</span>}
           </button>
@@ -293,7 +331,7 @@ export default function DashboardChefPage() {
       {activeTab === 'recipes' && (
         <div>
           {recipes.length === 0 ? (
-            <p className="text-cb-muted text-center py-12">No public recipes yet.</p>
+            <p className="text-cb-muted text-center py-12">{isOwnProfile ? 'No recipes yet.' : 'No public recipes yet.'}</p>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
