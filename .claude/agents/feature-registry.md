@@ -163,6 +163,10 @@
 | Message button on profiles | LIVE | apps/web (MessageButton), apps/mobile (chef/[id]) | 98, 101 | Not on own profile; mobile uses bottom sheet (not Alert.prompt) |
 | Message moderation (admin) | LIVE | apps/web/admin/messages/ | 98 | Approve/Remove flagged messages |
 | Message flags | LIVE | message_flags table | 98 | Inappropriate/Harassment/Spam/Other |
+| Chef profile page (redesigned) | LIVE | apps/web/app/chef/[username], /dashboard/chef/[username] | P-W | 4 tabs (recipes/techniques/cookbooks/about); avatar; badges; bio; social links; stats; follow/message buttons; own profile shows "Edit Profile" |
+| Verified Chef badge | LIVE | apps/web/components/VerifiedChefBadge.tsx | P-W | SVG fork/knife/spoon crossed; red #ce2b37; sizes sm/md/lg; tooltip; assigned via user_account_tags 'verified' |
+| User badges (featured/author/new) | LIVE | apps/web/components/UserBadges.tsx | P-W | Reads user_account_tags; featured=gold star; author=book; new=auto 30 days |
+| Profile social links | LIVE | user_profiles (instagram_url, website_url, location), apps/web/dashboard/settings | P-W | Migration 051; editable in Settings page Public Profile section |
 
 ---
 
@@ -181,7 +185,7 @@
 |---------|--------|-------------|---------|-------|
 | Language selector (5 languages: en/fr/es/it/de) | LIVE | LanguagePickerModal, apps/web sidebar | 08, 95 | ONLY 5 — filtered via SUPPORTED_LANGUAGES |
 | Metric/imperial toggle | LIVE | preferencesStore, apps/web sidebar (useUnits hook) | 03, 99 | unitConversion.ts in packages/ui — display-only, never writes to DB; reactive via localStorage events |
-| Profile edit (name, bio) | LIVE | apps/web/dashboard/settings, apps/mobile settings | 29 | |
+| Profile edit (name, bio, location, social) | LIVE | apps/web/dashboard/settings, apps/mobile settings | 29, P-W | Bio 160 char; Location; Instagram; Website (P-W) |
 | Privacy toggle (is_searchable) | LIVE | apps/web, apps/mobile | 29 | |
 | Avatar upload | LIVE | apps/web/dashboard/settings | 35 | |
 | Plan display + upgrade CTA | LIVE | apps/web/dashboard/plans/, apps/mobile | 27 | |

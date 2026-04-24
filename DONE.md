@@ -1,6 +1,68 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-23 (session Prompt-W — Chef Public Profiles + Badge System) TYPE: FEATURE
+
+### FIX 1 — Verified Chef Badge Component
+
+**Created:** `components/VerifiedChefBadge.tsx`
+- SVG badge with crossed fork (left, -35deg) and knife (right, +35deg), spoon centered vertically
+- All utensils in pomodoro red #ce2b37
+- Circular white background with red border
+- Sizes: sm (16px), md (24px), lg (48px)
+- Tooltip on hover: "Verified Chef · Recognized by Chefsbook"
+
+### FIX 2 — UserBadges Component
+
+**Created:** `components/UserBadges.tsx`
+- Reads user tags from `user_account_tags` table
+- Badge types:
+  - `verified` → renders VerifiedChefBadge
+  - `featured` → gold star badge ⭐ (amber-100/amber-700)
+  - `author` → book badge 📚 (cb-green-soft/cb-green)
+  - `new` → auto-computed from created_at (within 30 days), grey pill
+- Returns null if no badges
+
+### FIX 3 — Chef Profile Page Redesign
+
+**Both `/chef/[username]` and `/dashboard/chef/[username]` updated:**
+- Avatar with proper image loading (via `/api/image` proxy)
+- Username + badges (lg size) next to @username
+- Display name and plan badge (Chef/Family/Pro pill)
+- Bio, location, Instagram link, website link
+- Stats row: Recipes, Followers, Following
+- Action button: "Edit Profile" for own profile, Follow/Message for others
+- **4 tabs:**
+  - Recipes: grid of public recipes with images, pagination (12 per page)
+  - Techniques: grid of public techniques with YouTube thumbnails
+  - Cookbooks: grid of public cookbooks with covers
+  - About: full bio, member since, cuisine specialties, total likes, badges earned
+- Follows tabs (existing FollowTabs component)
+
+### FIX 4 — Profile Social Links
+
+**Migration 051 applied:**
+```sql
+ALTER TABLE user_profiles
+ADD COLUMN instagram_url TEXT DEFAULT NULL,
+ADD COLUMN website_url TEXT DEFAULT NULL,
+ADD COLUMN location TEXT DEFAULT NULL;
+```
+
+### FIX 5 — Settings Page Updates
+
+**New fields in Public Profile section:**
+- Bio (existing, now with 160 char limit visible)
+- Location (new text input, e.g. "Paris, France")
+- Instagram (new text input, accepts @handle or full URL)
+- Website (new text input, URL)
+- All saved via existing profile update mechanism
+
+### TypeScript: Clean
+### Deployment: Live at chefsbk.app
+
+---
+
 ## 2026-04-23 (session Prompt-U — Recipe Deletion Ownership Rules + Admin Nuclear Delete) TYPE: FEATURE
 
 ### FIX 1 — Owner delete blocked if others have saved it
