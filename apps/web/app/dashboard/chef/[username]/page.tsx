@@ -193,6 +193,13 @@ export default function DashboardChefPage() {
           <UserBadges tags={tags} createdAt={profile.created_at} size="lg" />
         </div>
 
+        {/* Verified Member · Since [Month Year] */}
+        {tags.includes('Verified Chef') && (
+          <p className="text-sm text-cb-muted mb-1">
+            Verified Member · Since {new Date(profile.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
+          </p>
+        )}
+
         {/* Display name */}
         {profile.display_name && (
           <p className="text-lg text-cb-text">{profile.display_name}</p>

@@ -7,6 +7,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import SocialShareModal from '@/components/SocialShareModal';
 import LikeButton from '@/components/LikeButton';
+import VerifiedChefBadge from '@/components/VerifiedChefBadge';
 import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import StorePickerDialog from '@/components/StorePickerDialog';
@@ -45,6 +46,7 @@ export default function RecipePage() {
   const [copied, setCopied] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [ownerUsername, setOwnerUsername] = useState<string | null>(null);
+  const [ownerTags, setOwnerTags] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -151,6 +153,11 @@ export default function RecipePage() {
       if (data) setServings(data.servings);
       // Load cookbook if linked
       if (data?.cookbook_id) getCookbook(data.cookbook_id).then(setCookbook);
+      // Fetch owner tags for verified badge
+      if (data?.user_id) {
+        supabase.from('user_account_tags').select('tag').eq('user_id', data.user_id)
+          .then(({ data: tags }) => setOwnerTags((tags ?? []).map((t: { tag: string }) => t.tag)));
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -1857,6 +1864,7 @@ export default function RecipePage() {
               <a href={`/dashboard/chef/${uploaderUsername}`} className="inline-flex items-center gap-1.5 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
                 <span className="w-4 h-4 rounded-full bg-cb-primary text-white flex items-center justify-center text-[8px] font-bold">{uploaderUsername.charAt(0).toUpperCase()}</span>
                 @{uploaderUsername}
+                {ownerTags.includes('Verified Chef') && <VerifiedChefBadge size="sm" />}
               </a>
             ) : null;
           })()}
