@@ -10,6 +10,9 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [email, setEmail] = useState('');
   const [planTier, setPlanTier] = useState('free');
   const [saving, setSaving] = useState(false);
@@ -32,6 +35,9 @@ export default function SettingsPage() {
         setDisplayName(profile.display_name ?? '');
         setUsername(profile.username ?? '');
         setBio(profile.bio ?? '');
+        setLocation(profile.location ?? '');
+        setInstagramUrl(profile.instagram_url ?? '');
+        setWebsiteUrl(profile.website_url ?? '');
         setPlanTier(profile.plan_tier ?? 'free');
         setAvatarUrl(profile.avatar_url);
         setOnboardingEnabled(profile.onboarding_enabled ?? true);
@@ -53,6 +59,9 @@ export default function SettingsPage() {
       const { error } = await supabase.from('user_profiles').update({
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
+        location: location.trim() || null,
+        instagram_url: instagramUrl.trim() || null,
+        website_url: websiteUrl.trim() || null,
       }).eq('id', user.id);
       if (error) throw error;
       setMessage('Saved');
@@ -170,13 +179,27 @@ export default function SettingsPage() {
       {/* Profile */}
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Public Profile</h2>
-        <div>
-          <label className="text-sm font-medium text-cb-secondary block mb-1">Bio</label>
-          <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 160))} rows={3} maxLength={160} placeholder="Tell other cooks about yourself..." className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
-          <p className="text-[10px] text-cb-secondary mt-0.5">{bio.length}/160</p>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Bio</label>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 160))} rows={3} maxLength={160} placeholder="Tell other cooks about yourself..." className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+            <p className="text-[10px] text-cb-secondary mt-0.5">{bio.length}/160</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Location</label>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Paris, France" className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Instagram</label>
+            <input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="@username or full URL" className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-cb-secondary block mb-1">Website</label>
+            <input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://your-website.com" className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary" />
+          </div>
         </div>
         {username && (
-          <p className="text-xs text-cb-secondary mt-2">Your public profile: <a href={`/chef/${username}`} className="text-cb-primary hover:underline">/chef/{username}</a></p>
+          <p className="text-xs text-cb-secondary mt-4">Your public profile: <a href={`/chef/${username}`} className="text-cb-primary hover:underline">/chef/{username}</a></p>
         )}
       </section>
 
