@@ -1,4 +1,4 @@
-import { callClaude, extractJSON, HAIKU } from './client';
+import { callClaude, extractJSON, HAIKU, filterDomainTags } from './client';
 import type { ScannedRecipe } from '@chefsbook/db';
 
 const IMPORT_PROMPT = `You are a recipe extraction expert. The user has provided text content scraped from a recipe webpage. Extract the recipe details precisely.
@@ -36,7 +36,7 @@ Rules:
 - Use null for any field not found
 - For "cuisine": detect the most specific cuisine type (e.g. "Italian", "Thai", "Mexican", "French", "American", "Japanese")
 - For "course": Waffles/pancakes/eggs/oatmeal→breakfast. Sandwiches/light soups/salads→lunch. Pasta/roasts/stews/curries/heavy proteins→dinner. Lamb/beef roast/whole chicken→dinner. Cakes/cookies/ice cream→dessert. Chips/dips/nuts→snack. Smoothies/cocktails→drink. Rice/potatoes/vegetable sides→side. Appetizers/bruschetta→starter. Breads/rolls/focaccia/biscuits→bread. Use "other" only as a last resort.
-- For "tags": include 5-8 lowercase tags covering: main protein (chicken, beef, pork, fish, vegetarian, vegan), cooking method (baked, grilled, fried, slow-cooked, no-knead), key characteristics (quick, one-pot, meal-prep, comfort-food), diet flags (gluten-free, dairy-free, keto) if applicable. All tags must be lowercase.
+- For "tags": include 5-8 lowercase tags covering: main protein (chicken, beef, pork, fish, vegetarian, vegan), cooking method (baked, grilled, fried, slow-cooked, no-knead), key characteristics (quick, one-pot, meal-prep, comfort-food), diet flags (gluten-free, dairy-free, keto) if applicable. All tags must be lowercase. NEVER include website domain names (like "bonappetit.com", "seriouseats.com") or brand names as tags — only culinary descriptors.
 - For "notes": Extract the SUBSTANCE of any notes, tips, storage instructions, scaling advice, timing notes, serving suggestions, or substitution hints. Rewrite them as clean prose paragraphs in a neutral voice. Do NOT copy the source site's formatting, label prefixes (e.g. "MULTIPLE:", "TOTAL TIME:", "STORAGE:", "NOTE:", "TIP:"), or sentence structure. Do NOT copy verbatim phrases — paraphrase entirely. If there are no meaningful notes beyond what's already in the description or steps, return null.`;
 
 const CLASSIFY_PROMPT = `You are a web page classifier. Determine if this page contains a recipe.
@@ -443,6 +443,7 @@ ${pageText.slice(0, 25000)}`;
 
   const text = await callClaude({ prompt, maxTokens: 3000 });
   const recipe = extractJSON<ScannedRecipe>(text);
+  recipe.tags = filterDomainTags(recipe.tags);
   return { ...recipe, stage: 'text-extraction' };
 }
 
@@ -568,7 +569,9 @@ ${pageText.slice(0, 25000)}`;
   // 6000 covers multi-component recipes (e.g. Bûche de Noël — 5 sub-recipes,
   // 20+ ingredients, 30+ steps). 3000 truncated mid-array (session 200).
   const text = await callClaude({ prompt, maxTokens: 6000 });
-  return extractJSON<ScannedRecipe>(text);
+  const recipe = extractJSON<ScannedRecipe>(text);
+  recipe.tags = filterDomainTags(recipe.tags);
+  return recipe;
 }
 
 export type ImportResult =

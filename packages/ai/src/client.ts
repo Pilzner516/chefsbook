@@ -147,3 +147,10 @@ export function extractJSON<T>(text: string): T {
     }
   }
 }
+
+const DOMAIN_TAG_PATTERN = /^[a-zA-Z0-9-]+\.(com|org|net|io|co|uk|fr|de|app|me|tv|us|ca|au|nz)$/i;
+
+export function filterDomainTags(tags: string[] | undefined): string[] {
+  if (!tags) return [];
+  return tags.filter((tag) => !DOMAIN_TAG_PATTERN.test(tag));
+}

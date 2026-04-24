@@ -10,6 +10,7 @@ import { LANGUAGES, PRIORITY_LANGUAGES, SUPPORTED_LANGUAGES } from '@chefsbook/u
 import type { UnitSystem } from '@chefsbook/ui';
 import { activateLanguage } from '@/lib/i18n';
 import { useUnits } from '@/lib/useUnits';
+import { proxyIfNeeded } from '@/lib/recipeImage';
 
 type NavItemConfig = {
   key: string;
@@ -236,7 +237,7 @@ export default function Sidebar({ user }: { user: User | null }) {
         {!collapsed && user && (
           <div className="flex items-center gap-2 px-3 py-1.5">
             {avatarUrl ? (
-              <img src={`/api/image?url=${encodeURIComponent(avatarUrl)}`} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+              <img src={proxyIfNeeded(avatarUrl)} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
             ) : (
               <div className="w-6 h-6 rounded-full bg-cb-primary/20 flex items-center justify-center text-[10px] font-bold text-cb-primary shrink-0">
                 {user.email?.charAt(0).toUpperCase() ?? '?'}

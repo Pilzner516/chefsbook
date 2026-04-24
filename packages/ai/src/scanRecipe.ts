@@ -1,4 +1,4 @@
-import { callClaude, extractJSON } from './client';
+import { callClaude, extractJSON, filterDomainTags } from './client';
 import type { ScannedRecipe } from '@chefsbook/db';
 
 const SCAN_PROMPT = `You are a recipe extraction expert. The user has photographed a recipe — a handwritten card, cookbook page, or printed recipe. Extract every visible detail precisely.
@@ -59,7 +59,9 @@ Social media screenshots (Instagram, TikTok, Facebook, Threads, Pinterest, Reddi
 
 export async function scanRecipe(imageBase64: string, mimeType = 'image/jpeg'): Promise<ScannedRecipe> {
   const text = await callClaude({ prompt: SCAN_PROMPT, imageBase64, imageMimeType: mimeType, maxTokens: 3000 });
-  return extractJSON<ScannedRecipe>(text);
+  const recipe = extractJSON<ScannedRecipe>(text);
+  recipe.tags = filterDomainTags(recipe.tags);
+  return recipe;
 }
 
 const MULTI_PAGE_PROMPT = `You are a recipe extraction expert. The user has photographed multiple pages of a single recipe. These images are consecutive pages — treat them as one recipe and extract all information into a unified result.
@@ -80,5 +82,7 @@ export async function scanRecipeMultiPage(
     images: pages,
     maxTokens: 6000,
   });
-  return extractJSON<ScannedRecipe>(text);
+  const recipe = extractJSON<ScannedRecipe>(text);
+  recipe.tags = filterDomainTags(recipe.tags);
+  return recipe;
 }
