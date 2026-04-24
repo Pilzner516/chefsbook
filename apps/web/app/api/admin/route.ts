@@ -32,15 +32,42 @@ export async function GET(req: NextRequest) {
     const { data: admins } = await supabaseAdmin.from('admin_users').select('user_id, role');
     const { data: tags } = await supabaseAdmin.from('user_account_tags').select('user_id, tag');
     const { data: flags } = await supabaseAdmin.from('user_flags').select('user_id, flag_type, note, created_at, id, is_resolved').eq('is_resolved', false);
-    // Fetch emails from auth.users
+    // Fetch emails and last sign in from auth.users
     const { data: { users: authUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 200 });
-    const emailMap = new Map((authUsers ?? []).map((u: any) => [u.id, u.email]));
-    // Fetch throttle/cost data
-    const { data: throttleData } = await supabaseAdmin.from('user_throttle').select('user_id, monthly_cost_usd, throttle_level, is_throttled');
+    const authMap = new Map((authUsers ?? []).map((u: any) => [u.id, { email: u.email, last_sign_in_at: u.last_sign_in_at }]));
+    // Fetch throttle data
+    const { data: throttleData } = await supabaseAdmin.from('user_throttle').select('user_id, throttle_level, is_throttled');
     const throttleMap = new Map((throttleData ?? []).map((t: any) => [t.user_id, t]));
+    // Fetch actual AI costs from ai_usage_log (SUM per user)
+    const { data: costData } = await supabaseAdmin
+      .from('ai_usage_log')
+      .select('user_id, cost_usd');
+    const costMap = new Map<string, number>();
+    for (const c of costData ?? []) {
+      if (c.user_id) {
+        costMap.set(c.user_id, (costMap.get(c.user_id) ?? 0) + Number(c.cost_usd ?? 0));
+      }
+    }
+    // Fetch recipe counts per user
+    const userIds = (data ?? []).map((u: any) => u.id);
+    let recipeCounts = new Map<string, number>();
+    if (userIds.length > 0) {
+      const { data: recipeData } = await supabaseAdmin.from('recipes').select('user_id').in('user_id', userIds);
+      for (const r of recipeData ?? []) {
+        recipeCounts.set(r.user_id, (recipeCounts.get(r.user_id) ?? 0) + 1);
+      }
+    }
     const usersWithEmail = (data ?? []).map((u: any) => {
       const t = throttleMap.get(u.id);
-      return { ...u, email: emailMap.get(u.id) ?? null, monthly_cost_usd: t?.monthly_cost_usd ?? 0, throttle_level: t?.throttle_level ?? null };
+      const auth = authMap.get(u.id);
+      return {
+        ...u,
+        email: auth?.email ?? null,
+        last_sign_in_at: auth?.last_sign_in_at ?? null,
+        monthly_cost_usd: costMap.get(u.id) ?? 0,
+        throttle_level: t?.throttle_level ?? null,
+        recipe_count: recipeCounts.get(u.id) ?? 0,
+      };
     });
     return NextResponse.json({ users: usersWithEmail, admins: admins ?? [], tags: tags ?? [], flags: flags ?? [] });
   }
@@ -840,6 +867,110 @@ export async function POST(req: NextRequest) {
       is_throttled: false,
       throttle_level: null,
     }, { onConflict: 'user_id' });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Suspend user: force free plan, store pre-suspension plan
+  if (action === 'suspendUser') {
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('plan_tier')
+      .eq('id', body.userId)
+      .single();
+
+    await supabaseAdmin.from('user_profiles').update({
+      account_status: 'suspended',
+      pre_suspension_plan: profile?.plan_tier ?? 'free',
+      plan_tier: 'free',
+      status_changed_at: new Date().toISOString(),
+      status_changed_by: adminId,
+      status_reason: body.reason ?? null,
+    }).eq('id', body.userId);
+
+    // Send notification message
+    const { sendMessage } = await import('@chefsbook/db');
+    await sendMessage(
+      adminId,
+      body.userId,
+      'Your ChefsBook account has been restricted to the Free plan. If you have questions, please reply to this message.',
+      'clean',
+      supabaseAdmin
+    ).catch(() => {});
+
+    return NextResponse.json({ ok: true });
+  }
+
+  // Unsuspend user: restore original plan
+  if (action === 'unsuspendUser') {
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('pre_suspension_plan')
+      .eq('id', body.userId)
+      .single();
+
+    await supabaseAdmin.from('user_profiles').update({
+      account_status: 'active',
+      plan_tier: profile?.pre_suspension_plan ?? 'free',
+      pre_suspension_plan: null,
+      status_changed_at: null,
+      status_changed_by: null,
+      status_reason: null,
+    }).eq('id', body.userId);
+
+    // Notify user
+    const { sendMessage } = await import('@chefsbook/db');
+    await sendMessage(
+      adminId,
+      body.userId,
+      'Your ChefsBook account restrictions have been lifted. Thank you for your patience.',
+      'clean',
+      supabaseAdmin
+    ).catch(() => {});
+
+    return NextResponse.json({ ok: true });
+  }
+
+  // Expel user: content becomes hidden from all other users
+  if (action === 'expelUser') {
+    await supabaseAdmin.from('user_profiles').update({
+      account_status: 'expelled',
+      status_changed_at: new Date().toISOString(),
+      status_changed_by: adminId,
+      status_reason: body.reason ?? null,
+    }).eq('id', body.userId);
+
+    // Send notification message
+    const { sendMessage } = await import('@chefsbook/db');
+    await sendMessage(
+      adminId,
+      body.userId,
+      'Your ChefsBook account has been restricted and your content is temporarily hidden from the community. If you have questions, please reply to this message.',
+      'clean',
+      supabaseAdmin
+    ).catch(() => {});
+
+    return NextResponse.json({ ok: true });
+  }
+
+  // Reinstate expelled user: content becomes visible again
+  if (action === 'reinstateUser') {
+    await supabaseAdmin.from('user_profiles').update({
+      account_status: 'active',
+      status_changed_at: null,
+      status_changed_by: null,
+      status_reason: null,
+    }).eq('id', body.userId);
+
+    // Notify user
+    const { sendMessage } = await import('@chefsbook/db');
+    await sendMessage(
+      adminId,
+      body.userId,
+      'Your ChefsBook account has been reinstated. Your content is now visible to the community again.',
+      'clean',
+      supabaseAdmin
+    ).catch(() => {});
+
     return NextResponse.json({ ok: true });
   }
 

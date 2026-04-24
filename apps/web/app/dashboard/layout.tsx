@@ -14,6 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [checking, setChecking] = useState(true);
   const [recipesFrozen, setRecipesFrozen] = useState(false);
   const [frozenDismissed, setFrozenDismissed] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<'active' | 'suspended' | 'expelled'>('active');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -21,8 +22,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.replace('/auth');
       } else {
         setUser(user);
-        supabase.from('user_profiles').select('recipes_frozen').eq('id', user.id).single().then(({ data }) => {
+        supabase.from('user_profiles').select('recipes_frozen, account_status').eq('id', user.id).single().then(({ data }) => {
           if (data?.recipes_frozen) setRecipesFrozen(true);
+          if (data?.account_status) setAccountStatus(data.account_status);
         });
         setChecking(false);
       }
@@ -39,6 +41,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => subscription.unsubscribe();
   }, [router]);
 
+  // Heartbeat: update last_seen_at every 3 minutes
+  useEffect(() => {
+    if (!user) return;
+
+    const sendHeartbeat = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token) {
+          fetch('/api/user/heartbeat', {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }).catch(() => {});
+        }
+      });
+    };
+
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 3 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   if (checking) {
     return <div className="min-h-screen flex items-center justify-center text-cb-secondary">Loading...</div>;
   }
@@ -47,6 +69,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex">
       <Sidebar user={user} />
       <main className="flex-1 bg-cb-bg overflow-auto">
+        {accountStatus === 'suspended' && (
+          <div className="bg-amber-100 border-b border-amber-400 px-6 py-4">
+            <div className="flex items-center gap-3 max-w-4xl">
+              <span className="text-xl">⚠️</span>
+              <div className="flex-1">
+                <p className="text-amber-900 text-sm">
+                  Your account has been restricted to the Free plan by Chefsbook.
+                  If you have questions, please contact our team.
+                </p>
+              </div>
+              <a
+                href="/dashboard/messages?compose=support&tag=account_restriction_inquiry"
+                className="text-sm font-semibold text-amber-900 bg-amber-200 px-4 py-2 rounded hover:bg-amber-300 transition-colors shrink-0"
+              >
+                Message Support
+              </a>
+            </div>
+          </div>
+        )}
+        {accountStatus === 'expelled' && (
+          <div className="bg-red-100 border-b border-red-300 px-6 py-4">
+            <div className="flex items-center gap-3 max-w-4xl">
+              <span className="text-xl">🚫</span>
+              <div className="flex-1">
+                <p className="text-red-900 text-sm">
+                  Your account has been restricted by Chefsbook.
+                  Your content is temporarily hidden from the community.
+                  If you have questions, please contact our team.
+                </p>
+              </div>
+              <a
+                href="/dashboard/messages?compose=support&tag=account_restriction_inquiry"
+                className="text-sm font-semibold text-red-900 bg-red-200 px-4 py-2 rounded hover:bg-red-300 transition-colors shrink-0"
+              >
+                Message Support
+              </a>
+            </div>
+          </div>
+        )}
         {recipesFrozen && !frozenDismissed && (
           <div className="bg-amber-50 border-b border-amber-300 px-6 py-4">
             <div className="flex items-start gap-3 max-w-4xl">

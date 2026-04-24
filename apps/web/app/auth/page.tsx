@@ -123,13 +123,20 @@ export default function AuthPage() {
         setMode('login');
       }
     } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (signInError) {
         setError(signInError.message);
       } else {
+        // Increment login count
+        if (signInData?.session?.access_token) {
+          fetch('/api/auth/login-success', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${signInData.session.access_token}` },
+          }).catch(() => {});
+        }
         router.push('/dashboard');
       }
     }

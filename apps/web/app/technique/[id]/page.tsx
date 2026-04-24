@@ -35,6 +35,24 @@ export default function TechniquePage() {
       const data = await getTechnique(id);
       setTechnique(data);
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Check if technique owner is expelled - hide from non-owners/non-admins
+      if (data) {
+        const { data: ownerProfile } = await supabase
+          .from('user_profiles')
+          .select('account_status')
+          .eq('id', data.user_id)
+          .single();
+        if (ownerProfile?.account_status === 'expelled') {
+          const isCurrentUserOwner = user && user.id === data.user_id;
+          const isAdmin = user ? (await supabase.from('admin_users').select('role').eq('user_id', user.id).maybeSingle()).data : null;
+          if (!isCurrentUserOwner && !isAdmin) {
+            router.push('/dashboard');
+            return;
+          }
+        }
+      }
+
       if (user && data && user.id === data.user_id) setIsOwner(true);
       // Load related recipes
       if (data?.related_recipe_ids?.length) {

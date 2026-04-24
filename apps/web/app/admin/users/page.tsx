@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { PlanTier } from '@chefsbook/db';
 import { supabase } from '@chefsbook/db';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
+import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 
 interface UserRow {
   id: string;
@@ -18,6 +19,10 @@ interface UserRow {
   follower_count: number;
   recipe_count: number;
   created_at: string;
+  account_status: 'active' | 'suspended' | 'expelled';
+  last_seen_at: string | null;
+  last_sign_in_at: string | null;
+  login_count: number;
 }
 
 interface TagRow { user_id: string; tag: string; }
@@ -82,6 +87,10 @@ export default function UsersPage() {
   const [emailChecking, setEmailChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameChecking, setUsernameChecking] = useState(false);
+  const [statusConfirm, StatusDialog] = useConfirmDialog();
+  const [showAlert, AlertDialog] = useAlertDialog();
+  const [statusReason, setStatusReason] = useState('');
+  const [statusAction, setStatusAction] = useState<{ userId: string; type: 'suspend' | 'expel' } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -244,10 +253,50 @@ export default function UsersPage() {
     setUsernameChecking(false);
   };
 
-  const toggleSuspend = async (user: UserRow) => {
+  const handleSuspend = async (user: UserRow) => {
+    const confirmed = await statusConfirm({
+      title: 'Suspend this user?',
+      body: `@${user.username ?? 'user'} will be restricted to the Free plan. Their content remains visible but they lose access to paid features. They will be notified and can message support.`,
+      confirmLabel: 'Suspend',
+      cancelLabel: 'Cancel',
+    });
+    if (!confirmed) return;
     setError(null);
     try {
-      await adminPost({ action: 'toggleSuspend', userId: user.id, suspended: !user.is_suspended });
+      await adminPost({ action: 'suspendUser', userId: user.id, reason: statusReason || null });
+      setStatusReason('');
+    } catch (e: any) { setError(e.message); }
+    load();
+  };
+
+  const handleUnsuspend = async (user: UserRow) => {
+    setError(null);
+    try {
+      await adminPost({ action: 'unsuspendUser', userId: user.id });
+    } catch (e: any) { setError(e.message); }
+    load();
+  };
+
+  const handleExpel = async (user: UserRow) => {
+    const confirmed = await statusConfirm({
+      title: 'Expel this user?',
+      body: `ALL of @${user.username ?? 'user'}'s content (recipes, techniques, comments, messages) will be hidden from every member immediately. This includes recipes others have saved. They will be notified and can message support.`,
+      confirmLabel: 'Expel',
+      cancelLabel: 'Cancel',
+    });
+    if (!confirmed) return;
+    setError(null);
+    try {
+      await adminPost({ action: 'expelUser', userId: user.id, reason: statusReason || null });
+      setStatusReason('');
+    } catch (e: any) { setError(e.message); }
+    load();
+  };
+
+  const handleReinstate = async (user: UserRow) => {
+    setError(null);
+    try {
+      await adminPost({ action: 'reinstateUser', userId: user.id });
     } catch (e: any) { setError(e.message); }
     load();
   };
@@ -462,6 +511,10 @@ export default function UsersPage() {
                 <SortHeader label="Role" sortKeyName="role" />
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Tags</th>
                 <th className="px-2 py-3 text-left font-medium text-gray-500 w-6">⚑</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-500 text-xs">Last Active</th>
+                <th className="px-3 py-3 text-left font-medium text-gray-500 text-xs">Last Login</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-500 text-xs">Logins</th>
+                <th className="px-3 py-3 text-center font-medium text-gray-500 text-xs">Recipes</th>
                 <SortHeader label="Joined" sortKeyName="created_at" />
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
               </tr>
@@ -476,7 +529,15 @@ export default function UsersPage() {
                   <tr key={u.id} className="border-b last:border-0 hover:bg-gray-50">
                     <td className="px-2 py-3"><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} /></td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{u.display_name ?? '—'}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-gray-900">{u.display_name ?? '—'}</span>
+                        {u.account_status === 'suspended' && (
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">Suspended</span>
+                        )}
+                        {u.account_status === 'expelled' && (
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">Expelled</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         {editingUsername === u.id ? (
                           <div className="flex items-center gap-1">
@@ -551,10 +612,42 @@ export default function UsersPage() {
                     <td className="px-2 py-3">
                       {flags.length > 0 && <span className="text-red-500 cursor-pointer" title={flags.map((f) => `${f.flag_type}: ${f.note ?? ''}`).join('\n')} onClick={() => flags.forEach((f) => resolveFlag(f.id, 'Resolved by admin'))}>⚑</span>}
                     </td>
+                    <td className="px-3 py-3 text-xs text-gray-500">
+                      {u.last_seen_at ? (
+                        <div className="flex items-center gap-1">
+                          {(() => {
+                            const lastSeen = new Date(u.last_seen_at);
+                            const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+                            const isOnline = lastSeen.getTime() > fiveMinAgo;
+                            return <span className={`inline-block w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`} title={isOnline ? 'Online' : 'Offline'} />;
+                          })()}
+                          <span>{new Date(u.last_seen_at).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      ) : <span className="text-gray-300">Never</span>}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-gray-500">
+                      {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }) : <span className="text-gray-300">Never</span>}
+                    </td>
+                    <td className="px-3 py-3 text-center text-xs text-gray-500">{u.login_count ?? 0}</td>
+                    <td className="px-3 py-3 text-center text-xs text-gray-500">{u.recipe_count ?? 0}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1.5">
-                        <button onClick={() => toggleSuspend(u)} className={`text-xs px-2 py-1 rounded ${u.is_suspended ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{u.is_suspended ? 'Restore' : 'Suspend'}</button>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {u.account_status === 'active' && (
+                          <>
+                            <button onClick={() => handleSuspend(u)} className="text-xs px-2 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100">Suspend</button>
+                            <button onClick={() => handleExpel(u)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100">Expel</button>
+                          </>
+                        )}
+                        {u.account_status === 'suspended' && (
+                          <>
+                            <button onClick={() => handleUnsuspend(u)} className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100">Unsuspend</button>
+                            <button onClick={() => handleExpel(u)} className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100">Expel</button>
+                          </>
+                        )}
+                        {u.account_status === 'expelled' && (
+                          <button onClick={() => handleReinstate(u)} className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100">Reinstate</button>
+                        )}
                         <button onClick={() => { setShowMessage(u.id); setMessageText(''); }} className="text-xs px-2 py-1 rounded bg-cb-primary/10 text-cb-primary hover:bg-cb-primary/20">Message</button>
                       </div>
                     </td>
@@ -598,6 +691,10 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* Status Dialog (suspend/expel confirmations) */}
+      <StatusDialog />
+      <AlertDialog />
 
       {/* Create Account Modal */}
       {showCreateAccount && (

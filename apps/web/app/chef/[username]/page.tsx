@@ -19,6 +19,9 @@ export default async function ChefPage({ params }: { params: Promise<{ username:
 
   if (!profile) notFound();
 
+  // Expelled users' profiles are not publicly visible
+  if (profile.account_status === 'expelled') notFound();
+
   const chef = profile as UserProfile;
 
   const { data: recipes } = await supabase
