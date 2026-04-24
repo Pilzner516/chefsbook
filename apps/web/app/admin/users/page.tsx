@@ -28,8 +28,8 @@ interface UserRow {
 interface TagRow { user_id: string; tag: string; }
 interface FlagRow { id: string; user_id: string; flag_type: string; note: string | null; created_at: string; }
 
-const GREEN_TAGS = new Set(['VIP', 'Beta Tester', 'Partner', 'Influencer', 'Press', 'Paid', 'Comped', 'Trial Extended']);
-const DEFAULT_TAGS = ['VIP', 'Beta Tester', 'Partner', 'Influencer', 'Press', 'Flagged', 'Under Review', 'Canceled', 'Churned', 'Paid', 'Comped', 'Trial Extended', 'Banned'];
+const GREEN_TAGS = new Set(['VIP', 'Beta Tester', 'Partner', 'Influencer', 'Press', 'Paid', 'Comped', 'Trial Extended', 'Verified Chef', 'Featured Chef', 'Author']);
+const DEFAULT_TAGS = ['Verified Chef', 'Featured Chef', 'Author', 'VIP', 'Beta Tester', 'Partner', 'Influencer', 'Press', 'Flagged', 'Under Review', 'Canceled', 'Churned', 'Paid', 'Comped', 'Trial Extended', 'Banned'];
 
 interface AdminRow {
   user_id: string;

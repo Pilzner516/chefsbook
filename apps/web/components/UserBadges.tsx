@@ -46,13 +46,13 @@ function BadgePill({ children, color, tooltip, size }: { children: React.ReactNo
 export default function UserBadges({ tags, createdAt, size = 'md' }: UserBadgesProps) {
   const badges: React.ReactNode[] = [];
 
-  // Verified badge
-  if (tags.includes('verified')) {
+  // Verified badge (tag: "Verified Chef")
+  if (tags.includes('Verified Chef')) {
     badges.push(<VerifiedChefBadge key="verified" size={size} showTooltip />);
   }
 
-  // Featured badge (gold star)
-  if (tags.includes('featured')) {
+  // Featured badge (gold star, tag: "Featured Chef")
+  if (tags.includes('Featured Chef')) {
     badges.push(
       <BadgePill key="featured" color="bg-amber-100 text-amber-700" tooltip="Featured Chef" size={size}>
         <span>⭐</span>
@@ -60,8 +60,8 @@ export default function UserBadges({ tags, createdAt, size = 'md' }: UserBadgesP
     );
   }
 
-  // Author badge (book)
-  if (tags.includes('author')) {
+  // Author badge (book, tag: "Author")
+  if (tags.includes('Author')) {
     badges.push(
       <BadgePill key="author" color="bg-cb-green-soft text-cb-green" tooltip="Published Cookbook Author" size={size}>
         <span>📚</span>
