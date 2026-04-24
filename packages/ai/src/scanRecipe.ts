@@ -78,7 +78,7 @@ export async function scanRecipeMultiPage(
   const text = await callClaude({
     prompt: MULTI_PAGE_PROMPT,
     images: pages,
-    maxTokens: 4000,
+    maxTokens: 6000,
   });
   return extractJSON<ScannedRecipe>(text);
 }

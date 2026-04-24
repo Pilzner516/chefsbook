@@ -76,7 +76,7 @@ Return ONLY a JSON array:
 
 Return exactly one entry per selected day+slot combination.`;
 
-  const text = await callClaude({ prompt, maxTokens: 3000 });
+  const text = await callClaude({ prompt, maxTokens: 6000 });
   try {
     return extractJSON(text) as MealPlanSlot[];
   } catch {

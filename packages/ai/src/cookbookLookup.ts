@@ -101,7 +101,7 @@ Only suggest recipes that would actually appear in this type of cookbook.
 Return ONLY a JSON array:
 [{ "name": "chapter name", "recipes": [{ "title": "recipe name", "page_estimate": number_or_null }] }]`;
 
-  const text = await callClaude({ prompt, maxTokens: 3000 });
+  const text = await callClaude({ prompt, maxTokens: 4000 });
   try {
     return extractJSON<AiTocChapter[]>(text);
   } catch {
