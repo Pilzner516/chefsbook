@@ -7,6 +7,7 @@ import { supabase, getTechnique, deleteTechnique, getRecipe } from '@chefsbook/d
 import type { Technique, TechniqueStep, Recipe } from '@chefsbook/db';
 import { proxyIfNeeded } from '@/lib/recipeImage';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
+import VerifiedChefBadge from '@/components/VerifiedChefBadge';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: 'bg-green-100 text-green-700',
@@ -23,6 +24,8 @@ export default function TechniquePage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [relatedRecipes, setRelatedRecipes] = useState<Recipe[]>([]);
+  const [ownerUsername, setOwnerUsername] = useState<string | null>(null);
+  const [ownerTags, setOwnerTags] = useState<string[]>([]);
   const [showReimportMenu, setShowReimportMenu] = useState(false);
   const [converting, setConverting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,7 +43,7 @@ export default function TechniquePage() {
       if (data) {
         const { data: ownerProfile } = await supabase
           .from('user_profiles')
-          .select('account_status')
+          .select('account_status, username')
           .eq('id', data.user_id)
           .single();
         if (ownerProfile?.account_status === 'expelled') {
@@ -51,6 +54,10 @@ export default function TechniquePage() {
             return;
           }
         }
+        if (ownerProfile?.username) setOwnerUsername(ownerProfile.username);
+        // Fetch owner tags for verified badge
+        const { data: tags } = await supabase.from('user_account_tags').select('tag').eq('user_id', data.user_id);
+        setOwnerTags((tags ?? []).map((t: { tag: string }) => t.tag));
       }
 
       if (user && data && user.id === data.user_id) setIsOwner(true);
@@ -257,6 +264,28 @@ export default function TechniquePage() {
           <p className="text-cb-secondary text-lg mb-6 leading-relaxed">{technique.description}</p>
         )}
 
+        {/* Attribution row */}
+        <div className="flex items-center gap-2 flex-wrap mb-4">
+          {ownerUsername && (
+            <Link href={`/chef/${ownerUsername}`} className="inline-flex items-center gap-1.5 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
+              <span className="w-4 h-4 rounded-full bg-cb-primary text-white flex items-center justify-center text-[8px] font-bold">{ownerUsername.charAt(0).toUpperCase()}</span>
+              @{ownerUsername}
+              {ownerTags.includes('Verified Chef') && <VerifiedChefBadge size="sm" />}
+            </Link>
+          )}
+          {technique.source_url && (() => {
+            try {
+              const domain = new URL(technique.source_url).hostname.replace('www.', '');
+              return (
+                <a href={technique.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 bg-cb-bg border border-cb-border rounded-full px-3 py-1 text-xs font-medium text-cb-text hover:border-cb-primary/50 transition">
+                  🔗 {domain} <span className="text-[10px] text-cb-muted">↗</span>
+                </a>
+              );
+            } catch { return null; }
+          })()}
+          <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">Technique</span>
+        </div>
+
         {/* Source links */}
         <div className="flex items-center gap-4 mb-8 flex-wrap">
           {technique.source_url && (
@@ -283,7 +312,6 @@ export default function TechniquePage() {
               )}
             </a>
           )}
-          <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">Technique</span>
         </div>
 
         {/* Two column layout */}
