@@ -50,6 +50,7 @@ export default function Sidebar({ user }: { user: User | null }) {
   const [counts, setCounts] = useState<{ recipes: number; techniques: number }>({ recipes: 0, techniques: 0 });
   const [isAdmin, setIsAdmin] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [language, setLanguageState] = useState('en');
   const { units, setUnits } = useUnits();
   const [langOpen, setLangOpen] = useState(false);
@@ -61,12 +62,13 @@ export default function Sidebar({ user }: { user: User | null }) {
     if (saved === 'true') setCollapsed(true);
   }, []);
 
-  // Load language preference from Supabase
+  // Load profile data (language + avatar) from Supabase
   useEffect(() => {
     if (!user) return;
-    supabase.from('user_profiles').select('preferred_language').eq('id', user.id).single().then(({ data }) => {
+    supabase.from('user_profiles').select('preferred_language, avatar_url').eq('id', user.id).single().then(({ data }) => {
       if (data) {
         setLanguageState(data.preferred_language || 'en');
+        setAvatarUrl(data.avatar_url || null);
       }
     });
   }, [user]);
@@ -233,9 +235,13 @@ export default function Sidebar({ user }: { user: User | null }) {
         </Link>
         {!collapsed && user && (
           <div className="flex items-center gap-2 px-3 py-1.5">
-            <div className="w-6 h-6 rounded-full bg-cb-primary/20 flex items-center justify-center text-[10px] font-bold text-cb-primary shrink-0">
-              {user.email?.charAt(0).toUpperCase() ?? '?'}
-            </div>
+            {avatarUrl ? (
+              <img src={`/api/image?url=${encodeURIComponent(avatarUrl)}`} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-cb-primary/20 flex items-center justify-center text-[10px] font-bold text-cb-primary shrink-0">
+                {user.email?.charAt(0).toUpperCase() ?? '?'}
+              </div>
+            )}
             <p className="text-xs text-cb-secondary truncate flex-1">{user.email}</p>
           </div>
         )}
