@@ -1,6 +1,48 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Alert Cleanup) TYPE: REFACTOR
+
+### Replaced all raw browser alerts with ChefsDialog system
+
+**Scope:** 45 raw `alert()`, `confirm()`, and `prompt()` calls across 16 web files
+
+**Files changed:**
+- Admin pages: `incomplete-recipes/page.tsx` (2 confirm), `users/page.tsx` (1 alert)
+- Dashboard pages: `messages/page.tsx` (3), `page.tsx` (9), `plan/page.tsx` (2), `plan/templates/page.tsx` (1), `settings/page.tsx` (1 confirm), `shop/page.tsx` (2)
+- Scan page: `scan/page.tsx` (1)
+- Cookbook detail: `cookbooks/[id]/page.tsx` (1)
+- Recipe detail: `recipe/[id]/page.tsx` (17) — largest file
+- Share page: `share/[token]/page.tsx` (1)
+- Components: `MessageButton.tsx` (1), `RecipeComments.tsx` (1), `RefreshFromSourceBanner.tsx` (1 confirm), `StorePickerDialog.tsx` (1)
+
+**Replacements:**
+- `alert('message')` → `showAlert({ title: 'Title', body: 'message' })`
+- `window.confirm('message')` → `await confirm({ title: 'Title', body: 'message', confirmLabel: 'Label' })`
+- Added `useAlertDialog` / `useConfirmDialog` imports and hooks
+- Rendered `<AlertDialog />` / `<ConfirmDialog />` components in each file
+
+**Benefits:**
+- ✅ Consistent UX across all dialogs
+- ✅ Non-blocking (no main thread freeze)
+- ✅ Mobile-friendly
+- ✅ Themeable (uses Trattoria palette)
+- ✅ Accessible
+
+**Verification:**
+- Grep: 0 raw calls remaining
+- TypeScript: `npx tsc --noEmit` clean (exit code 0)
+- Deployment: Live at chefsbk.app (all smoke tests passed)
+
+**Build notes:**
+- RPi5 build via `turbo build --filter=@chefsbook/web` (768MB memory)
+- Direct `next build` hits SIGKILL during type check (expected on arm64)
+- Turbo build completed in 1m33s
+
+**Commit:** `f817145` — refactor(web): replace all raw alert/confirm calls with ChefsDialog system
+
+---
+
 ## 2026-04-24 (session Messages Page Fix) TYPE: FIX
 
 ### Permanent fix for "supabaseKey is required" error on /dashboard/messages
