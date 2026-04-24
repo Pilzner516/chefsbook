@@ -112,7 +112,7 @@ ssh rasp@rpi5-eth "psql postgresql://supabase_admin:<pw>@localhost:5432/postgres
 - **Postgres**: port 5432 on 100.110.47.62 (internal only)
 - **Network**: Tailscale mesh — accessible from any device on the tailnet
 - **Storage**: 54GB USB drive mounted at /mnt/chefsbook on rpi5-eth
-- **Email**: SMTP via Resend (smtp.resend.com, noreply@chefsbk.app). GOTRUE_MAILER_AUTOCONFIRM=true (signup auto-confirm stays on). Password recovery emails working.
+- **Email**: SMTP via Resend (smtp.resend.com, noreply@chefsbk.app). GOTRUE_MAILER_AUTOCONFIRM=true (signup auto-confirm stays on). Password recovery emails working. Welcome emails sent via Resend API on admin account creation (requires RESEND_API_KEY).
 - **Admin accounts**: pilzner (a@aol.com) + seblux (seblux100@gmail.com) — both super_admin in admin_users table
 - **NOT using**: supabase.com cloud — everything is self-hosted
 - **Migrations**: SQL files in `supabase/migrations/` — apply manually via `psql` on rpi5-eth (no Supabase CLI migration runner; self-hosted)
@@ -164,6 +164,7 @@ GOOGLE_BOOKS_API_KEY=<key>                  # Google Books API (optional — wor
 REPLICATE_API_TOKEN=<key>                   # Replicate Flux Dev (AI image generation — ~$0.025/image)
 PEXELS_API_KEY=<key>                        # Pexels API (recipe image search picker; EXPO_PUBLIC_ prefix for mobile)
 UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
+RESEND_API_KEY=<key>                        # Resend email API (welcome emails; optional — gracefully skips if not set)
 ```
 
 ## Moderation Permission Model

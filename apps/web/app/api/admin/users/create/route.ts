@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { sendWelcomeEmail } from '@/lib/email';
 
 /** Verify the request is from an admin user. Returns userId or null. */
 async function verifyAdmin(req: NextRequest): Promise<string | null> {
@@ -123,8 +124,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // TODO: Send welcome email if sendWelcomeEmail is true
-    // Check how other emails are sent in the codebase and implement here
+    // Send welcome email if requested
+    if (sendWelcomeEmail) {
+      const emailSent = await sendWelcomeEmail({
+        email,
+        name: displayName || username,
+        username,
+      });
+      if (emailSent) {
+        console.log('[admin/users/create] Welcome email sent');
+      } else {
+        console.log('[admin/users/create] Welcome email skipped (API key not configured)');
+      }
+    }
 
     console.log('[admin/users/create] Account created successfully');
     return NextResponse.json({
