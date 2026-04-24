@@ -1,6 +1,28 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Messages Page Fix) TYPE: FIX
+
+### Permanent fix for "supabaseKey is required" error on /dashboard/messages
+
+**Root cause:** PM2 runtime didn't have `NEXT_PUBLIC_*` env vars. While Next.js inlines them into client bundles at build time, server-side rendering still needs them at runtime.
+
+**Fix:**
+1. Updated `deploy-staging.sh` to generate `ecosystem.config.js` with env vars from `.env.local`
+2. PM2 now starts with proper env vars for SSR
+3. Added build verification step that checks if `api.chefsbk.app` is inlined in built JS chunks
+
+**Files on RPi5:**
+- `/mnt/chefsbook/deploy-staging.sh` — generates ecosystem config from sourced .env.local
+- `/mnt/chefsbook/repo/apps/web/ecosystem.config.js` — PM2 config with runtime env vars
+
+**This fix is permanent:** The deploy script now always regenerates the ecosystem config with current env vars, ensuring PM2 has them for SSR.
+
+**TypeScript:** N/A (deployment fix)
+**Deployment:** Live at chefsbk.app
+
+---
+
 ## 2026-04-24 (session Technique Attribution) TYPE: FEATURE
 
 ### Added attribution row to technique detail page
