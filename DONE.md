@@ -1,6 +1,29 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Profile Page Fixes) TYPE: FIX
+
+### FIX 1 — Techniques tab shows 0 despite user having techniques
+
+**Root cause:** All techniques were `private` visibility; query filtered by public only even for own profile.
+
+**Fix:** When `isOwnProfile`, fetch ALL content (recipes, techniques, cookbooks) without visibility filter. Query now:
+- Own profile: fetch all items regardless of visibility
+- Other profiles: filter by `visibility IN ('public', 'shared_link')`
+
+### FIX 2 — Own profile shows all recipes with public/private counts
+
+**Updated:** `/chef/[username]` and `/dashboard/chef/[username]`
+- Added `authChecked` state to wait for session before fetching content
+- Added `publicRecipeCount` and `privateRecipeCount` state
+- Tab display shows "56 public · 27 private" when viewing own profile with private recipes
+- Empty state message: "No recipes yet." (own) vs "No public recipes yet." (other)
+
+**TypeScript:** Clean
+**Deployment:** Live at chefsbk.app
+
+---
+
 ## 2026-04-24 (session Verified Badge Redesign) TYPE: FEATURE
 
 ### CHANGE 1 — VerifiedChefBadge redesigned as Twitter-style checkmark
