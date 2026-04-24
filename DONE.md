@@ -1,6 +1,39 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session maxTokens Audit) TYPE: FIX
+
+### Raised maxTokens for truncation-prone callClaude callers
+
+**Problem:** Several AI functions had maxTokens values too low for their expected output, causing silent JSON truncation in heavy extraction tasks.
+
+**Audit scope:** All 51 `callClaude()` calls across packages/ai, apps/web, and apps/mobile.
+
+**Full inventory (old → new maxTokens):**
+
+| File | Function | Old | New | Notes |
+|------|----------|-----|-----|-------|
+| cookbookLookup.ts:104 | generateCookbookToc | 3000 | **4000** | TOC with 50+ recipes |
+| scanRecipe.ts:78 | scanRecipeMultiPage | 4000 | **6000** | Multi-page recipe |
+| mealPlanWizard.ts:79 | generateMealPlan | 3000 | **6000** | 7 days × 3 meals |
+| dishIdentify.ts:157 | generateDishRecipe | 4000 | 4000 | Already OK |
+| importFromUrl.ts:570 | importUrlFull | 6000 | 6000 | Already OK |
+| All others (47 callers) | various | various | unchanged | Appropriately sized |
+
+**Error handling audit:**
+- `client.ts` already throws `ClaudeTruncatedError` when `stop_reason === 'max_tokens'` (line 111-113)
+- `extractJSON()` uses `jsonrepair` before parsing, with `ClaudeJsonParseError` on failure
+- No additional guards needed — truncation check happens in `callClaude()` before response is returned
+
+**Verification:**
+- `cd packages/ai && npx tsc --noEmit` — clean
+- `cd apps/web && npx tsc --noEmit` — clean
+- Deploy: Live at chefsbk.app (HTTP 200 on / and /dashboard)
+
+**Commit:** `be69a66` — fix(ai): raise maxTokens for truncation-prone callClaude callers
+
+---
+
 ## 2026-04-24 (session Alert Cleanup) TYPE: REFACTOR
 
 ### Replaced all raw browser alerts with ChefsDialog system
