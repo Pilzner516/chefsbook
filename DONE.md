@@ -1,6 +1,58 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Welcome Email + Admin Fixes) TYPE: FEATURE
+
+### FIX 1 — Welcome Email on Signup
+
+**Background:** Prompt T added account creation flow but left a TODO comment for the welcome email.
+
+**Implementation:**
+- Created `apps/web/lib/email.ts` with `sendWelcomeEmail()` function
+- Installed Resend SDK (official Resend API client)
+- Welcome email template with Trattoria branding:
+  - Subject: "Welcome to ChefsBook, [name]!"
+  - Cream background (#faf7f0), pomodoro red (#ce2b37) accents
+  - Branded header, welcome message, CTA button to dashboard
+  - Link to import first recipe, responsive HTML design
+- Wired into `apps/web/app/api/admin/users/create/route.ts`
+- Gracefully skips if `RESEND_API_KEY` not configured (logs warning)
+
+**Environment variable added:**
+- `RESEND_API_KEY` — documented in CLAUDE.md (obtain from resend.com dashboard)
+- Updated infrastructure notes: "Welcome emails sent via Resend API on admin account creation"
+
+**Email sending logic:**
+- Only sends once on account creation (controlled by `sendWelcomeEmail` flag in admin UI)
+- Uses existing `noreply@chefsbk.app` sender address
+- Falls back gracefully with console.warn if API key not set
+- No errors thrown if email fails — logs and continues
+
+**Files changed:**
+- `apps/web/lib/email.ts` (new) — email utility with HTML template
+- `apps/web/app/api/admin/users/create/route.ts` — wired welcome email call
+- `apps/web/package.json` — added `resend` dependency
+- `CLAUDE.md` — documented `RESEND_API_KEY` env var and infrastructure change
+
+**Testing status:**
+- ✅ TypeScript clean (tsc --noEmit passed)
+- ✅ Build successful on RPi5 (turbo, 1m44s)
+- ✅ Deployed and live at chefsbk.app
+- ⚠️ Email sending requires RESEND_API_KEY to be added to RPi5 .env.local
+- 🔄 Actual email test pending API key configuration
+
+**Next step:** Add `RESEND_API_KEY` to `/mnt/chefsbook/repo/apps/web/.env.local` on RPi5, then test by creating an account with "Send welcome email" checkbox enabled.
+
+### FIX 2 — Incomplete Recipes Admin Page Stale Data
+
+**Status:** Already fixed (no action needed)
+
+`export const dynamic = 'force-dynamic'` already present on line 3 of `apps/web/app/admin/incomplete-recipes/page.tsx`. Page correctly returns fresh data on reload.
+
+**Commit:** `a08a657` — feat(web): add welcome email on admin account creation
+
+---
+
 ## 2026-04-24 (session Avatar + Domain Tags) TYPE: FIX
 
 ### FIX 1 — Sidebar avatar now displays correctly
