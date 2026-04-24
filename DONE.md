@@ -1,6 +1,22 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session Technique Attribution) TYPE: FEATURE
+
+### Added attribution row to technique detail page
+
+**Updated:** `/technique/[id]/page.tsx`
+- Chef attribution: @username pill linking to `/chef/{username}` with verified badge if applicable
+- Source attribution: domain pill (e.g. youtube.com) linking to source URL
+- Purple "Technique" badge pill
+- Same style as recipe detail page attribution row
+- Fetches owner's username and user_account_tags for verified badge
+
+**TypeScript:** Clean
+**Deployment:** Live at chefsbk.app
+
+---
+
 ## 2026-04-24 (session Profile Page Fixes) TYPE: FIX
 
 ### FIX 1 — Techniques tab shows 0 despite user having techniques
