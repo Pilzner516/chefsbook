@@ -299,7 +299,7 @@ export default function ChefPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {recipes.slice(0, visibleRecipes).map((recipe) => {
                     const primaryPhoto = primaryPhotos.get(recipe.id);
-                    const imageUrl = getRecipeImageUrl(primaryPhoto, recipe.image_url);
+                    const imageUrl = getRecipeImageUrl(primaryPhoto, recipe.image_url, recipe.youtube_video_id);
                     return (
                       <Link key={recipe.id} href={`/recipe/${recipe.id}`} className="group">
                         <div className="bg-cb-card border border-cb-border rounded-card overflow-hidden hover:border-cb-primary/50 transition-colors">
