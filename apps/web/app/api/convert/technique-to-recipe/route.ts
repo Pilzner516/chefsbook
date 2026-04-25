@@ -41,6 +41,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
+    // Map technique source_type to recipe-allowed values
+    const mapSourceType = (type: string | null): string => {
+      if (type === 'web') return 'url';
+      if (type === 'youtube') return 'youtube';
+      if (type === 'extension') return 'url';
+      return 'manual'; // manual or unknown → manual
+    };
+
     // Create recipe
     const { data: recipe, error: createErr } = await supabaseAdmin
       .from('recipes')
@@ -53,7 +61,7 @@ export async function POST(req: NextRequest) {
         image_url: technique.image_url ?? null,
         youtube_video_id: technique.youtube_video_id ?? null,
         source_url: technique.source_url ?? null,
-        source_type: technique.source_type ?? 'manual',
+        source_type: mapSourceType(technique.source_type),
         visibility: 'private',
         is_complete: false,
         servings: 4,

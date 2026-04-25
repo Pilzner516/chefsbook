@@ -84,6 +84,14 @@ export async function POST(req: NextRequest) {
       common_mistake: null,
     }));
 
+    // Map recipe source_type to technique-allowed values
+    const mapSourceType = (type: string | null): string => {
+      if (type === 'url') return 'web';
+      if (type === 'youtube') return 'youtube';
+      if (type === 'extension') return 'extension';
+      return 'manual'; // scan, ai, manual, or unknown → manual
+    };
+
     // Create technique
     const { data: technique, error: createErr } = await supabaseAdmin
       .from('techniques')
@@ -100,7 +108,7 @@ export async function POST(req: NextRequest) {
         image_url: imageUrl,
         youtube_video_id: recipe.youtube_video_id ?? null,
         source_url: recipe.source_url ?? null,
-        source_type: recipe.source_type ?? 'manual',
+        source_type: mapSourceType(recipe.source_type),
         visibility: 'private',
       })
       .select()
