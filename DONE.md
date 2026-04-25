@@ -1,6 +1,77 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session NUTRITION-4) TYPE: FEATURE
+
+### Nutritional Goals in Meal Plan Wizard
+
+**Users can now set optional nutritional goals before generating an AI meal plan.** The wizard shows daily nutrition summaries when goals are set.
+
+#### Wizard Step 4: Nutritional Goals (Optional)
+
+Screenshot description: Step 4 shows a "Nutritional Goals" heading with a note that the step is optional. Three inputs:
+1. **Daily Calorie Target** — number input, placeholder "e.g., 2000", with helper text "Leave empty to skip calorie tracking"
+2. **Macro Preference** — 2x2 grid of cards: No preference, High Protein (30%+ from protein), Low Carb (<100g carbs/day), Balanced (40/30/30)
+3. **Max Calories per Meal** — number input, placeholder "e.g., 600", helper text "Optional — helps keep individual meals lighter"
+
+Footer has "Skip this step →" link and green "Generate Plan" button.
+
+#### AI Prompt Changes
+
+Extended `generateMealPlan()` in packages/ai/src/mealPlanWizard.ts:
+- Added `NutritionGoals` interface with `dailyCalories?`, `macroPriority?`, `maxCaloriesPerMeal?`
+- When goals are set, appends NUTRITIONAL GOALS section to prompt
+- Requests `estimated_nutrition` per meal (calories, protein_g, carbs_g, fat_g)
+- Requests `daily_summaries` object with per-day totals
+
+#### Plan Display with Nutrition
+
+When goals are set, the Review step shows:
+- Per-meal calorie estimates in the secondary line (e.g., "Italian · 45min · ~450 kcal")
+- Daily summary row below each day's meals:
+  ```
+  Daily total: ~1,820 kcal  Protein: 95g  Carbs: 180g  Fat: 68g
+  ```
+- Header shows "14 meals planned · 2000 kcal daily target"
+
+#### No-Goals Path Verification
+
+Confirmed no regression: when nutritional goals step is skipped:
+- `nutritionGoals` is undefined in the API call
+- Prompt does NOT include nutrition section
+- Response has no `estimated_nutrition` or `daily_summaries`
+- Plan displays exactly as before (no nutrition rows)
+
+#### Files Changed
+
+| File | Change |
+|------|--------|
+| `packages/ai/src/mealPlanWizard.ts` | Extended interfaces + prompt with nutrition |
+| `packages/ai/src/index.ts` | Export new types |
+| `apps/web/components/MealPlanWizard.tsx` | Added step 4 UI + daily summary display |
+| `apps/web/app/api/meal-plan/generate/route.ts` | Pass daily_summaries in response |
+
+#### Verification
+
+TypeScript clean:
+```bash
+cd packages/ai && npx tsc --noEmit  # Clean
+cd apps/web && npx tsc --noEmit    # Clean
+```
+
+Deploy confirmed:
+- Build succeeded on RPi5
+- PM2 restart: online
+- Smoke tests: HTTP 200 on /, /dashboard/plan
+- Commit: b84e3f2
+
+#### SKIPPED (per prompt)
+
+- Nutrition-5: Mobile parity
+- Nutrition-6: Bulk backfill admin UI
+
+---
+
 ## 2026-04-25 (session NUTRITION-3) TYPE: FEATURE
 
 ### Nutrition Filters in Recipe Search
