@@ -1,6 +1,46 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session SEARCH-FILTER-POLISH) TYPE: UI POLISH
+
+### Recipe Counts on All Search Filters + Scrollable Sections
+
+**Added recipe counts `(N)` to all filter categories in web search page:**
+- **Cuisine** — shows count per cuisine (e.g. `Italian (23)`)
+- **Course** — shows count per course (e.g. `Dinner (41)`)
+- **Source** — shows count per source type (e.g. `URL Import (34)`)
+- **Cook Time** — shows count per time bucket (e.g. `Under 30 min (28)`)
+- **Tags** — already had counts, verified no regression
+
+**Made all filter sections scrollable with `max-h-[200px] overflow-y-auto`:**
+- Cuisine, Course, Source, Tags, Cook Time
+- Nutrition filters (Calories per serving, Protein)
+
+**How counts are fetched:**
+- Computed client-side via `useMemo` with Map pattern (same as Tags)
+- `allCuisines`: counts recipes per cuisine, sorted alphabetically
+- `allCourses`: counts recipes per course, sorted by COURSES array order
+- `allSources`: counts recipes per source_type, sorted by SOURCES array order
+- `allTimes`: counts recipes per time bucket (30min, 60min, 999min)
+- Zero-count items automatically hidden (only items in the Map are rendered)
+
+**Files changed:**
+- `apps/web/app/dashboard/search/page.tsx` — added count computations, updated all filter section rendering
+
+**Verification:**
+- tsc clean ✓
+- Deployed to RPi5 successfully ✓
+- Smoke tests: `/`, `/dashboard`, `/dashboard/search` all return HTTP 200 ✓
+- Filter logic unchanged — display-only polish, no behavior changes
+
+**Manual verification recommended at https://chefsbk.app/dashboard/search:**
+1. Cuisine/Course/Source/Cook Time show counts next to each item
+2. Long sections (Cuisine) are scrollable
+3. Tags still shows counts (no regression)
+4. Applying filters still works correctly
+
+---
+
 ## 2026-04-25 (session CONVERSION-AUTH-FIX) TYPE: BUG FIX
 
 ### Fixed "Not authenticated" on Recipe/Technique Conversion
