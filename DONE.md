@@ -1,6 +1,66 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session NUTRITION-2) TYPE: FEATURE
+
+### Auto-Generate Nutrition on Import
+
+**Nutrition generation now fires automatically on all import paths.** Users no longer need to click "Generate Nutrition" — the card simply appears after import.
+
+#### Import Paths Wired
+
+| Path | File | Status |
+|------|------|--------|
+| URL import | `lib/saveWithModeration.ts` | ✅ Wired |
+| YouTube import | `lib/saveWithModeration.ts` | ✅ Wired |
+| Speak a Recipe | `lib/saveWithModeration.ts` | ✅ Wired |
+| Cookbook TOC | `lib/saveWithModeration.ts` | ✅ Wired |
+| Extension (URL) | `api/extension/import/route.ts` | ✅ Wired |
+| Extension (YouTube) | `api/extension/import/route.ts` | ✅ Wired |
+
+#### Import Paths Skipped
+
+| Path | Reason |
+|------|--------|
+| Batch bookmark import | Cost/rate concern — generates on-demand only |
+| Manual recipe creation | No ingredients at creation time |
+
+#### Implementation Details
+
+- Created `apps/web/lib/nutritionHelper.ts` with `generateAndSaveNutrition()` helper
+- Fire-and-forget pattern: never blocks import response
+- Checks if recipe already has nutrition before generating (avoid double-generation)
+- Skips recipes without ingredients (video-only, manual stubs)
+- Haiku model: ~$0.001/recipe
+
+#### Verification
+
+TypeScript:
+```bash
+cd packages/ai && npx tsc --noEmit  # Clean
+cd apps/web && npx tsc --noEmit     # Clean
+```
+
+Database check (existing recipes have no nutrition — expected, auto-gen is for NEW imports only):
+```
+has_nutrition = false for all 10 most recent recipes
+```
+
+Deploy confirmed:
+- Build succeeded on RPi5
+- PM2 status: online
+- Smoke tests: HTTP 200 on /, /dashboard, /recipe/[id]
+- Commit: c64ad84
+
+#### SKIPPED (per prompt)
+
+- Nutrition-3: Search filters
+- Nutrition-4: Meal plan integration
+- Nutrition-5: Mobile parity
+- Nutrition-6: Bulk backfill admin UI
+
+---
+
 ## 2026-04-25 (session NUTRITION-1) TYPE: FEATURE
 
 ### Nutrition Facts Card with AI Estimation
