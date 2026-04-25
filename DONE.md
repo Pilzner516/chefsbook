@@ -1,6 +1,42 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session CONVERSION-AUTH-FIX) TYPE: BUG FIX
+
+### Fixed "Not authenticated" on Recipe/Technique Conversion
+
+**Root cause:** Client-side fetch calls did not include Authorization header; API routes called `supabase.auth.getUser()` without passing a token, which always returns null in route handler context.
+
+**Files changed:**
+- `apps/web/app/api/convert/recipe-to-technique/route.ts` — read token from Authorization header
+- `apps/web/app/api/convert/technique-to-recipe/route.ts` — read token from Authorization header
+- `apps/web/app/recipe/[id]/page.tsx` — add Authorization header to fetch
+- `apps/web/app/technique/[id]/page.tsx` — add Authorization header to fetch
+
+**Verification:**
+- tsc clean
+- Deploy confirmed: HTTP 405 (correct for POST-only route on GET)
+- Conversion flow now works as recipe owner
+
+---
+
+## 2026-04-25 (session NUTRITION-6-FIX) TYPE: BUG FIX
+
+### Fixed Nutrition Bulk Generation API Key Issue
+
+**Root cause:** The prompt's diagnosis was incorrect — the code correctly queries `recipe_ingredients`. The actual issue was:
+1. Anthropic API key was invalid/expired
+2. Next.js loads `.env.local` from `apps/web/`, not monorepo root — the `ANTHROPIC_API_KEY` was only in root `.env.local`
+
+**Fix:**
+- User regenerated API key at console.anthropic.com
+- Added `ANTHROPIC_API_KEY` to `apps/web/.env.local` on Pi
+- PM2 restarted to pick up new env vars
+
+**No code changes required** — the code was already correct.
+
+---
+
 ## 2026-04-25 (session NUTRITION-6) TYPE: FEATURE
 
 ### Nutrition Bulk Generation System
