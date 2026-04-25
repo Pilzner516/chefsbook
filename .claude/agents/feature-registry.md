@@ -246,6 +246,13 @@
 | AI moderation toggle | LIVE | system_settings table, /admin/settings, saveWithModeration.ts | 148 | ON/OFF toggle; serious+ON=auto-hide; serious+OFF=flag-only; mild=always flag-only |
 | AI spam detection | LIVE | packages/ai (moderateRecipe), apps/web/lib/saveWithModeration.ts | P-K2 | Extends existing moderateRecipe call with spam signals (no new AI cost); auto-creates recipe_flags with flagged_by=null (AI Proctor) |
 | Admin flagged recipes queue | LIVE | /admin/flagged-recipes, /api/admin/flags/route.ts, /api/admin/flags/[recipeId]/action/route.ts | P-K2 | Lists recipes with pending flags; actions: Make Private/Hide/Delete/Dismiss; flag detail drawer shows AI Proctor for null flagged_by |
+| Nutrition bulk generation (admin) | LIVE | /admin/nutrition, /api/admin/nutrition/bulk-generate, /api/admin/nutrition/stats | NUTR-6 | Stats card + SSE progress bulk generation; 1 recipe/second rate limit; skips no-ingredient recipes |
+| Nutrition bulk generation (user) | LIVE | /api/recipes/bulk-generate-nutrition, NutritionBanner component | NUTR-6 | Fire-and-forget bulk gen; amber banner on My Recipes when >5 recipes lack nutrition; dismissible with localStorage |
+| Nutrition card (web) | LIVE | apps/web/components/NutritionCard.tsx, apps/web/app/recipe/[id]/page.tsx | NUTR-1 | 7 nutrients, per-serving/per-100g toggle, generate/regenerate, low-confidence warning |
+| Nutrition card (mobile) | LIVE | apps/mobile/components/NutritionCard.tsx, apps/mobile/app/recipe/[id].tsx | NUTR-5 | Same as web, SecureStore for toggle preference, i18n in all 5 locales |
+| Nutrition auto-generation on import | LIVE | /api/recipes/finalize | NUTR-2 | Fire-and-forget after completeness gate passes |
+| Nutrition search filters | LIVE | apps/web/app/dashboard/search/page.tsx, search_recipes RPC | NUTR-3 | Calorie ranges, protein levels, dietary presets |
+| Nutrition in meal plan wizard | LIVE | MealPlanWizard.tsx, packages/ai/src/mealPlanWizard.ts | NUTR-4 | Optional step 4 for nutritional goals; daily summaries in plan output |
 
 ---
 

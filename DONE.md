@@ -1,6 +1,118 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session NUTRITION-6) TYPE: FEATURE
+
+### Nutrition Bulk Generation System
+
+**Admins can now bulk-generate nutrition data for all recipes from `/admin/nutrition`. Users see a banner on My Recipes to generate nutrition for their collection.**
+
+#### psql BEFORE Bulk Generation
+
+```
+ total | needs_nutrition | has_nutrition 
+-------+-----------------+---------------
+    85 |              85 |             0
+```
+
+#### Admin Page: `/admin/nutrition`
+
+Screenshot description: The admin page shows:
+1. **Statistics card** with 3 metric tiles:
+   - Total recipes: 85
+   - With nutrition: 0 (0%)
+   - Needs generation: 85 (amber highlight)
+
+2. **Bulk Generation card**:
+   - Description text explaining 1 recipe/second rate limit
+   - Estimated time shown (e.g., "~2 minutes for 85 recipes")
+   - Green "Generate All" button
+   - Status indicator: idle / running / complete / error
+
+3. **Progress bar** when running:
+   - Visual progress bar
+   - Text: "Processing: X / 85 recipes"
+   - Skipped count (recipes with no ingredients)
+   - Error count
+
+4. **Recent Generations log** table:
+   - Recipe title, relative time, confidence score, status pill (success/skipped/error)
+   - Last 20 entries shown
+
+#### API Routes Created
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/admin/nutrition/stats` | GET | Returns total/hasNutrition/needsNutrition counts |
+| `/api/admin/nutrition/bulk-generate` | POST | SSE stream for bulk generation progress |
+| `/api/recipes/bulk-generate-nutrition` | POST | User-scoped bulk generation (fire-and-forget) |
+
+#### User Banner on My Recipes
+
+When user has >5 recipes without nutrition data, an amber dismissible banner appears:
+```
+✨ {N} of your recipes don't have nutrition data yet.  [Generate for all →]
+```
+
+- Clicking "Generate for all →" calls `/api/recipes/bulk-generate-nutrition`
+- Returns `{ queued: N }` immediately, processes in background
+- Banner shows "Generating nutrition for N recipes in the background..."
+- Dismiss persists to localStorage with count tracking
+- Reappears if 5+ more recipes without nutrition are added
+
+#### Rate Limiting
+
+All bulk routes enforce 1 second delay between recipes per ai-cost.md guidelines:
+```typescript
+await new Promise((r) => setTimeout(r, 1000));
+```
+
+#### Files Changed
+
+| File | Change |
+|------|--------|
+| `apps/web/app/admin/layout.tsx` | Added nutrition nav item |
+| `apps/web/app/admin/nutrition/page.tsx` | New admin page (301 lines) |
+| `apps/web/app/api/admin/nutrition/stats/route.ts` | Stats endpoint |
+| `apps/web/app/api/admin/nutrition/bulk-generate/route.ts` | SSE bulk gen (209 lines) |
+| `apps/web/app/api/recipes/bulk-generate-nutrition/route.ts` | User bulk gen |
+| `apps/web/components/NutritionBanner.tsx` | My Recipes banner |
+| `apps/web/app/dashboard/page.tsx` | Import + mount NutritionBanner |
+
+#### Verification
+
+TypeScript clean:
+```bash
+cd apps/web && npx tsc --noEmit  # Clean
+```
+
+Deploy confirmed:
+- Build succeeded on RPi5
+- PM2 restart: online
+- Smoke tests: HTTP 200 on /, /admin/nutrition
+- Commit: e18940e
+
+#### To Complete Verification
+
+Navigate to `/admin/nutrition` and click "Generate All" to bulk-generate nutrition for all 85 recipes. After completion, run:
+```bash
+ssh rasp@rpi5-eth "sudo docker exec supabase-db psql -U postgres -d postgres -c 'SELECT COUNT(*) FILTER (WHERE nutrition IS NOT NULL) as has_nutrition FROM recipes;'"
+```
+
+#### NUTRITION FEATURE COMPLETE
+
+All 6 sessions are done:
+- **Nutrition-1**: Foundation (migration, generateNutrition, NutritionCard, generate-nutrition API)
+- **Nutrition-2**: Auto-generation on import (wired into /api/recipes/finalize)
+- **Nutrition-3**: Search filters (calorie/protein/dietary ranges in search)
+- **Nutrition-4**: Meal plan integration (nutritional goals step, daily summaries)
+- **Nutrition-5**: Mobile parity (NutritionCard for React Native)
+- **Nutrition-6**: Bulk backfill (admin page, user banner, background processing)
+
+The full nutrition feature is now live.
+
+---
+
 ## 2026-04-25 (session NUTRITION-5) TYPE: FEATURE
 
 ### Mobile NutritionCard Component
