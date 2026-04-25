@@ -34,10 +34,10 @@ export async function POST(req: Request) {
   }));
 
   const t0 = Date.now();
-  const plan = await generateMealPlan(preferences, userRecipes);
+  const result = await generateMealPlan(preferences, userRecipes);
 
   const u = consumeLastUsage();
   logAiCall({ userId: user?.id, action: 'generate_meal_plan', model: 'sonnet', durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
 
-  return Response.json({ plan });
+  return Response.json({ plan: result.plan, daily_summaries: result.daily_summaries });
 }

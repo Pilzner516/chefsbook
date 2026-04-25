@@ -15,7 +15,7 @@ export type { PurchaseSuggestion } from './suggestPurchaseUnit';
 export { lookupIsbn, readBookCover, generateCookbookToc } from './cookbookLookup';
 export type { BookMetadata, AiTocChapter } from './cookbookLookup';
 export { generateMealPlan } from './mealPlanWizard';
-export type { MealPlanPreferences, MealPlanSlot } from './mealPlanWizard';
+export type { MealPlanPreferences, MealPlanSlot, NutritionGoals, MealNutrition, DailySummary, MealPlanResult } from './mealPlanWizard';
 export { matchFolderToCategory, matchFoldersToCategories } from './matchFolderCategory';
 export type { CategoryMatch } from './matchFolderCategory';
 export { importFromYouTube } from './importFromYouTube';

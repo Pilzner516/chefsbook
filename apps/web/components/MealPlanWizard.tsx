@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { supabase, addMealPlan } from '@chefsbook/db';
+import type { NutritionGoals, MealNutrition, DailySummary } from '@chefsbook/ai';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -10,6 +11,12 @@ const SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
 const DIETS = ['Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Nut-free', 'Low-carb', 'High-protein', 'Kid-friendly'];
 const CUISINES = ['Italian', 'French', 'Asian', 'Mexican', 'Mediterranean', 'American', 'Indian', 'Japanese', 'Thai'];
 const SERVINGS = [1, 2, 4, 6];
+const MACRO_PRESETS: { key: NutritionGoals['macroPriority']; label: string; desc: string }[] = [
+  { key: 'none', label: 'No preference', desc: 'Standard macro balance' },
+  { key: 'high_protein', label: 'High Protein', desc: '30%+ calories from protein' },
+  { key: 'low_carb', label: 'Low Carb', desc: 'Under 100g carbs/day' },
+  { key: 'balanced', label: 'Balanced', desc: '40/30/30 carb/protein/fat' },
+];
 
 interface PlanSlot {
   day: string;
@@ -20,6 +27,7 @@ interface PlanSlot {
   cuisine: string;
   estimated_time: number;
   reason: string;
+  estimated_nutrition?: MealNutrition;
 }
 
 export default function MealPlanWizard({
@@ -50,11 +58,19 @@ export default function MealPlanWizard({
   // Step 3
   const [source, setSource] = useState<'my_recipes' | 'mix' | 'community'>('mix');
 
-  // Step 4
+  // Step 4: Nutritional Goals (optional)
+  const [dailyCalories, setDailyCalories] = useState<string>('');
+  const [macroPriority, setMacroPriority] = useState<NutritionGoals['macroPriority']>('none');
+  const [maxCaloriesPerMeal, setMaxCaloriesPerMeal] = useState<string>('');
+
+  // Step 5
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState('');
   const [plan, setPlan] = useState<PlanSlot[]>([]);
+  const [dailySummaries, setDailySummaries] = useState<Record<string, DailySummary>>({});
   const [saving, setSaving] = useState(false);
+
+  const hasNutritionGoals = dailyCalories || macroPriority !== 'none' || maxCaloriesPerMeal;
 
   const toggleDay = (d: string) => setSelectedDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
   const toggleSlot = (s: string) => setSelectedSlots((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
@@ -62,7 +78,7 @@ export default function MealPlanWizard({
   const toggleCuisine = (c: string) => setPreferredCuisines((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]);
 
   const generate = async () => {
-    setStep(4);
+    setStep(5);
     setGenerating(true);
     setGenStep('Your Sous Chef is analyzing your preferences...');
 
@@ -71,6 +87,11 @@ export default function MealPlanWizard({
       if (!session) throw new Error('Not signed in');
 
       setGenStep('Selecting recipes...');
+      const nutritionGoals: NutritionGoals | undefined = hasNutritionGoals ? {
+        dailyCalories: dailyCalories ? parseInt(dailyCalories) : undefined,
+        macroPriority: macroPriority !== 'none' ? macroPriority : undefined,
+        maxCaloriesPerMeal: maxCaloriesPerMeal ? parseInt(maxCaloriesPerMeal) : undefined,
+      } : undefined;
       const res = await fetch('/api/meal-plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
@@ -85,11 +106,13 @@ export default function MealPlanWizard({
           adventurousness,
           servings,
           source,
+          nutritionGoals,
         }),
       });
       const data = await res.json();
       setGenStep('Balancing your week...');
       setPlan(data.plan ?? []);
+      setDailySummaries(data.daily_summaries ?? {});
     } catch {} finally {
       setGenerating(false);
     }
@@ -99,14 +122,23 @@ export default function MealPlanWizard({
     // Re-generate just this one slot
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
+    const nutritionGoals: NutritionGoals | undefined = hasNutritionGoals ? {
+      dailyCalories: dailyCalories ? parseInt(dailyCalories) : undefined,
+      macroPriority: macroPriority !== 'none' ? macroPriority : undefined,
+      maxCaloriesPerMeal: maxCaloriesPerMeal ? parseInt(maxCaloriesPerMeal) : undefined,
+    } : undefined;
     const res = await fetch('/api/meal-plan/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ days: [day], slots: [slot], dietary, likesDislikesText: likesText, cuisineVariety, preferredCuisines, effortLevel, adventurousness, servings, source }),
+      body: JSON.stringify({ days: [day], slots: [slot], dietary, likesDislikesText: likesText, cuisineVariety, preferredCuisines, effortLevel, adventurousness, servings, source, nutritionGoals }),
     });
     const data = await res.json();
     if (data.plan?.[0]) {
-      setPlan((prev) => prev.map((p) => p.day === day && p.slot === slot ? data.plan[0] : p));
+      setPlan((prev) => {
+        const newPlan = prev.map((p) => p.day === day && p.slot === slot ? data.plan[0] : p);
+        if (data.daily_summaries) setDailySummaries(data.daily_summaries);
+        return newPlan;
+      });
     }
   };
 
@@ -148,7 +180,7 @@ export default function MealPlanWizard({
 
         {/* Progress */}
         <div className="px-5 pt-4 flex gap-1 shrink-0">
-          {['Days & Meals', 'Preferences', 'Sources', 'Review'].map((label, i) => (
+          {['Days & Meals', 'Preferences', 'Sources', 'Nutrition', 'Review'].map((label, i) => (
             <div key={i} className="flex-1">
               <div className={`h-1 rounded-full mb-1 ${step > i + 1 ? 'bg-cb-primary' : step === i + 1 ? 'bg-cb-primary/50' : 'bg-cb-border'}`} />
               <p className={`text-[10px] ${step === i + 1 ? 'text-cb-primary font-semibold' : 'text-cb-secondary'}`}>{i + 1}. {label}</p>
@@ -248,8 +280,64 @@ export default function MealPlanWizard({
             </div>
           )}
 
-          {/* Step 4: Review */}
-          {step === 4 && generating && (
+          {/* Step 4: Nutritional Goals (Optional) */}
+          {step === 4 && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="font-semibold mb-1">Nutritional Goals</h3>
+                <p className="text-sm text-cb-secondary mb-4">
+                  Set daily targets to help balance your meal plan. This step is optional — skip if you don't need nutrition tracking.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Daily Calorie Target</label>
+                <input
+                  type="number"
+                  value={dailyCalories}
+                  onChange={(e) => setDailyCalories(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g., 2000"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
+                />
+                <p className="text-[10px] text-cb-secondary mt-1">Leave empty to skip calorie tracking</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Macro Preference</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {MACRO_PRESETS.map((preset) => (
+                    <button
+                      key={preset.key}
+                      onClick={() => setMacroPriority(preset.key)}
+                      className={`p-3 rounded-card border-2 text-left transition-colors ${
+                        macroPriority === preset.key
+                          ? 'border-cb-primary bg-cb-primary/5'
+                          : 'border-cb-border hover:border-cb-primary/30'
+                      }`}
+                    >
+                      <span className="block text-sm font-medium">{preset.label}</span>
+                      <span className="text-[10px] text-cb-secondary">{preset.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Max Calories per Meal</label>
+                <input
+                  type="number"
+                  value={maxCaloriesPerMeal}
+                  onChange={(e) => setMaxCaloriesPerMeal(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g., 600"
+                  className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm outline-none focus:border-cb-primary"
+                />
+                <p className="text-[10px] text-cb-secondary mt-1">Optional — helps keep individual meals lighter</p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Review */}
+          {step === 5 && generating && (
             <div className="text-center py-12">
               <div className="w-16 h-16 rounded-full bg-cb-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
                 <svg className="w-8 h-8 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
@@ -259,13 +347,15 @@ export default function MealPlanWizard({
             </div>
           )}
 
-          {step === 4 && !generating && (
+          {step === 5 && !generating && (
             <div>
-              <p className="text-sm text-cb-secondary mb-4">{plan.length} meals planned</p>
-              <div className="space-y-2">
+              <p className="text-sm text-cb-secondary mb-4">{plan.length} meals planned{hasNutritionGoals && dailyCalories ? ` · ${dailyCalories} kcal daily target` : ''}</p>
+              <div className="space-y-3">
                 {DAYS.filter((d) => selectedDays.includes(d)).map((day) => {
                   const daySlots = plan.filter((p) => p.day === day);
                   if (daySlots.length === 0) return null;
+                  const daySummary = dailySummaries[day];
+                  const hasAnyNutrition = daySlots.some((s) => s.estimated_nutrition) || daySummary;
                   return (
                     <div key={day}>
                       <p className="text-xs font-bold text-cb-secondary uppercase mb-1">{day.charAt(0).toUpperCase() + day.slice(1)}</p>
@@ -275,7 +365,10 @@ export default function MealPlanWizard({
                             <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${entry.slot === 'breakfast' ? 'bg-amber-100 text-amber-700' : entry.slot === 'lunch' ? 'bg-blue-100 text-blue-700' : entry.slot === 'dinner' ? 'bg-cb-primary/10 text-cb-primary' : 'bg-green-100 text-green-700'}`}>{entry.slot}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{entry.title}</p>
-                              <p className="text-[10px] text-cb-secondary">{entry.cuisine} · {entry.estimated_time}min · {entry.reason}</p>
+                              <p className="text-[10px] text-cb-secondary">
+                                {entry.cuisine} · {entry.estimated_time}min
+                                {entry.estimated_nutrition && ` · ~${entry.estimated_nutrition.calories} kcal`}
+                              </p>
                             </div>
                             <button onClick={() => swapSlot(day, entry.slot)} className="text-cb-secondary hover:text-cb-primary shrink-0" title="Swap">
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" /></svg>
@@ -286,6 +379,16 @@ export default function MealPlanWizard({
                           </div>
                         ))}
                       </div>
+                      {/* Daily Nutrition Summary */}
+                      {hasAnyNutrition && daySummary && (
+                        <div className="mt-2 pt-2 border-t border-cb-border/50 flex gap-4 text-[11px] text-cb-secondary">
+                          <span className="font-medium">Daily total:</span>
+                          <span>~{daySummary.calories} kcal</span>
+                          <span>Protein: {daySummary.protein_g}g</span>
+                          <span>Carbs: {daySummary.carbs_g}g</span>
+                          <span>Fat: {daySummary.fat_g}g</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -296,11 +399,17 @@ export default function MealPlanWizard({
 
         {/* Footer */}
         <div className="p-5 border-t border-cb-border flex items-center gap-3 shrink-0">
-          {step > 1 && step < 4 && <button onClick={() => setStep((s) => (s - 1) as any)} className="text-sm text-cb-secondary hover:text-cb-text">&larr; Back</button>}
+          {step > 1 && step < 5 && <button onClick={() => setStep((s) => (s - 1) as any)} className="text-sm text-cb-secondary hover:text-cb-text">&larr; Back</button>}
           <span className="flex-1" />
           {step < 3 && <button onClick={() => setStep((s) => (s + 1) as any)} disabled={step === 1 && (selectedDays.length === 0 || selectedSlots.length === 0)} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 disabled:opacity-50">Next &rarr;</button>}
-          {step === 3 && <button onClick={generate} className="bg-cb-green text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>Generate Plan</button>}
-          {step === 4 && !generating && (
+          {step === 3 && <button onClick={() => setStep(4)} className="bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90">Next &rarr;</button>}
+          {step === 4 && (
+            <>
+              <button onClick={() => setStep(5)} className="text-sm text-cb-secondary hover:text-cb-text">Skip this step &rarr;</button>
+              <button onClick={generate} className="bg-cb-green text-white px-6 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 flex items-center gap-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>Generate Plan</button>
+            </>
+          )}
+          {step === 5 && !generating && (
             <>
               <button onClick={() => setStep(2)} className="text-sm text-cb-secondary hover:text-cb-text">&larr; Change preferences</button>
               <button onClick={generate} className="border border-cb-border px-4 py-2 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text">Regenerate</button>
