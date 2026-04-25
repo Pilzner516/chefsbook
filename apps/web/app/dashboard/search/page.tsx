@@ -270,7 +270,45 @@ export default function SearchPage() {
   };
 
   // Derived data for filter panels
-  const allCuisines = useMemo(() => [...new Set(recipes.map((r) => r.cuisine).filter(Boolean))].sort(), [recipes]);
+  const allCuisines = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of recipes) if (r.cuisine) counts.set(r.cuisine, (counts.get(r.cuisine) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [recipes]);
+
+  const allCourses = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of recipes) if (r.course) counts.set(r.course, (counts.get(r.course) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => {
+      const aIndex = COURSES.indexOf(a[0]);
+      const bIndex = COURSES.indexOf(b[0]);
+      return aIndex - bIndex;
+    });
+  }, [recipes]);
+
+  const allSources = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of recipes) if (r.source_type) counts.set(r.source_type, (counts.get(r.source_type) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => {
+      const aIndex = SOURCES.findIndex(s => s.value === a[0]);
+      const bIndex = SOURCES.findIndex(s => s.value === b[0]);
+      return aIndex - bIndex;
+    });
+  }, [recipes]);
+
+  const allTimes = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const r of recipes) {
+      const mins = r.total_minutes ?? 0;
+      if (mins > 0) {
+        if (mins < 30) counts.set(30, (counts.get(30) ?? 0) + 1);
+        else if (mins <= 60) counts.set(60, (counts.get(60) ?? 0) + 1);
+        else counts.set(999, (counts.get(999) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [recipes]);
+
   const allTags = useMemo(() => {
     const counts = new Map<string, number>();
     for (const r of recipes) for (const t of r.tags ?? []) if (!t.startsWith('_')) counts.set(t, (counts.get(t) ?? 0) + 1);
@@ -316,10 +354,10 @@ export default function SearchPage() {
         {/* Cuisine */}
         <div>
           <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cuisine</h3>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
             <button onClick={() => setCuisineFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!cuisineFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Cuisines</button>
-            {allCuisines.map((c) => (
-              <button key={c} onClick={() => setCuisineFilter(c!)} className={`block text-sm w-full text-left px-2 py-1 rounded ${cuisineFilter === c ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{c}</button>
+            {allCuisines.map(([cuisine, count]) => (
+              <button key={cuisine} onClick={() => setCuisineFilter(cuisine)} className={`block text-sm w-full text-left px-2 py-1 rounded ${cuisineFilter === cuisine ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{cuisine} <span className="text-[10px] text-cb-secondary">({count})</span></button>
             ))}
           </div>
         </div>
@@ -327,10 +365,10 @@ export default function SearchPage() {
         {/* Course */}
         <div>
           <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Course</h3>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
             <button onClick={() => setCourseFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!courseFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Courses</button>
-            {COURSES.map((c) => (
-              <button key={c} onClick={() => setCourseFilter(c)} className={`block text-sm w-full text-left px-2 py-1 rounded ${courseFilter === c ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{c.charAt(0).toUpperCase() + c.slice(1)}</button>
+            {allCourses.map(([course, count]) => (
+              <button key={course} onClick={() => setCourseFilter(course)} className={`block text-sm w-full text-left px-2 py-1 rounded ${courseFilter === course ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{course.charAt(0).toUpperCase() + course.slice(1)} <span className="text-[10px] text-cb-secondary">({count})</span></button>
             ))}
           </div>
         </div>
@@ -338,11 +376,15 @@ export default function SearchPage() {
         {/* Source */}
         <div>
           <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Source</h3>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
             <button onClick={() => setSourceFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!sourceFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Sources</button>
-            {SOURCES.map((s) => (
-              <button key={s.value} onClick={() => setSourceFilter(s.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${sourceFilter === s.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{s.label}</button>
-            ))}
+            {allSources.map(([sourceType, count]) => {
+              const sourceInfo = SOURCES.find(s => s.value === sourceType);
+              const label = sourceInfo?.label ?? sourceType;
+              return (
+                <button key={sourceType} onClick={() => setSourceFilter(sourceType)} className={`block text-sm w-full text-left px-2 py-1 rounded ${sourceFilter === sourceType ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{label} <span className="text-[10px] text-cb-secondary">({count})</span></button>
+              );
+            })}
           </div>
         </div>
 
@@ -403,10 +445,15 @@ export default function SearchPage() {
         {/* Cook time */}
         <div>
           <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cook Time</h3>
-          <div className="space-y-0.5">
-            {TIME_FILTERS.map((t) => (
-              <button key={t.value} onClick={() => setTimeFilter(t.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${timeFilter === t.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{t.label}</button>
-            ))}
+          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+            {TIME_FILTERS.map((t) => {
+              const count = t.value === 0 ? recipes.length : (allTimes.get(t.value) ?? 0);
+              return (
+                <button key={t.value} onClick={() => setTimeFilter(t.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${timeFilter === t.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>
+                  {t.label} {t.value > 0 && <span className="text-[10px] text-cb-secondary">({count})</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -416,7 +463,7 @@ export default function SearchPage() {
           {/* Calories */}
           <div className="mb-3">
             <p className="text-[10px] text-cb-muted mb-1">Calories per serving</p>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
               {CALORIE_FILTERS.map((c) => (
                 <button
                   key={c.value}
@@ -431,7 +478,7 @@ export default function SearchPage() {
           {/* Protein */}
           <div className="mb-3">
             <p className="text-[10px] text-cb-muted mb-1">Protein</p>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
               {PROTEIN_FILTERS.map((p) => (
                 <button
                   key={p.value}
