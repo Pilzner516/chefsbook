@@ -72,9 +72,20 @@ export async function listRecipes(params?: {
   favouritesOnly?: boolean;
   limit?: number;
   offset?: number;
+  // Nutrition filters
+  calMin?: number;
+  calMax?: number;
+  proteinMin?: number;
+  carbsMax?: number;
+  fatMax?: number;
+  fiberMin?: number;
+  sodiumMax?: number;
 }): Promise<Recipe[]> {
+  const hasNutritionFilter = params?.calMin || params?.calMax || params?.proteinMin ||
+    params?.carbsMax || params?.fatMax || params?.fiberMin || params?.sodiumMax;
+
   // Use server-side search_recipes function for trgm-powered search
-  if (params?.userId && (params?.search || params?.sourceType || params?.tags?.length || params?.includePublic || params?.cuisine || params?.course || params?.maxTime)) {
+  if (params?.userId && (params?.search || params?.sourceType || params?.tags?.length || params?.includePublic || params?.cuisine || params?.course || params?.maxTime || hasNutritionFilter)) {
     const { data } = await supabase.rpc('search_recipes', {
       p_user_id: params.userId,
       p_query: params.search ?? null,
@@ -86,6 +97,14 @@ export async function listRecipes(params?: {
       p_include_public: params.includePublic ?? false,
       p_limit: params.limit ?? 50,
       p_offset: params.offset ?? 0,
+      // Nutrition filters
+      p_cal_min: params.calMin ?? null,
+      p_cal_max: params.calMax ?? null,
+      p_protein_min: params.proteinMin ?? null,
+      p_carbs_max: params.carbsMax ?? null,
+      p_fat_max: params.fatMax ?? null,
+      p_fiber_min: params.fiberMin ?? null,
+      p_sodium_max: params.sodiumMax ?? null,
     });
     return (data ?? []) as Recipe[];
   }

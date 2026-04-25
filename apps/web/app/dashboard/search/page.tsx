@@ -25,6 +25,27 @@ const TIME_FILTERS = [
   { label: 'Over 1 hour', value: 999 },
 ];
 
+// Nutrition filter constants
+const CALORIE_FILTERS = [
+  { label: 'Any', value: 'any' },
+  { label: 'Under 300', value: 'under300' },
+  { label: '300–500', value: '300-500' },
+  { label: '500–700', value: '500-700' },
+  { label: 'Over 700', value: 'over700' },
+];
+const PROTEIN_FILTERS = [
+  { label: 'Any', value: 'any' },
+  { label: 'High (20g+)', value: 'high' },
+  { label: 'Medium (10–20g)', value: 'medium' },
+  { label: 'Low (under 10g)', value: 'low' },
+];
+const NUTRITION_PRESETS = [
+  { key: 'lowCarb', label: 'Low Carb', emoji: '🥩' },
+  { key: 'highFiber', label: 'High Fiber', emoji: '🥦' },
+  { key: 'lowFat', label: 'Low Fat', emoji: '🥗' },
+  { key: 'lowSodium', label: 'Low Sodium', emoji: '🧂' },
+];
+
 export default function SearchPage() {
   const { i18n } = useTranslation();
   const searchParams = useSearchParams();
@@ -54,6 +75,11 @@ export default function SearchPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [expelledUserIds, setExpelledUserIds] = useState<Set<string>>(new Set());
 
+  // Nutrition filters
+  const [calorieFilter, setCalorieFilter] = useState('any');
+  const [proteinFilter, setProteinFilter] = useState('any');
+  const [nutritionPresets, setNutritionPresets] = useState<string[]>([]);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
@@ -75,7 +101,7 @@ export default function SearchPage() {
       const timer = setTimeout(() => doSearch(), 300);
       return () => clearTimeout(timer);
     }
-  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter, i18n.language]);
+  }, [query, cuisineFilter, courseFilter, sourceFilter, tagFilter, timeFilter, ingredientPills, dietaryFilters, userId, scope, followingTimeFilter, whatsNewTimeFilter, i18n.language, calorieFilter, proteinFilter, nutritionPresets]);
 
   // Filter out expelled users' content (unless viewer is admin)
   const filterExpelledContent = <T extends { user_id: string }>(items: T[]): T[] => {
@@ -168,6 +194,25 @@ export default function SearchPage() {
       if (cuisineFilter) recipeResults = recipeResults.filter((r) => r.cuisine === cuisineFilter);
       if (courseFilter) recipeResults = recipeResults.filter((r) => r.course === courseFilter);
     } else {
+      // Convert nutrition filters to API parameters
+      const nutritionParams: {
+        calMin?: number; calMax?: number; proteinMin?: number;
+        carbsMax?: number; fatMax?: number; fiberMin?: number; sodiumMax?: number;
+      } = {};
+      if (calorieFilter === 'under300') nutritionParams.calMax = 299;
+      else if (calorieFilter === '300-500') { nutritionParams.calMin = 300; nutritionParams.calMax = 500; }
+      else if (calorieFilter === '500-700') { nutritionParams.calMin = 500; nutritionParams.calMax = 700; }
+      else if (calorieFilter === 'over700') nutritionParams.calMin = 701;
+
+      if (proteinFilter === 'high') nutritionParams.proteinMin = 20;
+      else if (proteinFilter === 'medium') { nutritionParams.proteinMin = 10; /* no max for medium */ }
+      else if (proteinFilter === 'low') { /* proteinMax not supported, use client filter */ }
+
+      if (nutritionPresets.includes('lowCarb')) nutritionParams.carbsMax = 19;
+      if (nutritionPresets.includes('highFiber')) nutritionParams.fiberMin = 5;
+      if (nutritionPresets.includes('lowFat')) nutritionParams.fatMax = 9;
+      if (nutritionPresets.includes('lowSodium')) nutritionParams.sodiumMax = 599;
+
       let results = await listRecipes({
         userId,
         search: query || undefined,
@@ -178,6 +223,7 @@ export default function SearchPage() {
         tags: tagFilter ? [tagFilter] : undefined,
         includePublic: scope === 'all',
         limit: 100,
+        ...nutritionParams,
       });
       // Filter out expelled users' recipes (for public results)
       if (scope === 'all') {
@@ -191,6 +237,15 @@ export default function SearchPage() {
       recipeResults = recipeResults.filter((r) =>
         dietaryFilters.every((f) => (r.dietary_flags ?? []).includes(f))
       );
+    }
+
+    // Client-side filter for "low protein" (RPC doesn't have protein_max)
+    if (proteinFilter === 'low') {
+      recipeResults = recipeResults.filter((r) => {
+        const nutrition = (r as any).nutrition;
+        if (!nutrition?.per_serving) return false;
+        return (nutrition.per_serving.protein_g ?? 0) < 10;
+      });
     }
 
     let techResults = query ? await listTechniques({ userId, search: query, limit: 20 }) : [];
@@ -232,6 +287,8 @@ export default function SearchPage() {
     return list;
   }, [recipes, sort, timeFilter]);
 
+  const hasNutritionFilter = calorieFilter !== 'any' || proteinFilter !== 'any' || nutritionPresets.length > 0;
+
   const activeFilters = [
     cuisineFilter && { label: cuisineFilter, clear: () => setCuisineFilter('') },
     courseFilter && { label: courseFilter, clear: () => setCourseFilter('') },
@@ -242,6 +299,13 @@ export default function SearchPage() {
     ...dietaryFilters.map((d) => {
       const info = DIETARY_FLAGS.find((f) => f.key === d);
       return { label: `${info?.emoji ?? ''} ${info?.label ?? d}`, clear: () => setDietaryFilters((prev) => prev.filter((f) => f !== d)) };
+    }),
+    // Nutrition filters
+    calorieFilter !== 'any' && { label: `🔥 ${CALORIE_FILTERS.find((c) => c.value === calorieFilter)?.label ?? calorieFilter} cal`, clear: () => setCalorieFilter('any') },
+    proteinFilter !== 'any' && { label: `💪 ${PROTEIN_FILTERS.find((p) => p.value === proteinFilter)?.label ?? proteinFilter}`, clear: () => setProteinFilter('any') },
+    ...nutritionPresets.map((preset) => {
+      const info = NUTRITION_PRESETS.find((p) => p.key === preset);
+      return { label: `${info?.emoji ?? ''} ${info?.label ?? preset}`, clear: () => setNutritionPresets((prev) => prev.filter((p) => p !== preset)) };
     }),
   ].filter(Boolean) as { label: string; clear: () => void }[];
 
@@ -345,6 +409,56 @@ export default function SearchPage() {
             ))}
           </div>
         </div>
+
+        {/* Nutrition */}
+        <div>
+          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Nutrition</h3>
+          {/* Calories */}
+          <div className="mb-3">
+            <p className="text-[10px] text-cb-muted mb-1">Calories per serving</p>
+            <div className="space-y-0.5">
+              {CALORIE_FILTERS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setCalorieFilter(c.value)}
+                  className={`block text-sm w-full text-left px-2 py-1 rounded ${calorieFilter === c.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Protein */}
+          <div className="mb-3">
+            <p className="text-[10px] text-cb-muted mb-1">Protein</p>
+            <div className="space-y-0.5">
+              {PROTEIN_FILTERS.map((p) => (
+                <button
+                  key={p.value}
+                  onClick={() => setProteinFilter(p.value)}
+                  className={`block text-sm w-full text-left px-2 py-1 rounded ${proteinFilter === p.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Presets */}
+          <div>
+            <p className="text-[10px] text-cb-muted mb-1">Dietary goals</p>
+            <div className="flex flex-wrap gap-1">
+              {NUTRITION_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  onClick={() => setNutritionPresets((prev) => prev.includes(preset.key) ? prev.filter((p) => p !== preset.key) : [...prev, preset.key])}
+                  className={`text-xs px-2 py-1 rounded-full ${nutritionPresets.includes(preset.key) ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+                >
+                  {preset.emoji} {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Right: Results */}
@@ -446,7 +560,15 @@ export default function SearchPage() {
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             ))}
-            <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); setIngredientPills([]); setDietaryFilters([]); }} className="text-xs text-cb-secondary hover:text-cb-text">Clear all</button>
+            <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); setIngredientPills([]); setDietaryFilters([]); setCalorieFilter('any'); setProteinFilter('any'); setNutritionPresets([]); }} className="text-xs text-cb-secondary hover:text-cb-text">Clear all</button>
+          </div>
+        )}
+
+        {/* Nutrition filter note */}
+        {hasNutritionFilter && (
+          <div className="bg-amber-50 border border-amber-200 rounded-card px-3 py-2 mb-4 text-xs text-amber-800 flex items-center gap-2">
+            <span>🥗</span>
+            <span>Showing recipes with nutrition data only</span>
           </div>
         )}
 
@@ -473,7 +595,7 @@ export default function SearchPage() {
             ) : (
               <>
                 <p className="text-cb-secondary mb-2">No recipes found</p>
-                {activeFilters.length > 0 && <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); }} className="text-cb-primary text-sm hover:underline">Clear all filters</button>}
+                {activeFilters.length > 0 && <button onClick={() => { setCuisineFilter(''); setCourseFilter(''); setSourceFilter(''); setTagFilter(''); setTimeFilter(0); setIngredientPills([]); setDietaryFilters([]); setCalorieFilter('any'); setProteinFilter('any'); setNutritionPresets([]); }} className="text-cb-primary text-sm hover:underline">Clear all filters</button>}
               </>
             )}
           </div>
