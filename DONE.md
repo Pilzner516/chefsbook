@@ -1,6 +1,101 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session NUTRITION-1) TYPE: FEATURE
+
+### Nutrition Facts Card with AI Estimation
+
+**Foundation implementation complete.** Manual generation and display working; auto-generation at import is Nutrition-2.
+
+#### Migration 053 Verified
+
+```
+       task        |           model           
+-------------------+---------------------------
+ classification    | claude-haiku-4-5-20251001
+ cookbook_toc      | claude-sonnet-4-20250514
+ dish_recipe       | claude-sonnet-4-20250514
+ image_generation  | replicate/flux-schnell
+ import_extraction | claude-sonnet-4-20250514
+ meal_plan         | claude-sonnet-4-20250514
+ moderation        | claude-haiku-4-5-20251001
+ nutrition         | claude-haiku-4-5-20251001
+ speak_recipe      | claude-sonnet-4-20250514
+ translation       | claude-sonnet-4-20250514
+(10 rows)
+```
+
+New columns on `recipes` table: `nutrition` (JSONB), `nutrition_generated_at` (TIMESTAMPTZ), `nutrition_source` (TEXT).
+
+#### curl Test of API Route
+
+Unauthenticated request correctly returns 401:
+```bash
+$ curl -s -X POST "https://chefsbk.app/api/recipes/.../generate-nutrition"
+{"error":"Unauthorized"}
+```
+
+Route requires `Authorization: Bearer <token>` header and owner/admin check passes before generation.
+
+#### NutritionCard Component
+
+- Mounted in recipe detail page after Steps, before Notes section
+- Cream background (#faf7f0) with pomodoro red (#ce2b37) left accent stripe
+- Header: "Nutrition Facts" with ✨ "Sous Chef estimate" attribution
+- 7 nutrient values in 2x4 grid (Calories, Protein, Carbs, Fat, Fiber, Sugar, Sodium)
+- Per Serving / Per 100g toggle (hidden when per_100g is null)
+- Toggle preference persists in localStorage (`cb-nutrition-toggle`)
+- Low confidence warning (amber banner when confidence < 0.5)
+- Generate button for owner when nutrition is null
+- Regenerate ↻ button in footer for owner
+- Disclaimer: "Estimated by Sous Chef. Not a substitute for professional dietary advice."
+
+#### Low Confidence Path
+
+When `confidence < 0.5`, component displays:
+> ⚠️ Limited ingredient data — these values are rough estimates only.
+
+Values are still shown below the warning (not hidden).
+
+#### Files Created/Modified
+
+- `supabase/migrations/20260424_053_add_nutrition_data.sql` — migration
+- `packages/ai/src/modelConfig.ts` — `getModelForTask()` helper
+- `packages/ai/src/generateNutrition.ts` — AI function
+- `packages/ai/src/index.ts` — exports
+- `apps/web/app/api/recipes/[id]/generate-nutrition/route.ts` — API route
+- `apps/web/components/NutritionCard.tsx` — UI component
+- `apps/web/app/recipe/[id]/page.tsx` — mounted card
+
+#### TypeScript Clean
+
+```
+packages/ai: npx tsc --noEmit ✅ zero errors
+apps/web: npx tsc --noEmit ✅ zero errors
+```
+
+#### Deploy Verification
+
+```
+curl -I https://chefsbk.app/ → HTTP 200 ✅
+curl -I https://chefsbk.app/dashboard → HTTP 200 ✅
+curl -I https://chefsbk.app/recipe/[id] → HTTP 200 ✅
+pm2 status → chefsbook-web online ✅
+```
+
+#### SKIPPED (out of scope for Nutrition-1)
+
+- **Nutrition-2:** Auto-generation at import time
+- **Nutrition-3:** Search filters (calorie ranges, protein levels)
+- **Nutrition-4:** Meal plan integration (daily nutrition goals)
+- **Nutrition-5:** Mobile parity (React Native NutritionCard)
+- **Nutrition-6:** Bulk backfill admin UI
+- **AI Model Management:** Admin UI for editing ai_model_config table
+
+**Commit:** `f179d9b` — feat(web): add nutrition facts card with AI estimation
+
+---
+
 ## 2026-04-24 (session NUTRITION-DESIGN) TYPE: ARCHITECTURE
 
 ### Design Document: Nutrition Feature

@@ -306,6 +306,13 @@ export async function POST(req: Request) {
         });
       } catch {}
 
+      // Fire-and-forget: auto-generate nutrition (Haiku ~$0.001/recipe)
+      if (recipe.ingredients?.length) {
+        import('@/lib/nutritionHelper').then(({ generateAndSaveNutrition }) => {
+          generateAndSaveNutrition(newRecipe.id).catch(() => {});
+        }).catch(() => {});
+      }
+
       return Response.json({
         success: true,
         contentType: 'recipe',
@@ -642,6 +649,13 @@ export async function POST(req: Request) {
           source_image_url: imageUrl,
         });
       } catch { /* non-critical */ }
+    }
+
+    // Fire-and-forget: auto-generate nutrition (Haiku ~$0.001/recipe)
+    if (recipe.ingredients?.length) {
+      import('@/lib/nutritionHelper').then(({ generateAndSaveNutrition }) => {
+        generateAndSaveNutrition(newRecipe.id).catch(() => {});
+      }).catch(() => {});
     }
 
     return Response.json({

@@ -206,5 +206,18 @@ export async function createRecipeWithModeration(
     }).catch(() => {});
   }
 
+  // Fire-and-forget: auto-generate nutrition data (Haiku ~$0.001/recipe)
+  // Only fires if recipe has ingredients (skips manual stubs and video-only)
+  if ((recipe.ingredients?.length ?? 0) >= 1) {
+    supabase.auth.getSession().then(({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
+      fetch(`/api/recipes/${created.id}/generate-nutrition`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }).catch(() => {});
+  }
+
   return { recipe: created, moderation, completeness };
 }
