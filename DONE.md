@@ -1,6 +1,46 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-24 (session NUTRITION-DESIGN) TYPE: ARCHITECTURE
+
+### Design Document: Nutrition Feature
+
+**Deliverable:** `docs/nutrition-design.md` — Complete architecture document for the Nutrition feature.
+
+**Document Scope:**
+1. **Database Schema** — JSONB `nutrition` column with per-serving and per-100g data, confidence scores, indexes for search filters
+2. **AI Function Design** — Full `generateNutrition()` prompt, Haiku model recommendation (~$0.001/recipe)
+3. **Import Pipeline Integration** — Fire-and-forget nutrition generation on all import paths via `/api/recipes/finalize`
+4. **Recipe Detail UI** — NutritionCard component placement (after Steps, before Cooking Notes), toggle implementation, Trattoria design tokens
+5. **Search Filter Integration** — Calorie ranges, protein levels, dietary presets with JSONB query SQL
+6. **Meal Plan Integration** — Optional nutrition goals step in MealPlanWizard, daily summary display
+7. **Implementation Order** — 6-phase build sequence with parallelization opportunities
+8. **Prompt Split Recommendation** — 6 sessions (Nutrition-1 through Nutrition-6), all Sonnet
+9. **Cost Analysis** — ~$0.001/recipe, immaterial to existing AI cost model (~$5/month at 5,000 imports)
+10. **Edge Cases** — No ingredients, few ingredients, alcohol, large servings, retroactive bulk generation
+
+**Migration designed:**
+```sql
+ALTER TABLE recipes ADD COLUMN nutrition JSONB;
+ALTER TABLE recipes ADD COLUMN nutrition_generated_at TIMESTAMPTZ;
+ALTER TABLE recipes ADD COLUMN nutrition_source TEXT;
+CREATE INDEX idx_recipes_nutrition ON recipes USING GIN (nutrition jsonb_path_ops);
+```
+
+**Open questions for Bob:**
+1. Haiku vs Sonnet model choice
+2. Batch import skip-or-generate behavior
+3. Confidence threshold for display
+4. Mobile launch priority
+5. Disclaimer wording approval
+
+**Files created:**
+- `docs/nutrition-design.md` — Full design document
+
+**No code changes.** Ready for implementation prompts.
+
+---
+
 ## 2026-04-24 (session Welcome Email + Admin Fixes) TYPE: FEATURE
 
 ### FIX 1 — Welcome Email on Signup

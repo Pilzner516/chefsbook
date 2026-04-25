@@ -14,6 +14,7 @@ import StorePickerDialog from '@/components/StorePickerDialog';
 import { RecipeStatusBanner } from '@/components/RecipeStatusBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import { RecipeLightbox } from '@/components/RecipeLightbox';
+import NutritionCard from '@/components/NutritionCard';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, isTagBlocked, logTagRemoval } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
@@ -2340,6 +2341,14 @@ export default function RecipePage() {
           )}
         </section>
         </>}
+
+        {/* Nutrition Facts */}
+        <NutritionCard
+          recipeId={recipe.id}
+          nutrition={(recipe as any).nutrition}
+          isOwner={isOwner}
+          servings={recipe.servings}
+        />
 
         {/* Notes */}
         <section className="mb-10">

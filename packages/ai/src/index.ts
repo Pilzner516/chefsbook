@@ -85,3 +85,6 @@ export type {
   BulkCommentFinding,
   BulkProfileFinding,
 } from './bulkModerate';
+export { generateNutrition } from './generateNutrition';
+export type { NutritionEstimate, NutritionInput } from './generateNutrition';
+export { getModelForTask, clearModelCache, MODEL_FALLBACKS } from './modelConfig';
