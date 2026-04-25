@@ -1,6 +1,78 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session NUTRITION-3) TYPE: FEATURE
+
+### Nutrition Filters in Recipe Search
+
+**Users can now filter recipes by nutrition values on the web search page.** Three filter categories added to the sidebar: Calories, Protein, and Dietary Presets.
+
+#### Migration 054 Applied
+
+Extended `search_recipes` RPC with 7 new nutrition parameters:
+- `p_cal_min`, `p_cal_max` — calorie range
+- `p_protein_min` — minimum protein
+- `p_carbs_max` — maximum carbs
+- `p_fat_max` — maximum fat
+- `p_fiber_min` — minimum fiber
+- `p_sodium_max` — maximum sodium
+
+JSONB path queries filter recipes with nutrition data:
+```sql
+AND (p_cal_min IS NULL OR (
+  r.nutrition IS NOT NULL
+  AND (r.nutrition->'per_serving'->>'calories')::numeric >= p_cal_min
+))
+```
+
+#### Filter Categories
+
+| Category | Options |
+|----------|---------|
+| Calories | Any, Under 300, 300-500, 500-700, Over 700 |
+| Protein | Any, High Protein (≥25g), Low Protein (≤10g) |
+| Presets | Low Carb (≤20g), High Fiber (≥8g), Low Fat (≤10g), Low Sodium (≤500mg) |
+
+#### UI Implementation
+
+- Filter section added to search sidebar below existing filters
+- Amber banner: "Showing recipes with nutrition data only" when nutrition filters active
+- Active filter pills display in the filter bar with ✕ to remove
+- Both "Clear all" buttons (main and in-sidebar) reset nutrition filters
+- Client-side filter for "Low Protein" (RPC only has protein_min, not protein_max)
+
+#### Files Changed
+
+| File | Change |
+|------|--------|
+| `supabase/migrations/20260425_054_search_nutrition_filters.sql` | New RPC with nutrition params |
+| `packages/db/src/queries/recipes.ts` | Extended listRecipes() params and RPC call |
+| `apps/web/app/dashboard/search/page.tsx` | Filter UI, state, and query integration |
+
+#### Verification
+
+TypeScript clean:
+```bash
+cd packages/db && npx tsc --noEmit  # Clean
+cd apps/web && npx tsc --noEmit    # Clean
+```
+
+Note: 0 recipes currently have nutrition data (expected — auto-gen only runs on NEW imports per Nutrition-2).
+
+Deploy confirmed:
+- Build succeeded on RPi5
+- PM2 restart: online
+- Smoke tests: HTTP 200 on /, /dashboard/search
+- Commit: aaa0c5b
+
+#### SKIPPED (per prompt)
+
+- Nutrition-4: Meal plan integration
+- Nutrition-5: Mobile parity
+- Nutrition-6: Bulk backfill admin UI
+
+---
+
 ## 2026-04-25 (session NUTRITION-2) TYPE: FEATURE
 
 ### Auto-Generate Nutrition on Import
