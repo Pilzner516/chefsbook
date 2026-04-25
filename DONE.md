@@ -1,6 +1,63 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session NUTRITION-5) TYPE: FEATURE
+
+### Mobile NutritionCard Component
+
+**Users can now view and generate AI nutrition estimates on recipe detail screens in the mobile app.** Brings web's Nutrition-2 parity to mobile.
+
+#### New Component: NutritionCard
+
+Created `apps/mobile/components/NutritionCard.tsx`:
+- 2-column nutrient grid showing 7 values: Calories, Protein, Carbs, Fat, Fiber, Sugar, Sodium
+- Per Serving / Per 100g toggle with preference persisted to SecureStore
+- Generate button (owners only) calls `https://chefsbk.app/api/recipes/[id]/generate-nutrition`
+- Regenerate button in footer (owners only)
+- Low confidence warning (amber banner) when confidence < 0.5
+- AI notes display when present
+- Disclaimer footer: "Estimated by Sous Chef. Not a substitute for professional dietary advice."
+
+#### Recipe Detail Integration
+
+Mounted NutritionCard in `apps/mobile/app/recipe/[id].tsx` after Tag management section, before Cooking notes:
+- Receives `nutrition` from recipe data (JSONB column accessed via `select('*')`)
+- Passes `isOwner`, `servings`, `onNutritionUpdated` callback
+- Non-owners see the card only if nutrition data exists; owners always see it (empty state with Generate CTA)
+
+#### Type Updates
+
+- Added `nutrition: Record<string, unknown> | null` to `Recipe` interface in `packages/db/src/types.ts`
+- Fixed `MealPlanWizard.tsx` (mobile) to use new `MealPlanResult.plan` array after Nutrition-4 changed return type
+
+#### i18n: 5 Locales Updated
+
+Added `nutrition` namespace with 17 keys to all mobile locale files:
+- `apps/mobile/locales/en.json`
+- `apps/mobile/locales/fr.json`
+- `apps/mobile/locales/es.json`
+- `apps/mobile/locales/it.json`
+- `apps/mobile/locales/de.json`
+
+#### Files Changed
+
+| File | Change |
+|------|--------|
+| `apps/mobile/components/NutritionCard.tsx` | New component (370 lines) |
+| `apps/mobile/app/recipe/[id].tsx` | Import + mount NutritionCard |
+| `apps/mobile/locales/*.json` | All 5 locales updated with nutrition namespace |
+| `packages/db/src/types.ts` | Added `nutrition` field to Recipe interface |
+| `apps/mobile/components/MealPlanWizard.tsx` | Fixed MealPlanResult usage |
+
+#### Verification
+
+TypeScript clean (only known expo-file-system error unrelated to changes):
+```bash
+cd apps/mobile && npx tsc --noEmit  # Clean except known expo-file-system issue
+```
+
+---
+
 ## 2026-04-25 (session NUTRITION-4) TYPE: FEATURE
 
 ### Nutritional Goals in Meal Plan Wizard

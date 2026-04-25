@@ -37,6 +37,8 @@ import { HeroGallery } from '../../components/HeroGallery';
 import { useConfirmDialog } from '../../components/useDialog';
 import ChefsDialog from '../../components/ChefsDialog';
 import { StorePicker } from '../../components/StorePicker';
+import { NutritionCard } from '../../components/NutritionCard';
+import type { NutritionEstimate } from '@chefsbook/ai';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -1852,6 +1854,16 @@ function RecipeDetailInner() {
         />
 
         {/* Source shown in attribution row — SourceSection removed */}
+
+        {/* Nutrition card */}
+        <Divider />
+        <NutritionCard
+          recipeId={recipe.id}
+          nutrition={recipe.nutrition as NutritionEstimate | null}
+          isOwner={recipe.user_id === session?.user?.id}
+          servings={recipe.servings}
+          onNutritionUpdated={() => fetchRecipe(recipe.id)}
+        />
 
         {/* Feature #4: cooking notes */}
         <Divider />

@@ -75,7 +75,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
           tags: r.tags ?? [], total_minutes: r.total_minutes,
         })),
       );
-      setPlan(result);
+      setPlan(result.plan);
       setStep(4);
     } catch (e: any) {
       Alert.alert(t('wizard.generationFailed'), e.message);
@@ -101,8 +101,8 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
           adventurousness: 70, servings: 4, source },
         userRecipes.map((r) => ({ id: r.id, title: r.title, cuisine: r.cuisine, course: r.course, tags: r.tags ?? [], total_minutes: r.total_minutes })),
       );
-      if (result.length > 0) {
-        setPlan((prev) => prev.map((p) => p.day === day && p.slot === slot ? result[0] : p));
+      if (result.plan.length > 0) {
+        setPlan((prev) => prev.map((p) => p.day === day && p.slot === slot ? result.plan[0] : p));
       }
     } catch {} finally { setGenerating(false); }
   };

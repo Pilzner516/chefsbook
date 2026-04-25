@@ -527,5 +527,23 @@
     "regenLimitBody": "Questa ricetta ha raggiunto il numero massimo di rigenerazioni di immagini IA.",
     "regenLimitReached": "Limite di rigenerazione raggiunto per questa ricetta",
     "generationFailed": "Generazione dell'immagine fallita. Riprova."
+  },
+  "nutrition": {
+    "title": "Valori nutrizionali",
+    "estimate": "Stima",
+    "perServing": "Per porzione",
+    "per100g": "Per 100g",
+    "notYetGenerated": "Dati nutrizionali non ancora generati",
+    "generate": "Genera",
+    "regenerate": "Rigenera",
+    "lowConfidence": "Dati ingredienti limitati — questi valori sono stime approssimative.",
+    "disclaimer": "Stimato da Sous Chef. Non sostituisce il parere di un dietologo.",
+    "calories": "Calorie",
+    "protein_g": "Proteine",
+    "carbs_g": "Carboidrati",
+    "fat_g": "Grassi",
+    "fiber_g": "Fibre",
+    "sugar_g": "Zuccheri",
+    "sodium_mg": "Sodio"
   }
 }

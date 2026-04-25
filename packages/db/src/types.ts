@@ -139,6 +139,7 @@ export interface Recipe {
   ai_recipe_verdict: 'approved' | 'flagged' | 'not_a_recipe' | 'pending' | null;
   ai_verdict_reason: string | null;
   ai_verdict_at: string | null;
+  nutrition: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }

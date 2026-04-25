@@ -28,6 +28,7 @@ const DEFAULT_REORDERABLE_NAV: AdminNavItem[] = [
   { key: 'incomplete-recipes', href: '/admin/incomplete-recipes', label: 'Incomplete Recipes' },
   { key: 'copyright', href: '/admin/copyright', label: 'Copyright' },
   { key: 'costs', href: '/admin/costs', label: 'Costs' },
+  { key: 'nutrition', href: '/admin/nutrition', label: 'Nutrition' },
 ];
 
 const FIXED_NAV: AdminNavItem[] = [
