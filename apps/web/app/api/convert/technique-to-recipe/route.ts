@@ -10,7 +10,12 @@ import { supabase, supabaseAdmin, fetchRecipeCompleteness } from '@chefsbook/db'
  */
 export async function POST(req: NextRequest) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const authHeader = req.headers.get('authorization') ?? '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    const token = authHeader.slice(7);
+    const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }

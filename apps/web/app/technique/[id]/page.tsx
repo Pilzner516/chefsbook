@@ -120,9 +120,13 @@ export default function TechniquePage() {
     setConverting(true);
     setShowReimportMenu(false);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/convert/technique-to-recipe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ techniqueId: id }),
       });
       const data = await res.json();
