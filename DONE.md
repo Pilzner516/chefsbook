@@ -1,6 +1,62 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-25 (session ADMIN-USERS-FIX) TYPE: CODE FIX
+
+### Admin Users Page — Missing Columns Fix
+
+**FIX 1 — Display Name fallback: FIXED**
+- Display name was showing "Chef" for all users (auto-populated role label during account creation)
+- Now falls back: display_name → username → email prefix → "User"
+- "Chef" is explicitly skipped as an invalid display name
+
+**FIX 2 — Avatar column: FIXED**
+- Added 32px avatar circle at start of each user row
+- Uses `/api/image` proxy for Supabase storage URLs
+- Falls back to initial letter if no avatar
+
+**FIX 3 — Online indicator: ALREADY IMPLEMENTED**
+- Green/grey dot now shown next to username (moved from Last Active column)
+- Uses `last_seen_at > NOW() - 5 minutes` logic
+
+**FIX 4 — Last Active column: ALREADY IMPLEMENTED**
+- Shows "Never" if `last_seen_at` is null
+- Formats as MM/DD/YY HH:MM when populated
+- Heartbeat status: `last_seen_at` exists, pilzner has data from 2026-04-25
+
+**FIX 5 — Last Login column: ALREADY IMPLEMENTED**
+- Shows `auth.users.last_sign_in_at` formatted as MM/DD/YY
+
+**FIX 6 — Login Count column: ALREADY IMPLEMENTED**
+- Shows `user_profiles.login_count` (pilzner = 1, others = 0)
+
+**FIX 7 — Recipes count column: ALREADY IMPLEMENTED**
+- Shows actual recipe count per user (pilzner = 83)
+
+**FIX 8 — Cost column: ALREADY IMPLEMENTED**
+- AI usage log table exists (`ai_usage_log`, 608 rows, $3.75 total)
+- Cost data shows correctly (pilzner = $3.58)
+
+**FIX 9 — Throttle column: ALREADY IMPLEMENTED**
+- `user_throttle` table exists with `throttle_level` (yellow/red/null)
+- Shows "—" when no throttle, Red/Yellow pill when throttled
+
+**Schema audit results:**
+- `ai_usage_log`: EXISTS (608 rows, $3.75 total cost)
+- `user_throttle`: EXISTS (throttle_level = yellow/red/null)
+- `user_profiles.last_seen_at`: EXISTS (pilzner has data)
+- `user_profiles.login_count`: EXISTS (pilzner = 1)
+
+**TypeScript check:** PASS (zero errors)
+
+**Deploy:** SUCCESS — HTTP 200 at https://chefsbk.app/admin/users
+
+**Verified via psql:**
+- pilzner recipe count = 83 (matches what API returns)
+- pilzner AI cost = $3.58 (matches ai_usage_log SUM)
+
+---
+
 ## 2026-04-25 (session MOBILE-4) TYPE: FEATURE
 
 ### Meal Plan Nutritional Goals + Daily Summary — Mobile Implementation
