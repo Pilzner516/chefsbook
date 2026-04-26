@@ -500,6 +500,7 @@ export default function UsersPage() {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-2 py-3 w-8"><input type="checkbox" checked={selected.size === sorted.length && sorted.length > 0} onChange={() => selected.size === sorted.length ? setSelected(new Set()) : selectAll()} /></th>
+                <th className="px-2 py-3 w-10"></th>{/* Avatar */}
                 <SortHeader label="User" sortKeyName="username" />
                 <SortHeader label="Email" sortKeyName="email" />
                 <SortHeader label="Plan" sortKeyName="plan_tier" />
@@ -528,9 +529,35 @@ export default function UsersPage() {
                 return (
                   <tr key={u.id} className="border-b last:border-0 hover:bg-gray-50">
                     <td className="px-2 py-3"><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} /></td>
+                    <td className="px-2 py-3">
+                      {/* Avatar */}
+                      {u.avatar_url ? (
+                        <img
+                          src={u.avatar_url.startsWith('http') ? `/api/image?url=${encodeURIComponent(u.avatar_url)}` : u.avatar_url}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover bg-gray-100"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500">
+                          {(u.display_name || u.username || u.email || 'U').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-gray-900">{u.display_name ?? '—'}</span>
+                        {/* Online indicator */}
+                        {u.last_seen_at && (() => {
+                          const lastSeen = new Date(u.last_seen_at);
+                          const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+                          const isOnline = lastSeen.getTime() > fiveMinAgo;
+                          return <span className={`inline-block w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`} title={isOnline ? 'Online' : 'Offline'} />;
+                        })()}
+                        {!u.last_seen_at && <span className="inline-block w-2 h-2 rounded-full bg-gray-300" title="Never seen" />}
+                        {/* Display name with fallback: display_name → username → email prefix → "User" */}
+                        {/* Skip generic role labels like "Chef" that were auto-populated */}
+                        <span className="font-medium text-gray-900">
+                          {(u.display_name && u.display_name !== 'Chef') ? u.display_name : (u.username || (u.email ? u.email.split('@')[0] : 'User'))}
+                        </span>
                         {u.account_status === 'suspended' && (
                           <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">Suspended</span>
                         )}
@@ -614,15 +641,7 @@ export default function UsersPage() {
                     </td>
                     <td className="px-3 py-3 text-xs text-gray-500">
                       {u.last_seen_at ? (
-                        <div className="flex items-center gap-1">
-                          {(() => {
-                            const lastSeen = new Date(u.last_seen_at);
-                            const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-                            const isOnline = lastSeen.getTime() > fiveMinAgo;
-                            return <span className={`inline-block w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`} title={isOnline ? 'Online' : 'Offline'} />;
-                          })()}
-                          <span>{new Date(u.last_seen_at).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
+                        <span>{new Date(u.last_seen_at).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                       ) : <span className="text-gray-300">Never</span>}
                     </td>
                     <td className="px-3 py-3 text-xs text-gray-500">
