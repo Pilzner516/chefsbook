@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin, fetchRecipeCompleteness } from '@chefsbook/db';
+import { supabaseAdmin, fetchRecipeCompleteness } from '@chefsbook/db';
 
 /**
  * POST /api/convert/technique-to-recipe
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
     const token = authHeader.slice(7);
-    const { data: { user } } = await supabase.auth.getUser(token);
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
