@@ -1,6 +1,61 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-26 (session MOBILE-LOGO-FEEDBACK) TYPE: FEATURE
+
+### Mobile — Feedback Modal on Logo Tap
+
+**What was built:**
+Tapping the ChefsBook logo in the mobile header now opens an action sheet with two options:
+1. Settings — navigates to settings screen (existing behavior)
+2. Log Feedback — opens a new feedback modal
+
+**FeedbackModal component:**
+- Three feedback types: Bug, Suggestion, Praise (with icons)
+- Screen/feature field (optional, auto-populated if available)
+- Description field (required, multiline)
+- Submit saves to `user_feedback` table with user_id, type, screen, description, app_version, platform
+- Success toast on submit, error handling with form preservation
+
+**Database:**
+- Migration 055: `user_feedback` table created
+- Columns: id, user_id, type (bug/suggestion/praise), screen, description, app_version, platform, created_at
+- RLS: users can insert their own feedback, admins can read all
+- Indexes on created_at DESC and type
+
+**Admin feedback page:**
+- New page at `/admin/feedback`
+- Added to admin nav (reorderable)
+- Filter buttons for All/Bugs/Suggestions/Praise
+- Shows: avatar, username, type badge, screen tag, description, timestamp, platform, app version
+
+**i18n:**
+- Added `header.settings` and `header.logFeedback` keys
+- Added `feedback.*` section with 15 keys for all UI strings
+- Translated to all 5 locales: en, fr, es, it, de
+
+**Files changed:**
+- apps/mobile/components/FeedbackModal.tsx (NEW)
+- apps/mobile/components/ChefsBookHeader.tsx (updated)
+- apps/mobile/locales/*.json (5 files)
+- apps/web/app/admin/feedback/page.tsx (NEW)
+- apps/web/app/admin/layout.tsx (added nav item)
+- apps/web/app/api/admin/route.ts (added handler)
+- supabase/migrations/20260425_055_user_feedback.sql (NEW)
+
+**Verification:**
+- TypeScript: PASS (mobile and web both clean)
+- Migration: Applied to production DB
+- Admin page: HTTP 200 on chefsbk.app/admin/feedback
+- Table schema: Verified via psql
+
+**ADB testing notes:**
+- Logo tap via ADB coordinates was unreliable — the TouchableOpacity did not visually respond
+- Known ADB limitation with React Native touchable components
+- Mobile feature built and bundled in APK but tap testing inconclusive
+
+---
+
 ## 2026-04-25 (session ADMIN-USERS-FIX) TYPE: CODE FIX
 
 ### Admin Users Page — Missing Columns Fix
