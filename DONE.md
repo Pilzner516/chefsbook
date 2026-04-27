@@ -1,6 +1,33 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session NUTRITION-FIX) TYPE: CODE FIX
+
+### Web + Mobile — Remove Verbose AI Notes from NutritionCard
+
+**Issue:** The Nutrition Facts card displayed a verbose AI reasoning paragraph
+below the nutrient grid explaining assumptions about ingredient weights, cooking
+losses, sodium calculations, etc. Users only need the single-line disclaimer.
+
+**Fix:** Removed the `nutrition.notes` section from both NutritionCard components.
+The single-line disclaimer remains: "Estimated by Sous Chef. Not a substitute for
+professional dietary advice."
+
+**Files changed:**
+- apps/web/components/NutritionCard.tsx (removed lines 244-248)
+- apps/mobile/components/NutritionCard.tsx (removed lines 315-326)
+
+**Pre-existing correct behavior (no changes needed):**
+- Default view: Already set to 'serving' (not '100g')
+- Toggle: Already present, shows when per_100g data exists
+
+**Verification:**
+- TypeScript web: PASS (`npx tsc --noEmit` clean)
+- Deployed to RPi5: HTTP 200
+- Recipe page accessible: curl returns HTTP 200
+
+---
+
 ## 2026-04-27 (session CONVERSION-AUTH-FIX) TYPE: CODE FIX
 
 ### Web — Fix "Conversion failed: Not authenticated" Error
