@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -344,7 +344,11 @@ export default function SpeakScreen() {
   // ── Step 2: Review ──
   if (step === 2) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.bgScreen }} contentContainerStyle={{ padding: 20, paddingBottom: tabBarHeight }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1, backgroundColor: colors.bgScreen }}
+      >
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: tabBarHeight }}>
         <ProgressBar />
 
         <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 4 }}>{t('speak.reviewCaptured')}</Text>
@@ -374,6 +378,7 @@ export default function SpeakScreen() {
 
         {error ? <Text style={{ color: '#ef4444', fontSize: 14, marginTop: 12 }}>{error}</Text> : null}
       </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 

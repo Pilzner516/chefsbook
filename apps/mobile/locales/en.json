@@ -95,6 +95,8 @@
     "browseCategory": "Browse by Category",
     "exploreCategory": "Explore by Category",
     "clearAll": "Clear all",
+    "filtersActive": "{{count}} filter active",
+    "filtersActive_plural": "{{count}} filters active",
     "noPublicRecipes": "No public recipes yet",
     "beFirstToShare": "Be the first to share one!",
     "noFollowingRecipes": "No recipes from chefs you follow",

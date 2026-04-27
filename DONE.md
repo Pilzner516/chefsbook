@@ -1,6 +1,40 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session MOBILE-LAYOUT-FIXES) TYPE: CODE FIX
+
+### Mobile Layout Bug Fixes (3 bugs from docs/prompts/mobile-layout-fixes.md)
+
+**Bug 1 - Toggle overflow on recipe detail:**
+- Header toggle (kg/lb) and NutritionCard toggle (Per Serving/Per 100g) verified visible on Samsung S24 viewport
+- No code changes needed - toggles already display correctly
+
+**Bug 2 - Search filter collapse:**
+- Implemented collapsible filter section with animated expand/collapse
+- Added "X filter(s) active" summary bar with expand button and clear-all X
+- Added LayoutAnimation for smooth transitions on Android
+- Added i18n translations in all 5 locales (en/fr/es/de/it):
+  - `filtersActive` / `filtersActive_plural` keys
+- Files changed: `apps/mobile/app/(tabs)/search.tsx`, `apps/mobile/locales/*.json`
+
+**Bug 3 - Keyboard overlapping text inputs:**
+- Added KeyboardAvoidingView to all screens with TextInput:
+  - `search.tsx` - search input
+  - `recipe/[id].tsx` - editing mode inputs
+  - `speak.tsx` - transcript review input
+  - `shop.tsx` - manual item input
+  - `scan.tsx` - paste text input
+  - `chef/[id].tsx` - edit profile modal + message compose sheet
+  - `plan.tsx` - recipe picker search modal
+- Already had KeyboardAvoidingView: `messages.tsx`, `auth/signup.tsx`, `auth/signin.tsx`
+
+**Verification:**
+- ADB screenshots captured: collapsed filter state, expanded filter state
+- NutritionCard toggle confirmed visible by user
+- APK rebuilt and installed on emulator
+
+---
+
 ## 2026-04-27 (session NUTRITION-EMERGENCY-VERIFICATION) TYPE: VERIFICATION
 
 ### Nutrition Display Regression Investigation — NO FIX NEEDED

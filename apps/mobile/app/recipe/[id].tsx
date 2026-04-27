@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image, ActivityIndicator, BackHandler } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Linking, Image, ActivityIndicator, BackHandler, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -17,7 +17,7 @@ import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { supabase, updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe } from '@chefsbook/db';
+import { supabase, updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe, getVerifiedUserIds } from '@chefsbook/db';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
@@ -37,6 +37,7 @@ import { HeroGallery } from '../../components/HeroGallery';
 import { useConfirmDialog } from '../../components/useDialog';
 import ChefsDialog from '../../components/ChefsDialog';
 import { StorePicker } from '../../components/StorePicker';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { NutritionCard } from '../../components/NutritionCard';
 import type { NutritionEstimate } from '@chefsbook/ai';
 
@@ -708,6 +709,8 @@ function RecipeDetailInner() {
   const shareTargetRef = React.useRef<typeof currentRecipe>(null);
   const privateSharUrlRef = React.useRef<string>('');
   const addToListRef = React.useRef<(listId: string, listName: string) => void>(() => {});
+  // Verified user IDs for attribution badges
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (id) fetchRecipe(id);
@@ -716,6 +719,18 @@ function RecipeDetailInner() {
   useEffect(() => {
     if (currentRecipe) setServings(currentRecipe.servings ?? 4);
   }, [currentRecipe?.id]);
+
+  // Fetch verified user IDs for attribution badges
+  useEffect(() => {
+    if (!currentRecipe) return;
+    const userIds: string[] = [];
+    if (currentRecipe.user_id) userIds.push(currentRecipe.user_id);
+    if (currentRecipe.original_submitter_id) userIds.push(currentRecipe.original_submitter_id);
+    if (currentRecipe.shared_by_id) userIds.push(currentRecipe.shared_by_id);
+    if (userIds.length > 0) {
+      getVerifiedUserIds(userIds).then(setVerifiedUserIds);
+    }
+  }, [currentRecipe?.id, currentRecipe?.user_id, currentRecipe?.original_submitter_id, currentRecipe?.shared_by_id]);
 
   // Translation: check cache or translate in background
   useEffect(() => {
@@ -1111,7 +1126,10 @@ function RecipeDetailInner() {
 
   if (editing) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1, backgroundColor: colors.bgScreen }}
+      >
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}>
         <View style={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -1260,6 +1278,7 @@ function RecipeDetailInner() {
                 <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
                   {t('attribution.originalBy')} @{currentRecipe.original_submitter_username}
                 </Text>
+                {currentRecipe.original_submitter_id && verifiedUserIds.has(currentRecipe.original_submitter_id) && <VerifiedBadge size="sm" />}
               </TouchableOpacity>
               <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t('recipe.originalSource')}</Text>
             </View>
@@ -1432,14 +1451,17 @@ function RecipeDetailInner() {
         </TouchableOpacity>
       </View>
       <ConfirmActionDialog />
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: colors.bgScreen }}
+    >
       <ChefsBookHeader />
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}>
       {/* Hero image gallery — user photos or fallback to recipe.image_url / chef's hat */}
       <View style={{ position: 'relative' }}>
         <HeroGallery recipeId={recipe.id} fallbackImageUrl={recipe.image_url} refreshKey={heroRefreshKey} />
@@ -1515,6 +1537,7 @@ function RecipeDetailInner() {
                   <Text style={{ color: '#ffffff', fontSize: 9, fontWeight: '700' }}>{uploaderUsername.charAt(0).toUpperCase()}</Text>
                 </View>
                 <Text style={{ color: colors.textPrimary, fontSize: 13 }}>@{uploaderUsername}</Text>
+                {uploaderId && verifiedUserIds.has(uploaderId) && <VerifiedBadge size="sm" />}
               </TouchableOpacity>
             ) : null;
           })()}
@@ -1662,6 +1685,7 @@ function RecipeDetailInner() {
                 <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
                   {t('attribution.originalBy')} @{recipe.original_submitter_username}
                 </Text>
+                {recipe.original_submitter_id && verifiedUserIds.has(recipe.original_submitter_id) && <VerifiedBadge size="sm" />}
               </TouchableOpacity>
             )}
             {recipe.shared_by_username && (
@@ -1669,10 +1693,11 @@ function RecipeDetailInner() {
                 backgroundColor: colors.bgBase, borderRadius: 16,
                 paddingHorizontal: 12, paddingVertical: 6,
               }}>
-                <TouchableOpacity onPress={() => router.push(`/chef/${recipe.shared_by_id}`)}>
+                <TouchableOpacity onPress={() => router.push(`/chef/${recipe.shared_by_id}`)} style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>
                     {t('attribution.sharedBy')} @{recipe.shared_by_username}
                   </Text>
+                  {recipe.shared_by_id && verifiedUserIds.has(recipe.shared_by_id) && <VerifiedBadge size="sm" />}
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={async () => {
@@ -1897,7 +1922,8 @@ function RecipeDetailInner() {
           }}
           variant="ghost"
         />
-        <View style={{ height: recipe.user_id !== session?.user?.id ? 100 : 40 }} />
+        {/* Extra space for save bar on non-owned recipes */}
+        {recipe.user_id !== session?.user?.id && <View style={{ height: 60 }} />}
       </View>
     </ScrollView>
     {/* Save bar for non-owned recipes */}
@@ -2067,6 +2093,6 @@ function RecipeDetailInner() {
         onImageGenerated={handleImageGenerated}
       />
     )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }

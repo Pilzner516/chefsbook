@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Alert, ScrollView, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
+import { View, Text, Alert, ScrollView, TouchableOpacity, ActivityIndicator, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -483,7 +483,10 @@ export default function ScanTab() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: colors.bgScreen }}
+    >
       <ChefsBookHeader />
 
       {/* Import progress bar */}
@@ -839,7 +842,7 @@ export default function ScanTab() {
         onClose={() => setShowInstagramRedirectDialog(false)}
         buttons={[{ label: 'OK', variant: 'primary', onPress: () => setShowInstagramRedirectDialog(false) }]}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

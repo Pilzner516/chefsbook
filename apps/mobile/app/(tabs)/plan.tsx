@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, FlatList, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Modal, TextInput, FlatList, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import ChefsDialog from '../../components/ChefsDialog';
 
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -453,11 +453,12 @@ export default function PlanTab() {
 
       {/* Recipe Picker Modal */}
       <Modal visible={pickerVisible} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{
-            backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-            maxHeight: '85%', paddingTop: 16, paddingBottom: insets.bottom + 16,
-          }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+            <View style={{
+              backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+              maxHeight: '85%', paddingTop: 16, paddingBottom: insets.bottom + 16,
+            }}>
             {/* Handle bar */}
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
 
@@ -604,7 +605,8 @@ export default function PlanTab() {
               </View>
             )}
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Shopping List Picker Modal */}

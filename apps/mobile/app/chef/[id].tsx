@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Modal, FlatList } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Modal, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -9,12 +9,13 @@ import {
   supabase, saveRecipe, updateProfile, getProfileById,
   followUser, unfollowUser, isFollowing as checkIsFollowing,
   getFollowers, getFollowing, getFollowedRecipes, sendMessage,
-  canDo, getUserPlanTier,
+  canDo, getUserPlanTier, isUserVerified, getVerifiedUserIds,
 } from '@chefsbook/db';
 import type { UserProfile, Recipe, PlanTier } from '@chefsbook/db';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, RecipeCard, Button, Loading, EmptyState, Input } from '../../components/UIKit';
 import ChefsDialog from '../../components/ChefsDialog';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { getInitials } from '@chefsbook/ui';
 
 type ProfileTab = 'recipes' | 'followers' | 'following';
@@ -49,6 +50,8 @@ export default function ChefProfile() {
   const [followersLoading, setFollowersLoading] = useState(false);
   const [userPlanTier, setUserPlanTier] = useState<PlanTier>('free');
   const [showUnfollowDialog, setShowUnfollowDialog] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
 
   const isOwnProfile = session?.user?.id === id;
 
@@ -76,14 +79,16 @@ export default function ChefProfile() {
       recipesQuery = recipesQuery.in('visibility', ['public', 'shared_link']);
     }
 
-    const [profile, { data: publicRecipes }] = await Promise.all([
+    const [profile, { data: publicRecipes }, verified] = await Promise.all([
       getProfileById(id!),
       recipesQuery,
+      isUserVerified(id!),
     ]);
     setChef(profile);
     setRecipes((publicRecipes ?? []) as Recipe[]);
     setFollowerCount(profile?.follower_count ?? 0);
     setFollowingCount(profile?.following_count ?? 0);
+    setIsVerified(verified);
 
     // Check if current user follows this chef
     if (session?.user?.id && session.user.id !== id) {
@@ -128,6 +133,8 @@ export default function ChefProfile() {
     setFollowersLoading(true);
     const data = await getFollowers(id);
     setFollowers(data);
+    const verifiedIds = await getVerifiedUserIds(data.map((u) => u.id));
+    setVerifiedUserIds(verifiedIds);
     setFollowersLoading(false);
   };
 
@@ -136,6 +143,8 @@ export default function ChefProfile() {
     setFollowersLoading(true);
     const data = await getFollowing(id);
     setFollowing(data);
+    const verifiedIds = await getVerifiedUserIds(data.map((u) => u.id));
+    setVerifiedUserIds(verifiedIds);
     setFollowersLoading(false);
   };
 
@@ -196,7 +205,10 @@ export default function ChefProfile() {
       <Avatar uri={user.avatar_url} initials={getInitials(user.display_name)} size={44} />
       <View style={{ marginLeft: 12, flex: 1 }}>
         {user.username && (
-          <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600' }}>@{user.username}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '600' }}>@{user.username}</Text>
+            {verifiedUserIds.has(user.id) && <VerifiedBadge size="sm" />}
+          </View>
         )}
         {user.display_name && (
           <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{user.display_name}</Text>
@@ -220,7 +232,10 @@ export default function ChefProfile() {
           {chef.display_name}
         </Text>
         {chef.username && (
-          <Text style={{ color: colors.textSecondary, fontSize: 15 }}>@{chef.username}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 15 }}>@{chef.username}</Text>
+            {isVerified && <VerifiedBadge size="md" />}
+          </View>
         )}
         {chef.bio && (
           <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 8, textAlign: 'center', paddingHorizontal: 16 }}>{chef.bio}</Text>
@@ -366,8 +381,9 @@ export default function ChefProfile() {
 
       {/* Edit Profile Modal */}
       <Modal visible={showEditProfile} animationType="slide" transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 }}>
               <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700' }}>{t('profile.editProfile')}</Text>
               <TouchableOpacity onPress={() => setShowEditProfile(false)}>
@@ -409,7 +425,8 @@ export default function ChefProfile() {
               <Button title={t('profile.saveProfile')} onPress={saveProfile} loading={savingProfile} />
             </View>
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
       <ChefsDialog
         visible={showUnfollowDialog}
@@ -435,8 +452,9 @@ export default function ChefProfile() {
       />
       {/* Message compose sheet */}
       {showMessageSheet && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: insets.bottom + 20 }}>
+        <KeyboardAvoidingView style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: insets.bottom + 20 }}>
             <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 4 }}>Message @{chef?.username ?? ''}</Text>
             {messageError && <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 8 }}>{messageError}</Text>}
             <TextInput
@@ -480,7 +498,8 @@ export default function ChefProfile() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       )}
     </ScrollView>
   );

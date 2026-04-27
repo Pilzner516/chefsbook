@@ -94,6 +94,8 @@
     "browseCategory": "Nach Kategorie durchsuchen",
     "exploreCategory": "Nach Kategorie erkunden",
     "clearAll": "Alles löschen",
+    "filtersActive": "{{count}} Filter aktiv",
+    "filtersActive_plural": "{{count}} Filter aktiv",
     "noPublicRecipes": "Noch keine öffentlichen Rezepte",
     "beFirstToShare": "Sei der Erste, der eins teilt!",
     "noFollowingRecipes": "Keine Rezepte von Köchen, denen du folgst",

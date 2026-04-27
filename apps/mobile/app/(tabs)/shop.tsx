@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -280,7 +280,10 @@ export default function ShopTab() {
   // ── List detail view ──
   if (currentList) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1, backgroundColor: colors.bgScreen }}
+      >
         <ChefsBookHeader />
         {/* Offline banner */}
         {isOffline && (
@@ -468,7 +471,7 @@ export default function ShopTab() {
           <View style={{ height: tabBarHeight }} />
         </ScrollView>
         {shopDialogs}
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
