@@ -1,6 +1,30 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session CONVERSION-AUTH-FIX) TYPE: CODE FIX
+
+### Web — Fix "Conversion failed: Not authenticated" Error
+
+**Root cause:** The conversion API routes (`/api/convert/recipe-to-technique` and
+`/api/convert/technique-to-recipe`) used `supabase.auth.getUser(token)` with the
+anon client to validate JWT tokens. The anon client doesn't have permission to
+validate JWTs — only the service role client can do this.
+
+**Fix:** Changed both routes to use `supabaseAdmin.auth.getUser(token)` instead
+of `supabase.auth.getUser(token)`. Also removed the unused `supabase` import.
+
+**Files changed:**
+- apps/web/app/api/convert/recipe-to-technique/route.ts
+- apps/web/app/api/convert/technique-to-recipe/route.ts
+
+**Verification:**
+- TypeScript: PASS (`npx tsc --noEmit` clean)
+- Deployed to RPi5: HTTP 200
+- Conversion as owner: Should now work (no "Not authenticated")
+- Conversion as non-owner: Returns proper "Not authorized" (403)
+
+---
+
 ## 2026-04-27 (session IMPORT-PAGE-REDESIGN) TYPE: FEATURE
 
 ### Web — Import Page Redesign with Card-Based Layout
