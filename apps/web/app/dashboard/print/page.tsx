@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, PLAN_LIMITS } from '@chefsbook/db';
+import { supabase, PLAN_LIMITS, getPrimaryPhotos } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 import { proxyIfNeeded } from '@/lib/recipeImage';
 
@@ -50,6 +50,7 @@ export default function PrintCookbookPage() {
 
   // Step 1: Recipe selection
   const [recipes, setRecipes] = useState<RecipePreview[]>([]);
+  const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(true);
 
@@ -117,7 +118,15 @@ export default function PrintCookbookPage() {
       .select('id, title, cuisine, total_minutes, servings, image_url')
       .eq('user_id', userId)
       .order('title');
-    setRecipes(data || []);
+    const recipeList = data || [];
+    setRecipes(recipeList);
+
+    // Fetch primary photos from recipe_user_photos table
+    if (recipeList.length > 0) {
+      const photos = await getPrimaryPhotos(recipeList.map((r) => r.id));
+      setPrimaryPhotos(photos);
+    }
+
     setRecipesLoading(false);
   };
 
@@ -385,9 +394,9 @@ export default function PrintCookbookPage() {
                           </svg>
                         </div>
                       )}
-                      {recipe.image_url ? (
+                      {(primaryPhotos[recipe.id] || recipe.image_url) ? (
                         <img
-                          src={proxyIfNeeded(recipe.image_url)}
+                          src={proxyIfNeeded(primaryPhotos[recipe.id] || recipe.image_url!)}
                           alt=""
                           className="w-full h-24 object-cover rounded mb-2"
                         />
