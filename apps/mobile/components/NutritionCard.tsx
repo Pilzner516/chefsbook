@@ -311,20 +311,6 @@ export function NutritionCard({ recipeId, nutrition: initialNutrition, isOwner, 
           )}
         </View>
 
-        {/* Notes if present */}
-        {nutrition.notes && (
-          <View style={{
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            borderTopWidth: 1,
-            borderTopColor: colors.borderDefault,
-          }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, fontStyle: 'italic' }}>
-              {nutrition.notes}
-            </Text>
-          </View>
-        )}
-
         {/* Footer with disclaimer and regenerate */}
         <View style={{
           flexDirection: 'row',

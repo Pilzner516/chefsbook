@@ -240,13 +240,6 @@ export default function NutritionCard({
           )}
         </div>
 
-        {/* Notes if present */}
-        {nutrition.notes && (
-          <div className="px-4 py-2 border-t border-cb-border/50 text-xs text-cb-secondary italic">
-            {nutrition.notes}
-          </div>
-        )}
-
         {/* Footer with disclaimer and regenerate */}
         <div className="px-4 py-2 border-t border-cb-border/50 flex items-center justify-between">
           <span className="text-[10px] text-cb-muted">
