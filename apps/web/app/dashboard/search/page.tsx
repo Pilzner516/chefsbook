@@ -8,6 +8,8 @@ import type { Recipe, Technique } from '@chefsbook/db';
 import { formatDuration, DIETARY_FLAGS } from '@chefsbook/ui';
 import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { useTranslation } from 'react-i18next';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 
 const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread'];
 const SOURCES = [
@@ -46,6 +48,20 @@ const NUTRITION_PRESETS = [
   { key: 'lowSodium', label: 'Low Sodium', emoji: '🧂' },
 ];
 
+// Default filter section order
+const DEFAULT_SECTION_ORDER = [
+  'cuisine',
+  'course',
+  'cookTime',
+  'ingredients',
+  'source',
+  'tags',
+  'dietary',
+  'nutrition',
+];
+
+const STORAGE_KEY = 'cb-search-filter-order';
+
 export default function SearchPage() {
   const { i18n } = useTranslation();
   const searchParams = useSearchParams();
@@ -56,6 +72,9 @@ export default function SearchPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
+
+  // Section order state
+  const [sectionOrder, setSectionOrder] = useState<string[]>(DEFAULT_SECTION_ORDER);
 
   // Scope toggle
   const [scope, setScope] = useState<'all' | 'mine' | 'following' | 'whats-new'>('all');
@@ -79,6 +98,26 @@ export default function SearchPage() {
   const [calorieFilter, setCalorieFilter] = useState('any');
   const [proteinFilter, setProteinFilter] = useState('any');
   const [nutritionPresets, setNutritionPresets] = useState<string[]>([]);
+
+  // Load section order from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(k => typeof k === 'string')) {
+          // Merge with defaults to handle new sections
+          const merged = [...parsed];
+          for (const key of DEFAULT_SECTION_ORDER) {
+            if (!merged.includes(key)) merged.push(key);
+          }
+          setSectionOrder(merged.filter(k => DEFAULT_SECTION_ORDER.includes(k)));
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -347,165 +386,264 @@ export default function SearchPage() {
     }),
   ].filter(Boolean) as { label: string; clear: () => void }[];
 
-  return (
-    <div className="p-8 flex gap-6">
-      {/* Left: Category drill-down */}
-      <div className="w-[260px] shrink-0 space-y-4 hidden lg:block">
-        {/* Cuisine */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cuisine</h3>
-          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-            <button onClick={() => setCuisineFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!cuisineFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Cuisines</button>
-            {allCuisines.map(([cuisine, count]) => (
-              <button key={cuisine} onClick={() => setCuisineFilter(cuisine)} className={`block text-sm w-full text-left px-2 py-1 rounded ${cuisineFilter === cuisine ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{cuisine} <span className="text-[10px] text-cb-secondary">({count})</span></button>
-            ))}
+  // Drag and drop handler
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(sectionOrder);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    setSectionOrder(items);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  const resetSectionOrder = () => {
+    setSectionOrder(DEFAULT_SECTION_ORDER);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  const isCustomOrder = JSON.stringify(sectionOrder) !== JSON.stringify(DEFAULT_SECTION_ORDER);
+
+  // Render individual filter sections
+  const renderSection = (key: string) => {
+    switch (key) {
+      case 'cuisine':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cuisine</h3>
+            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+              <button onClick={() => setCuisineFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!cuisineFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Cuisines</button>
+              {allCuisines.map(([cuisine, count]) => (
+                <button key={cuisine} onClick={() => setCuisineFilter(cuisine)} className={`block text-sm w-full text-left px-2 py-1 rounded ${cuisineFilter === cuisine ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{cuisine} <span className="text-[10px] text-cb-secondary">({count})</span></button>
+              ))}
+            </div>
           </div>
-        </div>
+        );
 
-        {/* Course */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Course</h3>
-          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-            <button onClick={() => setCourseFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!courseFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Courses</button>
-            {allCourses.map(([course, count]) => (
-              <button key={course} onClick={() => setCourseFilter(course)} className={`block text-sm w-full text-left px-2 py-1 rounded ${courseFilter === course ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{course.charAt(0).toUpperCase() + course.slice(1)} <span className="text-[10px] text-cb-secondary">({count})</span></button>
-            ))}
+      case 'course':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Course</h3>
+            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+              <button onClick={() => setCourseFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!courseFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Courses</button>
+              {allCourses.map(([course, count]) => (
+                <button key={course} onClick={() => setCourseFilter(course)} className={`block text-sm w-full text-left px-2 py-1 rounded ${courseFilter === course ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{course.charAt(0).toUpperCase() + course.slice(1)} <span className="text-[10px] text-cb-secondary">({count})</span></button>
+              ))}
+            </div>
           </div>
-        </div>
+        );
 
-        {/* Source */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Source</h3>
-          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-            <button onClick={() => setSourceFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!sourceFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Sources</button>
-            {allSources.map(([sourceType, count]) => {
-              const sourceInfo = SOURCES.find(s => s.value === sourceType);
-              const label = sourceInfo?.label ?? sourceType;
-              return (
-                <button key={sourceType} onClick={() => setSourceFilter(sourceType)} className={`block text-sm w-full text-left px-2 py-1 rounded ${sourceFilter === sourceType ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{label} <span className="text-[10px] text-cb-secondary">({count})</span></button>
-              );
-            })}
+      case 'source':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Source</h3>
+            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+              <button onClick={() => setSourceFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!sourceFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Sources</button>
+              {allSources.map(([sourceType, count]) => {
+                const sourceInfo = SOURCES.find(s => s.value === sourceType);
+                const label = sourceInfo?.label ?? sourceType;
+                return (
+                  <button key={sourceType} onClick={() => setSourceFilter(sourceType)} className={`block text-sm w-full text-left px-2 py-1 rounded ${sourceFilter === sourceType ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{label} <span className="text-[10px] text-cb-secondary">({count})</span></button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        );
 
-        {/* Tags */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Tags</h3>
-          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-            <button onClick={() => setTagFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!tagFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Tags</button>
-            {allTags.slice(0, 20).map(([tag, count]) => (
-              <button key={tag} onClick={() => setTagFilter(tag)} className={`block text-sm w-full text-left px-2 py-1 rounded ${tagFilter === tag ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{tag} <span className="text-[10px] text-cb-secondary">({count})</span></button>
-            ))}
+      case 'tags':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Tags</h3>
+            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+              <button onClick={() => setTagFilter('')} className={`block text-sm w-full text-left px-2 py-1 rounded ${!tagFilter ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>All Tags</button>
+              {allTags.slice(0, 20).map(([tag, count]) => (
+                <button key={tag} onClick={() => setTagFilter(tag)} className={`block text-sm w-full text-left px-2 py-1 rounded ${tagFilter === tag ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>{tag} <span className="text-[10px] text-cb-secondary">({count})</span></button>
+              ))}
+            </div>
           </div>
-        </div>
+        );
 
-        {/* Ingredient search */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Ingredient</h3>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const val = ingredientFilter.trim().toLowerCase();
-            if (val && !ingredientPills.includes(val)) {
-              setIngredientPills((p) => [...p, val]);
-              setIngredientFilter('');
-            }
-          }} className="flex gap-1 mb-1">
-            <input
-              value={ingredientFilter}
-              onChange={(e) => setIngredientFilter(e.target.value)}
-              placeholder="e.g. chicken..."
-              className="flex-1 bg-cb-bg border border-cb-border rounded-input px-2 py-1 text-sm outline-none focus:border-cb-primary min-w-0"
-            />
-            <button type="submit" className="text-cb-primary text-sm font-medium px-2">+</button>
-          </form>
-          {ingredientPills.map((ing) => (
-            <button key={ing} onClick={() => setIngredientPills((p) => p.filter((i) => i !== ing))} className="inline-flex items-center gap-1 bg-cb-primary/10 text-cb-primary text-xs font-medium px-2 py-0.5 rounded-full mr-1 mb-1 hover:bg-cb-primary/20">
-              🥕 {ing}
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-            </button>
-          ))}
-        </div>
-
-        {/* Dietary Restrictions */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Dietary</h3>
-          <div className="flex flex-wrap gap-1">
-            {DIETARY_FLAGS.map((flag) => (
-              <button
-                key={flag.key}
-                onClick={() => setDietaryFilters((prev) => prev.includes(flag.key) ? prev.filter((f) => f !== flag.key) : [...prev, flag.key])}
-                className={`text-xs px-2 py-1 rounded-full ${dietaryFilters.includes(flag.key) ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
-              >
-                {flag.emoji} {flag.label}
+      case 'ingredients':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Ingredient</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const val = ingredientFilter.trim().toLowerCase();
+              if (val && !ingredientPills.includes(val)) {
+                setIngredientPills((p) => [...p, val]);
+                setIngredientFilter('');
+              }
+            }} className="flex gap-1 mb-1">
+              <input
+                value={ingredientFilter}
+                onChange={(e) => setIngredientFilter(e.target.value)}
+                placeholder="e.g. chicken..."
+                className="flex-1 bg-cb-bg border border-cb-border rounded-input px-2 py-1 text-sm outline-none focus:border-cb-primary min-w-0"
+              />
+              <button type="submit" className="text-cb-primary text-sm font-medium px-2">+</button>
+            </form>
+            {ingredientPills.map((ing) => (
+              <button key={ing} onClick={() => setIngredientPills((p) => p.filter((i) => i !== ing))} className="inline-flex items-center gap-1 bg-cb-primary/10 text-cb-primary text-xs font-medium px-2 py-0.5 rounded-full mr-1 mb-1 hover:bg-cb-primary/20">
+                🥕 {ing}
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
               </button>
             ))}
           </div>
-        </div>
+        );
 
-        {/* Cook time */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cook Time</h3>
-          <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-            {TIME_FILTERS.map((t) => {
-              const count = t.value === 0 ? recipes.length : (allTimes.get(t.value) ?? 0);
-              return (
-                <button key={t.value} onClick={() => setTimeFilter(t.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${timeFilter === t.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>
-                  {t.label} {t.value > 0 && <span className="text-[10px] text-cb-secondary">({count})</span>}
-                </button>
-              );
-            })}
+      case 'dietary':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Dietary</h3>
+            <div className="max-h-[200px] overflow-y-auto">
+              <div className="flex flex-wrap gap-1">
+                {DIETARY_FLAGS.map((flag) => (
+                  <button
+                    key={flag.key}
+                    onClick={() => setDietaryFilters((prev) => prev.includes(flag.key) ? prev.filter((f) => f !== flag.key) : [...prev, flag.key])}
+                    className={`text-xs px-2 py-1 rounded-full ${dietaryFilters.includes(flag.key) ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+                  >
+                    {flag.emoji} {flag.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        );
 
-        {/* Nutrition */}
-        <div>
-          <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Nutrition</h3>
-          {/* Calories */}
-          <div className="mb-3">
-            <p className="text-[10px] text-cb-muted mb-1">Calories per serving</p>
+      case 'cookTime':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Cook Time</h3>
             <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-              {CALORIE_FILTERS.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => setCalorieFilter(c.value)}
-                  className={`block text-sm w-full text-left px-2 py-1 rounded ${calorieFilter === c.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}
-                >
-                  {c.label}
-                </button>
-              ))}
+              {TIME_FILTERS.map((t) => {
+                const count = t.value === 0 ? recipes.length : (allTimes.get(t.value) ?? 0);
+                return (
+                  <button key={t.value} onClick={() => setTimeFilter(t.value)} className={`block text-sm w-full text-left px-2 py-1 rounded ${timeFilter === t.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}>
+                    {t.label} {t.value > 0 && <span className="text-[10px] text-cb-secondary">({count})</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
-          {/* Protein */}
-          <div className="mb-3">
-            <p className="text-[10px] text-cb-muted mb-1">Protein</p>
-            <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-              {PROTEIN_FILTERS.map((p) => (
-                <button
-                  key={p.value}
-                  onClick={() => setProteinFilter(p.value)}
-                  className={`block text-sm w-full text-left px-2 py-1 rounded ${proteinFilter === p.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}
-                >
-                  {p.label}
-                </button>
-              ))}
+        );
+
+      case 'nutrition':
+        return (
+          <div key={key}>
+            <h3 className="text-xs font-bold text-cb-secondary uppercase tracking-wide mb-2">Nutrition</h3>
+            {/* Calories */}
+            <div className="mb-3">
+              <p className="text-[10px] text-cb-muted mb-1">Calories per serving</p>
+              <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+                {CALORIE_FILTERS.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => setCalorieFilter(c.value)}
+                    className={`block text-sm w-full text-left px-2 py-1 rounded ${calorieFilter === c.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Protein */}
+            <div className="mb-3">
+              <p className="text-[10px] text-cb-muted mb-1">Protein</p>
+              <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
+                {PROTEIN_FILTERS.map((p) => (
+                  <button
+                    key={p.value}
+                    onClick={() => setProteinFilter(p.value)}
+                    className={`block text-sm w-full text-left px-2 py-1 rounded ${proteinFilter === p.value ? 'bg-cb-primary/10 text-cb-primary font-medium' : 'text-cb-secondary hover:text-cb-text'}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Dietary Goals (Presets) */}
+            <div>
+              <p className="text-[10px] text-cb-muted mb-1">Dietary goals</p>
+              <div className="max-h-[200px] overflow-y-auto">
+                <div className="flex flex-wrap gap-1">
+                  {NUTRITION_PRESETS.map((preset) => (
+                    <button
+                      key={preset.key}
+                      onClick={() => setNutritionPresets((prev) => prev.includes(preset.key) ? prev.filter((p) => p !== preset.key) : [...prev, preset.key])}
+                      className={`text-xs px-2 py-1 rounded-full ${nutritionPresets.includes(preset.key) ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
+                    >
+                      {preset.emoji} {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-          {/* Presets */}
-          <div>
-            <p className="text-[10px] text-cb-muted mb-1">Dietary goals</p>
-            <div className="flex flex-wrap gap-1">
-              {NUTRITION_PRESETS.map((preset) => (
-                <button
-                  key={preset.key}
-                  onClick={() => setNutritionPresets((prev) => prev.includes(preset.key) ? prev.filter((p) => p !== preset.key) : [...prev, preset.key])}
-                  className={`text-xs px-2 py-1 rounded-full ${nutritionPresets.includes(preset.key) ? 'bg-cb-primary text-white' : 'bg-cb-bg text-cb-secondary hover:text-cb-text'}`}
-                >
-                  {preset.emoji} {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="p-8 flex gap-6">
+      {/* Left: Category drill-down */}
+      <div className="w-[260px] shrink-0 hidden lg:block">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="filter-sections">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-4"
+              >
+                {sectionOrder.map((key, index) => (
+                  <Draggable key={key} draggableId={key} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`relative group ${snapshot.isDragging ? 'opacity-70 bg-cb-card rounded-card shadow-lg' : ''}`}
+                      >
+                        <div
+                          {...provided.dragHandleProps}
+                          className="absolute right-0 top-0 cursor-grab active:cursor-grabbing text-cb-muted opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                          title="Drag to reorder"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                          </svg>
+                        </div>
+                        {renderSection(key)}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+
+        {/* Reset to default order */}
+        {isCustomOrder && (
+          <button
+            onClick={resetSectionOrder}
+            className="text-xs text-cb-muted hover:text-cb-primary mt-4 block"
+          >
+            Reset to default order
+          </button>
+        )}
       </div>
 
       {/* Right: Results */}
