@@ -1,6 +1,34 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session AGENT-REGISTRY-REFRESH) TYPE: MAINTENANCE
+
+### Agent Files Audit & Update for Phase 2 Readiness
+
+**Purpose:** Audit and update all agent files in `.claude/agents/` to reflect current codebase reality after 200+ development sessions.
+
+**Ground rule confirmation:** NO production files modified — only `.claude/agents/` files updated.
+
+**Files updated:**
+
+1. **testing.md** — Added Regression Smoke Test Checklist, emulator AVD name (CB_API_34), ADB tap limitation, pre-existing TypeScript error note, emulator instability pattern
+
+2. **ui-guardian.md** — Added NutritionCard three-sections warning (nutrient grid, toggle, disclaimer are INDEPENDENT render blocks)
+
+3. **deployment.md** — Added deploy script path (`/mnt/chefsbook/deploy-staging.sh`), pre-build clean sequence, NODE_OPTIONS requirement, SWC lockfile warning (NON-FATAL on arm64)
+
+4. **data-flow.md** — Added nutrition JSONB field shape documentation, localStorage/SecureStore key references for toggle preferences
+
+5. **feature-registry.md** — Added KNOWN FAILURE PATTERNS section with NutritionCard, FloatingTabBar, recipe images, visibility filter, and import completeness gate patterns; updated FloatingTabBar with DO NOT MOVE warning
+
+**Undocumented features found in codebase (not in DONE.md):**
+- None — feature registry already comprehensive
+
+**AGENDA.md items that appear already complete:**
+- None identified — existing agenda items are future work
+
+---
+
 ## 2026-04-27 (session NUTRITION-FIX) TYPE: CODE FIX
 
 ### Web + Mobile — Remove Verbose AI Notes from NutritionCard

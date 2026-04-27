@@ -17,13 +17,27 @@ Run these in order after every web code change:
 Ensure all changes are committed and pushed to the repo that the Pi pulls from.
 
 ### Step 2 — Pull and build on RPi5
+
+**CRITICAL**: Use the deploy script (handles all cleanup automatically):
+```bash
+ssh rasp@rpi5-eth "/mnt/chefsbook/deploy-staging.sh"
+```
+
+**Or manual build** (if deploy script unavailable):
 ```bash
 ssh rasp@rpi5-eth
 cd /mnt/chefsbook/repo
 git pull
+
+# MANDATORY pre-build clean (prevents duplicate React crash):
+rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next
+
+# Build with increased memory for arm64:
 cd apps/web
-npm run build 2>&1 | tail -30
+NODE_OPTIONS=--max-old-space-size=1536 npm run build 2>&1 | tail -30
 ```
+
+**DO NOT** run `npm install` in apps/web or repo root on Pi — blocked by EOVERRIDE conflict.
 
 **If build fails:**
 - Read the FULL error output (not just tail — scroll up if needed)
@@ -74,6 +88,7 @@ This is not optional — confirm the feature works on the live site.
 | TypeScript errors | Fix the type error in the source, commit, pull, rebuild |
 | `ENOSPC: no space left on device` | Pi disk full — `df -h` to check, clear old builds: `rm -rf .next` |
 | Port 3000 already in use after restart | `sudo lsof -i :3000` then kill the PID |
+| `Failed to patch lockfile [TypeError: Cannot read properties of undefined (reading 'os')]` | SWC lockfile issue on arm64 — **NON-FATAL**, build still compiles via SWC in ~27s. Ignore this warning. |
 
 ---
 

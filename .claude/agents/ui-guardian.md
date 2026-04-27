@@ -111,3 +111,4 @@ Run this before /wrapup. Do not skip any item.
 | Wrong colour on action buttons | "Create & Add" button rendered green (#009246) in shopping flow | Green is for Save/Confirm only. Primary actions in shopping/recipe flows use pomodoro red #ce2b37 |
 | Staging pill left in header | Dev environment indicator pushed kg/lb toggle off screen | Remove ALL dev-only UI indicators before any build. grep for "staging", "dev", "debug" in component files |
 | New screen, no safe area | Every new modal/sheet added without insets | Check pre-flight: does ANY element sit at the bottom? → insets.bottom required. No exceptions |
+| NutritionCard section confusion | Editing notes section accidentally removed nutrient grid | NutritionCard has THREE independent render blocks: (1) nutrient grid, (2) Per Serving/Per 100g toggle, (3) disclaimer footer. These are INDEPENDENT blocks. Editing one must NEVER affect the others. Always `git diff` before wrapup to verify. |

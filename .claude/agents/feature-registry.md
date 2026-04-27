@@ -276,7 +276,7 @@
 | Chef's hat fallback | LIVE | RecipeImage component | 11 | Shows when no recipe image |
 | StoreAvatar (logo.dev) | LIVE | StoreAvatar component | 69 | Initials fallback with hash color |
 | i18n (web + mobile, 5 locales) | LIVE | apps/web/locales/, apps/mobile/locales/ | 08, 53 | react-i18next |
-| FloatingTabBar (mobile) | LIVE | apps/mobile/components/FloatingTabBar.tsx, apps/mobile/app/_layout.tsx | 01, 203 | 5 tabs with i18n labels. Session 203: mounted at root Stack (not inside (tabs) Tabs layout) so it persists on detail screens (recipe/[id], cookbook/[id], chef/[id], share/[token]). Hidden on /, /auth/*, /modal, /messages. |
+| FloatingTabBar (mobile) | LIVE | apps/mobile/components/FloatingTabBar.tsx, apps/mobile/app/_layout.tsx | 01, 203 | **DO NOT MOVE**: Lives in ROOT `_layout.tsx` NOT in `(tabs)/_layout.tsx`. Moving it to tabs layout causes it to disappear on Stack screens. Session 203 fix. |
 | Branded launch splash (3s min) | LIVE | apps/mobile/app/_layout.tsx (SplashOverlay) | 203 | expo-splash-screen preventAutoHideAsync at module scope; React overlay shows chef-hat asset + "ChefsBook" serif wordmark + "Welcome to ChefsBook" tagline for SPLASH_MIN_MS=3000. Warm resume never re-shows. |
 | Web loading splash | LIVE | apps/web/app/loading.tsx | P-209 | Next.js Suspense fallback: cream #faf7f0, chef hat from /images/chefs-hat.png, ChefsBook Georgia serif wordmark, Welcome tagline. Zero network calls, all assets local. |
 | Sidebar nav reordering (web) | LIVE | apps/web/components/Sidebar.tsx, /api/user/nav-order, user_profiles.nav_order | Prompt-S | @hello-pangea/dnd drag-and-drop; grip icon handles; persists to nav_order TEXT[] column; reset button clears; fixed items (Settings, Sign out, Admin, Extension) non-draggable |
@@ -318,3 +318,17 @@ Format for new rows:
 | Feature name | LIVE | primary/owner/files.ts | session# | Any gotcha |
 
 Never delete rows. Change status instead.
+
+---
+
+## KNOWN FAILURE PATTERNS — DO NOT REPEAT
+
+These bugs have occurred multiple times. Do not re-introduce them.
+
+| Pattern | What happened | Prevention |
+|---------|--------------|------------|
+| NutritionCard notes removal | Removing the `notes` section accidentally deleted the nutrient grid JSX | The notes section and nutrient grid are SEPARATE render blocks. Edit one, verify the other is unchanged via `git diff` before wrapup. |
+| FloatingTabBar moved to (tabs) | Tab bar was moved into `(tabs)/_layout.tsx` and disappeared on Stack screens | FloatingTabBar MUST stay in root `_layout.tsx`. Never move it. |
+| Recipe images not showing | Used `recipe.image_url` directly | Primary images are in `recipe_user_photos` table. Always use `getPrimaryPhotos()` + `getRecipeImageUrl(primaryPhoto, fallbackUrl)`. |
+| Visibility filter missing shared_link | Filtered by `visibility = 'public'` only, hiding 95% of recipes | Always use `visibility IN ('public', 'shared_link')` for public queries. |
+| Import completeness gate bypassed | Used `createRecipe()` directly | All imports should go through `createRecipeWithModeration()` or `/api/recipes/finalize`. |

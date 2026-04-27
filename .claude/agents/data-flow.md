@@ -11,7 +11,7 @@ restart or manual refresh.
 ## STORE ARCHITECTURE
 
 ```
-Zustand stores (apps/mobile/store/):
+Zustand stores (apps/mobile/lib/zustand/):
   recipesStore     — recipe list, current recipe, primary photos
   shoppingStore    — lists, items, stores
   mealPlanStore    — weekly plans, meals
@@ -21,6 +21,36 @@ Zustand stores (apps/mobile/store/):
 DB package (@chefsbook/db):
   All Supabase queries live here — never call supabase directly in components
 ```
+
+---
+
+## KEY DATA SHAPES
+
+### recipes.nutrition (JSONB)
+```json
+{
+  "per_serving": {
+    "calories": 450,
+    "protein_g": 25,
+    "carbs_g": 30,
+    "fat_g": 20,
+    "fiber_g": 5,
+    "sugar_g": 8,
+    "sodium_mg": 600
+  },
+  "per_100g": { /* same 7 fields */ },
+  "confidence": 0.85,
+  "notes": "AI explanation (displayed as disclaimer, NOT in nutrient grid)"
+}
+```
+
+### Toggle Preference Persistence
+- **Web**: localStorage key `cb-nutrition-toggle` (values: `'serving'` | `'100g'`)
+- **Mobile**: SecureStore key `cb-nutrition-toggle`
+- **Default**: `'serving'`
+
+### Filter Order Persistence
+- **Web**: localStorage key `cb-search-filter-order` (JSON array of filter section IDs)
 
 ---
 

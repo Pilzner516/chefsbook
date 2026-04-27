@@ -168,6 +168,47 @@ Do not run /wrapup until every item below is checked:
 
 ---
 
+## REGRESSION SMOKE TEST — RUN BEFORE EVERY WRAPUP
+
+Regardless of what was changed in this session, run these checks before wrapup:
+
+```
+□ Recipe detail page loads (web: curl chefsbk.app/recipe/[id], mobile: ADB screenshot)
+□ NutritionCard renders with values (not blank) on a recipe that has nutrition data
+□ Per Serving / Per 100g toggle is visible and switches values
+□ Nutrition disclaimer shows single line only (no AI reasoning paragraph)
+□ Recipe import page loads (curl chefsbk.app/dashboard/scan)
+□ Auth flow: sign in page loads (curl chefsbk.app/auth)
+□ Admin panel loads (curl chefsbk.app/admin)
+□ FloatingTabBar visible on mobile recipe detail screen
+□ No new TypeScript errors introduced (tsc --noEmit on changed workspaces)
+```
+
+---
+
+## EMULATOR SETUP
+
+**AVD Name**: `CB_API_34` (Pixel 5, API 34, google_apis_playstore)
+
+**Launch command**:
+```bash
+emulator -avd CB_API_34 -no-snapshot -gpu host
+```
+
+**If "System UI isn't responding"**:
+```bash
+emulator -avd CB_API_34 -no-snapshot -wipe-data -gpu host
+```
+Cold boot with `-wipe-data` before retrying. Do NOT give up after one failure.
+
+**Port forwarding after launch**:
+```bash
+adb reverse tcp:8000 tcp:8000   # Supabase
+adb reverse tcp:8081 tcp:8081   # Metro
+```
+
+---
+
 ## KNOWN TESTING FAILURES — DO NOT REPEAT
 
 | What was claimed | What was actually true |
@@ -178,3 +219,7 @@ Do not run /wrapup until every item below is checked:
 | "Images showing — proxy applied" | Wrong column name `photo_url` used, images still broken |
 | "StorePickerDialog wired" | Only wired to one of three entry points |
 | "Cross-platform complete" | Mobile not implemented at all |
+| "ADB tap tested feature" | ADB tap unreliable on React Native touchables | Use visual screenshot + code review instead of ADB tap |
+| "Emulator won't launch" | Gave up after one System UI crash | Cold boot with -wipe-data before retrying |
+| "TypeScript error blocking build" | expo-file-system types error | Pre-existing error — NOT a session regression, do not flag or block |
+| "Code looks correct" | Used as proof for checklist item | "Code looks correct" is NOT valid proof — require visual screenshot or psql/curl |
