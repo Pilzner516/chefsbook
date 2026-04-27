@@ -1,6 +1,50 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session ADMIN-FEEDBACK-MANAGEMENT) TYPE: FEATURE
+
+### Admin Feedback Management — Status, Notes, and Messaging
+
+**3 new capabilities for `/admin/feedback`:**
+
+1. **Status management**
+   - Feedback items now have status: `new`, `under_review`, `resolved`
+   - "Mark Under Review" button changes status and shows amber badge
+   - "Delete" button with ChefsDialog confirmation (hard delete)
+   - "Under Review" filter tab in filter bar
+
+2. **Internal admin notes**
+   - Collapsible "Admin Notes (N)" section on each feedback card
+   - Add tracking notes visible only to admins
+   - Notes display with admin username and relative timestamp
+
+3. **Threaded messaging with submitter**
+   - Collapsible "Thread with @username" section
+   - Two-way messaging between admin and feedback submitter
+   - Admin messages: red bubble (#ce2b37) aligned right
+   - User messages: cream bubble with border aligned left
+
+**Database migrations:**
+- 056: `user_feedback.status` column (new/under_review/resolved)
+- 057: `feedback_notes` table (admin_id, note, created_at)
+- 058: `feedback_messages` table (sender_id, message, is_admin_message)
+
+**API routes:**
+- `PATCH /api/admin/feedback/[id]/status` — update status
+- `DELETE /api/admin/feedback/[id]` — delete feedback
+- `GET/POST /api/admin/feedback/[id]/notes` — list/create notes
+- `GET/POST /api/admin/feedback/[id]/messages` — list/send messages
+
+**Testing verification:**
+- Migrations applied to RPi5 (schema verified via psql)
+- Pages load with HTTP 200 (home, admin, admin/feedback)
+- Deployed to production at commit 274c78b
+
+**Follow-up for AGENDA.md:**
+- Mobile user-facing thread view (users seeing admin replies) — web-only for now
+
+---
+
 ## 2026-04-27 (session MOBILE-LAYOUT-FIXES) TYPE: CODE FIX
 
 ### Mobile Layout Bug Fixes (3 bugs from docs/prompts/mobile-layout-fixes.md)
