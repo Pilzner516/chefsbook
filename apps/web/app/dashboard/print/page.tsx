@@ -640,7 +640,7 @@ export default function PrintCookbookPage() {
 
                 {cookbook.interior_pdf_url && (
                   <a
-                    href={cookbook.interior_pdf_url}
+                    href={`/api/pdf?url=${encodeURIComponent(cookbook.interior_pdf_url)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-sm text-cb-primary hover:underline mt-4"
