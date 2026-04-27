@@ -7,6 +7,23 @@ import { supabase, createRecipe, createTechnique, checkRecipeLimit, saveRecipe }
 import { scanRecipe } from '@chefsbook/ai';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
+import {
+  Mic,
+  Camera,
+  ImagePlus,
+  Link as LinkIcon,
+  CirclePlay,
+  ClipboardPaste,
+  PenLine,
+  Lightbulb,
+  Globe,
+  X,
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  AlertTriangle,
+  Check,
+} from 'lucide-react';
 
 // ─── Bookmark types ─────────────────────────────────────────────
 
@@ -29,12 +46,28 @@ interface ImportResult {
 
 type BookmarkPhase = 'idle' | 'checking' | 'preview' | 'importing' | 'done';
 
+// ─── Import method card data ────────────────────────────────────
+
+const IMPORT_METHODS = [
+  { id: 'scan', icon: Camera, title: 'Scan Photo', subtitle: 'Cookbook or recipe card' },
+  { id: 'choose', icon: ImagePlus, title: 'Choose Photo', subtitle: 'From your gallery' },
+  { id: 'url', icon: LinkIcon, title: 'Import URL', subtitle: 'Paste any recipe link' },
+  { id: 'youtube', icon: CirclePlay, title: 'YouTube', subtitle: 'Import from any video' },
+  { id: 'paste', icon: ClipboardPaste, title: 'Paste Text', subtitle: 'AI parses any format' },
+  { id: 'manual', icon: PenLine, title: 'Manual Entry', subtitle: 'Type it yourself' },
+] as const;
+
+type ImportMethod = typeof IMPORT_METHODS[number]['id'];
+
 // ─── Main page ──────────────────────────────────────────────────
 
 export default function ScanPage() {
   const [confirm, ConfirmDialog] = useConfirmDialog();
   const [showAlert, AlertDialog] = useAlertDialog();
   const router = useRouter();
+
+  // Active panel state
+  const [activeMethod, setActiveMethod] = useState<ImportMethod | null>(null);
 
   // Image / URL state
   const [url, setUrl] = useState('');
@@ -53,18 +86,17 @@ export default function ScanPage() {
   const [showFailed, setShowFailed] = useState(false);
   const abortRef = useRef(false);
 
-  // (Voice recording moved to /dashboard/speak)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Check pro + speech support + resume import ──
+  // ── Check pro + resume import ──
   useEffect(() => {
     const activeJobId = localStorage.getItem('chefsbook_import_job');
     if (activeJobId) {
       setBmPhase('importing');
       startPolling(activeJobId);
     }
-    // (Voice + pro check moved to /dashboard/speak)
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
 
@@ -103,7 +135,7 @@ export default function ScanPage() {
       }
     };
 
-    poll(); // immediate first poll
+    poll();
     pollRef.current = setInterval(poll, 2000);
   };
 
@@ -146,7 +178,7 @@ export default function ScanPage() {
   const handleUrlImport = async () => {
     if (!url.trim()) return;
     if (isInstagramUrl(url.trim())) {
-      setError('Instagram import is no longer supported. Take a screenshot of the post and use Photo Import — we\'ll read the photo and caption.');
+      setError('Instagram import is no longer supported. Take a screenshot of the post and use Scan Photo — we\'ll read the photo and caption.');
       return;
     }
     setLoading('url');
@@ -155,11 +187,9 @@ export default function ScanPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in');
 
-      // Plan limit check
       const gate = await checkRecipeLimit(user.id);
       if (!gate.allowed) throw new Error(gate.reason!);
 
-      // Duplicate check: warn if URL already imported
       const { data: existing } = await supabase
         .from('recipes')
         .select('id, title')
@@ -167,15 +197,13 @@ export default function ScanPage() {
         .eq('source_url', url.trim())
         .limit(1);
       if (existing?.length) {
-        const proceed = await confirm({ icon: '\u26A0\uFE0F', title: 'Duplicate URL', body: `You already have "${existing[0].title}" from this URL. Import again?`, confirmLabel: 'Import Again', variant: 'positive' });
+        const proceed = await confirm({ icon: '⚠️', title: 'Duplicate URL', body: `You already have "${existing[0].title}" from this URL. Import again?`, confirmLabel: 'Import Again', variant: 'positive' });
         if (!proceed) { setLoading(null); return; }
       }
 
       const storedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('chefsbook-language') : null;
 
-      // YouTube-specific flow with classification confirmation
       if (isYouTubeUrl(url)) {
-        // Step 1: Classify without extracting
         const classifyRes = await fetch('/api/import/youtube', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -189,9 +217,8 @@ export default function ScanPage() {
         const capitalizedSuggested = aiSuggestedType.charAt(0).toUpperCase() + aiSuggestedType.slice(1);
         const capitalizedOther = otherType.charAt(0).toUpperCase() + otherType.slice(1);
 
-        // Step 2: Show confirmation dialog
         const confirmed = await confirm({
-          icon: '🧑‍🍳', // chef emoji
+          icon: '🧑‍🍳',
           title: "Your Sous Chef's best guess",
           body: `This looks like a **${capitalizedSuggested}** to us. Does that look right?`,
           confirmLabel: `Yes, it's a ${capitalizedSuggested}`,
@@ -200,7 +227,6 @@ export default function ScanPage() {
 
         const confirmedType = confirmed ? aiSuggestedType : otherType;
 
-        // Step 3: Extract with confirmed type
         const extractRes = await fetch('/api/import/youtube', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -209,7 +235,6 @@ export default function ScanPage() {
         const data = await extractRes.json();
         if (!extractRes.ok) throw new Error(data.error || 'Import failed');
 
-        // Route based on confirmed type
         if (confirmedType === 'technique' && !data.videoOnly) {
           const technique = await createTechnique(user.id, {
             ...data.technique,
@@ -258,7 +283,6 @@ export default function ScanPage() {
         }
       }
 
-      // Non-YouTube URL import flow (unchanged)
       const endpoint = '/api/import/url';
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -268,7 +292,6 @@ export default function ScanPage() {
       const data = await res.json();
       if (!res.ok && res.status !== 206) throw new Error(data.error || 'Import failed');
 
-      // Handle server-side duplicate detection — recipe already exists publicly
       if (data.duplicate && data.existingRecipe) {
         const action = await confirm({
           icon: '📖',
@@ -278,7 +301,6 @@ export default function ScanPage() {
           cancelLabel: 'Import anyway',
         });
         if (action) {
-          // Save reference — uses existing recipe_saves table
           const { data: sess } = await supabase.auth.getSession();
           if (sess.session?.access_token) {
             await saveRecipe(data.existingRecipe.id, user.id);
@@ -287,7 +309,6 @@ export default function ScanPage() {
           setLoading(null);
           return;
         }
-        // User chose "Import anyway" — re-call with skipDuplicateCheck
         const retry = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -298,35 +319,26 @@ export default function ScanPage() {
         Object.assign(data, retryData);
       }
 
-      // Handle extension fallback signal — for both 206 hard blocks and incomplete extractions
       if (data.needsBrowserExtraction) {
-        // Check if extension is installed (content script sets a data attribute on <html>)
         const hasExtension = typeof document !== 'undefined' && document.documentElement.hasAttribute('data-chefsbook-extension');
         if (hasExtension && !data.recipe) {
-          // Hard block (no recipe at all) — hand off to extension silently
           window.postMessage({ type: 'CHEFSBOOK_PDF_IMPORT', url }, '*');
           setLoading(null);
           return;
         }
-        // If we have a partial recipe but extension could do better, show a hint
         if (data.incompleteMessage) {
           console.log('Import incomplete — extension could improve:', data.incompleteMessage);
-          // Continue with partial recipe if we have one, but show the warning
         }
-        // If no extension and hard block, show error
         if (!data.recipe) {
           throw new Error(data.incompleteMessage || data.message || 'This site requires the ChefsBook browser extension for full import.');
         }
       }
 
-      // Warm-discovery signal: store the message for the next page to show.
       if (data.discovery?.isNew && typeof window !== 'undefined') {
         sessionStorage.setItem('chefsbook_discovery', JSON.stringify(data.discovery));
       }
 
-      // Route by content type
       if (data.contentType === 'technique' && !data.videoOnly) {
-        // Technique extracted
         const technique = await createTechnique(user.id, {
           ...data.technique,
           source_url: url,
@@ -336,7 +348,6 @@ export default function ScanPage() {
         });
         router.push(`/technique/${technique.id}`);
       } else if (data.videoOnly) {
-        // No content extracted — save as video bookmark
         const { recipe } = await createRecipeWithModeration(user.id, {
           title: data.title,
           description: data.description,
@@ -357,7 +368,6 @@ export default function ScanPage() {
         });
         router.push(`/recipe/${recipe.id}`);
       } else {
-        // Recipe extracted
         const recipeData = {
           ...data.recipe,
           source_url: url,
@@ -415,7 +425,20 @@ export default function ScanPage() {
     if (file?.type.startsWith('image/')) handleImage(file);
   }, []);
 
-  // ── Bookmark handlers ──
+  // ── Method card click handlers ──
+
+  const handleMethodClick = (method: ImportMethod) => {
+    setError('');
+    if (method === 'scan' || method === 'choose') {
+      fileInputRef.current?.click();
+    } else if (method === 'manual') {
+      router.push('/recipe/new');
+    } else {
+      setActiveMethod(activeMethod === method ? null : method);
+    }
+  };
+
+  // ── Bookmark / file handlers ──
 
   const parseBookmarksHtml = (html: string): Bookmark[] => {
     const parser = new DOMParser();
@@ -459,7 +482,6 @@ export default function ScanPage() {
     return results;
   };
 
-  // ── Universal file import ──
   const [fileRecipes, setFileRecipes] = useState<any[]>([]);
   const [fileType, setFileType] = useState('');
   const [fileError, setFileError] = useState('');
@@ -481,7 +503,6 @@ export default function ScanPage() {
       }
       setFileType(data.fileType);
       if (data.recipes?.length > 0) {
-        // Convert to bookmark-like format for the existing review UI
         const mapped = data.recipes.map((r: any, i: number) => ({
           title: r.title || `Recipe ${i + 1}`,
           url: '',
@@ -489,7 +510,7 @@ export default function ScanPage() {
           selected: true,
           isDuplicate: false,
           existingTitle: undefined,
-          _recipe: r, // store full recipe for direct import
+          _recipe: r,
         }));
         setBookmarks(mapped);
         setFileRecipes(data.recipes);
@@ -512,7 +533,6 @@ export default function ScanPage() {
     const isHtml = ext === 'html' || ext === 'htm' || file.type === 'text/html';
 
     if (!isHtml) {
-      // Non-HTML file → route through universal file import API
       handleFileImport(file);
       return;
     }
@@ -599,11 +619,9 @@ export default function ScanPage() {
     const selected = bookmarks.filter((b) => b.selected);
     if (selected.length === 0) return;
 
-    // Check if these are file-extracted recipes (have _recipe data, no URLs)
     const hasDirectRecipes = selected.some((b: any) => b._recipe);
 
     if (hasDirectRecipes) {
-      // Direct import from file — save each recipe immediately
       setBmPhase('importing');
       setImportProgress(0);
       setImportTotal(selected.length);
@@ -629,7 +647,6 @@ export default function ScanPage() {
       return;
     }
 
-    // Standard bookmark URL batch import
     setBmPhase('importing');
     setImportProgress(0);
     setImportTotal(selected.length);
@@ -669,147 +686,217 @@ export default function ScanPage() {
   const skippedCount = importResults.filter((r) => r.status === 'skipped').length;
   const failedCount = importResults.filter((r) => r.status === 'failed').length;
 
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-2">Import Recipe</h1>
-      <p className="text-cb-secondary text-sm mb-8">
-        Scan a photo, paste a URL, or import your browser bookmarks.
-      </p>
+  // ─── Render ───────────────────────────────────────────────────────
 
+  return (
+    <div className="p-6 md:p-8 max-w-4xl mx-auto">
+      {/* Hidden file input for image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleImage(file);
+          e.target.value = '';
+        }}
+      />
+
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-cb-text">Add a Recipe</h1>
+        <p className="text-cb-secondary text-sm mt-1">Choose how to add your recipe</p>
+      </div>
+
+      {/* Error message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-cb-primary rounded-input p-3 mb-6 text-sm">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-cb-primary rounded-input p-3 mb-6 text-sm flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-auto shrink-0">
+            <X className="w-4 h-4 text-cb-secondary hover:text-cb-text" />
+          </button>
         </div>
       )}
 
-      {/* Top row: Image + URL (side by side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Image upload */}
-        <div data-onboard="scan" className="bg-cb-card border border-cb-border rounded-card p-6">
-          <h2 className="font-semibold mb-1">Scan from image</h2>
-          <p className="text-cb-secondary text-sm mb-4">
-            Upload a photo of a handwritten card, cookbook page, or printed recipe.
-          </p>
-          <div
-            onDrop={onImageDrop}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            className={`border-2 border-dashed rounded-card p-12 text-center transition-colors ${
-              dragOver ? 'border-cb-primary bg-cb-primary/5' : 'border-cb-border'
+      {/* Hero: Speak a Recipe button */}
+      <Link
+        href="/dashboard/speak"
+        className="block w-full bg-cb-primary hover:bg-cb-primary/90 transition-colors rounded-xl p-5 mb-6"
+      >
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+            <Mic className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-left">
+            <div className="flex items-center gap-2">
+              <span className="text-white text-lg font-bold">Speak a Recipe</span>
+              <span className="bg-white/20 text-white text-[10px] font-semibold px-2 py-0.5 rounded">PRO</span>
+            </div>
+            <p className="text-white/80 text-sm">Dictate and AI formats it instantly</p>
+          </div>
+        </div>
+      </Link>
+
+      {/* Import method grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        {IMPORT_METHODS.map(({ id, icon: Icon, title, subtitle }) => (
+          <button
+            key={id}
+            onClick={() => handleMethodClick(id)}
+            disabled={loading !== null}
+            className={`bg-cb-bg border rounded-xl p-4 text-center transition-all hover:shadow-md hover:border-cb-primary/30 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-cb-primary/30 ${
+              activeMethod === id ? 'border-cb-primary shadow-md' : 'border-stone-200'
             }`}
           >
-            {loading === 'image' ? (
-              <div className="text-cb-secondary">
-                <Spinner className="mx-auto mb-3" />
-                <p className="text-sm font-medium">Extracting recipe...</p>
-                <p className="text-xs mt-1">Claude is reading your image</p>
-              </div>
+            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-2">
+              <Icon className="w-5 h-5 text-cb-primary" />
+            </div>
+            <p className="font-semibold text-[15px] text-cb-text">{title}</p>
+            <p className="text-cb-muted text-[13px] mt-0.5 line-clamp-1">{subtitle}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Loading indicator */}
+      {loading === 'image' && (
+        <div className="bg-cb-card border border-cb-border rounded-card p-6 mb-6 text-center">
+          <Spinner className="mx-auto mb-3" />
+          <p className="font-medium">Extracting recipe...</p>
+          <p className="text-cb-secondary text-sm mt-1">Your Sous Chef is reading your image</p>
+        </div>
+      )}
+
+      {/* URL import panel */}
+      {activeMethod === 'url' && (
+        <div className="bg-cb-card border border-cb-border rounded-card p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Import from URL</h3>
+            <button onClick={() => setActiveMethod(null)} className="text-cb-secondary hover:text-cb-text">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://example.com/recipe..."
+            className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors mb-3"
+            onKeyDown={(e) => e.key === 'Enter' && handleUrlImport()}
+          />
+          <button
+            onClick={handleUrlImport}
+            disabled={!url.trim() || loading !== null}
+            className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading === 'url' ? (
+              <><Spinner size={16} /> Your Sous Chef is fetching this recipe...</>
             ) : (
-              <>
-                <svg className="w-10 h-10 text-cb-secondary mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                </svg>
-                <p className="text-cb-secondary text-sm mb-4">Drag & drop a recipe image here</p>
-                <label className="inline-block bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity">
-                  Choose File
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImage(file);
-                  }} />
-                </label>
-              </>
+              'Import Recipe'
             )}
+          </button>
+          <p className="text-xs text-cb-secondary mt-3">
+            Works with most recipe websites. We strip the life story and extract just the recipe.
+          </p>
+        </div>
+      )}
+
+      {/* YouTube import panel */}
+      {activeMethod === 'youtube' && (
+        <div className="bg-cb-card border border-cb-border rounded-card p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Import from YouTube</h3>
+            <button onClick={() => setActiveMethod(null)} className="text-cb-secondary hover:text-cb-text">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://youtube.com/watch?v=..."
+            className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors mb-3"
+            onKeyDown={(e) => e.key === 'Enter' && handleUrlImport()}
+          />
+          <button
+            onClick={handleUrlImport}
+            disabled={!url.trim() || loading !== null}
+            className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading === 'url' ? (
+              <><Spinner size={16} /> Your Sous Chef is fetching this video...</>
+            ) : (
+              'Import from YouTube'
+            )}
+          </button>
+          <p className="text-xs text-cb-secondary mt-3">
+            YouTube imports include timestamp-linked steps from the video transcript.
+          </p>
+        </div>
+      )}
+
+      {/* Paste text panel */}
+      {activeMethod === 'paste' && (
+        <div className="bg-cb-card border border-cb-border rounded-card p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Paste Recipe Text</h3>
+            <button onClick={() => setActiveMethod(null)} className="text-cb-secondary hover:text-cb-text">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            placeholder="Paste ingredients, steps, or the full recipe. Your Sous Chef will extract and structure it for you."
+            rows={6}
+            className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors resize-none mb-3"
+          />
+          <button
+            onClick={handlePasteImport}
+            disabled={!pasteText.trim() || loading !== null}
+            className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading === 'text' ? (
+              <><Spinner size={16} /> Parsing recipe...</>
+            ) : (
+              'Import from text'
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Info banners */}
+      <div className="space-y-3 mb-6">
+        {/* Instagram/TikTok tip */}
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-card p-4">
+          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <Lightbulb className="w-4 h-4 text-amber-600" />
+          </div>
+          <div>
+            <p className="text-sm text-cb-text">
+              <span className="font-semibold">See a recipe on Instagram or TikTok?</span>{' '}
+              Screenshot it and use Scan Photo — we'll read the photo and the caption.
+            </p>
           </div>
         </div>
 
-        {/* URL import */}
-        <div data-onboard="url" className="bg-cb-card border border-cb-border rounded-card p-6">
-          <h2 className="font-semibold mb-1">Import from URL</h2>
-          <p className="text-cb-secondary text-sm mb-4">
-            Paste a link to any recipe page. We strip the life story and extract just the recipe.
-          </p>
-          <div className="space-y-4">
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com/recipe..."
-              className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors"
-            />
-            <button
-              onClick={handleUrlImport}
-              disabled={!url.trim() || loading !== null}
-              className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading === 'url' ? (
-                <><Spinner size={16} /> Your Sous Chef is fetching this recipe...</>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
-                  Import Recipe
-                </>
-              )}
-            </button>
+        {/* Chrome extension banner */}
+        <div className="flex items-start gap-3 bg-cb-green-soft border border-cb-green/20 rounded-card p-4">
+          <div className="w-8 h-8 rounded-full bg-cb-green/10 flex items-center justify-center shrink-0">
+            <Globe className="w-4 h-4 text-cb-green" />
           </div>
-          <div className="mt-6 p-4 bg-cb-bg rounded-input">
-            <p className="text-xs text-cb-secondary leading-relaxed">
-              Works with most recipe websites and YouTube cooking videos.
-              YouTube imports include timestamp-linked steps.
+          <div>
+            <p className="text-sm text-cb-text">
+              <span className="font-semibold">Import directly from Chrome</span> — Install the ChefsBook extension to save any recipe in one click.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Paste text import */}
-      <div className="bg-cb-card border border-cb-border rounded-card p-6 mb-8">
-        <h2 className="font-semibold mb-1">Paste recipe text</h2>
-        <p className="text-cb-secondary text-sm mb-4">
-          Copy recipe text from any source — ingredients, steps, or the full recipe. Your Sous Chef will extract and structure it.
-        </p>
-        <textarea
-          value={pasteText}
-          onChange={(e) => setPasteText(e.target.value)}
-          placeholder="Paste recipe text here — ingredients, steps, or the full recipe. Your Sous Chef will extract and structure it for you."
-          rows={6}
-          className="w-full bg-cb-bg border border-cb-border rounded-input px-4 py-3 text-sm placeholder:text-cb-secondary/60 outline-none focus:border-cb-primary transition-colors resize-none mb-3"
-        />
-        <button
-          onClick={handlePasteImport}
-          disabled={!pasteText.trim() || loading !== null}
-          className="w-full bg-cb-green text-white py-3 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {loading === 'text' ? (
-            <><Spinner size={16} /> Parsing recipe...</>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z" />
-              </svg>
-              Import from text
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Voice recipe link */}
-      <Link href="/dashboard/speak" data-onboard="speak" className="block bg-cb-card border border-cb-border rounded-card p-6 mb-8 hover:border-cb-primary/50 transition-colors">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-cb-primary/10 flex items-center justify-center shrink-0">
-            <svg className="w-6 h-6 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>
-          </div>
-          <div>
-            <h2 className="font-semibold">Speak a recipe</h2>
-            <p className="text-cb-secondary text-sm">Dictate a recipe and Your Sous Chef will format it for you. <span className="text-amber-600 text-xs font-medium">Pro</span></p>
-          </div>
-          <svg className="w-5 h-5 text-cb-secondary ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
-        </div>
-      </Link>
-
-      {/* File import panel */}
-      <div className="bg-cb-card border border-cb-border rounded-card p-6">
-        <h2 className="font-semibold mb-1">Import from File</h2>
+      {/* File import section */}
+      <div className="bg-cb-card border border-cb-border rounded-card p-5">
+        <h3 className="font-semibold mb-1">Import from File</h3>
         <p className="text-cb-secondary text-sm mb-4">
           Upload any file — bookmarks, PDFs, Word docs, or text files. We'll find all the recipes inside.
         </p>
@@ -821,15 +908,14 @@ export default function ScanPage() {
               onDrop={onBookmarkDrop}
               onDragOver={(e) => { e.preventDefault(); setBmDragOver(true); }}
               onDragLeave={() => setBmDragOver(false)}
-              className={`border-2 border-dashed rounded-card p-10 text-center transition-colors mb-4 ${
+              className={`border-2 border-dashed rounded-card p-8 text-center transition-colors mb-4 ${
                 bmDragOver ? 'border-cb-primary bg-cb-primary/5' : 'border-cb-border'
               }`}
             >
-              <svg className="w-10 h-10 text-cb-secondary mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-              </svg>
+              <Folder className="w-10 h-10 text-cb-secondary mx-auto mb-3" />
               <p className="text-cb-secondary text-sm mb-4">
-                Drag & drop any file here <span className="text-[10px] text-cb-secondary block mt-1">PDF, Word, HTML, Text, CSV, JSON</span>
+                Drag & drop any file here
+                <span className="block text-[10px] mt-1">PDF, Word, HTML, Text, CSV, JSON</span>
               </p>
               <label className="inline-block bg-cb-primary text-white px-6 py-2.5 rounded-input text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity">
                 Choose File
@@ -839,16 +925,10 @@ export default function ScanPage() {
                 }} />
               </label>
             </div>
-
-            <div className="bg-cb-bg rounded-input p-3">
-              <p className="text-xs text-cb-secondary leading-relaxed">
-                Supports: PDF cookbooks, Word documents, text files, CSV spreadsheets, JSON exports, and browser bookmark HTML files. Max 50MB.
-              </p>
-            </div>
           </>
         )}
 
-        {/* Phase: checking — duplicate detection */}
+        {/* Phase: checking */}
         {bmPhase === 'checking' && (
           <div className="py-12 text-center">
             <Spinner className="mx-auto mb-3" />
@@ -862,7 +942,6 @@ export default function ScanPage() {
         {/* Phase: preview — folder tree */}
         {bmPhase === 'preview' && (
           <>
-            {/* Header: summary + actions */}
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-medium">Review bookmarks</p>
@@ -882,13 +961,12 @@ export default function ScanPage() {
                   disabled={selectedCount === 0}
                   className="bg-cb-primary text-white px-5 py-2.5 rounded-input text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  Import {selectedCount} selected recipe{selectedCount !== 1 ? 's' : ''}
+                  Import {selectedCount} selected
                 </button>
               </div>
             </div>
 
-            {/* Tree */}
-            <div className="max-h-[500px] overflow-y-auto border border-cb-border rounded-card">
+            <div className="max-h-[400px] overflow-y-auto border border-cb-border rounded-card">
               {folders.map((folder) => {
                 const folderBms = bookmarks.filter((b) => b.folder === folder);
                 const allSelected = folderBms.every((b) => b.selected);
@@ -898,20 +976,16 @@ export default function ScanPage() {
 
                 return (
                   <div key={folder}>
-                    {/* Folder row */}
                     <div
                       onClick={() => toggleExpand(folder)}
                       className="flex items-center gap-2 px-3 py-2.5 hover:bg-cb-bg/50 cursor-pointer border-b border-cb-border select-none"
                     >
-                      {/* Chevron */}
-                      <svg
-                        className={`w-3.5 h-3.5 text-cb-secondary shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                      </svg>
+                      {expanded ? (
+                        <ChevronDown className="w-3.5 h-3.5 text-cb-secondary shrink-0" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5 text-cb-secondary shrink-0" />
+                      )}
 
-                      {/* Folder checkbox */}
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleFolder(folder, !allSelected); }}
                         className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
@@ -922,27 +996,13 @@ export default function ScanPage() {
                               : 'bg-cb-primary border-cb-primary text-white'
                         }`}
                       >
-                        {allSelected && (
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                          </svg>
-                        )}
-                        {!allSelected && !noneSelected && (
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" d="M5 12h14" />
-                          </svg>
-                        )}
+                        {allSelected && <Check className="w-2.5 h-2.5" />}
+                        {!allSelected && !noneSelected && <span className="w-2 h-0.5 bg-white" />}
                       </button>
 
-                      {/* Folder icon */}
-                      <svg className="w-4 h-4 text-cb-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                      </svg>
-
-                      {/* Folder name */}
+                      <Folder className="w-4 h-4 text-cb-secondary shrink-0" />
                       <span className="text-sm font-medium truncate">{folder}</span>
 
-                      {/* Spacer + counts */}
                       <span className="text-xs text-cb-secondary ml-auto shrink-0">
                         {folderBms.filter((b) => b.selected).length}/{folderBms.length}
                       </span>
@@ -953,7 +1013,6 @@ export default function ScanPage() {
                       )}
                     </div>
 
-                    {/* Bookmark rows (visible when expanded) */}
                     {expanded && folderBms.map((bm) => {
                       const globalIndex = bookmarks.indexOf(bm);
                       const hostname = (() => { try { return new URL(bm.url).hostname; } catch { return ''; } })();
@@ -966,7 +1025,6 @@ export default function ScanPage() {
                             bm.isDuplicate ? 'bg-amber-50/30 hover:bg-amber-50/60' : 'hover:bg-cb-bg/50'
                           }`}
                         >
-                          {/* Bookmark checkbox */}
                           <span
                             className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
                               bm.selected
@@ -974,36 +1032,27 @@ export default function ScanPage() {
                                 : 'border-cb-border'
                             }`}
                           >
-                            {bm.selected && (
-                              <svg className="w-2 h-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                              </svg>
-                            )}
+                            {bm.selected && <Check className="w-2 h-2" />}
                           </span>
 
-                          {/* Favicon */}
-                          <img
-                            src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
-                            alt=""
-                            className="w-4 h-4 shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
+                          {hostname && (
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
+                              alt=""
+                              className="w-4 h-4 shrink-0"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          )}
 
-                          {/* Title + URL + duplicate hint */}
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm truncate ${bm.isDuplicate ? 'text-cb-secondary' : ''}`}>{bm.title}</p>
-                            <p className="text-[10px] text-cb-secondary truncate">{bm.url}</p>
+                            {bm.url && <p className="text-[10px] text-cb-secondary truncate">{bm.url}</p>}
                             {bm.isDuplicate && bm.existingTitle && (
                               <p className="text-[10px] text-amber-600 truncate">Already imported: {bm.existingTitle}</p>
                             )}
                           </div>
 
-                          {/* Warning icon for duplicates */}
-                          {bm.isDuplicate && (
-                            <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                            </svg>
-                          )}
+                          {bm.isDuplicate && <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />}
                         </div>
                       );
                     })}
@@ -1012,7 +1061,6 @@ export default function ScanPage() {
               })}
             </div>
 
-            {/* Footer summary */}
             <div className="mt-3 px-1 text-xs text-cb-secondary">
               {folders.length} folder{folders.length !== 1 ? 's' : ''} &middot;{' '}
               {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''} found &middot;{' '}
@@ -1024,10 +1072,9 @@ export default function ScanPage() {
           </>
         )}
 
-        {/* Phase: importing — progress */}
+        {/* Phase: importing */}
         {bmPhase === 'importing' && (
           <div className="py-8">
-            {/* Progress bar */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold">
@@ -1045,7 +1092,6 @@ export default function ScanPage() {
               </div>
             </div>
 
-            {/* Live feed */}
             <div className="max-h-[300px] overflow-y-auto space-y-1">
               {importResults.slice(-20).reverse().map((r, i) => (
                 <div
@@ -1078,13 +1124,11 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Phase: done — summary */}
+        {/* Phase: done */}
         {bmPhase === 'done' && (
           <div className="py-8 text-center">
             <div className="w-16 h-16 rounded-full bg-cb-green/10 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-cb-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
+              <Check className="w-8 h-8 text-cb-green" />
             </div>
             <h3 className="text-xl font-bold mb-2">Import complete</h3>
             <p className="text-cb-secondary mb-6">
@@ -1097,22 +1141,13 @@ export default function ScanPage() {
               )}
             </p>
 
-            {/* Failed list (collapsible) */}
             {failedCount > 0 && (
               <div className="text-left max-w-lg mx-auto mb-6">
                 <button
                   onClick={() => setShowFailed(!showFailed)}
                   className="text-sm text-cb-secondary hover:text-cb-text flex items-center gap-1"
                 >
-                  <svg
-                    className={`w-3 h-3 transition-transform ${showFailed ? 'rotate-90' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                  </svg>
+                  {showFailed ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                   {failedCount} failed URL{failedCount !== 1 ? 's' : ''}
                 </button>
                 {showFailed && (
@@ -1186,6 +1221,7 @@ export default function ScanPage() {
           </div>
         )}
       </div>
+
       <ConfirmDialog />
       <AlertDialog />
     </div>
