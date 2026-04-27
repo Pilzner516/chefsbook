@@ -1,6 +1,26 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session MOBILE-FONT-VERIFY) TYPE: VERIFICATION
+
+### Mobile Wordmark Font Verification
+
+Verified that mobile wordmark font matches web — both use Inter Bold (700).
+
+**Findings:**
+- Web wordmark: Inter Bold (700), "Chefs" #ce2b37, "book" #1a1a1a
+- Mobile wordmark: Inter-Bold (700), "Chefs" #ce2b37, "book" #1a1a1a
+- **Fonts match** — no change needed
+
+**Minor fix:**
+- SplashOverlay "book" color corrected from #1f1b16 to #1a1a1a to exactly match web
+
+**Verification:**
+- ADB screenshot confirms Inter Bold rendering correctly
+- Compared against web loading.tsx and landing page styling
+
+---
+
 ## 2026-04-27 (session MOBILE-FONT-FIX) TYPE: UI POLISH
 
 ### Mobile Brand Font Fix

@@ -118,7 +118,7 @@ function SplashOverlay() {
       />
       <Text style={{ fontSize: 42, fontFamily: 'Inter-Bold', marginBottom: 8 }}>
         <Text style={{ color: '#ce2b37' }}>Chefs</Text>
-        <Text style={{ color: '#1f1b16' }}>book</Text>
+        <Text style={{ color: '#1a1a1a' }}>book</Text>
       </Text>
       <Text style={{ fontSize: 15, color: '#7a6a5a', fontStyle: 'italic' }}>
         Welcome to Chefsbook
