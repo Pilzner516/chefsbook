@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -20,7 +20,7 @@ export function ChefsBookHeader() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
+  const fontFamily = 'Inter-Bold';
   const session = useAuthStore((s) => s.session);
   const language = usePreferencesStore((s) => s.language);
   const units = usePreferencesStore((s) => s.units);
@@ -55,8 +55,8 @@ export function ChefsBookHeader() {
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TouchableOpacity onPress={() => setShowUserMenu(true)} activeOpacity={1}>
           <Text style={{ fontSize: 28, fontWeight: '700', fontFamily }}>
-            <Text style={{ color: colors.textPrimary }}>Chefs</Text>
-            <Text style={{ color: colors.accent }}>Book</Text>
+            <Text style={{ color: colors.accent }}>Chefs</Text>
+            <Text style={{ color: colors.textPrimary }}>book</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -132,7 +132,7 @@ export function ChefsBookHeader() {
       <ChefsDialog
         visible={showUserMenu}
         icon="⚙️"
-        title="ChefsBook"
+        title="Chefsbook"
         body=""
         layout="vertical"
         onClose={() => setShowUserMenu(false)}

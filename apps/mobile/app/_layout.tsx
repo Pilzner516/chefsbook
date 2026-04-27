@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Stack, useRouter, useSegments, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
 import { configureStorage } from '@chefsbook/db';
 import { getPendingCameraResult, storePendingRecoveryUri } from '../lib/image';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
@@ -98,7 +99,6 @@ function useProtectedRoute() {
 // Rendered at the root on top of everything; hand-off from the native splash
 // is seamless because both share the cream Trattoria background.
 function SplashOverlay() {
-  const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
   return (
     <View
       pointerEvents="none"
@@ -116,12 +116,12 @@ function SplashOverlay() {
         style={{ width: 160, height: 160, marginBottom: 24 }}
         resizeMode="contain"
       />
-      <Text style={{ fontSize: 42, fontWeight: '700', fontFamily, marginBottom: 8 }}>
-        <Text style={{ color: '#1f1b16' }}>Chefs</Text>
-        <Text style={{ color: '#ce2b37' }}>Book</Text>
+      <Text style={{ fontSize: 42, fontFamily: 'Inter-Bold', marginBottom: 8 }}>
+        <Text style={{ color: '#ce2b37' }}>Chefs</Text>
+        <Text style={{ color: '#1f1b16' }}>book</Text>
       </Text>
       <Text style={{ fontSize: 15, color: '#7a6a5a', fontStyle: 'italic' }}>
-        Welcome to ChefsBook
+        Welcome to Chefsbook
       </Text>
     </View>
   );
@@ -280,9 +280,19 @@ function RootNav() {
 export default function RootLayout() {
   const init = useAuthStore((s) => s.init);
 
+  // Load the Inter Bold font for the brand wordmark
+  const [fontsLoaded] = useFonts({
+    'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
+  });
+
   useEffect(() => {
     init();
   }, []);
+
+  // Don't render until fonts are loaded
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>

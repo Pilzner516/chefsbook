@@ -1,6 +1,32 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session MOBILE-FONT-FIX) TYPE: UI POLISH
+
+### Mobile Brand Font Fix
+
+Fixed the ChefsBook brand wordmark to use Inter font on mobile, matching web branding.
+
+**Changes:**
+- Bundled Inter-Bold.ttf font via expo-font
+- Added useFonts hook in root layout to load Inter-Bold
+- Updated ChefsBookHeader.tsx to use fontFamily='Inter-Bold'
+- Updated SplashOverlay to use Inter-Bold font
+- Updated landing page (index.tsx) to use Inter-Bold font
+- Fixed wordmark colors: "Chefs" red (#ce2b37), "book" black (lowercase b)
+
+**Files changed:**
+- `apps/mobile/app/_layout.tsx` — font loading via useFonts, SplashOverlay font fix
+- `apps/mobile/components/ChefsBookHeader.tsx` — fontFamily + color fix
+- `apps/mobile/app/index.tsx` — landing page fontFamily + color fix
+- `apps/mobile/assets/fonts/Inter-Bold.ttf` — new font file (304KB)
+
+**Verification:**
+- ADB screenshot: Header showing "Chefsbook" in Inter Bold font — verified
+- Font matches web branding (clean sans-serif, not system serif fallback)
+
+---
+
 ## 2026-04-27 (session SCOPE-DROPDOWN) TYPE: UI POLISH
 
 ### Search Screen — Scope Selector Dropdown

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -10,7 +10,7 @@ export default function LandingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
+  const fontFamily = 'Inter-Bold';
 
   return (
     <View
@@ -37,7 +37,7 @@ export default function LandingScreen() {
         resizeMode="contain"
       />
 
-      {/* ChefsBook logo */}
+      {/* Chefsbook logo */}
       <Text style={{
         fontSize: 34,
         fontWeight: 'bold',
@@ -45,8 +45,8 @@ export default function LandingScreen() {
         textAlign: 'center',
         marginBottom: 8,
       }}>
-        <Text style={{ color: colors.textPrimary }}>Chefs</Text>
-        <Text style={{ color: colors.accent }}>Book</Text>
+        <Text style={{ color: colors.accent }}>Chefs</Text>
+        <Text style={{ color: colors.textPrimary }}>book</Text>
       </Text>
 
       {/* Tagline */}
