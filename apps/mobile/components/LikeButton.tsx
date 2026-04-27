@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
-import { toggleLike, isLiked, getLikers } from '@chefsbook/db';
+import { toggleLike, isLiked, getLikers, getVerifiedUserIds } from '@chefsbook/db';
 import ChefsDialog from './ChefsDialog';
 import { Avatar } from './UIKit';
 import { getInitials } from '@chefsbook/ui';
 import { Ionicons } from '@expo/vector-icons';
+import VerifiedBadge from './VerifiedBadge';
 
 interface Props {
   recipeId: string;
@@ -30,6 +31,7 @@ export function LikeButton({ recipeId, likeCount: initialCount, isOwner }: Props
   const [showLikers, setShowLikers] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [likers, setLikers] = useState<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }[]>([]);
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -56,6 +58,12 @@ export function LikeButton({ recipeId, likeCount: initialCount, isOwner }: Props
     if (!isOwner || count === 0) return;
     const data = await getLikers(recipeId);
     setLikers(data);
+    // Fetch verified status for likers
+    const userIds = data.map((u) => u.id);
+    if (userIds.length > 0) {
+      const verifiedIds = await getVerifiedUserIds(userIds);
+      setVerifiedUserIds(verifiedIds);
+    }
     setShowLikers(true);
   };
 
@@ -92,7 +100,10 @@ export function LikeButton({ recipeId, likeCount: initialCount, isOwner }: Props
                 >
                   <Avatar uri={u.avatar_url} initials={getInitials(u.display_name)} size={36} />
                   <View style={{ marginLeft: 10, flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>@{u.username ?? '?'}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>@{u.username ?? '?'}</Text>
+                      {verifiedUserIds.has(u.id) && <VerifiedBadge size="sm" />}
+                    </View>
                     {u.display_name && <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{u.display_name}</Text>}
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

@@ -17,9 +17,11 @@ import {
   getUnreadCount,
   markNotificationRead,
   markAllNotificationsRead,
+  getVerifiedUserIds,
 } from '@chefsbook/db';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
+import VerifiedBadge from './VerifiedBadge';
 
 const TABS = [
   { key: 'all', label: 'All' },
@@ -70,6 +72,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [tab, setTab] = useState('all');
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
 
   // Initial unread count + realtime subscription
   useEffect(() => {
@@ -105,6 +108,12 @@ export default function NotificationBell() {
     if (!userId) return;
     const data = await getNotifications(userId);
     setNotifications(data);
+    // Fetch verified status for all actors
+    const actorIds = data.map((n: any) => n.actor_id).filter((id: string | null): id is string => !!id);
+    if (actorIds.length > 0) {
+      const verifiedIds = await getVerifiedUserIds([...new Set(actorIds)]);
+      setVerifiedUserIds(verifiedIds);
+    }
   }, [userId]);
 
   const openPanel = async () => {
@@ -183,13 +192,19 @@ export default function NotificationBell() {
         <Text style={{ fontSize: 16 }}>{emojiForType(n.type)}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, color: colors.textPrimary }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
           {n.actor_username ? (
-            <Text style={{ fontWeight: '700' }}>@{n.actor_username} </Text>
+            <>
+              <Text style={{ fontSize: 14, color: colors.textPrimary, fontWeight: '700' }}>@{n.actor_username}</Text>
+              {n.actor_id && verifiedUserIds.has(n.actor_id) && <VerifiedBadge size="sm" />}
+              <Text style={{ fontSize: 14, color: colors.textPrimary }}> </Text>
+            </>
           ) : null}
-          {n.batch_count > 1 ? `${n.batch_count} people ` : ''}
-          {n.message}
-        </Text>
+          <Text style={{ fontSize: 14, color: colors.textPrimary }}>
+            {n.batch_count > 1 ? `${n.batch_count} people ` : ''}
+            {n.message}
+          </Text>
+        </View>
         {n.recipe_title ? (
           <Text
             numberOfLines={1}

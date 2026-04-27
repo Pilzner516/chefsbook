@@ -103,7 +103,8 @@ export default function SearchTab() {
   const tabBarHeight = useTabBarHeight();
   const [ingredientInput, setIngredientInput] = useState('');
   const [tagInput, setTagInput] = useState('');
-  const [filtersExpanded, setFiltersExpanded] = useState(true); // collapsed when filters active
+  const [filtersExpanded, setFiltersExpanded] = useState(false); // collapsed by default
+  const [scopeExpanded, setScopeExpanded] = useState(false); // scope dropdown state
   const [peopleResults, setPeopleResults] = useState<UserProfile[]>([]);
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [verifiedPeopleIds, setVerifiedPeopleIds] = useState<Set<string>>(new Set());
@@ -134,16 +135,6 @@ export default function SearchTab() {
     if (peopleResults.length === 0) { setVerifiedPeopleIds(new Set()); return; }
     getVerifiedUserIds(peopleResults.map((u) => u.id)).then(setVerifiedPeopleIds);
   }, [peopleResults]);
-
-  // Auto-collapse filters when filters are active, auto-expand when cleared
-  useEffect(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    if (activeFilters.length > 0) {
-      setFiltersExpanded(false);
-    } else {
-      setFiltersExpanded(true);
-    }
-  }, [activeFilters.length]);
 
   // Reset state when switching modes
   const switchMode = (newMode: SearchMode) => {
@@ -206,6 +197,7 @@ export default function SearchTab() {
 
     let recipeResults: Recipe[] = [];
 
+    try {
     if (mode === 'following') {
       // Get recipes from users the current user follows
       const { data: follows } = await supabase
@@ -304,7 +296,12 @@ export default function SearchTab() {
     }
 
     setResults(recipeResults);
-    setLoading(false);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   }, [session?.user?.id, query, activeFilters, filterParams, mode]);
 
   useEffect(() => {
@@ -476,49 +473,87 @@ export default function SearchTab() {
     >
       <ChefsBookHeader />
 
-      {/* Scope tabs: All / My Recipes / Following / What's New — 2×2 grid */}
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          gap: 8,
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          marginBottom: 4,
-        }}
-      >
-        {([
-          { key: 'all', labelKey: 'search.allRecipes' },
-          { key: 'mine', labelKey: 'search.myRecipes' },
-          { key: 'following', labelKey: 'search.following' },
-          { key: 'whats-new', labelKey: 'search.whatsNew' },
-        ] as const).map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            onPress={() => switchMode(tab.key)}
+      {/* Scope selector dropdown */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, marginBottom: 4 }}>
+        {/* Collapsed row - shows selected scope */}
+        <TouchableOpacity
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setScopeExpanded(!scopeExpanded);
+          }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#ce2b37',
+            borderRadius: 20,
+            paddingVertical: 12,
+            paddingHorizontal: 20,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600' }}>
+            {t(
+              mode === 'all' ? 'search.allRecipes' :
+              mode === 'mine' ? 'search.myRecipes' :
+              mode === 'following' ? 'search.following' :
+              'search.whatsNew'
+            )}
+          </Text>
+          <Ionicons
+            name={scopeExpanded ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color="#ffffff"
+          />
+        </TouchableOpacity>
+
+        {/* Expanded options - 2×2 grid when visible */}
+        {scopeExpanded && (
+          <View
             style={{
-              width: '48%',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: 12,
-              borderRadius: 20,
-              backgroundColor: mode === tab.key ? '#ce2b37' : colors.bgBase,
-              borderWidth: 1,
-              borderColor: mode === tab.key ? '#ce2b37' : colors.borderDefault,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginTop: 8,
             }}
           >
-            <Text
-              style={{
-                color: mode === tab.key ? '#ffffff' : colors.textPrimary,
-                fontSize: 14,
-                fontWeight: mode === tab.key ? '600' : '400',
-              }}
-            >
-              {t(tab.labelKey)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+            {([
+              { key: 'all', labelKey: 'search.allRecipes' },
+              { key: 'mine', labelKey: 'search.myRecipes' },
+              { key: 'following', labelKey: 'search.following' },
+              { key: 'whats-new', labelKey: 'search.whatsNew' },
+            ] as const).filter((tab) => tab.key !== mode).map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  switchMode(tab.key);
+                  setScopeExpanded(false);
+                }}
+                style={{
+                  width: '48%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 12,
+                  borderRadius: 20,
+                  backgroundColor: colors.bgBase,
+                  borderWidth: 1,
+                  borderColor: colors.borderDefault,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: '400',
+                  }}
+                >
+                  {t(tab.labelKey)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {/* Search bar */}
@@ -557,8 +592,8 @@ export default function SearchTab() {
         </View>
       </View>
 
-      {/* Collapsed filter summary bar - shown when filters active and collapsed */}
-      {activeFilters.length > 0 && !filtersExpanded && (
+      {/* Collapsed filter bar - shown when collapsed */}
+      {!filtersExpanded && (
         <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
           <TouchableOpacity
             onPress={() => {
@@ -569,37 +604,39 @@ export default function SearchTab() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: colors.accentSoft,
+              backgroundColor: activeFilters.length > 0 ? colors.accentSoft : colors.bgBase,
               borderRadius: 12,
               paddingHorizontal: 14,
               paddingVertical: 10,
               borderWidth: 1,
-              borderColor: colors.accent,
+              borderColor: activeFilters.length > 0 ? colors.accent : colors.borderDefault,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Ionicons name="filter" size={16} color={colors.accent} />
-              <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>
-                {t('search.filtersActive', { count: activeFilters.length })}
+              <Ionicons name="filter" size={16} color={activeFilters.length > 0 ? colors.accent : colors.textSecondary} />
+              <Text style={{ color: activeFilters.length > 0 ? colors.accent : colors.textSecondary, fontSize: 14, fontWeight: '600', marginLeft: 8 }}>
+                {activeFilters.length > 0 ? t('search.filtersActive', { count: activeFilters.length }) : t('search.filters')}
               </Text>
-              <Ionicons name="chevron-down" size={16} color={colors.accent} style={{ marginLeft: 6 }} />
+              <Ionicons name="chevron-down" size={16} color={activeFilters.length > 0 ? colors.accent : colors.textMuted} style={{ marginLeft: 6 }} />
             </View>
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation?.();
-                setActiveFilters([]);
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{ padding: 4 }}
-            >
-              <Ionicons name="close-circle" size={20} color={colors.accent} />
-            </TouchableOpacity>
+            {activeFilters.length > 0 && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  setActiveFilters([]);
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ padding: 4 }}
+              >
+                <Ionicons name="close-circle" size={20} color={colors.accent} />
+              </TouchableOpacity>
+            )}
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Filter category chips - stacked in rows (shown when no filters or expanded) */}
-      {(activeFilters.length === 0 || filtersExpanded) && (
+      {/* Filter category chips - stacked in rows (shown when expanded) */}
+      {filtersExpanded && (
         <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {categories.map((cat) => {

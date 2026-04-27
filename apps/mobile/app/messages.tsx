@@ -20,11 +20,13 @@ import {
   sendMessage,
   markMessagesRead,
   flagMessage,
+  getVerifiedUserIds,
 } from '@chefsbook/db';
 import type { ConversationPreview, DirectMessage } from '@chefsbook/db';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
 import ChefsDialog from '../components/ChefsDialog';
+import VerifiedBadge from '../components/VerifiedBadge';
 
 function timeAgo(d: string) {
   const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -54,13 +56,23 @@ export default function MessagesScreen() {
   const [loadingThread, setLoadingThread] = useState(false);
   const [flagTarget, setFlagTarget] = useState<string | null>(null);
   const [infoDialog, setInfoDialog] = useState<{ title: string; body: string } | null>(null);
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<ScrollView>(null);
 
   // Load conversation list
   useEffect(() => {
     if (!userId) { setLoading(false); return; }
     getConversationList(userId)
-      .then((c) => { setConvos(c); setLoading(false); })
+      .then(async (c) => {
+        setConvos(c);
+        // Fetch verified status for all conversation partners
+        const otherIds = c.map((convo) => convo.other_user_id).filter((id): id is string => !!id);
+        if (otherIds.length > 0) {
+          const verifiedIds = await getVerifiedUserIds(otherIds);
+          setVerifiedUserIds(verifiedIds);
+        }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, [userId]);
 
@@ -182,9 +194,12 @@ export default function MessagesScreen() {
             </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 14 }}>
-              @{selected.other_username}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 14 }}>
+                @{selected.other_username}
+              </Text>
+              {selected.other_user_id && verifiedUserIds.has(selected.other_user_id) && <VerifiedBadge size="sm" />}
+            </View>
             {selected.other_display_name ? (
               <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
                 {selected.other_display_name}
@@ -443,6 +458,7 @@ export default function MessagesScreen() {
                   >
                     @{item.other_username}
                   </Text>
+                  {item.other_user_id && verifiedUserIds.has(item.other_user_id) && <VerifiedBadge size="sm" />}
                   {item.other_display_name ? (
                     <Text
                       style={{ color: colors.textSecondary, fontSize: 12 }}

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { generateMealPlan } from '@chefsbook/ai';
-import type { MealPlanSlot } from '@chefsbook/ai';
+import type { MealPlanSlot, NutritionGoals, DailySummary } from '@chefsbook/ai';
 import type { Recipe, MealSlot } from '@chefsbook/db';
 
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -17,6 +17,12 @@ const EFFORT_OPTION_KEYS = [
   { labelKey: 'wizard.mediumEffort', value: 'medium' },
   { labelKey: 'wizard.fullEffort', value: 'full' },
 ];
+const MACRO_PRESETS: { key: NutritionGoals['macroPriority']; labelKey: string; descKey: string }[] = [
+  { key: 'none', labelKey: 'wizard.macroNone', descKey: 'wizard.macroNoneDesc' },
+  { key: 'high_protein', labelKey: 'wizard.macroHighProtein', descKey: 'wizard.macroHighProteinDesc' },
+  { key: 'low_carb', labelKey: 'wizard.macroLowCarb', descKey: 'wizard.macroLowCarbDesc' },
+  { key: 'balanced', labelKey: 'wizard.macroBalanced', descKey: 'wizard.macroBalancedDesc' },
+];
 
 interface Props {
   visible: boolean;
@@ -26,7 +32,7 @@ interface Props {
   onSave: (slots: { plan_date: string; meal_slot: MealSlot; recipe_id: string | null; title: string; servings: number }[]) => Promise<void>;
 }
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSave }: Props) {
   const { colors } = useTheme();
@@ -41,7 +47,15 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
   const [source, setSource] = useState<'my_recipes' | 'mix' | 'community'>('mix');
   const [generating, setGenerating] = useState(false);
   const [plan, setPlan] = useState<MealPlanSlot[]>([]);
+  const [dailySummaries, setDailySummaries] = useState<Record<string, DailySummary>>({});
   const [saving, setSaving] = useState(false);
+
+  // Step 4: Nutritional Goals (optional)
+  const [dailyCalories, setDailyCalories] = useState('');
+  const [macroPriority, setMacroPriority] = useState<NutritionGoals['macroPriority']>('none');
+  const [maxCaloriesPerMeal, setMaxCaloriesPerMeal] = useState('');
+
+  const hasNutritionGoals = dailyCalories || macroPriority !== 'none' || maxCaloriesPerMeal;
 
   const toggleSet = (set: Set<string>, value: string, setter: (s: Set<string>) => void) => {
     const next = new Set(set);
@@ -57,6 +71,11 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
     setGenerating(true);
     try {
       const effortLevel = effort === 'quick' ? 10 : effort === 'medium' ? 50 : 90;
+      const nutritionGoals: NutritionGoals | undefined = hasNutritionGoals ? {
+        dailyCalories: dailyCalories ? parseInt(dailyCalories) : undefined,
+        macroPriority: macroPriority !== 'none' ? macroPriority : undefined,
+        maxCaloriesPerMeal: maxCaloriesPerMeal ? parseInt(maxCaloriesPerMeal) : undefined,
+      } : undefined;
       const result = await generateMealPlan(
         {
           days: [...selectedDays],
@@ -69,6 +88,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
           adventurousness: 50,
           servings: 4,
           source,
+          nutritionGoals,
         },
         userRecipes.map((r) => ({
           id: r.id, title: r.title, cuisine: r.cuisine, course: r.course,
@@ -76,7 +96,8 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
         })),
       );
       setPlan(result.plan);
-      setStep(4);
+      setDailySummaries(result.daily_summaries ?? {});
+      setStep(5);
     } catch (e: any) {
       Alert.alert(t('wizard.generationFailed'), e.message);
     } finally {
@@ -94,15 +115,21 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
     if (!old) return;
     setGenerating(true);
     try {
+      const nutritionGoals: NutritionGoals | undefined = hasNutritionGoals ? {
+        dailyCalories: dailyCalories ? parseInt(dailyCalories) : undefined,
+        macroPriority: macroPriority !== 'none' ? macroPriority : undefined,
+        maxCaloriesPerMeal: maxCaloriesPerMeal ? parseInt(maxCaloriesPerMeal) : undefined,
+      } : undefined;
       const result = await generateMealPlan(
         { days: [day], slots: [slot], dietary, likesDislikesText: `Don't repeat: ${old.title}`,
           cuisineVariety: 50, preferredCuisines: cuisines,
           effortLevel: effort === 'quick' ? 10 : effort === 'medium' ? 50 : 90,
-          adventurousness: 70, servings: 4, source },
+          adventurousness: 70, servings: 4, source, nutritionGoals },
         userRecipes.map((r) => ({ id: r.id, title: r.title, cuisine: r.cuisine, course: r.course, tags: r.tags ?? [], total_minutes: r.total_minutes })),
       );
       if (result.plan.length > 0) {
-        setPlan((prev) => prev.map((p) => p.day === day && p.slot === slot ? result.plan[0] : p));
+        setPlan((prev) => prev.map((p) => p.day === day && p.slot === slot ? result.plan[0]! : p));
+        if (result.daily_summaries) setDailySummaries(result.daily_summaries);
       }
     } catch {} finally { setGenerating(false); }
   };
@@ -133,12 +160,16 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
   const reset = () => {
     setStep(1);
     setPlan([]);
+    setDailySummaries({});
     setSelectedDays(new Set(DAY_KEYS));
     setSelectedSlots(new Set(['breakfast', 'lunch', 'dinner']));
     setDietary([]);
     setCuisines([]);
     setEffort('medium');
     setSource('mix');
+    setDailyCalories('');
+    setMacroPriority('none');
+    setMaxCaloriesPerMeal('');
   };
 
   const Chip = ({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) => (
@@ -167,7 +198,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
 
         {/* Progress dots */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4, 5].map((s) => (
             <View key={s} style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: step >= s ? colors.accent : colors.borderDefault }} />
           ))}
         </View>
@@ -238,33 +269,116 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
               </View>
             )}
 
-            {/* Step 4: Review */}
+            {/* Step 4: Nutritional Goals (Optional) */}
             {step === 4 && (
-              <View>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('wizard.reviewPlan')}</Text>
-                {DAY_KEYS.filter((d) => plan.some((p) => p.day === d)).map((day) => (
-                  <View key={day} style={{ marginBottom: 16 }}>
-                    <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{t(`days.${day}`)}</Text>
-                    {plan.filter((p) => p.day === day).map((slot) => (
-                      <View key={`${slot.day}-${slot.slot}`} style={{
-                        flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgCard,
-                        borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: colors.borderDefault,
-                      }}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 11, textTransform: 'uppercase', fontWeight: '700' }}>{slot.slot}</Text>
-                          <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>{slot.title}</Text>
-                          {slot.reason && <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>{slot.reason}</Text>}
-                        </View>
-                        <TouchableOpacity onPress={() => swapPlanSlot(slot.day, slot.slot)} style={{ padding: 6 }}>
-                          <Ionicons name="refresh" size={18} color={colors.accent} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => removePlanSlot(slot.day, slot.slot)} style={{ padding: 6 }}>
-                          <Ionicons name="close" size={18} color={colors.textMuted} />
-                        </TouchableOpacity>
-                      </View>
+              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+                <View>
+                  <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 4 }}>{t('wizard.nutritionGoals')}</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 16 }}>{t('wizard.nutritionGoalsDesc')}</Text>
+
+                  {/* Daily Calorie Target */}
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>{t('wizard.dailyCalories')}</Text>
+                  <TextInput
+                    value={dailyCalories}
+                    onChangeText={(v) => setDailyCalories(v.replace(/\D/g, ''))}
+                    placeholder={t('wizard.dailyCaloriesPlaceholder')}
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="numeric"
+                    returnKeyType="done"
+                    style={{
+                      backgroundColor: colors.bgBase, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
+                      fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 4,
+                    }}
+                  />
+                  <Text style={{ color: colors.textMuted, fontSize: 11, marginBottom: 16 }}>{t('wizard.dailyCaloriesHint')}</Text>
+
+                  {/* Macro Priority */}
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>{t('wizard.macroPriority')}</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                    {MACRO_PRESETS.map((preset) => (
+                      <TouchableOpacity
+                        key={preset.key}
+                        onPress={() => setMacroPriority(preset.key)}
+                        style={{
+                          flex: 1, minWidth: '45%', padding: 12, borderRadius: 10,
+                          borderWidth: 2, borderColor: macroPriority === preset.key ? colors.accent : colors.borderDefault,
+                          backgroundColor: macroPriority === preset.key ? colors.accentSoft : colors.bgCard,
+                        }}
+                      >
+                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>{t(preset.labelKey)}</Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 10, marginTop: 2 }}>{t(preset.descKey)}</Text>
+                      </TouchableOpacity>
                     ))}
                   </View>
-                ))}
+
+                  {/* Max Calories per Meal */}
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>{t('wizard.maxCaloriesPerMeal')}</Text>
+                  <TextInput
+                    value={maxCaloriesPerMeal}
+                    onChangeText={(v) => setMaxCaloriesPerMeal(v.replace(/\D/g, ''))}
+                    placeholder={t('wizard.maxCaloriesPlaceholder')}
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="numeric"
+                    returnKeyType="done"
+                    style={{
+                      backgroundColor: colors.bgBase, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
+                      fontSize: 15, color: colors.textPrimary, borderWidth: 1, borderColor: colors.borderDefault, marginBottom: 4,
+                    }}
+                  />
+                  <Text style={{ color: colors.textMuted, fontSize: 11 }}>{t('wizard.maxCaloriesHint')}</Text>
+                </View>
+              </KeyboardAvoidingView>
+            )}
+
+            {/* Step 5: Review */}
+            {step === 5 && (
+              <View>
+                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 4 }}>{t('wizard.reviewPlan')}</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 12 }}>
+                  {plan.length} {t('wizard.mealsPlanned')}{hasNutritionGoals && dailyCalories ? ` · ${dailyCalories} ${t('wizard.kcalTarget')}` : ''}
+                </Text>
+                {DAY_KEYS.filter((d) => plan.some((p) => p.day === d)).map((day) => {
+                  const daySlots = plan.filter((p) => p.day === day);
+                  const daySummary = dailySummaries[day];
+                  const hasAnyNutrition = daySlots.some((s) => s.estimated_nutrition) || daySummary;
+                  return (
+                    <View key={day} style={{ marginBottom: 16 }}>
+                      <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{t(`days.${day}`)}</Text>
+                      {daySlots.map((slot) => (
+                        <View key={`${slot.day}-${slot.slot}`} style={{
+                          flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgCard,
+                          borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: colors.borderDefault,
+                        }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 11, textTransform: 'uppercase', fontWeight: '700' }}>{slot.slot}</Text>
+                            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '500' }}>{slot.title}</Text>
+                            {slot.estimated_nutrition && (
+                              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>
+                                ~{slot.estimated_nutrition.calories} kcal
+                              </Text>
+                            )}
+                          </View>
+                          <TouchableOpacity onPress={() => swapPlanSlot(slot.day, slot.slot)} style={{ padding: 6 }}>
+                            <Ionicons name="refresh" size={18} color={colors.accent} />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => removePlanSlot(slot.day, slot.slot)} style={{ padding: 6 }}>
+                            <Ionicons name="close" size={18} color={colors.textMuted} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      {/* Daily Nutrition Summary */}
+                      {hasAnyNutrition && daySummary && (
+                        <View style={{
+                          marginTop: 4, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.borderDefault,
+                        }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                            ~{daySummary.calories.toLocaleString()} kcal · {daySummary.protein_g}g {t('nutrition.protein_g').toLowerCase()} · {daySummary.carbs_g}g {t('nutrition.carbs_g').toLowerCase()} · {daySummary.fat_g}g {t('nutrition.fat_g').toLowerCase()}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             )}
           </ScrollView>
@@ -273,7 +387,7 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
         {/* Footer buttons */}
         {!generating && (
           <View style={{ padding: 16, paddingBottom: insets.bottom + 16, flexDirection: 'row', gap: 12 }}>
-            {step > 1 && step < 4 && (
+            {step > 1 && step < 5 && (
               <TouchableOpacity
                 onPress={() => setStep((s) => (s - 1) as Step)}
                 style={{ flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
@@ -291,16 +405,38 @@ export function MealPlanWizard({ visible, onClose, userRecipes, weekDates, onSav
             )}
             {step === 3 && (
               <TouchableOpacity
-                onPress={handleGenerate}
+                onPress={() => setStep(4)}
                 style={{ flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('wizard.generatePlan')}</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('common.next')}</Text>
               </TouchableOpacity>
             )}
             {step === 4 && (
               <>
                 <TouchableOpacity
-                  onPress={() => setStep(3)}
+                  onPress={() => {
+                    setDailyCalories('');
+                    setMacroPriority('none');
+                    setMaxCaloriesPerMeal('');
+                    handleGenerate();
+                  }}
+                  style={{ flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
+                >
+                  <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500' }}>{t('wizard.skipNutrition')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleGenerate}
+                  style={{ flex: 1, backgroundColor: colors.accentGreen, borderRadius: 12, paddingVertical: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}
+                >
+                  <Ionicons name="sparkles" size={18} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('wizard.generatePlan')}</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {step === 5 && (
+              <>
+                <TouchableOpacity
+                  onPress={() => setStep(4)}
                   style={{ flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.borderDefault }}
                 >
                   <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>{t('speak.reGenerate')}</Text>

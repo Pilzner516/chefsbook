@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
 import { useAuthStore } from '../../lib/zustand/authStore';
-import { FloatingTabBar } from '../../components/FloatingTabBar';
 
 export default function TabLayout() {
   const session = useAuthStore((s) => s.session);
@@ -13,7 +12,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      tabBar={() => <FloatingTabBar />}
+      tabBar={() => null}
       screenOptions={{
         headerShown: false,
       }}

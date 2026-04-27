@@ -95,6 +95,7 @@
     "browseCategory": "Browse by Category",
     "exploreCategory": "Explore by Category",
     "clearAll": "Clear all",
+    "filters": "Filters",
     "filtersActive": "{{count}} filter active",
     "filtersActive_plural": "{{count}} filters active",
     "noPublicRecipes": "No public recipes yet",

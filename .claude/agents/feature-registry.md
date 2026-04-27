@@ -110,6 +110,8 @@
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
 | Search page — All / My Recipes toggle | LIVE | apps/web/dashboard/search/, apps/mobile/(tabs)/search.tsx | 90 | Default = All Recipes |
+| Search scope dropdown (mobile) | LIVE | apps/mobile/(tabs)/search.tsx | SCOPE-DROPDOWN | Replaces 2×2 pill grid; collapses to single row showing selected scope + chevron; expands with LayoutAnimation; 4 scopes: All Recipes/My Recipes/Following/What's New |
+| Search filter dropdown (mobile) | LIVE | apps/mobile/(tabs)/search.tsx | SCOPE-DROPDOWN | Filter chips collapsed by default into "Filters ▾" bar; expands to show all filter chips; shows active filter count |
 | Search RPC (pg_trgm fuzzy) | LIVE | search_recipes RPC | 35 | title/description/cuisine/ingredients/tags |
 | Category drill-down filters | LIVE | apps/web/dashboard/search/, apps/mobile | 35 | Cuisine, course, source, tags, time, dietary, ingredient |
 | Public recipe visibility fix (shared_link) | LIVE | search_recipes RPC, get_public_feed RPC | 92 | visibility IN ('public','shared_link') |

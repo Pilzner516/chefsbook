@@ -77,3 +77,26 @@ export async function searchUsers(
     .limit(limit);
   return (data ?? []) as UserProfile[];
 }
+
+export async function getUserTags(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('user_account_tags')
+    .select('tag')
+    .eq('user_id', userId);
+  return (data ?? []).map((t: { tag: string }) => t.tag);
+}
+
+export async function isUserVerified(userId: string): Promise<boolean> {
+  const tags = await getUserTags(userId);
+  return tags.includes('Verified Chef');
+}
+
+export async function getVerifiedUserIds(userIds: string[]): Promise<Set<string>> {
+  if (userIds.length === 0) return new Set();
+  const { data } = await supabase
+    .from('user_account_tags')
+    .select('user_id')
+    .in('user_id', userIds)
+    .eq('tag', 'Verified Chef');
+  return new Set((data ?? []).map((t: { user_id: string }) => t.user_id));
+}

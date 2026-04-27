@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useAuthStore } from '../lib/zustand/authStore';
-import { getComments, postComment, deleteComment, flagComment, blockCommenter, toggleComments, toggleCommentLike, createNotification } from '@chefsbook/db';
+import { getComments, postComment, deleteComment, flagComment, blockCommenter, toggleComments, toggleCommentLike, createNotification, getVerifiedUserIds } from '@chefsbook/db';
 import type { CommentRow } from '@chefsbook/db';
 import { moderateComment } from '@chefsbook/ai';
 import { PLAN_LIMITS } from '@chefsbook/db';
@@ -13,6 +13,7 @@ import { Avatar } from './UIKit';
 import ChefsDialog from './ChefsDialog';
 import { getInitials } from '@chefsbook/ui';
 import { Ionicons } from '@expo/vector-icons';
+import VerifiedBadge from './VerifiedBadge';
 
 interface Props {
   recipeId: string;
@@ -42,6 +43,7 @@ export function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, commentsE
   const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<string | null>(null);
   const [showBlockUserDialog, setShowBlockUserDialog] = useState(false);
   const [pendingBlockUserId, setPendingBlockUserId] = useState<string | null>(null);
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
 
   const isOwner = session?.user?.id === recipeOwnerId;
   const canComment = PLAN_LIMITS[planTier]?.canComment && profile?.is_searchable && !profile?.comments_suspended;
@@ -53,6 +55,12 @@ export function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, commentsE
   const loadComments = async () => {
     const data = await getComments(recipeId, session?.user?.id);
     setComments(data);
+    // Fetch verified status for all commenters
+    const userIds = [...new Set(data.map((c) => c.user_id).filter((id): id is string => !!id))];
+    if (userIds.length > 0) {
+      const verifiedIds = await getVerifiedUserIds(userIds);
+      setVerifiedUserIds(verifiedIds);
+    }
   };
 
   const handlePost = async () => {
@@ -215,6 +223,7 @@ export function RecipeComments({ recipeId, recipeOwnerId, recipeTitle, commentsE
           <View style={{ flex: 1, marginLeft: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600' }}>@{c.username ?? '?'}</Text>
+              {c.user_id && verifiedUserIds.has(c.user_id) && <VerifiedBadge size="sm" />}
               <Text style={{ color: colors.textMuted, fontSize: 11 }}>{timeAgo(c.created_at)}</Text>
             </View>
             <Text style={{ color: colors.textPrimary, fontSize: 14, marginTop: 2 }}>{c.content}</Text>

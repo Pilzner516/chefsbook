@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { RecipeImage } from './RecipeImage';
+import VerifiedBadge from './VerifiedBadge';
 
 // --- Button ---
 interface ButtonProps {
@@ -286,30 +287,44 @@ interface RecipeCardProps {
   cuisine?: string | null;
   totalMinutes?: number | null;
   isFavourite?: boolean;
+  likeCount?: number;
   saveCount?: number;
   sourceUrl?: string | null;
   sourceType?: string | null;
   versionCount?: number;
   attributedTo?: string | null;
+  isAttributedVerified?: boolean;
   onPress: () => void;
 }
 
-export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, saveCount, sourceUrl, sourceType, versionCount, attributedTo, onPress }: RecipeCardProps) {
+export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, likeCount, saveCount, sourceUrl, sourceType, versionCount, attributedTo, isAttributedVerified, onPress }: RecipeCardProps) {
   const { colors } = useTheme();
+  const hasLikes = (likeCount ?? 0) > 0;
+  const hasSaves = (saveCount ?? 0) > 0;
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
       <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
         <View>
           <RecipeImage uri={imageUrl} style={{ width: '100%', height: 160 }} />
-          {(saveCount ?? 0) > 0 && (
+          {(hasLikes || hasSaves) && (
             <View style={{
               position: 'absolute', bottom: 8, left: 8,
-              flexDirection: 'row', alignItems: 'center', gap: 4,
+              flexDirection: 'row', alignItems: 'center', gap: 8,
               backgroundColor: imageUrl ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.06)', borderRadius: 12,
               paddingHorizontal: 8, paddingVertical: 4,
             }}>
-              <Ionicons name="heart" size={12} color="#ff6b6b" />
-              <Text style={{ color: imageUrl ? '#ffffff' : colors.textSecondary, fontSize: 11, fontWeight: '600' }}>{saveCount}</Text>
+              {hasLikes && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                  <Ionicons name="heart" size={12} color="#ff6b6b" />
+                  <Text style={{ color: imageUrl ? '#ffffff' : colors.textSecondary, fontSize: 11, fontWeight: '600' }}>{likeCount}</Text>
+                </View>
+              )}
+              {hasSaves && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                  <Ionicons name="bookmark" size={12} color="#f5a623" />
+                  <Text style={{ color: imageUrl ? '#ffffff' : colors.textSecondary, fontSize: 11, fontWeight: '600' }}>{saveCount}</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -321,7 +336,10 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
             {isFavourite && <Text style={{ fontSize: 16, marginLeft: 8 }}>{'\u2764'}</Text>}
           </View>
           {attributedTo && (
-            <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 2 }}>by @{attributedTo}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>by @{attributedTo}</Text>
+              {isAttributedVerified && <VerifiedBadge size="sm" />}
+            </View>
           )}
           <View style={{ flexDirection: 'row', marginTop: 6, gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {cuisine && <Badge label={cuisine} />}

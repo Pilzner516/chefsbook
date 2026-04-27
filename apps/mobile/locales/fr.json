@@ -94,6 +94,7 @@
     "browseCategory": "Parcourir par catégorie",
     "exploreCategory": "Explorer par catégorie",
     "clearAll": "Tout effacer",
+    "filters": "Filtres",
     "filtersActive": "{{count}} filtre actif",
     "filtersActive_plural": "{{count}} filtres actifs",
     "noPublicRecipes": "Pas encore de recettes publiques",

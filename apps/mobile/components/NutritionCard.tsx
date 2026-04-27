@@ -189,30 +189,30 @@ export function NutritionCard({ recipeId, nutrition: initialNutrition, isOwner, 
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
         }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ color: colors.textPrimary, fontSize: 17, fontWeight: '700' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, minWidth: 0 }}>
+            <Text style={{ color: colors.textPrimary, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
               {t('nutrition.title', 'Nutrition Facts')}
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 11 }}>
-              ✨ {t('nutrition.estimate', 'Estimate')}
+            <Text style={{ color: colors.textMuted, fontSize: 10 }}>
+              ✨
             </Text>
           </View>
           {nutrition.per_100g && (
-            <View style={{ flexDirection: 'row', backgroundColor: colors.bgScreen, borderRadius: 16, padding: 2 }}>
+            <View style={{ flexDirection: 'row', backgroundColor: colors.bgScreen, borderRadius: 14, padding: 2, flexShrink: 0 }}>
               <TouchableOpacity
                 onPress={() => handleToggle('serving')}
                 style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 14,
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
+                  borderRadius: 12,
                   backgroundColor: view === 'serving' ? colors.accent : 'transparent',
                 }}
               >
                 <Text style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: '600',
                   color: view === 'serving' ? '#ffffff' : colors.textSecondary,
                 }}>
@@ -222,14 +222,14 @@ export function NutritionCard({ recipeId, nutrition: initialNutrition, isOwner, 
               <TouchableOpacity
                 onPress={() => handleToggle('100g')}
                 style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 14,
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
+                  borderRadius: 12,
                   backgroundColor: view === '100g' ? colors.accent : 'transparent',
                 }}
               >
                 <Text style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: '600',
                   color: view === '100g' ? '#ffffff' : colors.textSecondary,
                 }}>

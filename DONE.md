@@ -1,6 +1,45 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session SCOPE-DROPDOWN) TYPE: UI POLISH
+
+### Search Screen — Scope Selector Dropdown
+
+Replaced the 2×2 scope pill grid with a compact dropdown that saves vertical space.
+
+**Scope dropdown (collapsed state):**
+- Single full-width red pill showing selected scope + chevron-down
+- Same styling as previous active pill (#ce2b37 bg, white text, fontWeight 600)
+
+**Scope dropdown (expanded state):**
+- Tapping toggles expansion with LayoutAnimation
+- Shows remaining 3 options in 2-column layout below the selected scope
+- Chevron rotates to chevron-up when expanded
+- Tapping an option selects it and collapses back
+
+**Filter dropdown:**
+- Filter chips now collapsed by default into "Filters ▾" bar
+- Shows filter count when filters active ("2 filters active")
+- Expands to show all filter chips when tapped
+- Clear button (X) to remove all active filters
+
+**Bug fix included:**
+- Added try/catch/finally to `doSearch()` to prevent stuck "Loading..." state
+- Previously, network errors would leave loading=true permanently
+
+**Files changed:**
+- `apps/mobile/app/(tabs)/search.tsx` — scope dropdown, filter dropdown, error handling
+- `apps/mobile/locales/*.json` — added "filters" i18n key (5 locales)
+
+**Testing verification:**
+- ADB screenshot: collapsed "All Recipes ▾" — verified
+- ADB screenshot: expanded showing all 4 options — verified  
+- ADB screenshot: collapsed "My Recipes ▾" after selection — verified
+- Scope switching loads correct recipes for each mode — verified
+- Filter collapse animation still works — no regression
+
+---
+
 ## 2026-04-27 (session ADMIN-FEEDBACK-MANAGEMENT) TYPE: FEATURE
 
 ### Admin Feedback Management — Status, Notes, and Messaging

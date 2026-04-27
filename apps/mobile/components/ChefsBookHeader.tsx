@@ -61,27 +61,28 @@ export function ChefsBookHeader() {
         </TouchableOpacity>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
         {/* Notification bell */}
         <NotificationBell />
 
         {/* Language flag */}
         <TouchableOpacity
           onPress={() => setLangPickerVisible(true)}
-          style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+          style={{ minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}>{langLabel}</Text>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted }}>{langLabel}</Text>
         </TouchableOpacity>
 
         {/* Unit toggle pill */}
         <View style={{
           flexDirection: 'row',
-          width: 72,
-          height: 28,
-          borderRadius: 14,
+          minWidth: 60,
+          height: 26,
+          borderRadius: 13,
           overflow: 'hidden',
           borderWidth: 1,
           borderColor: colors.borderDefault,
+          flexShrink: 0,
         }}>
           <TouchableOpacity
             onPress={toggleUnits}

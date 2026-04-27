@@ -14,6 +14,7 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { PinnedBar } from '../components/PinnedBar';
 import { ImportBanner } from '../components/ImportBanner';
 import { Loading } from '../components/UIKit';
+import { FloatingTabBar } from '../components/FloatingTabBar';
 import '../lib/i18n';
 import { activateLanguage } from '../lib/i18n';
 
@@ -142,7 +143,9 @@ function SuspendedNotice() {
 function RootNav() {
   const { colors } = useTheme();
   const router = useRouter();
+  const segments = useSegments();
   const loading = useAuthStore((s) => s.loading);
+  const session = useAuthStore((s) => s.session);
   const profile = useAuthStore((s) => s.profile);
 
   // Cold-launch splash hold: hide the native splash as soon as JS mounts so the
@@ -258,6 +261,16 @@ function RootNav() {
         <Stack.Screen name="messages" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Settings' }} />
       </Stack>
+      {/* FloatingTabBar: show when authenticated and not on landing/auth/modal screens */}
+      {(() => {
+        const isAuthenticated = session && session.user?.is_anonymous !== true;
+        const firstSegment = segments[0] as string | undefined;
+        const isLanding = !firstSegment || firstSegment === 'index';
+        const isAuth = firstSegment === 'auth';
+        const isModal = firstSegment === 'modal' || firstSegment === 'messages';
+        const showTabBar = isAuthenticated && !isLanding && !isAuth && !isModal;
+        return showTabBar ? <FloatingTabBar /> : null;
+      })()}
       <PinnedBar />
       {!splashDone && <SplashOverlay />}
     </View>

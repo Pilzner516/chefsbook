@@ -94,6 +94,7 @@
     "browseCategory": "Sfoglia per Categoria",
     "exploreCategory": "Esplora per Categoria",
     "clearAll": "Cancella tutto",
+    "filters": "Filtri",
     "filtersActive": "{{count}} filtro attivo",
     "filtersActive_plural": "{{count}} filtri attivi",
     "noPublicRecipes": "Nessuna ricetta pubblica",

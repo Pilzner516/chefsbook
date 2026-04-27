@@ -12,7 +12,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, EmptyState, Loading, Card } from '../../components/UIKit';
 import { FeedbackCard } from '../../components/FeedbackCard';
-import { getRecipeVersions, getPrimaryPhotos, getBatchTranslatedTitles } from '@chefsbook/db';
+import { getRecipeVersions, getPrimaryPhotos, getBatchTranslatedTitles, getVerifiedUserIds } from '@chefsbook/db';
 
 type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
 
@@ -32,6 +32,7 @@ export default function RecipesTab() {
   const [versionPickerVersions, setVersionPickerVersions] = useState<any[]>([]);
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
+  const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
   const i18n = useTranslation().i18n;
 
   // Refresh recipes + primary photos every time the tab gains focus
@@ -53,7 +54,14 @@ export default function RecipesTab() {
     } else {
       setTranslatedTitles({});
     }
-  }, [recipes, i18n.language]);
+    // Batch-fetch verified user IDs for original submitters
+    const submitterIds = recipes
+      .map((r) => r.original_submitter_id)
+      .filter((id): id is string => !!id && id !== session?.user?.id);
+    if (submitterIds.length > 0) {
+      getVerifiedUserIds([...new Set(submitterIds)]).then(setVerifiedUserIds);
+    }
+  }, [recipes, i18n.language, session?.user?.id]);
 
   // Filter out child versions — only show parent/standalone recipes in the list
   const topLevelRecipes = useMemo(() => recipes.filter((r) => !r.parent_recipe_id), [recipes]);
@@ -198,9 +206,11 @@ export default function RecipesTab() {
               cuisine={item.cuisine}
               totalMinutes={item.total_minutes}
               isFavourite={item.is_favourite}
+              likeCount={item.like_count}
               saveCount={item.save_count}
               versionCount={vc}
               attributedTo={item.original_submitter_username && item.original_submitter_id !== item.user_id ? item.original_submitter_username : undefined}
+              isAttributedVerified={item.original_submitter_id ? verifiedUserIds.has(item.original_submitter_id) : false}
               onPress={() => {
                 if (item.is_parent) {
                   openVersionPicker(item.id);
