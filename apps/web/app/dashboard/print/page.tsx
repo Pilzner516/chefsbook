@@ -53,6 +53,7 @@ export default function PrintCookbookPage() {
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<'title' | 'recent'>('title');
 
   // Step 2: Book details
   const [title, setTitle] = useState('');
@@ -108,16 +109,30 @@ export default function PrintCookbookPage() {
       setAuthorName(profile.display_name);
     }
     setLoading(false);
-    loadRecipes(user.id);
+    loadRecipes(user.id, sortBy);
   };
 
-  const loadRecipes = async (userId: string) => {
+  // Reload recipes when sort changes
+  useEffect(() => {
+    if (user) {
+      loadRecipes(user.id, sortBy);
+    }
+  }, [sortBy]);
+
+  const loadRecipes = async (userId: string, sort: 'title' | 'recent' = 'title') => {
     setRecipesLoading(true);
-    const { data } = await supabase
+    let query = supabase
       .from('recipes')
       .select('id, title, cuisine, total_minutes, servings, image_url')
-      .eq('user_id', userId)
-      .order('title');
+      .eq('user_id', userId);
+
+    if (sort === 'recent') {
+      query = query.order('created_at', { ascending: false });
+    } else {
+      query = query.order('title');
+    }
+
+    const { data } = await query;
     const recipeList = data || [];
     setRecipes(recipeList);
 
@@ -358,8 +373,18 @@ export default function PrintCookbookPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Select Recipes</h2>
-            <div className="text-sm text-cb-secondary">
-              {selectedIds.length} selected (min 5, max 80)
+            <div className="flex items-center gap-4">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'title' | 'recent')}
+                className="text-sm border border-cb-border rounded-input px-3 py-1.5 bg-cb-card focus:outline-none focus:border-cb-primary"
+              >
+                <option value="title">A–Z</option>
+                <option value="recent">Most Recent</option>
+              </select>
+              <div className="text-sm text-cb-secondary">
+                {selectedIds.length} selected (min 5, max 80)
+              </div>
             </div>
           </div>
 
