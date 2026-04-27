@@ -1,6 +1,32 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session NUTRITION-EMERGENCY-VERIFICATION) TYPE: VERIFICATION
+
+### Nutrition Display Regression Investigation — NO FIX NEEDED
+
+**Reported issue:** Nutrition values allegedly disappeared from recipe detail pages after NUTRITION-FIX session.
+
+**Finding:** FALSE ALARM — nutrition is displaying correctly on both platforms.
+
+**Evidence gathered:**
+1. **Mobile verified via ADB screenshot** — Coq au Vin recipe shows full Nutrition Facts:
+   - Calories: 520.0, Protein: 52.0g, Carbs: 8.5g, Fat: 25.0g, Fiber: 1.2g, Sugar: 3.5g
+   - Disclaimer footer displaying correctly
+2. **Code diff verified** — NUTRITION-FIX only removed notes section (lines 244-248 web, 315-326 mobile); nutrient grid, toggle, disclaimer all preserved
+3. **TypeScript types verified** — `Recipe` interface has `nutrition: Record<string, unknown> | null` at line 142
+4. **Database verified** — JSONB nutrition data exists and is properly structured
+
+**Actions taken:**
+- Rebuilt and installed fresh APK on emulator (bundle cache cleared)
+- Verified nutrition display via deep link to recipe detail
+- Deployed latest code to production (deploy-staging.sh)
+- Production smoke test passed (200 OK)
+
+**Root cause of false alarm:** Likely testing on stale APK or testing recipe without nutrition data.
+
+---
+
 ## 2026-04-27 (session AGENT-REGISTRY-REFRESH) TYPE: MAINTENANCE
 
 ### Agent Files Audit & Update for Phase 2 Readiness
