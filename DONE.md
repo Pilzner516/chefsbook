@@ -1,6 +1,67 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session LULU-PRINT) TYPE: FEATURE
+
+### Lulu Print-on-Demand Cookbook Integration (Web Only)
+
+Built complete print-on-demand cookbook feature using Lulu Direct API.
+
+**Database:**
+- Migration 059: `printed_cookbooks` table (draft projects with recipe selection)
+- Migration 059: `printed_cookbook_orders` table (orders with tracking)
+- Migration 059: `cookbook-pdfs` storage bucket for generated PDFs
+- Added `canPrintCookbook` plan limit (Pro plan only)
+
+**API Routes:**
+- `POST /api/print-cookbooks` — create cookbook draft
+- `GET /api/print-cookbooks` — list user's cookbooks
+- `GET/PUT/DELETE /api/print-cookbooks/[id]` — CRUD operations
+- `POST /api/print-cookbooks/[id]/generate` — generate interior + cover PDFs
+- `POST /api/print-cookbooks/[id]/price` — get Lulu cost estimate
+- `POST /api/print-cookbooks/[id]/order` — create Stripe payment intent
+- `POST /api/print-cookbooks/[id]/submit` — submit to Lulu after payment
+- `POST /api/webhooks/lulu` — receive order status updates
+- `GET /api/print-orders` — list user's orders
+
+**UI:**
+- `/dashboard/print` — 5-step cookbook builder wizard
+  - Step 1: Select recipes (5-80, checkboxes with drag reorder)
+  - Step 2: Book details (title, subtitle, author, cover style)
+  - Step 3: Preview & generate PDFs
+  - Step 4: Shipping address + quantity + calculate price
+  - Step 5: Order confirmation
+- `/dashboard/orders` — Order tracking page with status badges
+- Added "Print My Cookbook" button to `/dashboard/cookbooks` header
+
+**PDF Generation:**
+- Interior: @react-pdf/renderer with title page, TOC, recipe pages, back page
+- Cover: One-piece PDF (back + spine + front) with 3 style options
+- 8.5" × 11" softcover, full color, perfect binding
+
+**Lulu Integration:**
+- OAuth client credentials flow with token caching
+- Cost calculation endpoint
+- Print job creation
+- Webhook handling for status updates (shipped/delivered/cancelled)
+- Mock mode when Lulu credentials not configured
+
+**Verification:**
+- TypeScript: `tsc --noEmit` passes
+- Pages load: `/dashboard/cookbooks`, `/dashboard/print`, `/dashboard/orders` all HTTP 200
+- Migration applied: `printed_cookbooks` and `printed_cookbook_orders` tables exist
+- Deployed to RPi5 production
+
+**Lulu credentials location:** https://developers.sandbox.lulu.com/user-profile/api-keys (sandbox)
+
+**Go-live checklist (added to AGENDA.md):**
+- [ ] Get production Lulu API credentials
+- [ ] Set LULU_SANDBOX=false in RPi5 .env.local
+- [ ] Add credit card to Lulu API account for production charges
+- [ ] Test one real order end-to-end before announcing feature
+
+---
+
 ## 2026-04-27 (session MOBILE-FONT-VERIFY) TYPE: VERIFICATION
 
 ### Mobile Wordmark Font Verification

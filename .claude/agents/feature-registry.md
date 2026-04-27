@@ -267,6 +267,7 @@
 | Techniques (separate from recipes) | LIVE | apps/web/dashboard/techniques/, techniques table | 35 | AI classification |
 | Cookbooks with recipe cards | LIVE | apps/web/dashboard/cookbooks/ | 35 | ISBN lookup, cover photo |
 | Convert Recipe ↔ Technique | LIVE | /api/convert/recipe-to-technique, /api/convert/technique-to-recipe, recipe/[id] + technique/[id] pages | P-R | Re-import dropdown with Move to Techniques/Recipes; converts steps/ingredients↔process_steps/tools; original deleted on success; confirmation dialog |
+| Print Cookbook (Lulu POD) | LIVE | /dashboard/print, /dashboard/orders, /api/print-cookbooks, /api/webhooks/lulu | LULU-PRINT | Pro plan only; 5-step wizard (select 5-80 recipes, book details, cover style, generate PDFs, order); printed_cookbooks + printed_cookbook_orders tables; Lulu Direct API integration; @react-pdf/renderer for interior + cover PDFs; 8.5×11 softcover; order tracking with webhooks |
 
 ---
 

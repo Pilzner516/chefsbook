@@ -17,6 +17,21 @@ These ship before anything else. Users are already hitting these.
 | 4 | Favourite toggle UI (heart/star button on cards + detail) | Filter pill exists but nothing to trigger it | S |
 | 5 | Recipe image remote patterns (`next.config.ts`) | Images broken for non-Supabase domains | S |
 
+## LULU PRINT COOKBOOK — GO-LIVE CHECKLIST
+
+Feature built (session LULU-PRINT). Before announcing:
+
+- [ ] Get production Lulu API credentials from https://developers.lulu.com/
+- [ ] Set `LULU_SANDBOX=false` in RPi5 `apps/web/.env.local`
+- [ ] Add `LULU_API_KEY`, `LULU_API_SECRET`, `LULU_WEBHOOK_SECRET` to RPi5 `.env.local`
+- [ ] Add credit card to Lulu API account for production charges
+- [ ] Register webhook URL: `https://chefsbk.app/api/webhooks/lulu`
+- [ ] Test one real order end-to-end before announcing feature
+- [ ] Wire Stripe Elements for real payment (currently mock flow)
+- [ ] Add email notification on shipped status (via Resend)
+
+---
+
 ## UI CLEANUP FOLLOW-UPS
 
 - Raw `window.alert()` sweep (apps/web): ~40 remaining call sites across dashboard/*, components/*, app/share, app/technique, app/recipe/[id] (PDF + flag paths). Session 199 cleaned the two sites inside the recipe detail Re-import/Delete handlers; ui-guardian.md forbids native alerts. Follow-up session should replace remaining with `useAlertDialog` from `@/components/useConfirmDialog`.
