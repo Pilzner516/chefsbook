@@ -167,6 +167,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ requests: data ?? [] });
   }
 
+  if (page === 'feedback') {
+    const { data, error } = await supabaseAdmin.from('user_feedback').select('*').order('created_at', { ascending: false }).limit(100);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Enrich with user info
+    const userIds = [...new Set((data ?? []).map((f: any) => f.user_id).filter(Boolean))];
+    const profileMap = new Map<string, { username: string | null; display_name: string | null }>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username, display_name').in('id', userIds);
+      for (const p of profiles ?? []) {
+        profileMap.set(p.id, { username: p.username, display_name: p.display_name });
+      }
+    }
+    const enriched = (data ?? []).map((f: any) => ({
+      ...f,
+      username: profileMap.get(f.user_id)?.username ?? null,
+      display_name: profileMap.get(f.user_id)?.display_name ?? null,
+    }));
+    return NextResponse.json({ feedback: enriched });
+  }
+
   if (page === 'import-sites') {
     const { data, error } = await supabaseAdmin.from('import_site_tracker').select('*').order('total_attempts', { ascending: false });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

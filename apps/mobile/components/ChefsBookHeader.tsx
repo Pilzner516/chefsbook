@@ -8,13 +8,16 @@ import { usePreferencesStore } from '../lib/zustand/preferencesStore';
 import { LANGUAGES } from '@chefsbook/ui';
 import { LanguagePickerModal } from './LanguagePickerModal';
 import { QANotepad } from './QANotepad';
+import { FeedbackModal } from './FeedbackModal';
 import ChefsDialog from './ChefsDialog';
 import NotificationBell from './NotificationBell';
+import { useTranslation } from 'react-i18next';
 
 const isStaging = process.env.EXPO_PUBLIC_APP_VARIANT === 'staging';
 
 export function ChefsBookHeader() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const fontFamily = Platform.select({ ios: 'Georgia', default: 'serif' });
@@ -24,6 +27,7 @@ export function ChefsBookHeader() {
   const setUnits = usePreferencesStore((s) => s.setUnits);
   const [langPickerVisible, setLangPickerVisible] = useState(false);
   const [qaNotepadVisible, setQaNotepadVisible] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const langEntry = LANGUAGES.find((l) => l.code === language);
@@ -133,17 +137,26 @@ export function ChefsBookHeader() {
         onClose={() => setShowUserMenu(false)}
         buttons={[
           {
-            label: '⚙️  Settings',
+            label: `⚙️  ${t('header.settings')}`,
             variant: 'primary',
             onPress: () => { setShowUserMenu(false); router.push('/modal'); },
+          },
+          {
+            label: `💬  ${t('header.logFeedback')}`,
+            variant: 'secondary',
+            onPress: () => { setShowUserMenu(false); setFeedbackVisible(true); },
           },
           ...(isStaging ? [{
             label: '📋  QA Notepad',
             variant: 'secondary' as const,
             onPress: () => { setShowUserMenu(false); setQaNotepadVisible(true); },
           }] : []),
-          { label: 'Cancel', variant: 'text' as const, onPress: () => setShowUserMenu(false) },
+          { label: t('common.cancel'), variant: 'text' as const, onPress: () => setShowUserMenu(false) },
         ]}
+      />
+      <FeedbackModal
+        visible={feedbackVisible}
+        onClose={() => setFeedbackVisible(false)}
       />
     </View>
   );

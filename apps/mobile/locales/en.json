@@ -26,6 +26,10 @@
     "sending": "Sending...",
     "saving": "Saving..."
   },
+  "header": {
+    "settings": "Settings",
+    "logFeedback": "Log Feedback"
+  },
   "nav": {
     "recipes": "My Recipes",
     "search": "Search",
@@ -83,6 +87,8 @@
   "search": {
     "myRecipes": "My Recipes",
     "allRecipes": "All Recipes",
+    "following": "Following",
+    "whatsNew": "What's New",
     "discover": "Discover",
     "searchRecipes": "Search recipes...",
     "discoverRecipes": "Discover recipes...",
@@ -91,6 +97,11 @@
     "clearAll": "Clear all",
     "noPublicRecipes": "No public recipes yet",
     "beFirstToShare": "Be the first to share one!",
+    "noFollowingRecipes": "No recipes from chefs you follow",
+    "followChefsMessage": "Follow some chefs to see their recipes here",
+    "browseChefs": "Browse Chefs",
+    "noTrendingRecipes": "No trending recipes yet",
+    "beFirstToTrend": "Be the first to share a trending recipe!",
     "noMatch": "No recipes match",
     "tryDifferent": "Try different filters or search terms.",
     "recipesFound": "{{count}} recipes found",
@@ -117,7 +128,25 @@
     "addedMessage": "Recipe added to your collection.",
     "cloneFailed": "Failed to clone recipe",
     "people": "People",
-    "noPeopleFound": "No users found"
+    "noPeopleFound": "No users found",
+    "calories": "Calories",
+    "protein": "Protein",
+    "nutritionPreset": "Diet Goals",
+    "caloriesAny": "Any",
+    "caloriesUnder300": "Under 300",
+    "calories300to500": "300–500",
+    "calories500to700": "500–700",
+    "caloriesOver700": "Over 700",
+    "proteinAny": "Any",
+    "proteinHigh": "High (20g+)",
+    "proteinMedium": "Medium (10–20g)",
+    "proteinLow": "Low (under 10g)",
+    "presetLowCarb": "Low Carb",
+    "presetHighFiber": "High Fiber",
+    "presetLowFat": "Low Fat",
+    "presetLowSodium": "Low Sodium",
+    "nutritionFilterNote": "Showing recipes with nutrition data",
+    "noOptionsAvailable": "No options available"
   },
   "recipe": {
     "ingredients": "Ingredients",
@@ -437,7 +466,27 @@
     "savePlan": "Save Plan",
     "generationFailed": "Generation failed",
     "saveFailed": "Save failed",
-    "mealPlanSaved": "Meal plan saved!"
+    "mealPlanSaved": "Meal plan saved!",
+    "nutritionGoals": "Nutritional Goals",
+    "nutritionGoalsDesc": "Set daily targets to help balance your meal plan. This step is optional.",
+    "dailyCalories": "Daily Calorie Target",
+    "dailyCaloriesPlaceholder": "e.g., 2000",
+    "dailyCaloriesHint": "Leave empty to skip calorie tracking",
+    "macroPriority": "Macro Preference",
+    "macroNone": "No preference",
+    "macroNoneDesc": "Standard balance",
+    "macroHighProtein": "High Protein",
+    "macroHighProteinDesc": "30%+ from protein",
+    "macroLowCarb": "Low Carb",
+    "macroLowCarbDesc": "<100g carbs/day",
+    "macroBalanced": "Balanced",
+    "macroBalancedDesc": "40/30/30 split",
+    "maxCaloriesPerMeal": "Max Calories per Meal",
+    "maxCaloriesPlaceholder": "e.g., 600",
+    "maxCaloriesHint": "Optional — keeps individual meals lighter",
+    "skipNutrition": "Skip",
+    "mealsPlanned": "meals planned",
+    "kcalTarget": "kcal daily target"
   },
   "settings": {
     "language": "Language",
@@ -718,8 +767,8 @@
     "createList": "Create List"
   },
   "feedback": {
-    "title": "Got an Idea for Us?",
-    "subtitle": "We'd love to hear from you",
+    "title": "Log Feedback",
+    "subtitle": "Help us improve ChefsBook",
     "intro": "We'd love to hear your thoughts, ideas, or suggestions for ChefsBook.",
     "from": "From",
     "placeholder": "Your message",
@@ -727,7 +776,22 @@
     "sending": "Sending...",
     "thankTitle": "Thanks for your feedback!",
     "thankBody": "We hope you are enjoying ChefsBook. Your ideas help us make it better for everyone.",
-    "errorBody": "Something went wrong. Please try again."
+    "errorBody": "Something went wrong. Please try again.",
+    "typeLabel": "Type",
+    "type": {
+      "bug": "Bug",
+      "suggestion": "Suggestion",
+      "praise": "Praise"
+    },
+    "screenLabel": "Screen or feature",
+    "screenPlaceholder": "Which screen or feature?",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Describe the issue or feedback...",
+    "submit": "Submit",
+    "descriptionRequired": "Please enter a description",
+    "signInRequired": "Please sign in to submit feedback",
+    "thankYou": "Feedback submitted — thank you!",
+    "submitError": "Failed to submit feedback. Please try again."
   },
   "imageManager": {
     "changeImage": "Change Image",

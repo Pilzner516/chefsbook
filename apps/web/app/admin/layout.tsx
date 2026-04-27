@@ -23,6 +23,7 @@ const DEFAULT_REORDERABLE_NAV: AdminNavItem[] = [
   { key: 'promos', href: '/admin/promos', label: 'Promo Codes' },
   { key: 'limits', href: '/admin/limits', label: 'Plan Limits' },
   { key: 'help', href: '/admin/help', label: 'User Ideas' },
+  { key: 'feedback', href: '/admin/feedback', label: 'User Feedback' },
   { key: 'reserved-usernames', href: '/admin/reserved-usernames', label: 'Reserved Usernames' },
   { key: 'import-sites', href: '/admin/import-sites', label: 'Import Sites' },
   { key: 'incomplete-recipes', href: '/admin/incomplete-recipes', label: 'Incomplete Recipes' },
