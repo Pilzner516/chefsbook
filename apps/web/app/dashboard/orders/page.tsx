@@ -43,14 +43,16 @@ export default function OrdersPage() {
   }, []);
 
   const loadOrders = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
       router.push('/auth');
       return;
     }
 
     try {
-      const res = await fetch('/api/print-orders');
+      const res = await fetch('/api/print-orders', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
       if (res.ok) {
         const { orders: data } = await res.json();
         setOrders(data || []);

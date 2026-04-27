@@ -44,6 +44,7 @@ interface PricingInfo {
 export default function PrintCookbookPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: string } | null>(null);
+  const [session, setSession] = useState<{ access_token: string } | null>(null);
   const [planTier, setPlanTier] = useState<PlanTier>('free');
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<Step>('select');
@@ -91,12 +92,13 @@ export default function PrintCookbookPage() {
   }, []);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { session: sess } } = await supabase.auth.getSession();
+    if (!sess?.user) {
       router.push('/auth');
       return;
     }
-    setUser(user);
+    setUser(sess.user);
+    setSession(sess);
 
     const { data: profile } = await supabase
       .from('user_profiles')
@@ -164,7 +166,10 @@ export default function PrintCookbookPage() {
       // Create the cookbook draft
       const createRes = await fetch('/api/print-cookbooks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           title: title.trim(),
           subtitle: subtitle.trim() || null,
@@ -185,6 +190,7 @@ export default function PrintCookbookPage() {
       // Generate the PDFs
       const genRes = await fetch(`/api/print-cookbooks/${created.id}/generate`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
       });
 
       if (!genRes.ok) {
@@ -209,7 +215,10 @@ export default function PrintCookbookPage() {
     try {
       const res = await fetch(`/api/print-cookbooks/${cookbook.id}/price`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           quantity,
           shipping_name: shippingAddress.name,
@@ -246,7 +255,10 @@ export default function PrintCookbookPage() {
       // Create the order and get Stripe payment intent
       const res = await fetch(`/api/print-cookbooks/${cookbook.id}/order`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           quantity,
           shipping_name: shippingAddress.name,
@@ -276,7 +288,10 @@ export default function PrintCookbookPage() {
       // Submit to Lulu (mock for now)
       const submitRes = await fetch(`/api/print-cookbooks/${cookbook.id}/submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ order_id }),
       });
 
