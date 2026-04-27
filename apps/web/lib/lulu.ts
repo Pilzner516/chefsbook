@@ -10,11 +10,75 @@ const LULU_AUTH_URL = LULU_SANDBOX
   ? 'https://api.sandbox.lulu.com/auth/realms/glasstree/protocol/openid-connect/token'
   : 'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token';
 
-// 8.5" × 11" Full color, standard quality, perfect bind (softcover), 60lb paper, color wrap cover
-export const POD_PACKAGE_ID = '0850X1100FCSTDPB060CW444GXX';
-
 // ChefsBook margin in cents
 export const OUR_MARGIN_CENTS = 499;
+
+// Lulu POD Package ID format: [SIZE][COLOR][QUALITY][BINDING][PAPER][COVER][FINISH]
+// Example: 0850X1100FCSTDPB060CW444GXX
+// - 0850X1100: 8.5" × 11"
+// - FC: Full color (BW for black & white)
+// - STD: Standard quality
+// - PB: Perfect bind softcover (CW for case wrap hardcover)
+// - 060: 60lb paper weight
+// - CW: Color wrap cover
+// - 444: Paper type
+// - GXX: Finish (glossy)
+
+export interface ProductOptions {
+  size: '6x9' | '8.5x11' | '5.5x8.5';
+  binding: 'softcover' | 'hardcover';
+  paperType: 'standard' | 'premium';
+  coverFinish: 'matte' | 'glossy';
+  interiorColor: 'color' | 'bw';
+}
+
+export const PRODUCT_OPTIONS = {
+  sizes: [
+    { id: '6x9', label: '6" × 9"', description: 'Standard book size', podPrefix: '0600X0900' },
+    { id: '8.5x11', label: '8.5" × 11"', description: 'Full page cookbook size', podPrefix: '0850X1100' },
+    { id: '5.5x8.5', label: '5.5" × 8.5"', description: 'Compact size', podPrefix: '0550X0850' },
+  ],
+  bindings: [
+    { id: 'softcover', label: 'Softcover', description: 'Perfect bound paperback', podCode: 'PB', priceMultiplier: 1.0 },
+    { id: 'hardcover', label: 'Hardcover', description: 'Durable case wrap binding', podCode: 'CW', priceMultiplier: 1.5 },
+  ],
+  paperTypes: [
+    { id: 'standard', label: 'Standard Paper', description: '60# white paper', podCode: '060', priceMultiplier: 1.0 },
+    { id: 'premium', label: 'Premium Paper', description: '80# cream paper, thicker pages', podCode: '080', priceMultiplier: 1.2 },
+  ],
+  coverFinishes: [
+    { id: 'matte', label: 'Matte', description: 'Elegant, non-reflective finish', podCode: 'M' },
+    { id: 'glossy', label: 'Glossy', description: 'Vibrant, shiny finish', podCode: 'G' },
+  ],
+  interiorColors: [
+    { id: 'color', label: 'Full Color', description: 'Color photos and text', podCode: 'FC', priceMultiplier: 1.0 },
+    { id: 'bw', label: 'Black & White', description: 'Grayscale interior', podCode: 'BW', priceMultiplier: 0.5 },
+  ],
+};
+
+export function buildPodPackageId(options: ProductOptions): string {
+  const size = PRODUCT_OPTIONS.sizes.find(s => s.id === options.size);
+  const binding = PRODUCT_OPTIONS.bindings.find(b => b.id === options.binding);
+  const paper = PRODUCT_OPTIONS.paperTypes.find(p => p.id === options.paperType);
+  const finish = PRODUCT_OPTIONS.coverFinishes.find(f => f.id === options.coverFinish);
+  const color = PRODUCT_OPTIONS.interiorColors.find(c => c.id === options.interiorColor);
+
+  if (!size || !binding || !paper || !finish || !color) {
+    return '0850X1100FCSTDPB060CW444GXX';
+  }
+
+  return `${size.podPrefix}${color.podCode}STD${binding.podCode}${paper.podCode}CW444${finish.podCode}XX`;
+}
+
+export function getDefaultProductOptions(): ProductOptions {
+  return {
+    size: '8.5x11',
+    binding: 'softcover',
+    paperType: 'standard',
+    coverFinish: 'glossy',
+    interiorColor: 'color',
+  };
+}
 
 interface LuluTokenResponse {
   access_token: string;
@@ -158,16 +222,21 @@ export async function calculatePrintCost(
   quantity: number,
   shippingAddress: LuluShippingAddress,
   shippingLevel: string = 'GROUND',
+  productOptions?: ProductOptions,
 ): Promise<{
   luluCostCents: number;
   shippingCostCents: number;
   ourMarginCents: number;
   totalCents: number;
 }> {
+  const podPackageId = productOptions
+    ? buildPodPackageId(productOptions)
+    : '0850X1100FCSTDPB060CW444GXX';
+
   const request: LuluCostRequest = {
     line_items: [{
       page_count: pageCount,
-      pod_package_id: POD_PACKAGE_ID,
+      pod_package_id: podPackageId,
       quantity,
     }],
     shipping_address: shippingAddress,
@@ -199,7 +268,12 @@ export async function createPrintJob(
   shippingLevel: 'MAIL' | 'PRIORITY_MAIL' | 'GROUND' | 'EXPEDITED' | 'EXPRESS',
   contactEmail: string,
   externalId?: string,
+  productOptions?: ProductOptions,
 ): Promise<LuluPrintJob> {
+  const podPackageId = productOptions
+    ? buildPodPackageId(productOptions)
+    : '0850X1100FCSTDPB060CW444GXX';
+
   const request: LuluPrintJobRequest = {
     contact_email: contactEmail,
     external_id: externalId,
@@ -207,7 +281,7 @@ export async function createPrintJob(
       title,
       cover: { source_url: coverPdfUrl },
       interior: { source_url: interiorPdfUrl },
-      pod_package_id: POD_PACKAGE_ID,
+      pod_package_id: podPackageId,
       quantity,
     }],
     shipping_address: shippingAddress,

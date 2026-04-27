@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { supabase, PLAN_LIMITS, getPrimaryPhotos } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 import { proxyIfNeeded } from '@/lib/recipeImage';
+import { PRODUCT_OPTIONS, getDefaultProductOptions, type ProductOptions } from '@/lib/lulu';
 
-type Step = 'select' | 'details' | 'preview' | 'order' | 'confirm';
+type Step = 'select' | 'details' | 'options' | 'preview' | 'order' | 'confirm';
 
 interface RecipePreview {
   id: string;
@@ -62,7 +63,12 @@ export default function PrintCookbookPage() {
   const [authorName, setAuthorName] = useState('');
   const [coverStyle, setCoverStyle] = useState<'classic' | 'modern' | 'minimal'>('classic');
 
-  // Step 3: Preview & Generate
+  // Step 3: Product options
+  const [productOptions, setProductOptions] = useState<ProductOptions>(getDefaultProductOptions());
+  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+
+  // Step 4: Preview & Generate
   const [cookbook, setCookbook] = useState<PrintedCookbook | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState('');
@@ -357,23 +363,23 @@ export default function PrintCookbookPage() {
 
       {/* Progress Steps */}
       <div className="flex items-center gap-2 mb-8">
-        {(['select', 'details', 'preview', 'order', 'confirm'] as Step[]).map((s, i) => (
+        {(['select', 'details', 'options', 'preview', 'order', 'confirm'] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
                 step === s
                   ? 'bg-cb-primary text-white'
-                  : i < ['select', 'details', 'preview', 'order', 'confirm'].indexOf(step)
+                  : i < ['select', 'details', 'options', 'preview', 'order', 'confirm'].indexOf(step)
                   ? 'bg-cb-green text-white'
                   : 'bg-cb-border text-cb-secondary'
               }`}
             >
               {i + 1}
             </div>
-            {i < 4 && (
+            {i < 5 && (
               <div
-                className={`w-12 h-0.5 mx-1 ${
-                  i < ['select', 'details', 'preview', 'order', 'confirm'].indexOf(step)
+                className={`w-10 h-0.5 mx-1 ${
+                  i < ['select', 'details', 'options', 'preview', 'order', 'confirm'].indexOf(step)
                     ? 'bg-cb-green'
                     : 'bg-cb-border'
                 }`}
@@ -558,8 +564,187 @@ export default function PrintCookbookPage() {
               ← Back
             </button>
             <button
+              onClick={() => setStep('options')}
+              disabled={!title.trim() || !authorName.trim()}
+              className="bg-cb-primary text-white px-6 py-2.5 rounded-input font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
+            >
+              Choose Print Options
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Product Options */}
+      {step === 'options' && (
+        <div className="max-w-2xl">
+          <h2 className="text-lg font-semibold mb-2">Print Options</h2>
+          <p className="text-sm text-cb-secondary mb-6">
+            Customize your printed cookbook. Prices update as you select options.
+          </p>
+
+          <div className="space-y-6">
+            {/* Book Size */}
+            <div className="bg-cb-card border border-cb-border rounded-card p-4">
+              <h3 className="font-medium mb-3">Book Size</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {PRODUCT_OPTIONS.sizes.map((size) => (
+                  <button
+                    key={size.id}
+                    onClick={() => setProductOptions({ ...productOptions, size: size.id as ProductOptions['size'] })}
+                    className={`p-3 rounded-input border text-left transition-all ${
+                      productOptions.size === size.id
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">{size.label}</p>
+                    <p className="text-xs text-cb-secondary mt-0.5">{size.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Binding Type */}
+            <div className="bg-cb-card border border-cb-border rounded-card p-4">
+              <h3 className="font-medium mb-3">Binding</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {PRODUCT_OPTIONS.bindings.map((binding) => (
+                  <button
+                    key={binding.id}
+                    onClick={() => setProductOptions({ ...productOptions, binding: binding.id as ProductOptions['binding'] })}
+                    className={`p-3 rounded-input border text-left transition-all ${
+                      productOptions.binding === binding.id
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-sm">{binding.label}</p>
+                        <p className="text-xs text-cb-secondary mt-0.5">{binding.description}</p>
+                      </div>
+                      {binding.priceMultiplier > 1 && (
+                        <span className="text-xs text-cb-primary font-medium">+{Math.round((binding.priceMultiplier - 1) * 100)}%</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Paper Type */}
+            <div className="bg-cb-card border border-cb-border rounded-card p-4">
+              <h3 className="font-medium mb-3">Paper Quality</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {PRODUCT_OPTIONS.paperTypes.map((paper) => (
+                  <button
+                    key={paper.id}
+                    onClick={() => setProductOptions({ ...productOptions, paperType: paper.id as ProductOptions['paperType'] })}
+                    className={`p-3 rounded-input border text-left transition-all ${
+                      productOptions.paperType === paper.id
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-sm">{paper.label}</p>
+                        <p className="text-xs text-cb-secondary mt-0.5">{paper.description}</p>
+                      </div>
+                      {paper.priceMultiplier > 1 && (
+                        <span className="text-xs text-cb-primary font-medium">+{Math.round((paper.priceMultiplier - 1) * 100)}%</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cover Finish */}
+            <div className="bg-cb-card border border-cb-border rounded-card p-4">
+              <h3 className="font-medium mb-3">Cover Finish</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {PRODUCT_OPTIONS.coverFinishes.map((finish) => (
+                  <button
+                    key={finish.id}
+                    onClick={() => setProductOptions({ ...productOptions, coverFinish: finish.id as ProductOptions['coverFinish'] })}
+                    className={`p-3 rounded-input border text-left transition-all ${
+                      productOptions.coverFinish === finish.id
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">{finish.label}</p>
+                    <p className="text-xs text-cb-secondary mt-0.5">{finish.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Interior Color */}
+            <div className="bg-cb-card border border-cb-border rounded-card p-4">
+              <h3 className="font-medium mb-3">Interior Printing</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {PRODUCT_OPTIONS.interiorColors.map((color) => (
+                  <button
+                    key={color.id}
+                    onClick={() => setProductOptions({ ...productOptions, interiorColor: color.id as ProductOptions['interiorColor'] })}
+                    className={`p-3 rounded-input border text-left transition-all ${
+                      productOptions.interiorColor === color.id
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-sm">{color.label}</p>
+                        <p className="text-xs text-cb-secondary mt-0.5">{color.description}</p>
+                      </div>
+                      {color.priceMultiplier < 1 && (
+                        <span className="text-xs text-cb-green font-medium">-{Math.round((1 - color.priceMultiplier) * 100)}%</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Estimated price summary */}
+          <div className="mt-6 p-4 bg-cb-bg rounded-card border border-cb-border">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-cb-secondary">Estimated base price</p>
+                <p className="text-xs text-cb-muted mt-0.5">Final price calculated with shipping</p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">
+                  ~${(15 + (productOptions.binding === 'hardcover' ? 8 : 0) + (productOptions.paperType === 'premium' ? 3 : 0) + selectedIds.length * 0.15).toFixed(2)}
+                </p>
+                <p className="text-xs text-cb-secondary">+ shipping</p>
+              </div>
+            </div>
+          </div>
+
+          {generateError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-input text-red-700 text-sm">
+              {generateError}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mt-6">
+            <button
+              onClick={() => setStep('details')}
+              className="text-cb-secondary hover:text-cb-text transition-colors"
+            >
+              ← Back
+            </button>
+            <button
               onClick={handleCreateCookbook}
-              disabled={!title.trim() || !authorName.trim() || generating}
+              disabled={generating}
               className="bg-cb-primary text-white px-6 py-2.5 rounded-input font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
             >
               {generating ? (
@@ -568,11 +753,11 @@ export default function PrintCookbookPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Generating...
+                  Generating Preview...
                 </>
               ) : (
                 <>
-                  Generate My Cookbook
+                  Generate Preview
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                   </svg>
@@ -583,7 +768,7 @@ export default function PrintCookbookPage() {
         </div>
       )}
 
-      {/* Step 3: Preview */}
+      {/* Step 4: Preview */}
       {step === 'preview' && cookbook && (
         <div className="max-w-2xl">
           <h2 className="text-lg font-semibold mb-4">Preview Your Cookbook</h2>
@@ -657,7 +842,7 @@ export default function PrintCookbookPage() {
 
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setStep('details')}
+              onClick={() => setStep('options')}
               className="text-cb-secondary hover:text-cb-text transition-colors"
             >
               ← Back
@@ -675,7 +860,7 @@ export default function PrintCookbookPage() {
         </div>
       )}
 
-      {/* Step 4: Order */}
+      {/* Step 5: Order */}
       {step === 'order' && cookbook && (
         <div className="max-w-xl">
           <h2 className="text-lg font-semibold mb-4">Complete Your Order</h2>
@@ -883,7 +1068,7 @@ export default function PrintCookbookPage() {
         </div>
       )}
 
-      {/* Step 5: Confirmation */}
+      {/* Step 6: Confirmation */}
       {step === 'confirm' && (
         <div className="max-w-lg mx-auto text-center py-12">
           <div className="w-20 h-20 rounded-full bg-cb-green/10 flex items-center justify-center mx-auto mb-6">
