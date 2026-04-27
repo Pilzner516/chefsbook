@@ -157,14 +157,16 @@
 | Notification types | LIVE | packages/db (likesComments.ts) | 86 | comment_reply, recipe_comment, recipe_like, new_follower, moderation |
 | Follow / unfollow | LIVE | user_follows table, packages/db (follows.ts) | 29 | Chef+ plan gate |
 | Followers / Following tabs on profile | LIVE | apps/web, apps/mobile | 29 | |
-| What's New feed (followed users' recipes) | LIVE | apps/mobile/(tabs)/search.tsx | 29 | |
+| Following tab (recipes from followed users) | LIVE | apps/web/dashboard/search, apps/mobile/(tabs)/search.tsx | 29, MOBILE-2 | Queries user_follows + public recipes; sorted by created_at DESC; mobile matches web 4-tab layout |
+| What's New tab (trending public recipes) | LIVE | apps/web/dashboard/search, apps/mobile/(tabs)/search.tsx | 29, MOBILE-2 | Hot score algorithm: (likes + saves) / hours^0.8; mobile matches web implementation |
+| Like/save counts on recipe cards | LIVE | apps/mobile/components/UIKit.tsx (RecipeCard) | MOBILE-2 | Heart icon for likes, bookmark icon for saves; displays on home and search tabs |
 | Social share (Instagram/Pinterest/Facebook) | LIVE | SocialShareModal, packages/ai | 35 | Pro plan gate |
 | Direct messages | LIVE | packages/db/messages.ts, apps/web/dashboard/messages, apps/mobile/chef | 98, 119, 121, 125 | AI moderation (haiku), 1000 char limit; sendMessage optional client; chat UI: avatars, textarea, Realtime; thread header shows role pill (Super Admin/Admin/Proctor/Member) |
 | Message button on profiles | LIVE | apps/web (MessageButton), apps/mobile (chef/[id]) | 98, 101 | Not on own profile; mobile uses bottom sheet (not Alert.prompt) |
 | Message moderation (admin) | LIVE | apps/web/admin/messages/ | 98 | Approve/Remove flagged messages |
 | Message flags | LIVE | message_flags table | 98 | Inappropriate/Harassment/Spam/Other |
 | Chef profile page (redesigned) | LIVE | apps/web/app/chef/[username], /dashboard/chef/[username] | P-W | 4 tabs (recipes/techniques/cookbooks/about); avatar; badges; bio; social links; stats; follow/message buttons; own profile shows "Edit Profile" |
-| Verified Chef badge | LIVE | apps/web/components/VerifiedChefBadge.tsx | P-W | SVG fork/knife/spoon crossed; red #ce2b37; sizes sm/md/lg; tooltip; assigned via user_account_tags 'verified' |
+| Verified Chef badge | LIVE | apps/web/components/VerifiedChefBadge.tsx, apps/mobile/components/VerifiedBadge.tsx | P-W, MOBILE-3 | Red circle #ce2b37 with white checkmark; sizes sm/md/lg; assigned via user_account_tags 'Verified Chef'; mobile shows on: recipe cards, recipe detail, chef profile, comments, notifications, likers, messages, search results |
 | User badges (featured/author/new) | LIVE | apps/web/components/UserBadges.tsx | P-W | Reads user_account_tags; featured=gold star; author=book; new=auto 30 days |
 | Profile social links | LIVE | user_profiles (instagram_url, website_url, location), apps/web/dashboard/settings | P-W | Migration 051; editable in Settings page Public Profile section |
 
@@ -251,8 +253,8 @@
 | Nutrition card (web) | LIVE | apps/web/components/NutritionCard.tsx, apps/web/app/recipe/[id]/page.tsx | NUTR-1 | 7 nutrients, per-serving/per-100g toggle, generate/regenerate, low-confidence warning |
 | Nutrition card (mobile) | LIVE | apps/mobile/components/NutritionCard.tsx, apps/mobile/app/recipe/[id].tsx | NUTR-5 | Same as web, SecureStore for toggle preference, i18n in all 5 locales |
 | Nutrition auto-generation on import | LIVE | /api/recipes/finalize | NUTR-2 | Fire-and-forget after completeness gate passes |
-| Nutrition search filters | LIVE | apps/web/app/dashboard/search/page.tsx, search_recipes RPC | NUTR-3 | Calorie ranges, protein levels, dietary presets |
-| Nutrition in meal plan wizard | LIVE | MealPlanWizard.tsx, packages/ai/src/mealPlanWizard.ts | NUTR-4 | Optional step 4 for nutritional goals; daily summaries in plan output |
+| Nutrition search filters | LIVE | apps/web/app/dashboard/search/page.tsx, apps/mobile/app/(tabs)/search.tsx, search_recipes RPC | NUTR-3, MOBILE-5 | Calorie ranges (under 300, 300-500, 500-700, over 700), protein levels (high/medium/low), dietary presets (low carb, high fiber, low fat, low sodium); mobile uses same filter bottom sheet pattern |
+| Nutrition in meal plan wizard | LIVE | apps/web/components/MealPlanWizard.tsx, apps/mobile/components/MealPlanWizard.tsx, packages/ai/src/mealPlanWizard.ts | NUTR-4, MOBILE-4 | Optional step 4 for nutritional goals (daily calories, macro priority, max per meal); daily summaries in plan output; i18n in all 5 locales |
 
 ---
 
@@ -278,6 +280,7 @@
 | Branded launch splash (3s min) | LIVE | apps/mobile/app/_layout.tsx (SplashOverlay) | 203 | expo-splash-screen preventAutoHideAsync at module scope; React overlay shows chef-hat asset + "ChefsBook" serif wordmark + "Welcome to ChefsBook" tagline for SPLASH_MIN_MS=3000. Warm resume never re-shows. |
 | Web loading splash | LIVE | apps/web/app/loading.tsx | P-209 | Next.js Suspense fallback: cream #faf7f0, chef hat from /images/chefs-hat.png, ChefsBook Georgia serif wordmark, Welcome tagline. Zero network calls, all assets local. |
 | Sidebar nav reordering (web) | LIVE | apps/web/components/Sidebar.tsx, /api/user/nav-order, user_profiles.nav_order | Prompt-S | @hello-pangea/dnd drag-and-drop; grip icon handles; persists to nav_order TEXT[] column; reset button clears; fixed items (Settings, Sign out, Admin, Extension) non-draggable |
+| Import page card layout (web) | LIVE | apps/web/app/dashboard/scan/page.tsx | IMPORT-PAGE-REDESIGN | Hero Speak a Recipe button; 6 method cards in 3-col grid (Scan, Choose, URL, YouTube, Paste, Manual); lucide-react icons; collapsible panels; info banners; responsive 2-col tablet/mobile |
 
 ---
 

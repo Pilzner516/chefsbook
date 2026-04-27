@@ -1,6 +1,171 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session IMPORT-PAGE-REDESIGN) TYPE: FEATURE
+
+### Web — Import Page Redesign with Card-Based Layout
+
+**Visual redesign to match mobile import screen layout:**
+
+1. **Hero "Speak a Recipe" button** — Full-width pomodoro red (#ce2b37), PRO badge, mic icon, white text with subtitle
+
+2. **6 method cards in responsive grid:**
+   | Method | Icon | Title | Subtitle |
+   |--------|------|-------|---------|
+   | Scan Photo | Camera | Scan Photo | Cookbook or recipe card |
+   | Choose Photo | ImagePlus | Choose Photo | From your gallery |
+   | Import URL | Link | Import URL | Paste any recipe link |
+   | YouTube | CirclePlay | YouTube | Import from any video |
+   | Paste Text | ClipboardPaste | Paste Text | AI parses any format |
+   | Manual Entry | PenLine | Manual Entry | Type it yourself |
+   
+   - Desktop: 3 columns
+   - Tablet: 2 columns
+   - Mobile web: 2 columns
+   - Light red icon badges (#fef2f2 bg, #ce2b37 icon)
+
+3. **Collapsible panels** — URL, YouTube, Paste Text expand inline when card clicked
+
+4. **Info banners:**
+   - Amber: Instagram/TikTok screenshot tip
+   - Green: Chrome extension promotion
+
+5. **File import section** — Preserved existing bookmark/PDF/Word import UI
+
+**Technical:**
+- Installed lucide-react for consistent icons
+- All existing handlers preserved (handleImage, handleUrlImport, handlePasteImport, handleBookmarkFile)
+- Keyboard accessible (focusable cards, Enter to activate)
+
+**Files changed:**
+- apps/web/app/dashboard/scan/page.tsx (complete rewrite — +283 lines, -236 lines)
+- apps/web/package.json (+lucide-react)
+
+**Verification:**
+- TypeScript: PASS (`npx tsc --noEmit` clean)
+- Hero Speak a Recipe button visible and links to /dashboard/speak ✓
+- All 6 import method cards visible in grid ✓
+- Grid responsive: 3-col desktop, 2-col mobile ✓
+- URL panel expands on click ✓
+- YouTube panel expands on click ✓
+- Paste Text panel expands on click ✓
+- Scan/Choose Photo triggers file picker ✓
+- Manual Entry navigates to /recipe/new ✓
+- Info banners displayed ✓
+- File import section functional ✓
+- Deploy: HTTP 200 on https://chefsbk.app/dashboard/scan
+
+---
+
+## 2026-04-26 (session SEARCH-FILTER-REORDER) TYPE: FEATURE
+
+### Web — Drag-and-Drop Filter Section Reordering + Dietary Styling Fix
+
+**Change 1 — Dietary + Dietary Goals styling fix:**
+- Problem: Dietary and Dietary Goals sections used `flex flex-wrap gap-1` without scroll container
+- Fix: Added `max-h-[200px] overflow-y-auto` wrapper matching other filter sections
+- Headers already had correct styling (`text-xs font-bold text-cb-secondary uppercase tracking-wide`)
+- Icons preserved (emojis in pill buttons)
+
+**Change 2 — Drag-and-drop filter section reordering:**
+- Drag library: `@hello-pangea/dnd` (already installed, used in admin layout)
+- Drag handle: ≡ icon on right side of section header, visible on hover
+- Sections snap into place with opacity change during drag
+- Default order: Cuisine → Course → Cook Time → Ingredients → Source → Tags → Dietary → Nutrition
+- localStorage key: `cb-search-filter-order`
+- "Reset to default order" link appears when custom order is active
+
+**Files changed:**
+- apps/web/app/dashboard/search/page.tsx (+279 lines, -141 lines)
+
+**Verification:**
+- TypeScript: PASS
+- Dietary section font matches Cuisine/Course ✓
+- Dietary Goals section scrollable ✓
+- Icons still present on Dietary sections ✓
+- Drag handle visible on hover ✓
+- Reordered Ingredients to top → persisted on reload ✓
+- Reset to default order → sections return to default ✓
+- All filter counts still show correctly ✓
+- Deploy: HTTP 200 on https://chefsbk.app/dashboard/search
+
+---
+
+## 2026-04-26 (session MOBILE-FLOATING-BAR) TYPE: CODE FIX
+
+### Mobile — Floating Tab Bar Fix (Visible on All Authenticated Screens)
+
+**Diagnosis:**
+The FloatingTabBar was mounted inside `(tabs)/_layout.tsx`, so navigating to screens outside the tabs group (recipe/[id], cookbook/[id], chef/[id], etc.) covered the entire Tabs layout including the bar.
+
+**Root cause:** Issue D — Expo Router layout conflict. The tab bar was defined inside a screen layout that gets unmounted when navigating to Stack screens.
+
+**The fix:**
+1. Moved `FloatingTabBar` from `(tabs)/_layout.tsx` to the root `_layout.tsx`
+2. Conditionally render based on:
+   - User is authenticated (session exists, not anonymous)
+   - NOT on landing page, auth screens, or modal screens
+3. Added `contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}` to recipe detail ScrollView
+4. Adjusted spacer for non-owned recipes
+
+**Files changed:**
+- apps/mobile/app/_layout.tsx (added FloatingTabBar import and conditional render)
+- apps/mobile/app/(tabs)/_layout.tsx (removed FloatingTabBar, set tabBar to null)
+- apps/mobile/app/recipe/[id].tsx (added paddingBottom to ScrollView)
+
+**Verification:**
+- TypeScript: PASS
+- FloatingTabBar visible on My Recipes tab ✓
+- FloatingTabBar visible on recipe detail screen ✓
+- Content not hidden behind bar (Delete Recipe button visible) ✓
+- Tab switching works correctly ✓
+- Navigation back preserves tab bar ✓
+
+**Screenshots:**
+- docs/adb_screenshots/floating_bar_recipe_before.png — BEFORE (no tab bar on recipe detail)
+- docs/adb_screenshots/floating_bar_recipe_v2.png — AFTER (tab bar visible on recipe detail)
+- docs/adb_screenshots/floating_bar_scroll_final.png — Content visible above tab bar
+
+---
+
+## 2026-04-26 (session MOBILE-SEARCH-PILLS) TYPE: CODE FIX
+
+### Mobile — Search Tab Pills 2×2 Grid Layout
+
+**What was fixed:**
+The 4 tab pills on the Search screen (All Recipes, My Recipes, Following, What's New) were in a horizontal scrolling row that went off screen. Changed to a 2×2 centered grid layout so all pills are visible without scrolling.
+
+**Layout change:**
+```
+┌──────────────────┬──────────────────┐
+│   All Recipes    │   My Recipes     │
+├──────────────────┼──────────────────┤
+│   Following      │   What's New     │
+└──────────────────┴──────────────────┘
+```
+
+**Implementation:**
+- Replaced horizontal `<ScrollView>` with `<View>` using `flexDirection: 'row'`, `flexWrap: 'wrap'`
+- Each pill: `width: '48%'`, centered text, `paddingVertical: 12`
+- Active state: `#ce2b37` (pomodoro red) background, white text, fontWeight 600
+- Inactive state: `colors.bgBase` background, `colors.textPrimary` text, fontWeight 400, border
+
+**Files changed:**
+- apps/mobile/app/(tabs)/search.tsx (lines 460-498)
+
+**Verification:**
+- TypeScript: PASS (only pre-existing expo-file-system types error)
+- ADB screenshots: All 4 pills visible without horizontal scroll
+- Active states tested on all 4 tabs: All Recipes ✓, My Recipes ✓, Following ✓, What's New ✓
+
+**Screenshots:**
+- docs/adb_screenshots/search_pills_2x2_v2.png — All Recipes active
+- docs/adb_screenshots/search_pills_myrecipes.png — My Recipes active
+- docs/adb_screenshots/search_pills_following2.png — Following active
+- docs/adb_screenshots/search_pills_whatsnew2.png — What's New active
+
+---
+
 ## 2026-04-26 (session MOBILE-LOGO-FEEDBACK) TYPE: FEATURE
 
 ### Mobile — Feedback Modal on Logo Tap
