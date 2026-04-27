@@ -103,7 +103,7 @@ export default function PrintCookbookPage() {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('plan_tier, display_name')
-      .eq('id', user.id)
+      .eq('id', sess.user.id)
       .single();
 
     setPlanTier((profile?.plan_tier as PlanTier) || 'free');
@@ -111,7 +111,7 @@ export default function PrintCookbookPage() {
       setAuthorName(profile.display_name);
     }
     setLoading(false);
-    loadRecipes(user.id, sortBy);
+    loadRecipes(sess.user.id, sortBy);
   };
 
   // Reload recipes when sort changes
