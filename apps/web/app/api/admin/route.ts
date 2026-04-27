@@ -172,6 +172,7 @@ export async function GET(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     // Enrich with user info
     const userIds = [...new Set((data ?? []).map((f: any) => f.user_id).filter(Boolean))];
+    const feedbackIds = (data ?? []).map((f: any) => f.id);
     const profileMap = new Map<string, { username: string | null; display_name: string | null }>();
     if (userIds.length > 0) {
       const { data: profiles } = await supabaseAdmin.from('user_profiles').select('id, username, display_name').in('id', userIds);
@@ -179,10 +180,28 @@ export async function GET(req: NextRequest) {
         profileMap.set(p.id, { username: p.username, display_name: p.display_name });
       }
     }
+    // Get note counts per feedback
+    const noteCountMap = new Map<string, number>();
+    if (feedbackIds.length > 0) {
+      const { data: notes } = await supabaseAdmin.from('feedback_notes').select('feedback_id').in('feedback_id', feedbackIds);
+      for (const n of notes ?? []) {
+        noteCountMap.set(n.feedback_id, (noteCountMap.get(n.feedback_id) ?? 0) + 1);
+      }
+    }
+    // Get message counts per feedback
+    const messageCountMap = new Map<string, number>();
+    if (feedbackIds.length > 0) {
+      const { data: messages } = await supabaseAdmin.from('feedback_messages').select('feedback_id').in('feedback_id', feedbackIds);
+      for (const m of messages ?? []) {
+        messageCountMap.set(m.feedback_id, (messageCountMap.get(m.feedback_id) ?? 0) + 1);
+      }
+    }
     const enriched = (data ?? []).map((f: any) => ({
       ...f,
       username: profileMap.get(f.user_id)?.username ?? null,
       display_name: profileMap.get(f.user_id)?.display_name ?? null,
+      note_count: noteCountMap.get(f.id) ?? 0,
+      message_count: messageCountMap.get(f.id) ?? 0,
     }));
     return NextResponse.json({ feedback: enriched });
   }
