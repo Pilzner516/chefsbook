@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   },
   stepRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 14,
     alignItems: 'flex-start',
   },
   stepNumber: {
@@ -432,15 +432,20 @@ const styles = StyleSheet.create({
     fontFamily: 'Source Sans Pro',
     fontWeight: 400,
     color: CHARCOAL,
-    flex: 1,
     lineHeight: 1.5,
+    marginBottom: 2,
   },
   stepTimer: {
     fontSize: 9,
     fontFamily: 'Source Sans Pro',
     fontWeight: 600,
     color: RUST,
+    backgroundColor: CREAM,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
     marginTop: 4,
+    borderRadius: 2,
   },
 
   // Notes
