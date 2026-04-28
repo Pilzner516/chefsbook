@@ -1,6 +1,72 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session PDF-REDESIGN) TYPE: UI POLISH
+
+### Cookbook PDF Template Redesign per pdf-design.md
+
+Rebuilt the @react-pdf/renderer cookbook PDF templates to match award-winning cookbook design standards (Ottolenghi, NYT Cooking quality).
+
+**Agent file:**
+- Created `.claude/agents/pdf-design.md` — authoritative design spec for all ChefsBook PDF generation
+- Covers typography, colors, page structure, Lulu print specs, known bugs, quality checklist
+
+**Typography:**
+- Registered Playfair Display font (400, 600, 700, italic variants) from Google Fonts
+- Registered Inter font (300, 400, 500, 600 weights) from Google Fonts
+- All type scale per spec: 52pt book title, 30pt recipe title, 14pt step numbers, etc.
+
+**Interior PDF changes:**
+- Warm cream background (#faf7f0) instead of white
+- Title page: chef hat icon, Playfair Display Bold title, red divider line, Classic style border frame
+- TOC: Playfair Display titles, proper dotted leaders, darker cream (#f0ece0) background
+- Recipe pages: 280pt hero images (was 180pt), Playfair step numbers, green timers (⏱)
+- Running footer: 3-column layout (ChefsBook | Recipe Title | Page N)
+- Back page: chef hat icon (80pt), "ChefsBook" wordmark, tagline, URL in red
+
+**Cover PDF changes:**
+- Updated to use Playfair Display + Inter fonts (was Times/Helvetica)
+- Classic style: inset red border frame on front, red spine
+- Modern style: dark background with white/cream text
+- Minimal style: red accent bar at top
+- Added ChefsBook branding to back cover and spine
+
+**Bug fixes per pdf-design.md:**
+- Timer character normalization: added fixTimerCharacter() helper (ñ → ⏱)
+- Bullet normalization: all ingredients now use • not -
+- No <br> spacers: all spacing via CSS margins
+- Page background: changed from white to cream
+
+**Route changes:**
+- Updated generate route to fetch chef hat icon and pass to both documents
+- Pass coverStyle to interior document for style-aware title page
+
+**Verification:**
+- TypeScript: `npx tsc --noEmit` passes (0 errors)
+- Build: `next build` succeeds on RPi5
+- Deployed to production via deploy-staging.sh
+- Server: https://chefsbk.app returns HTTP 200
+- NOTE: Manual UI test required — log in and regenerate a cookbook at /dashboard/print
+
+**Manual testing instructions:**
+1. Log in at https://chefsbk.app
+2. Go to /dashboard/print
+3. Select 5+ recipes and generate a new cookbook
+4. Download the Preview PDF and verify:
+   - [ ] Cream background (#faf7f0)
+   - [ ] Playfair Display on titles
+   - [ ] Inter on body text
+   - [ ] Chef hat icon on title page
+   - [ ] Red border frame (Classic style)
+   - [ ] TOC with dotted leaders
+   - [ ] 280pt recipe photos
+   - [ ] Red step numbers
+   - [ ] Green ⏱ timers
+   - [ ] 3-column running footer
+   - [ ] Back page with full branding
+
+---
+
 ## 2026-04-27 (session LULU-PRINT) TYPE: FEATURE
 
 ### Lulu Print-on-Demand Cookbook Integration (Web Only)

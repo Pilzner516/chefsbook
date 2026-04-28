@@ -32,6 +32,7 @@ agents before writing any code.
 | ANY feature on ANY session | testing.md (ALWAYS) |
 | Any change to apps/web | deployment.md (ALWAYS for web sessions) |
 | Any feature that calls Claude API or @chefsbook/ai | ai-cost.md (MANDATORY) |
+| Any PDF generation or print template | pdf-design.md (MANDATORY) |
 | Before modifying ANY existing feature | feature-registry.md (ALWAYS) |
 
 `testing.md`, `deployment.md`, and `feature-registry.md` are MANDATORY on every session.
