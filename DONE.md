@@ -1,6 +1,43 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session PDF-FIXES) TYPE: CODE FIX
+
+### Cookbook PDF — Timer, TOC, and Cover Style Fixes
+
+Follow-up fixes for issues remaining after the PDF-REDESIGN session.
+
+**Fix 1 — Timer "ñ" character (TYPE: CODE FIX)**
+- Enhanced `fixTimerCharacter()` function to handle all patterns:
+  - `ñ1h` → `⏱ 1h` (ñ followed by digit)
+  - `ñ ` → `⏱ ` (ñ followed by whitespace)
+  - Standalone `ñ` artifacts → removed
+- Code path: `CookbookPdf.tsx:393-402`
+- Verified: TypeScript compiles, function handles all test patterns
+
+**Fix 2 — TOC dotted leaders (TYPE: CODE FIX)**
+- Replaced text-based dots (which wrapped to multiple lines) with table-style flexbox layout
+- New structure: `tocTable` > `tocEntry` (flex row) with:
+  - `tocRecipe` (flexShrink: 0) — recipe name won't compress
+  - `tocLeader` (flex: 1, borderBottom) — solid line leader fills remaining space
+  - `tocPageNumber` (flexShrink: 0) — page number won't compress
+- Result: Single-line entries that never wrap, regardless of recipe title length
+- Code path: `CookbookPdf.tsx:145-173`, `465-474`
+
+**Fix 3 — Cover style differentiation (TYPE: CODE FIX)**
+- **Classic**: Cream background (#faf7f0), red border frame (1.5pt) inset 24pt
+- **Modern**: Dark background (#1a1a1a), horizontal red accent bar at 40% height (8pt tall), white title, red subtitle, semi-transparent author
+- **Minimal**: White background, red top bar only (6pt), Inter font for title (not Playfair), small red horizontal rule instead of hat icon
+- Code path: `CookbookPdf.tsx:615-621` (style config), `773-904` (rendering logic)
+
+**Verification:**
+- TypeScript: `npx tsc --noEmit` passes (0 errors)
+- Build: `next build` succeeds on RPi5 (~35s)
+- Deployed: PM2 online, commit d115b8c
+- Manual test required: regenerate cookbooks with each cover style at /dashboard/print
+
+---
+
 ## 2026-04-28 (session PDF-REDESIGN) TYPE: UI POLISH
 
 ### Cookbook PDF Template Redesign per pdf-design.md
