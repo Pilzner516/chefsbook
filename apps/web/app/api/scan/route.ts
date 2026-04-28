@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scanRecipe, scanRecipeMultiPage, getApiKey } from '@chefsbook/ai';
+import { scanRecipe, scanRecipeMultiPage } from '@chefsbook/ai';
 
 // POST /api/scan - Scan recipe from image(s)
 export async function POST(request: NextRequest) {
-  // Debug: log env var availability
-  const apiKey = getApiKey();
-  console.log('[/api/scan] API key available:', !!apiKey, 'length:', apiKey?.length || 0);
-  console.log('[/api/scan] process.env.ANTHROPIC_API_KEY:', !!process.env.ANTHROPIC_API_KEY);
+  // Debug: log all ANTHROPIC env vars
+  console.log('[/api/scan] ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
+  console.log('[/api/scan] EXPO_PUBLIC_ANTHROPIC_API_KEY exists:', !!process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY);
+  console.log('[/api/scan] Key length:', (process.env.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '').length);
+
+  // If env vars aren't available, return early with helpful error
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error('[/api/scan] No API key found in environment');
+    return NextResponse.json(
+      { error: 'Server configuration error: API key not available' },
+      { status: 500 }
+    );
+  }
 
   try {
     const body = await request.json();
