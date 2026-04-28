@@ -4,10 +4,13 @@ import type { PlanTier } from '@chefsbook/db';
 
 async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
+  console.log('[print-cookbooks] Auth header present:', !!authHeader);
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
+    console.log('[print-cookbooks] Token length:', token.length);
     // Use supabaseAdmin to verify JWT (anon client cannot validate tokens)
-    const { data } = await supabaseAdmin.auth.getUser(token);
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    console.log('[print-cookbooks] getUser result:', { userId: data.user?.id, error: error?.message });
     return data.user?.id ?? null;
   }
   return null;
