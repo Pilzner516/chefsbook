@@ -28,8 +28,8 @@ interface PageContent {
   recipePart?: number;
 }
 
-const PAGE_WIDTH = 196;
-const PAGE_HEIGHT = 254;
+const PAGE_WIDTH = 340;
+const PAGE_HEIGHT = 440;
 
 export default function FlipbookPreview({
   layout,
@@ -96,7 +96,7 @@ export default function FlipbookPreview({
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
         <div className="text-white/70 text-sm">
-          8.5 x 11 in &middot; Letter / Lulu standard &middot; ~24% scale
+          8.5 x 11 in &middot; Letter / Lulu standard &middot; ~42% scale
         </div>
         <button
           onClick={onClose}
