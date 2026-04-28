@@ -7,6 +7,9 @@ import { CookbookInteriorDocument, CookbookCoverDocument } from './CookbookPdf';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
+// Chef hat icon for PDF branding
+const CHEF_HAT_PATH = '/images/chefs-hat.png';
+
 async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
@@ -128,7 +131,21 @@ export async function POST(
     const pageCount = 2 + tocPages + recipes.length * 2 + 1;
     const spineWidth = calculateSpineWidth(pageCount);
 
-    // Generate interior PDF
+    // Fetch chef hat icon for branding
+    let chefsHatBase64: string | null = null;
+    try {
+      const hatRes = await fetch(`http://localhost:3000${CHEF_HAT_PATH}`);
+      if (hatRes.ok) {
+        const hatBuf = await hatRes.arrayBuffer();
+        const hatBase64 = Buffer.from(hatBuf).toString('base64');
+        const hatContentType = hatRes.headers.get('content-type') ?? 'image/png';
+        chefsHatBase64 = `data:${hatContentType};base64,${hatBase64}`;
+      }
+    } catch {
+      console.warn('Could not fetch chef hat icon for PDF');
+    }
+
+    // Generate interior PDF — per pdf-design.md
     const interiorBuffer = await renderToBuffer(
       CookbookInteriorDocument({
         title: cookbook.title,
@@ -136,10 +153,12 @@ export async function POST(
         authorName: cookbook.author_name,
         recipes,
         recipeImages,
+        coverStyle: cookbook.cover_style as 'classic' | 'modern' | 'minimal',
+        chefsHatBase64,
       }),
     );
 
-    // Generate cover PDF
+    // Generate cover PDF — per pdf-design.md
     const coverBuffer = await renderToBuffer(
       CookbookCoverDocument({
         title: cookbook.title,
@@ -148,6 +167,7 @@ export async function POST(
         coverStyle: cookbook.cover_style as 'classic' | 'modern' | 'minimal',
         pageCount,
         spineWidth,
+        chefsHatBase64,
       }),
     );
 
