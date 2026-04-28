@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabaseAdmin } from '@chefsbook/db';
 
 async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
-    const { data } = await supabase.auth.getUser(token);
+    // Use supabaseAdmin to verify JWT (anon client cannot validate tokens)
+    const { data } = await supabaseAdmin.auth.getUser(token);
     return data.user?.id ?? null;
   }
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
+  return null;
 }
 
 // GET /api/print-orders/[id] - Get a specific order with tracking

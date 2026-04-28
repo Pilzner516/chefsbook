@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin, getRecipe, listRecipePhotos, PLAN_LIMITS } from '@chefsbook/db';
+import { supabaseAdmin, getRecipe, listRecipePhotos, PLAN_LIMITS } from '@chefsbook/db';
 import type { PlanTier, RecipeWithDetails } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { CookbookInteriorDocument, CookbookCoverDocument } from './CookbookPdf';
@@ -14,15 +14,15 @@ async function getUserFromRequest(request: NextRequest): Promise<string | null> 
   const authHeader = request.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
-    const { data } = await supabase.auth.getUser(token);
+    // Use supabaseAdmin to verify JWT (anon client cannot validate tokens)
+    const { data } = await supabaseAdmin.auth.getUser(token);
     return data.user?.id ?? null;
   }
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
+  return null;
 }
 
 async function checkProPlan(userId: string): Promise<boolean> {
-  const { data: profile } = await supabase
+  const { data: profile } = await supabaseAdmin
     .from('user_profiles')
     .select('plan_tier')
     .eq('id', userId)
