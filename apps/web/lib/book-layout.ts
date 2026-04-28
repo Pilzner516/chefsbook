@@ -191,7 +191,7 @@ export function computePageMap(layout: BookLayout): PageMap {
         currentPage += 1;
         break;
       case 'recipe':
-        currentPage += card.pages.length;
+        currentPage += Array.isArray(card.pages) ? card.pages.length : 0;
         break;
       case 'index':
         currentPage += 1;

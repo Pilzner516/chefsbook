@@ -1153,9 +1153,11 @@ function RecipeCardBody({
 
   // Check quality of all available images
   useEffect(() => {
-    card.image_urls.forEach((url) => {
-      checkQuality(url, 'full_bleed');
-    });
+    if (Array.isArray(card.image_urls)) {
+      card.image_urls.forEach((url) => {
+        checkQuality(url, 'full_bleed');
+      });
+    }
   }, [card.image_urls, checkQuality]);
 
   const currentQuality = imageUrl ? imageQualities[imageUrl] : undefined;
@@ -1191,7 +1193,7 @@ function RecipeCardBody({
           </div>
         )}
         {/* Change Image button */}
-        {card.image_urls.length > 0 && (
+        {Array.isArray(card.image_urls) && card.image_urls.length > 0 && (
           <button
             onClick={() => setShowImagePicker(true)}
             className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center text-white text-xs font-medium"
@@ -1346,7 +1348,7 @@ function RecipeCardBody({
                   </div>
                 )}
               </button>
-              {card.image_urls.map((url) => {
+              {(card.image_urls || []).map((url) => {
                 const quality = imageQualities[url];
                 const isSelected = url === imageUrl;
                 return (
