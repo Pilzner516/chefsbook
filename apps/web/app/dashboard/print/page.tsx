@@ -198,23 +198,42 @@ export default function PrintCookbookPage() {
   };
 
   const handleCoverImageUpload = async (file: File) => {
-    if (!user || !session) return;
+    if (!user || !session) {
+      setGenerateError('Not authenticated - please refresh the page');
+      return;
+    }
     setCoverImageUploading(true);
+    setGenerateError('');
     try {
       const ext = file.name.split('.').pop() ?? 'jpg';
       const path = `${user.id}/cover-${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from('cookbook-pdfs')
-        .upload(path, file, { contentType: file.type });
-      if (uploadErr) throw uploadErr;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('cookbook-pdfs')
-        .getPublicUrl(path);
+      // Use fetch to upload with auth token (supabase client may not have session)
+      const formData = new FormData();
+      formData.append('', file);
+
+      const uploadRes = await fetch(
+        `https://api.chefsbk.app/storage/v1/object/cookbook-pdfs/${path}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+          },
+          body: file,
+        }
+      );
+
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text();
+        throw new Error(`Upload failed: ${uploadRes.status} ${errText}`);
+      }
+
+      const publicUrl = `https://api.chefsbk.app/storage/v1/object/public/cookbook-pdfs/${path}`;
       setCoverImageUrl(publicUrl);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Cover upload failed:', err);
-      setGenerateError('Failed to upload cover image');
+      setGenerateError(`Failed to upload cover image: ${err.message || 'Unknown error'}`);
     } finally {
       setCoverImageUploading(false);
     }
@@ -538,6 +557,76 @@ export default function PrintCookbookPage() {
                   );
                 })}
               </div>
+
+              {/* Selected recipes order panel */}
+              {selectedIds.length > 0 && (
+                <div className="mb-6 p-4 bg-cb-bg rounded-card border border-cb-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-sm">Recipe Order in Cookbook</h3>
+                    <span className="text-xs text-cb-secondary">Drag to reorder or use arrows</span>
+                  </div>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {selectedIds.map((id, idx) => {
+                      const recipe = recipes.find(r => r.id === id);
+                      if (!recipe) return null;
+                      return (
+                        <div key={id} className="flex items-center gap-2 bg-cb-card p-2 rounded-input border border-cb-border">
+                          <span className="text-xs text-cb-muted w-6 text-center">{idx + 1}</span>
+                          <span className="flex-1 text-sm truncate">{recipe.title}</span>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (idx > 0) {
+                                  const newIds = [...selectedIds];
+                                  [newIds[idx - 1], newIds[idx]] = [newIds[idx], newIds[idx - 1]];
+                                  setSelectedIds(newIds);
+                                }
+                              }}
+                              disabled={idx === 0}
+                              className="p-1 hover:bg-cb-border rounded disabled:opacity-30"
+                              title="Move up"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (idx < selectedIds.length - 1) {
+                                  const newIds = [...selectedIds];
+                                  [newIds[idx], newIds[idx + 1]] = [newIds[idx + 1], newIds[idx]];
+                                  setSelectedIds(newIds);
+                                }
+                              }}
+                              disabled={idx === selectedIds.length - 1}
+                              className="p-1 hover:bg-cb-border rounded disabled:opacity-30"
+                              title="Move down"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedIds(selectedIds.filter(i => i !== id));
+                              }}
+                              className="p-1 hover:bg-red-100 text-cb-primary rounded"
+                              title="Remove"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end">
                 <button
