@@ -1,6 +1,26 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session COOKBOOK-BUILDER-2) TYPE: CODE FIX
+
+### Cookbook Builder Fixes
+
+**Bug Fixes:**
+- Fixed cover image upload CORS error (was "Failed to fetch" on direct storage API call)
+  - Created server-side `/api/print-cookbooks/upload-cover` route using supabaseAdmin
+  - Bypasses browser CORS restrictions by proxying through Next.js API
+- Added recipe reordering capability in wizard
+  - Up/down/remove buttons in recipe selection panel
+  - Recipes can be reordered before PDF generation
+
+**Files created:** 
+- `apps/web/app/api/print-cookbooks/upload-cover/route.ts`
+- `apps/web/app/api/print-cookbooks/[id]/cover-image/route.ts`
+
+**Deployment:** Deployed to RPi5
+
+---
+
 ## 2026-04-28 (session COOKBOOK-BUILDER) TYPE: FEATURE
 
 ### Complete Cookbook Builder Overhaul

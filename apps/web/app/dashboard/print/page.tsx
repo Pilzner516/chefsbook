@@ -205,32 +205,24 @@ export default function PrintCookbookPage() {
     setCoverImageUploading(true);
     setGenerateError('');
     try {
-      const ext = file.name.split('.').pop() ?? 'jpg';
-      const path = `${user.id}/cover-${Date.now()}.${ext}`;
-
-      // Use fetch to upload with auth token (supabase client may not have session)
       const formData = new FormData();
-      formData.append('', file);
+      formData.append('file', file);
 
-      const uploadRes = await fetch(
-        `https://api.chefsbk.app/storage/v1/object/cookbook-pdfs/${path}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-          },
-          body: file,
-        }
-      );
+      const uploadRes = await fetch('/api/print-cookbooks/upload-cover', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
 
       if (!uploadRes.ok) {
-        const errText = await uploadRes.text();
-        throw new Error(`Upload failed: ${uploadRes.status} ${errText}`);
+        const errData = await uploadRes.json().catch(() => ({}));
+        throw new Error(errData.error || `Upload failed: ${uploadRes.status}`);
       }
 
-      const publicUrl = `https://api.chefsbk.app/storage/v1/object/public/cookbook-pdfs/${path}`;
-      setCoverImageUrl(publicUrl);
+      const { url } = await uploadRes.json();
+      setCoverImageUrl(url);
     } catch (err: any) {
       console.error('Cover upload failed:', err);
       setGenerateError(`Failed to upload cover image: ${err.message || 'Unknown error'}`);

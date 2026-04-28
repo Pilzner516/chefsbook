@@ -413,6 +413,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Visibility: `shared_link` must be treated as public in ALL recipe queries — NOT just `'public'`
 - Web image proxy: `/api/image?url=` proxies Supabase storage URLs with apikey (Kong returns 401 without it)
 - PDF export: `/recipe/[id]/pdf` from raw data via `@react-pdf/renderer`; Pro plan gated; hero image fetched server-side with apikey
+- Cookbook cover uploads: `/api/print-cookbooks/upload-cover` — must use server-side route (direct browser-to-storage fetch blocked by CORS)
 - Unified dialogs: `ChefsDialog` (web + mobile) replaces native confirm/alert; `useConfirmDialog` hooks
 - Offline shopping: mobile caches to FileSystem; checked items local-only; pending edits sync on reconnect
 - Extension: production URLs (chefsbk.app); zip at `apps/extension/dist/`; must copy to Pi after packaging
