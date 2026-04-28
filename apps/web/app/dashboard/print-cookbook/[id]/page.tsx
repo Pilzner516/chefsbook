@@ -1123,80 +1123,73 @@ function RecipeCardBody({
       {/* Visual page thumbnails - horizontal strip */}
       <div className="mt-3 overflow-x-auto">
         <div className="flex gap-2 pb-2">
-          {card.pages.map((page, idx) => (
-            <button
-              key={page.id}
-              onClick={() => handleOpenPageEditor(page)}
-              className="flex-shrink-0 w-[80px] h-[110px] rounded bg-[#FAF7F2] border border-[#E0D9D0] overflow-hidden hover:border-cb-primary/50 transition-colors"
-              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}
-              title={`Page ${idx + 1}: ${page.kind}`}
-            >
-              {page.kind === 'image' ? (
-                <div className="relative w-full h-full">
-                  {(page.image_url || primaryPhoto) ? (
-                    <img
-                      src={proxyIfNeeded(page.image_url || primaryPhoto || '')}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-cb-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                      </svg>
-                    </div>
-                  )}
-                  {/* Quality badge on image thumbnail */}
-                  {page.image_url && imageQualities[page.image_url] && (
-                    <div className="absolute bottom-1 left-1 bg-white/90 rounded px-0.5">
-                      <QualityBadge quality={imageQualities[page.image_url]} compact />
-                    </div>
-                  )}
-                  <div className="absolute top-1 right-1 bg-white/80 rounded px-1 text-[10px] font-medium text-cb-secondary">
-                    📷
+          {card.pages.map((page, idx) => {
+            const pageImageUrl = 'image_url' in page ? page.image_url : undefined;
+            const pageText = 'text' in page ? page.text : undefined;
+            const pagePart = 'part' in page ? page.part : undefined;
+
+            return (
+              <button
+                key={page.id}
+                onClick={() => handleOpenPageEditor(page)}
+                className="flex-shrink-0 w-[80px] h-[110px] rounded bg-[#FAF7F2] border border-[#E0D9D0] overflow-hidden hover:border-cb-primary/50 transition-colors"
+                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}
+                title={`Page ${idx + 1}: ${page.kind}`}
+              >
+                {page.kind === 'image' ? (
+                  <div className="relative w-full h-full">
+                    {(pageImageUrl || primaryPhoto) ? (
+                      <img
+                        src={proxyIfNeeded(pageImageUrl || primaryPhoto || '')}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-2xl">📷</span>
+                      </div>
+                    )}
+                    {pageImageUrl && imageQualities[pageImageUrl] && (
+                      <div className="absolute bottom-1 left-1 bg-white/90 rounded px-0.5">
+                        <QualityBadge quality={imageQualities[pageImageUrl]} compact />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : page.kind === 'content' ? (
-                <div className="w-full h-full flex flex-col items-center justify-center p-2">
-                  <svg className="w-5 h-5 text-cb-muted mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                  </svg>
-                  <span className="text-[9px] text-cb-muted text-center leading-tight">
-                    Recipe<br/>Part {(page as { part: number }).part}
-                  </span>
-                </div>
-              ) : page.kind === 'custom' ? (
-                <div className="relative w-full h-full">
-                  {(page as { image_url?: string }).image_url ? (
-                    <img
-                      src={proxyIfNeeded((page as { image_url?: string }).image_url || '')}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (page as { text?: string }).text ? (
-                    <div className="w-full h-full p-1.5 overflow-hidden">
-                      <p className="text-[8px] text-cb-secondary leading-tight line-clamp-6">
-                        {(page as { text?: string }).text}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-2xl">✨</span>
-                    </div>
-                  )}
-                  <div className="absolute top-1 right-1 bg-white/80 rounded px-1 text-[10px] font-medium text-cb-secondary">
-                    ✨
+                ) : page.kind === 'content' ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                    <span className="text-xl mb-1">📄</span>
+                    <span className="text-[9px] text-cb-muted text-center leading-tight">
+                      Part {pagePart || 1}
+                    </span>
                   </div>
-                  {/* Quality badge on custom page image */}
-                  {(page as { image_url?: string }).image_url && imageQualities[(page as { image_url?: string }).image_url!] && (
-                    <div className="absolute bottom-1 left-1 bg-white/90 rounded px-0.5">
-                      <QualityBadge quality={imageQualities[(page as { image_url?: string }).image_url!]} compact />
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </button>
-          ))}
+                ) : page.kind === 'custom' ? (
+                  <div className="relative w-full h-full">
+                    {pageImageUrl ? (
+                      <img
+                        src={proxyIfNeeded(pageImageUrl)}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : pageText ? (
+                      <div className="w-full h-full p-1.5 overflow-hidden">
+                        <p className="text-[8px] text-cb-secondary leading-tight line-clamp-6">
+                          {pageText}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-2xl">✨</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-xl">📄</span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
           {/* Add page button */}
           <button
             onClick={onToggleExpand}
