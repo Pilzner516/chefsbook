@@ -522,30 +522,89 @@ export default function PrintCookbookPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Cover Style</label>
-              <div className="grid grid-cols-3 gap-3">
-                {(['classic', 'modern', 'minimal'] as const).map((style) => (
-                  <button
-                    key={style}
-                    onClick={() => setCoverStyle(style)}
-                    className={`p-4 rounded-card border text-center transition-all ${
-                      coverStyle === style
-                        ? 'border-cb-primary ring-2 ring-cb-primary/20'
-                        : 'border-cb-border hover:border-cb-primary/50'
-                    }`}
-                  >
-                    <div
-                      className={`w-full h-20 rounded mb-2 ${
-                        style === 'classic'
-                          ? 'bg-[#faf7f0]'
-                          : style === 'modern'
-                          ? 'bg-[#1a1a1a]'
-                          : 'bg-white border border-cb-border'
-                      }`}
-                    />
-                    <span className="text-sm font-medium capitalize">{style}</span>
-                  </button>
-                ))}
+              <label className="block text-sm font-medium mb-2">Template Style</label>
+              <div className="grid grid-cols-3 gap-4">
+                {/* Trattoria (Classic) */}
+                <button
+                  onClick={() => setCoverStyle('classic')}
+                  className={`p-3 rounded-card border text-left transition-all ${
+                    coverStyle === 'classic'
+                      ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                      : 'border-cb-border hover:border-cb-primary/50'
+                  }`}
+                >
+                  <div className="w-full aspect-[3/4] rounded bg-[#faf7f0] mb-3 relative overflow-hidden">
+                    <svg viewBox="0 0 120 160" className="w-full h-full">
+                      {/* Cream background with red frame */}
+                      <rect x="8" y="8" width="104" height="144" fill="none" stroke="#ce2b37" strokeWidth="1"/>
+                      {/* Title area */}
+                      <text x="60" y="55" textAnchor="middle" fontFamily="serif" fontSize="10" fontWeight="bold" fill="#1a1a1a">My Cookbook</text>
+                      <rect x="45" y="62" width="30" height="1" fill="#ce2b37"/>
+                      <text x="60" y="78" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#7a6a5a">by Author Name</text>
+                      {/* Recipe preview boxes */}
+                      <rect x="18" y="95" width="84" height="20" fill="#f0ece0" rx="2"/>
+                      <rect x="18" y="120" width="40" height="28" fill="#f0ece0" rx="2"/>
+                      <rect x="62" y="120" width="40" height="28" fill="#f0ece0" rx="2"/>
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-sm">Trattoria</div>
+                  <div className="text-xs text-cb-secondary">Warm & rustic</div>
+                </button>
+
+                {/* Studio (Modern) */}
+                <button
+                  onClick={() => setCoverStyle('modern')}
+                  className={`p-3 rounded-card border text-left transition-all ${
+                    coverStyle === 'modern'
+                      ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                      : 'border-cb-border hover:border-cb-primary/50'
+                  }`}
+                >
+                  <div className="w-full aspect-[3/4] rounded bg-[#1a1a1a] mb-3 relative overflow-hidden">
+                    <svg viewBox="0 0 120 160" className="w-full h-full">
+                      {/* Dark background with red accent bar */}
+                      <rect x="0" y="64" width="120" height="6" fill="#ce2b37"/>
+                      {/* Title area */}
+                      <text x="60" y="55" textAnchor="middle" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#f5f0e8">My Cookbook</text>
+                      <text x="60" y="85" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#ce2b37">A Collection</text>
+                      <text x="60" y="98" textAnchor="middle" fontFamily="sans-serif" fontSize="4" fill="rgba(245,240,232,0.5)">by Author Name</text>
+                      {/* Ghost numbers */}
+                      <text x="25" y="140" fontFamily="serif" fontSize="28" fill="rgba(255,255,255,0.06)" fontWeight="bold">1</text>
+                      <text x="70" y="140" fontFamily="serif" fontSize="28" fill="rgba(255,255,255,0.06)" fontWeight="bold">2</text>
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-sm">Studio</div>
+                  <div className="text-xs text-cb-secondary">Dark & dramatic</div>
+                </button>
+
+                {/* Garden (Minimal) */}
+                <button
+                  onClick={() => setCoverStyle('minimal')}
+                  className={`p-3 rounded-card border text-left transition-all ${
+                    coverStyle === 'minimal'
+                      ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                      : 'border-cb-border hover:border-cb-primary/50'
+                  }`}
+                >
+                  <div className="w-full aspect-[3/4] rounded bg-white border border-cb-border mb-3 relative overflow-hidden">
+                    <svg viewBox="0 0 120 160" className="w-full h-full">
+                      {/* White background with green top bar */}
+                      <rect x="0" y="0" width="120" height="4" fill="#009246"/>
+                      {/* Title area - Inter Bold style */}
+                      <text x="60" y="50" textAnchor="middle" fontFamily="sans-serif" fontSize="11" fontWeight="bold" fill="#1a1a1a">My Cookbook</text>
+                      <rect x="50" y="56" width="20" height="2" fill="#009246"/>
+                      <text x="60" y="74" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#9a8a7a">by Author Name</text>
+                      {/* Clean lines for content */}
+                      <rect x="20" y="95" width="80" height="1" fill="#e8e0d0"/>
+                      <text x="22" y="108" fontFamily="sans-serif" fontSize="4" fill="#009246">INGREDIENTS</text>
+                      <rect x="20" y="112" width="30" height="1" fill="#009246"/>
+                      <text x="22" y="125" fontFamily="sans-serif" fontSize="3" fill="#1a1a1a">– item one</text>
+                      <text x="22" y="132" fontFamily="sans-serif" fontSize="3" fill="#1a1a1a">– item two</text>
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-sm">Garden</div>
+                  <div className="text-xs text-cb-secondary">Clean & airy</div>
+                </button>
               </div>
             </div>
           </div>

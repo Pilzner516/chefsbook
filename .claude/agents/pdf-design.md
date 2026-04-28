@@ -1,26 +1,45 @@
 # Agent: PDF Cookbook Design Standards
 # File: .claude/agents/pdf-design.md
 
-## LAUNCH PROMPT — Save agent file (run this first, separately)
-
-```
-Copy the file docs/prompts/pdf-design-agent.md to .claude/agents/pdf-design.md and commit it with message "feat: add pdf-design agent". Do not build anything else in this step.
-```
-
 ---
 
-# READ THIS before touching any PDF generation, template, or Puppeteer rendering code.
+# READ THIS before touching any PDF generation or template code.
 
 ---
 
 ## Purpose
 
 This agent defines the visual design standards for all ChefsBook printed cookbook PDFs.
-Every session that modifies `CookbookPdf`, `CookbookCoverPdf`, or any Puppeteer PDF
-rendering pipeline MUST read this file before writing code.
+Every session that modifies PDF templates or the generate API route MUST read this file.
 
 The goal is award-winning cookbook design — not a Word document with bullet points.
 Reference quality: Ottolenghi cookbooks, NYT Cooking print editions, Bon Appétit.
+
+---
+
+## PDF Engine: @react-pdf/renderer
+
+We use `@react-pdf/renderer` for server-side PDF generation. Key technical notes:
+
+- **NOT Puppeteer** — react-pdf is a React component library, not browser-based
+- All layout uses Flexbox (like React Native, not web CSS grid/floats)
+- Text sizing is in points (pt), not px
+- No CSS classes — all styles are inline via `StyleSheet.create()`
+- Images must be fetched as base64 data URIs before rendering
+- Fonts must be registered with `Font.register()` before use
+- Use `renderToBuffer()` to generate the PDF buffer for storage upload
+
+### Three Template Files
+
+```
+apps/web/lib/pdf-templates/trattoria.tsx  — Classic (warm, rustic, cream bg)
+apps/web/lib/pdf-templates/studio.tsx     — Modern (dark, dramatic, black bg)
+apps/web/lib/pdf-templates/garden.tsx     — Minimal (clean, airy, white bg, Inter only)
+apps/web/lib/pdf-templates/types.ts       — Shared types and helper functions
+```
+
+The generate route at `apps/web/app/api/print-cookbooks/[id]/generate/route.ts` selects
+the appropriate template based on `cookbook.cover_style`.
 
 ---
 
@@ -40,11 +59,34 @@ PDF version:      1.4 minimum (Puppeteer default is fine)
 
 ## Typography
 
-### Font stack (load via Google Fonts @import in Puppeteer HTML)
+### Font Registration (react-pdf Font.register)
 
-```css
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
+Register fonts via jsDelivr CDN (fontsource has reliable TTF files):
+
+```typescript
+import { Font } from '@react-pdf/renderer';
+
+Font.register({
+  family: 'Playfair Display',
+  fonts: [
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-400-normal.ttf', fontWeight: 400 },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.ttf', fontWeight: 700 },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-400-italic.ttf', fontWeight: 400, fontStyle: 'italic' },
+  ],
+});
+
+Font.register({
+  family: 'Inter',
+  fonts: [
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-300-normal.ttf', fontWeight: 300 },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf', fontWeight: 400 },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf', fontWeight: 600 },
+    { src: 'https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf', fontWeight: 700 },
+  ],
+});
 ```
+
+**Important**: Garden template uses Inter only (no Playfair Display) — this is the key differentiator.
 
 ### Scale
 
@@ -270,36 +312,36 @@ For smaller books, skip chapter dividers.
 ## Known Bugs to Always Fix
 
 1. **Timer character bug**: The "ñ" character appearing before timer durations is a
-   rendering artifact. The correct output is `⏱ X min` with a space-hair separator.
-   Fix in the data pipeline: wherever `ñ` appears before a time value, replace with `⏱ `.
+   rendering artifact. Use `fixTimerCharacter()` from `types.ts` to replace with `⏱ `.
 
-2. **Bullet inconsistency**: Some ingredients use `•` and others use `-`.
-   Always normalise to `•` in the HTML template.
+2. **Bullet style**: Trattoria uses `•`, Garden uses en-dash `–` in green. 
+   Match the template's established style.
 
-3. **Excessive whitespace**: The current template has large empty `<br>` gaps between
-   sections. Remove all `<br>` spacers and use CSS `margin-bottom` on each section
-   instead. Sections should breathe but not gape.
+3. **Image loading**: All images must be fetched as base64 data URIs BEFORE rendering.
+   The template receives `image_urls: string[]` which should already be base64.
 
-4. **White page background**: The current template uses white. Change to `#faf7f0`.
+4. **Background colors per template**:
+   - Trattoria: warm cream `#faf7f0`
+   - Studio: dark `#1a1a1a`
+   - Garden: pure white `#ffffff`
 
-5. **Missing running footer**: Current template has only a page number.
-   Add the full three-column running footer per spec above.
+5. **Running footer**: All content pages need the three-column footer:
+   Left: "ChefsBook" | Centre: recipe title | Right: page number
 
 ---
 
 ## What NOT to do
 
-- Do NOT use white as the page background
-- Do NOT use dashes as bullet points in ingredients
-- Do NOT use `<br>` tags for spacing — use CSS margins
-- Do NOT use the system sans-serif font — always import Playfair Display + Inter
-- Do NOT render timers as "ñ Xmin" — fix the source data pipeline
-- Do NOT make the title page a plain white page with centred text
-- Do NOT omit the running footer
-- Do NOT skip the back page
-- Do NOT use gradients or drop shadows heavier than `0 2px 8px rgba(0,0,0,0.08)`
-- Do NOT use more than 2 font families (Playfair Display + Inter only)
+- Do NOT use CSS — react-pdf uses StyleSheet.create() with inline styles
+- Do NOT use external image URLs directly — fetch as base64 first
+- Do NOT use gradients (not supported in react-pdf)
+- Do NOT render timers as "ñ Xmin" — use fixTimerCharacter()
+- Do NOT use more than 2 font families (Playfair Display + Inter for Trattoria/Studio, Inter-only for Garden)
 - Do NOT use font sizes smaller than 8pt or larger than 52pt
+- Do NOT omit the running footer on content pages
+- Do NOT skip the back page branding
+- Do NOT use Google Fonts URLs (use jsDelivr fontsource CDN for reliable TTF)
+- Do NOT use shadows (react-pdf View has no box-shadow support)
 
 ---
 
@@ -307,18 +349,16 @@ For smaller books, skip chapter dividers.
 
 Every PDF generation session must confirm:
 
-- [ ] Page background is warm cream (#faf7f0), not white
-- [ ] Playfair Display loaded and rendering correctly on titles
-- [ ] Inter loaded and rendering correctly on body text
-- [ ] Title page has visual design (not plain centred text on white)
-- [ ] TOC has dotted leaders and correct page numbers
-- [ ] Recipe photos render at full width with object-fit: cover
-- [ ] No "ñ" timer characters — all replaced with ⏱
-- [ ] All bullets are • not -
-- [ ] Section labels (INGREDIENTS/STEPS/NOTES) are Inter 9pt ALL CAPS red
-- [ ] Step numbers are Playfair Display Bold red
+- [ ] Correct template selected based on cover_style (classic→Trattoria, modern→Studio, minimal→Garden)
+- [ ] Fonts loading via jsDelivr CDN (Playfair Display + Inter)
+- [ ] Background colors match template (cream for Trattoria, dark for Studio, white for Garden)
+- [ ] Cover/title page renders with template-specific design elements
+- [ ] TOC has leader lines and correct page numbers
+- [ ] Recipe images render (base64 conversion working)
+- [ ] No "ñ" timer characters — fixTimerCharacter() applied
+- [ ] Section labels (INGREDIENTS/STEPS/NOTES) styled correctly
 - [ ] Running footer present on all recipe pages
-- [ ] Back page present with Chefsbook branding
-- [ ] No excessive blank whitespace between sections
-- [ ] PDF opens cleanly in Adobe Acrobat or Preview
+- [ ] Back page present with ChefsBook branding
+- [ ] PDF opens cleanly in viewer
 - [ ] File size reasonable (< 50MB for a 100-page book)
+- [ ] TypeScript compiles with no errors: `npx tsc --noEmit`

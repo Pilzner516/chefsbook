@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getRecipe, listRecipePhotos, PLAN_LIMITS } from '@chefsbook/db';
 import type { PlanTier, RecipeWithDetails } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
-import { CookbookInteriorDocument, CookbookCoverDocument } from './CookbookPdf';
+import { CookbookCoverDocument } from './CookbookPdf';
+import { TrattoriaDocument } from '@/lib/pdf-templates/trattoria';
+import { StudioDocument } from '@/lib/pdf-templates/studio';
+import { GardenDocument } from '@/lib/pdf-templates/garden';
+import type { CookbookPdfOptions, CookbookRecipe } from '@/lib/pdf-templates/types';
 
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -93,31 +97,59 @@ export async function POST(
     .eq('id', id);
 
   try {
-    // Fetch all recipes
-    const recipes: RecipeWithDetails[] = [];
-    const recipeImages: Record<string, string | null> = {};
+    // Fetch all recipes and convert to CookbookRecipe format
+    const cookbookRecipes: CookbookRecipe[] = [];
 
     for (const recipeId of cookbook.recipe_ids) {
       const recipe = await getRecipe(recipeId);
       if (recipe) {
-        recipes.push(recipe);
-
-        // Fetch primary image
+        // Fetch all images for this recipe
+        const imageUrls: string[] = [];
         try {
           const photos = await listRecipePhotos(recipeId);
-          const photoUrl = photos.length > 0 ? photos[0].url : recipe.image_url;
-          if (photoUrl) {
-            recipeImages[recipe.id] = await fetchImageAsBase64(photoUrl);
-          } else {
-            recipeImages[recipe.id] = null;
+          for (const photo of photos.slice(0, 3)) {
+            const base64 = await fetchImageAsBase64(photo.url);
+            if (base64) imageUrls.push(base64);
+          }
+          // Fallback to recipe.image_url if no photos
+          if (imageUrls.length === 0 && recipe.image_url) {
+            const base64 = await fetchImageAsBase64(recipe.image_url);
+            if (base64) imageUrls.push(base64);
           }
         } catch {
-          recipeImages[recipe.id] = null;
+          // Continue without images
         }
+
+        // Convert to CookbookRecipe format
+        cookbookRecipes.push({
+          id: recipe.id,
+          title: recipe.title,
+          description: recipe.description ?? undefined,
+          cuisine: recipe.cuisine ?? undefined,
+          course: recipe.course ?? undefined,
+          total_minutes: recipe.total_minutes ?? undefined,
+          servings: recipe.servings ?? undefined,
+          ingredients: recipe.ingredients.map((ing) => ({
+            quantity: ing.quantity,
+            unit: ing.unit,
+            ingredient: ing.ingredient,
+            preparation: ing.preparation,
+            optional: ing.optional ?? false,
+            group_label: ing.group_label,
+          })),
+          steps: recipe.steps.map((step) => ({
+            step_number: step.step_number,
+            instruction: step.instruction,
+            timer_minutes: step.timer_minutes,
+            group_label: step.group_label ?? null,
+          })),
+          notes: recipe.notes ?? undefined,
+          image_urls: imageUrls,
+        });
       }
     }
 
-    if (recipes.length < 5) {
+    if (cookbookRecipes.length < 5) {
       await supabaseAdmin
         .from('printed_cookbooks')
         .update({ status: 'draft' })
@@ -127,8 +159,8 @@ export async function POST(
 
     // Calculate page count
     // Title page + blank + TOC (1 page per 25 recipes) + 2 pages per recipe + back page
-    const tocPages = Math.ceil(recipes.length / 25);
-    const pageCount = 2 + tocPages + recipes.length * 2 + 1;
+    const tocPages = Math.ceil(cookbookRecipes.length / 25);
+    const pageCount = 2 + tocPages + cookbookRecipes.length * 2 + 1;
     const spineWidth = calculateSpineWidth(pageCount);
 
     // Fetch chef hat icon for branding
@@ -145,18 +177,30 @@ export async function POST(
       console.warn('Could not fetch chef hat icon for PDF');
     }
 
-    // Generate interior PDF — per pdf-design.md
-    const interiorBuffer = await renderToBuffer(
-      CookbookInteriorDocument({
+    // Select template based on cover_style
+    const coverStyle = cookbook.cover_style as 'classic' | 'modern' | 'minimal';
+    const pdfOptions: CookbookPdfOptions = {
+      cookbook: {
         title: cookbook.title,
         subtitle: cookbook.subtitle || undefined,
-        authorName: cookbook.author_name,
-        recipes,
-        recipeImages,
-        coverStyle: cookbook.cover_style as 'classic' | 'modern' | 'minimal',
-        chefsHatBase64,
-      }),
-    );
+        author_name: cookbook.author_name,
+        cover_style: coverStyle,
+        cover_image_url: cookbook.cover_image_url || undefined,
+        selected_image_urls: cookbook.selected_image_urls || undefined,
+      },
+      recipes: cookbookRecipes,
+      chefsHatBase64,
+    };
+
+    // Generate interior PDF using the appropriate template
+    const TemplateDocument =
+      coverStyle === 'modern'
+        ? StudioDocument
+        : coverStyle === 'minimal'
+        ? GardenDocument
+        : TrattoriaDocument;
+
+    const interiorBuffer = await renderToBuffer(TemplateDocument(pdfOptions));
 
     // Generate cover PDF — per pdf-design.md
     const coverBuffer = await renderToBuffer(
