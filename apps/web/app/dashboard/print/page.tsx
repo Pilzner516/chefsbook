@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, PLAN_LIMITS, getPrimaryPhotos } from '@chefsbook/db';
+import { supabase, PLAN_LIMITS, getPrimaryPhotos, listRecipePhotos } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 import { proxyIfNeeded } from '@/lib/recipeImage';
 import { PRODUCT_OPTIONS, getDefaultProductOptions, type ProductOptions } from '@/lib/lulu';
 
-type Step = 'select' | 'details' | 'options' | 'preview' | 'order' | 'confirm';
+type Step = 'select' | 'images' | 'details' | 'options' | 'preview' | 'order' | 'confirm';
 
 interface RecipePreview {
   id: string;
@@ -19,12 +19,14 @@ interface RecipePreview {
   image_url: string | null;
 }
 
+type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'spice';
+
 interface PrintedCookbook {
   id: string;
   title: string;
   subtitle?: string;
   author_name: string;
-  cover_style: 'classic' | 'modern' | 'minimal';
+  cover_style: CoverStyle;
   recipe_ids: string[];
   status: string;
   page_count?: number;
@@ -61,8 +63,15 @@ export default function PrintCookbookPage() {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [authorName, setAuthorName] = useState('');
-  const [coverStyle, setCoverStyle] = useState<'classic' | 'modern' | 'minimal'>('classic');
+  const [coverStyle, setCoverStyle] = useState<CoverStyle>('classic');
   const [foreword, setForeword] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [coverImageUploading, setCoverImageUploading] = useState(false);
+
+  // Step 1.5: Per-recipe image selection
+  const [recipeImages, setRecipeImages] = useState<Record<string, { url: string; id: string }[]>>({});
+  const [selectedImageUrls, setSelectedImageUrls] = useState<Record<string, string>>({});
+  const [imagesLoading, setImagesLoading] = useState(false);
 
   // Step 3: Product options
   const [productOptions, setProductOptions] = useState<ProductOptions>(getDefaultProductOptions());
@@ -162,6 +171,55 @@ export default function PrintCookbookPage() {
     );
   };
 
+  const loadRecipeImages = async () => {
+    setImagesLoading(true);
+    const imagesMap: Record<string, { url: string; id: string }[]> = {};
+    const defaultSelections: Record<string, string> = {};
+
+    for (const recipeId of selectedIds) {
+      try {
+        const photos = await listRecipePhotos(recipeId);
+        if (photos.length > 0) {
+          imagesMap[recipeId] = photos.map((p) => ({ url: p.url, id: p.id }));
+          // Default to primary (first) image
+          const primary = photos.find((p) => p.is_primary) ?? photos[0];
+          if (primary) {
+            defaultSelections[recipeId] = primary.url;
+          }
+        }
+      } catch {
+        // No images available
+      }
+    }
+
+    setRecipeImages(imagesMap);
+    setSelectedImageUrls(defaultSelections);
+    setImagesLoading(false);
+  };
+
+  const handleCoverImageUpload = async (file: File) => {
+    if (!user || !session) return;
+    setCoverImageUploading(true);
+    try {
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `${user.id}/cover-${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('cookbook-pdfs')
+        .upload(path, file, { contentType: file.type });
+      if (uploadErr) throw uploadErr;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('cookbook-pdfs')
+        .getPublicUrl(path);
+      setCoverImageUrl(publicUrl);
+    } catch (err) {
+      console.error('Cover upload failed:', err);
+      setGenerateError('Failed to upload cover image');
+    } finally {
+      setCoverImageUploading(false);
+    }
+  };
+
   const handleCreateCookbook = async () => {
     if (!title.trim() || !authorName.trim()) return;
     if (selectedIds.length < 5) return;
@@ -184,6 +242,8 @@ export default function PrintCookbookPage() {
           cover_style: coverStyle,
           recipe_ids: selectedIds,
           foreword: foreword.trim() || null,
+          cover_image_url: coverImageUrl,
+          selected_image_urls: selectedImageUrls,
         }),
       });
 
@@ -198,7 +258,11 @@ export default function PrintCookbookPage() {
       // Generate the PDFs
       const genRes = await fetch(`/api/print-cookbooks/${created.id}/generate`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ productOptions }),
       });
 
       if (!genRes.ok) {
@@ -365,23 +429,23 @@ export default function PrintCookbookPage() {
 
       {/* Progress Steps */}
       <div className="flex items-center gap-2 mb-8">
-        {(['select', 'details', 'options', 'preview', 'order', 'confirm'] as Step[]).map((s, i) => (
+        {(['select', 'images', 'details', 'options', 'preview', 'order', 'confirm'] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
                 step === s
                   ? 'bg-cb-primary text-white'
-                  : i < ['select', 'details', 'options', 'preview', 'order', 'confirm'].indexOf(step)
+                  : i < ['select', 'images', 'details', 'options', 'preview', 'order', 'confirm'].indexOf(step)
                   ? 'bg-cb-green text-white'
                   : 'bg-cb-border text-cb-secondary'
               }`}
             >
               {i + 1}
             </div>
-            {i < 5 && (
+            {i < 6 && (
               <div
                 className={`w-10 h-0.5 mx-1 ${
-                  i < ['select', 'details', 'options', 'preview', 'order', 'confirm'].indexOf(step)
+                  i < ['select', 'images', 'details', 'options', 'preview', 'order', 'confirm'].indexOf(step)
                     ? 'bg-cb-green'
                     : 'bg-cb-border'
                 }`}
@@ -477,9 +541,117 @@ export default function PrintCookbookPage() {
 
               <div className="flex justify-end">
                 <button
-                  onClick={() => setStep('details')}
+                  onClick={() => {
+                    loadRecipeImages();
+                    setStep('images');
+                  }}
                   disabled={selectedIds.length < 5}
                   className="bg-cb-primary text-white px-6 py-2.5 rounded-input font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
+                >
+                  Continue
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Step 1.5: Per-Recipe Image Selection */}
+      {step === 'images' && (
+        <div>
+          <h2 className="text-lg font-semibold mb-2">Select Images for Recipes</h2>
+          <p className="text-sm text-cb-secondary mb-6">
+            Choose which image to use for each recipe in your cookbook. Recipes without images will use a styled text page.
+          </p>
+
+          {imagesLoading ? (
+            <div className="text-center text-cb-secondary py-12">Loading images...</div>
+          ) : (
+            <>
+              <div className="space-y-6 mb-6">
+                {selectedIds.map((recipeId) => {
+                  const recipe = recipes.find((r) => r.id === recipeId);
+                  const images = recipeImages[recipeId] ?? [];
+                  const selectedUrl = selectedImageUrls[recipeId];
+
+                  return (
+                    <div key={recipeId} className="bg-cb-card border border-cb-border rounded-card p-4">
+                      <h3 className="font-medium mb-3">{recipe?.title ?? 'Unknown Recipe'}</h3>
+                      {images.length === 0 ? (
+                        <p className="text-sm text-cb-muted">No images available</p>
+                      ) : (
+                        <div className="flex gap-3 flex-wrap">
+                          {/* No image option */}
+                          <button
+                            onClick={() => {
+                              setSelectedImageUrls((prev) => {
+                                const updated = { ...prev };
+                                delete updated[recipeId];
+                                return updated;
+                              });
+                            }}
+                            className={`w-20 h-20 rounded-input border-2 flex items-center justify-center transition-all ${
+                              !selectedUrl
+                                ? 'border-cb-primary bg-cb-primary/5'
+                                : 'border-cb-border hover:border-cb-primary/50'
+                            }`}
+                          >
+                            <div className="text-center">
+                              <svg className="w-6 h-6 mx-auto text-cb-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                              </svg>
+                              <span className="text-[10px] text-cb-muted">None</span>
+                            </div>
+                          </button>
+                          {images.map((img) => (
+                            <button
+                              key={img.id}
+                              onClick={() => {
+                                setSelectedImageUrls((prev) => ({
+                                  ...prev,
+                                  [recipeId]: img.url,
+                                }));
+                              }}
+                              className={`relative w-20 h-20 rounded-input border-2 overflow-hidden transition-all ${
+                                selectedUrl === img.url
+                                  ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                                  : 'border-cb-border hover:border-cb-primary/50'
+                              }`}
+                            >
+                              <img
+                                src={proxyIfNeeded(img.url)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                              {selectedUrl === img.url && (
+                                <div className="absolute top-1 right-1 w-5 h-5 bg-cb-primary rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setStep('select')}
+                  className="text-cb-secondary hover:text-cb-text transition-colors"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => setStep('details')}
+                  className="bg-cb-primary text-white px-6 py-2.5 rounded-input font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
                 >
                   Continue
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -547,6 +719,55 @@ export default function PrintCookbookPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1">Cover Image <span className="text-cb-muted font-normal">(optional)</span></label>
+              <p className="text-xs text-cb-secondary mb-3">Upload a custom image for your cookbook cover. If not provided, a styled title page will be used.</p>
+              {coverImageUrl ? (
+                <div className="relative inline-block">
+                  <img
+                    src={proxyIfNeeded(coverImageUrl)}
+                    alt="Cover preview"
+                    className="w-40 h-52 object-cover rounded-card border border-cb-border"
+                  />
+                  <button
+                    onClick={() => setCoverImageUrl(null)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-cb-primary text-white rounded-full flex items-center justify-center hover:opacity-90"
+                    title="Remove cover image"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <label className={`flex flex-col items-center justify-center w-40 h-52 border-2 border-dashed rounded-card cursor-pointer transition-colors ${coverImageUploading ? 'border-cb-primary bg-cb-primary/5' : 'border-cb-border hover:border-cb-primary/50'}`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleCoverImageUpload(file);
+                    }}
+                    disabled={coverImageUploading}
+                  />
+                  {coverImageUploading ? (
+                    <svg className="animate-spin w-8 h-8 text-cb-primary" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : (
+                    <>
+                      <svg className="w-10 h-10 text-cb-secondary/40 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+                      </svg>
+                      <span className="text-xs text-cb-secondary">Click to upload</span>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-2">Template Style</label>
               <div className="grid grid-cols-3 gap-4">
                 {/* Trattoria (Classic) */}
@@ -560,13 +781,10 @@ export default function PrintCookbookPage() {
                 >
                   <div className="w-full aspect-[3/4] rounded bg-[#faf7f0] mb-3 relative overflow-hidden">
                     <svg viewBox="0 0 120 160" className="w-full h-full">
-                      {/* Cream background with red frame */}
                       <rect x="8" y="8" width="104" height="144" fill="none" stroke="#ce2b37" strokeWidth="1"/>
-                      {/* Title area */}
                       <text x="60" y="55" textAnchor="middle" fontFamily="serif" fontSize="10" fontWeight="bold" fill="#1a1a1a">My Cookbook</text>
                       <rect x="45" y="62" width="30" height="1" fill="#ce2b37"/>
                       <text x="60" y="78" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#7a6a5a">by Author Name</text>
-                      {/* Recipe preview boxes */}
                       <rect x="18" y="95" width="84" height="20" fill="#f0ece0" rx="2"/>
                       <rect x="18" y="120" width="40" height="28" fill="#f0ece0" rx="2"/>
                       <rect x="62" y="120" width="40" height="28" fill="#f0ece0" rx="2"/>
@@ -587,13 +805,10 @@ export default function PrintCookbookPage() {
                 >
                   <div className="w-full aspect-[3/4] rounded bg-[#1a1a1a] mb-3 relative overflow-hidden">
                     <svg viewBox="0 0 120 160" className="w-full h-full">
-                      {/* Dark background with red accent bar */}
                       <rect x="0" y="64" width="120" height="6" fill="#ce2b37"/>
-                      {/* Title area */}
                       <text x="60" y="55" textAnchor="middle" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#f5f0e8">My Cookbook</text>
                       <text x="60" y="85" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#ce2b37">A Collection</text>
                       <text x="60" y="98" textAnchor="middle" fontFamily="sans-serif" fontSize="4" fill="rgba(245,240,232,0.5)">by Author Name</text>
-                      {/* Ghost numbers */}
                       <text x="25" y="140" fontFamily="serif" fontSize="28" fill="rgba(255,255,255,0.06)" fontWeight="bold">1</text>
                       <text x="70" y="140" fontFamily="serif" fontSize="28" fill="rgba(255,255,255,0.06)" fontWeight="bold">2</text>
                     </svg>
@@ -613,22 +828,119 @@ export default function PrintCookbookPage() {
                 >
                   <div className="w-full aspect-[3/4] rounded bg-white border border-cb-border mb-3 relative overflow-hidden">
                     <svg viewBox="0 0 120 160" className="w-full h-full">
-                      {/* White background with green top bar */}
                       <rect x="0" y="0" width="120" height="4" fill="#009246"/>
-                      {/* Title area - Inter Bold style */}
                       <text x="60" y="50" textAnchor="middle" fontFamily="sans-serif" fontSize="11" fontWeight="bold" fill="#1a1a1a">My Cookbook</text>
                       <rect x="50" y="56" width="20" height="2" fill="#009246"/>
                       <text x="60" y="74" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#9a8a7a">by Author Name</text>
-                      {/* Clean lines for content */}
                       <rect x="20" y="95" width="80" height="1" fill="#e8e0d0"/>
                       <text x="22" y="108" fontFamily="sans-serif" fontSize="4" fill="#009246">INGREDIENTS</text>
                       <rect x="20" y="112" width="30" height="1" fill="#009246"/>
-                      <text x="22" y="125" fontFamily="sans-serif" fontSize="3" fill="#1a1a1a">– item one</text>
-                      <text x="22" y="132" fontFamily="sans-serif" fontSize="3" fill="#1a1a1a">– item two</text>
                     </svg>
                   </div>
                   <div className="font-semibold text-sm">Garden</div>
                   <div className="text-xs text-cb-secondary">Clean & airy</div>
+                </button>
+
+                {/* Heritage (Farmhouse) */}
+                <button
+                  onClick={() => setCoverStyle('heritage')}
+                  className={`p-3 rounded-card border text-left transition-all ${
+                    coverStyle === 'heritage'
+                      ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                      : 'border-cb-border hover:border-cb-primary/50'
+                  }`}
+                >
+                  <div className="w-full aspect-[3/4] rounded bg-[#f8f5f0] mb-3 relative overflow-hidden">
+                    <svg viewBox="0 0 120 160" className="w-full h-full">
+                      {/* Double frame */}
+                      <rect x="10" y="10" width="100" height="140" fill="none" stroke="#8b9a7d" strokeWidth="1"/>
+                      <rect x="14" y="14" width="92" height="132" fill="none" stroke="#ddd5c8" strokeWidth="0.5"/>
+                      {/* Decorative flourish */}
+                      <line x1="40" y1="40" x2="80" y2="40" stroke="#8b9a7d" strokeWidth="0.5"/>
+                      <circle cx="60" cy="40" r="2" fill="#8b9a7d"/>
+                      <line x1="40" y1="40" x2="35" y2="40" stroke="#8b9a7d" strokeWidth="0.5"/>
+                      <line x1="80" y1="40" x2="85" y2="40" stroke="#8b9a7d" strokeWidth="0.5"/>
+                      {/* Title */}
+                      <text x="60" y="60" textAnchor="middle" fontFamily="serif" fontSize="10" fontWeight="bold" fill="#3a3028">My Cookbook</text>
+                      <rect x="50" y="66" width="20" height="1" fill="#6b5344"/>
+                      <text x="60" y="82" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#9a8a7a">by Author Name</text>
+                      {/* Two-column preview */}
+                      <line x1="60" y1="95" x2="60" y2="145" stroke="#ddd5c8" strokeWidth="0.5"/>
+                      <text x="35" y="105" textAnchor="middle" fontFamily="sans-serif" fontSize="3" fill="#8b9a7d">INGREDIENTS</text>
+                      <text x="85" y="105" textAnchor="middle" fontFamily="sans-serif" fontSize="3" fill="#8b9a7d">DIRECTIONS</text>
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-sm">Heritage</div>
+                  <div className="text-xs text-cb-secondary">Farmhouse charm</div>
+                </button>
+
+                {/* Nordic (Scandinavian) */}
+                <button
+                  onClick={() => setCoverStyle('nordic')}
+                  className={`p-3 rounded-card border text-left transition-all ${
+                    coverStyle === 'nordic'
+                      ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                      : 'border-cb-border hover:border-cb-primary/50'
+                  }`}
+                >
+                  <div className="w-full aspect-[3/4] rounded bg-white mb-3 relative overflow-hidden">
+                    <svg viewBox="0 0 120 160" className="w-full h-full">
+                      {/* Left accent panel */}
+                      <rect x="0" y="0" width="40" height="160" fill="#f5f5f5"/>
+                      {/* Title - bottom aligned like Noma */}
+                      <text x="48" y="130" fontFamily="sans-serif" fontSize="12" fontWeight="bold" fill="#2d2d2d">My</text>
+                      <text x="48" y="145" fontFamily="sans-serif" fontSize="12" fontWeight="bold" fill="#2d2d2d">Cookbook</text>
+                      <text x="48" y="155" fontFamily="sans-serif" fontSize="4" fill="#5c7a8a">by Author Name</text>
+                      {/* Blue accent */}
+                      <rect x="0" y="0" width="4" height="160" fill="#5c7a8a"/>
+                      {/* Step numbers preview */}
+                      <text x="50" y="50" fontFamily="sans-serif" fontSize="8" fill="#5c7a8a">01</text>
+                      <line x1="50" y1="55" x2="110" y2="55" stroke="#e0e0e0" strokeWidth="0.5"/>
+                      <text x="50" y="70" fontFamily="sans-serif" fontSize="8" fill="#5c7a8a">02</text>
+                      <line x1="50" y1="75" x2="110" y2="75" stroke="#e0e0e0" strokeWidth="0.5"/>
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-sm">Nordic</div>
+                  <div className="text-xs text-cb-secondary">Stark & minimal</div>
+                </button>
+
+                {/* Spice (Middle Eastern) */}
+                <button
+                  onClick={() => setCoverStyle('spice')}
+                  className={`p-3 rounded-card border text-left transition-all ${
+                    coverStyle === 'spice'
+                      ? 'border-cb-primary ring-2 ring-cb-primary/20'
+                      : 'border-cb-border hover:border-cb-primary/50'
+                  }`}
+                >
+                  <div className="w-full aspect-[3/4] rounded bg-[#faf8f5] mb-3 relative overflow-hidden">
+                    <svg viewBox="0 0 120 160" className="w-full h-full">
+                      {/* Ornate double frame */}
+                      <rect x="8" y="8" width="104" height="144" fill="none" stroke="#d4a84b" strokeWidth="1.5"/>
+                      <rect x="12" y="12" width="96" height="136" fill="none" stroke="#d4a3b0" strokeWidth="0.5"/>
+                      {/* Top/bottom accent bars */}
+                      <rect x="0" y="0" width="120" height="4" fill="#8b2942"/>
+                      <rect x="0" y="156" width="120" height="4" fill="#1a6b6b"/>
+                      {/* Diamond pattern decoration */}
+                      <line x1="40" y1="35" x2="55" y2="35" stroke="#d4a84b" strokeWidth="0.5"/>
+                      <rect x="57" y="33" width="6" height="6" fill="#d4a84b" transform="rotate(45 60 36)"/>
+                      <line x1="65" y1="35" x2="80" y2="35" stroke="#d4a84b" strokeWidth="0.5"/>
+                      {/* Title */}
+                      <text x="60" y="60" textAnchor="middle" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#2a2520">My Cookbook</text>
+                      <text x="60" y="75" textAnchor="middle" fontFamily="serif" fontSize="6" fontStyle="italic" fill="#8b2942">A Collection</text>
+                      <rect x="45" y="82" width="30" height="1" fill="#d4a84b"/>
+                      <text x="60" y="96" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#6a5a4a">by Author Name</text>
+                      {/* Saffron ingredient box preview */}
+                      <rect x="20" y="110" width="80" height="35" fill="#f5e6c8"/>
+                      <rect x="20" y="110" width="2" height="35" fill="#d4a84b"/>
+                      <text x="28" y="122" fontFamily="sans-serif" fontSize="4" fill="#8b2942">INGREDIENTS</text>
+                      {/* Teal step number */}
+                      <circle cx="90" y="130" r="6" fill="#1a6b6b"/>
+                      <text x="90" y="132" textAnchor="middle" fontFamily="sans-serif" fontSize="6" fill="white" fontWeight="bold">1</text>
+                    </svg>
+                  </div>
+                  <div className="font-semibold text-sm">Spice</div>
+                  <div className="text-xs text-cb-secondary">Rich & ornate</div>
                 </button>
               </div>
             </div>
@@ -642,7 +954,7 @@ export default function PrintCookbookPage() {
 
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setStep('select')}
+              onClick={() => setStep('images')}
               className="text-cb-secondary hover:text-cb-text transition-colors"
             >
               ← Back
@@ -661,7 +973,7 @@ export default function PrintCookbookPage() {
         </div>
       )}
 
-      {/* Step 3: Product Options */}
+      {/* Step 4: Product Options */}
       {step === 'options' && (
         <div className="max-w-2xl">
           <h2 className="text-lg font-semibold mb-2">Print Options</h2>

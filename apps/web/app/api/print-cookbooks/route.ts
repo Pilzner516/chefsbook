@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, subtitle, author_name, cover_style, recipe_ids, foreword } = body;
+  const { title, subtitle, author_name, cover_style, recipe_ids, foreword, cover_image_url, selected_image_urls } = body;
 
   if (!title || !author_name) {
     return NextResponse.json({ error: 'Title and author name are required' }, { status: 400 });
@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
       cover_style: cover_style || 'classic',
       recipe_ids,
       foreword: foreword || null,
+      cover_image_url: cover_image_url || null,
+      selected_image_urls: selected_image_urls || null,
       status: 'draft',
     })
     .select()

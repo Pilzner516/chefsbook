@@ -2,12 +2,14 @@
  * Shared types for PDF cookbook templates
  */
 
+export type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'spice';
+
 export interface CookbookPdfOptions {
   cookbook: {
     title: string;
     subtitle?: string;
     author_name: string;
-    cover_style: 'classic' | 'modern' | 'minimal';
+    cover_style: CoverStyle;
     cover_image_url?: string;
     selected_image_urls?: Record<string, string[]>;
     foreword?: string;
