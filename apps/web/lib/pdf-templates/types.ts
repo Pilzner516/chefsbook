@@ -10,6 +10,7 @@ export interface CookbookPdfOptions {
     cover_style: 'classic' | 'modern' | 'minimal';
     cover_image_url?: string;
     selected_image_urls?: Record<string, string[]>;
+    foreword?: string;
   };
   recipes: CookbookRecipe[];
   chefsHatBase64?: string | null;

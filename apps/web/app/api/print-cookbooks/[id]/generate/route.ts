@@ -111,13 +111,10 @@ export async function POST(
             const base64 = await fetchImageAsBase64(photo.url);
             if (base64) imageUrls.push(base64);
           }
-          // Fallback to recipe.image_url if no photos
-          if (imageUrls.length === 0 && recipe.image_url) {
-            const base64 = await fetchImageAsBase64(recipe.image_url);
-            if (base64) imageUrls.push(base64);
-          }
+          // Do NOT fall back to recipe.image_url — scraped images may have watermarks
+          // Recipes without user-uploaded photos will use the styled placeholder
         } catch {
-          // Continue without images
+          // Continue without images — will use placeholder
         }
 
         // Convert to CookbookRecipe format
@@ -187,6 +184,7 @@ export async function POST(
         cover_style: coverStyle,
         cover_image_url: cookbook.cover_image_url || undefined,
         selected_image_urls: cookbook.selected_image_urls || undefined,
+        foreword: cookbook.foreword || undefined,
       },
       recipes: cookbookRecipes,
       chefsHatBase64,

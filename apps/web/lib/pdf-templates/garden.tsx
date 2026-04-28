@@ -342,12 +342,64 @@ const styles = StyleSheet.create({
     color: MUTED,
   },
 
+  // "A ChefsBook Cookbook" line on cover
+  cookbookLine: {
+    fontSize: 10,
+    fontFamily: 'Inter',
+    fontWeight: 300,
+    color: MUTED,
+    marginTop: 24,
+  },
+
+  // Foreword page
+  forewordPage: {
+    paddingTop: 80,
+    paddingBottom: 60,
+    paddingHorizontal: 80,
+    backgroundColor: WHITE,
+    alignItems: 'center',
+  },
+  forewordLabel: {
+    fontSize: 9,
+    fontFamily: 'Inter',
+    fontWeight: 300,
+    letterSpacing: 4,
+    color: GREEN,
+    textTransform: 'uppercase',
+    marginBottom: 12,
+  },
+  forewordRule: {
+    width: 60,
+    height: 1,
+    backgroundColor: GREEN,
+    marginBottom: 32,
+  },
+  forewordText: {
+    fontSize: 13,
+    fontFamily: 'Inter',
+    fontWeight: 300,
+    fontStyle: 'italic',
+    color: DARK,
+    lineHeight: 1.8,
+    textAlign: 'center',
+    maxWidth: 450,
+  },
+  forewordAuthor: {
+    fontSize: 11,
+    fontFamily: 'Inter',
+    fontWeight: 300,
+    color: MUTED,
+    textAlign: 'right',
+    marginTop: 32,
+  },
+
   // Back page
   backPage: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: WHITE,
+    paddingHorizontal: 60,
   },
   backTopBar: {
     position: 'absolute',
@@ -376,6 +428,21 @@ const styles = StyleSheet.create({
     color: MUTED,
     marginBottom: 16,
   },
+  backDivider: {
+    width: 60,
+    height: 1,
+    backgroundColor: BORDER,
+    marginVertical: 20,
+  },
+  backBlurb: {
+    fontSize: 12,
+    fontFamily: 'Inter',
+    fontWeight: 300,
+    color: MUTED,
+    textAlign: 'center',
+    lineHeight: 1.6,
+    marginBottom: 20,
+  },
   backUrl: {
     fontSize: 11,
     fontFamily: 'Inter',
@@ -394,6 +461,7 @@ function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions[
           <Image src={cookbook.cover_image_url} style={styles.coverImage} />
         </View>
         <Text style={styles.coverAuthor}>by {cookbook.author_name}</Text>
+        <Text style={styles.cookbookLine}>A ChefsBook Cookbook</Text>
         <Text style={styles.coverUrl}>chefsbk.app</Text>
       </Page>
     );
@@ -407,6 +475,7 @@ function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions[
         <View style={styles.coverRule} />
         {cookbook.subtitle && <Text style={styles.coverNoImageSubtitle}>{cookbook.subtitle}</Text>}
         <Text style={styles.coverAuthor}>by {cookbook.author_name}</Text>
+        <Text style={styles.cookbookLine}>A ChefsBook Cookbook</Text>
       </View>
     </Page>
   );
@@ -524,6 +593,17 @@ function RecipeContentPage({ recipe }: { recipe: CookbookRecipe }) {
   );
 }
 
+function ForewordPage({ foreword, authorName }: { foreword: string; authorName: string }) {
+  return (
+    <Page size="LETTER" style={styles.forewordPage}>
+      <Text style={styles.forewordLabel}>F O R E W O R D</Text>
+      <View style={styles.forewordRule} />
+      <Text style={styles.forewordText}>{foreword}</Text>
+      <Text style={styles.forewordAuthor}>— {authorName}</Text>
+    </Page>
+  );
+}
+
 function BackPage({ chefsHatBase64 }: { chefsHatBase64?: string | null }) {
   return (
     <Page size="LETTER" style={styles.backPage}>
@@ -531,14 +611,19 @@ function BackPage({ chefsHatBase64 }: { chefsHatBase64?: string | null }) {
       {chefsHatBase64 && <Image src={chefsHatBase64} style={styles.backHat} />}
       <Text style={styles.backWordmark}>ChefsBook</Text>
       <Text style={styles.backTagline}>Your recipes, beautifully collected.</Text>
-      <Text style={styles.backUrl}>chefsbk.app</Text>
+      <View style={styles.backDivider} />
+      <Text style={styles.backBlurb}>
+        This cookbook was created with ChefsBook — the app that helps you save, organise, and share the recipes that matter most. Import from any website, scan handwritten cards, or create your own. Your collection, always with you.
+      </Text>
+      <Text style={styles.backUrl}>Discover ChefsBook at chefsbk.app</Text>
     </Page>
   );
 }
 
 export function GardenDocument({ cookbook, recipes, chefsHatBase64 }: CookbookPdfOptions) {
   const tocPages = Math.ceil(recipes.length / 20);
-  const startPage = 3 + tocPages;
+  const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
+  const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
 
   return (
     <Document>
@@ -548,6 +633,11 @@ export function GardenDocument({ cookbook, recipes, chefsHatBase64 }: CookbookPd
       <Page size="LETTER" style={{ backgroundColor: WHITE }} />
 
       <TOCPage recipes={recipes} startPage={startPage} />
+
+      {/* Foreword page if text provided */}
+      {hasForeword && (
+        <ForewordPage foreword={cookbook.foreword!} authorName={cookbook.author_name} />
+      )}
 
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
