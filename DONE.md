@@ -1,6 +1,31 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session COOKBOOK-BUILDER-3) TYPE: CODE FIX + FEATURE
+
+### Cookbook Builder - Final Fixes + BBQ Template
+
+**Bug Fixes:**
+- Fixed cover image upload rejecting PNG (bucket only allowed PDF) - added image/jpeg to allowed_mime_types, sharp converts all uploads to JPEG
+- Fixed cover image not showing in generated PDF - now converts URL to base64 before passing to react-pdf (auth-required URLs don't work)
+- Fixed Preview PDF button styling - now green pill button matching "Order Now"
+- Fixed title positioning on all 6 templates - moved from center to 2/3 down page (paddingTop: '45%')
+- Fixed BBQ template step timer overlap - inline timer "(X min)" in step text avoids react-pdf layout bug
+
+**New Feature:**
+- BBQ template replaces Spice - smoky pitmaster style with Oswald + Source Sans Pro fonts, charcoal/amber/rust palette
+
+**Database:**
+- Updated printed_cookbooks_cover_style_check constraint: replaced 'spice' with 'bbq'
+
+**Files:**
+- Created `apps/web/lib/pdf-templates/bbq.tsx`
+- Deleted `apps/web/lib/pdf-templates/spice.tsx`
+
+**Deployment:** Multiple deploys to RPi5
+
+---
+
 ## 2026-04-28 (session COOKBOOK-BUILDER-2) TYPE: CODE FIX
 
 ### Cookbook Builder Fixes
