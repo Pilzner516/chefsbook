@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@chefsbook/db';
+import sharp from 'sharp';
 
 async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
@@ -25,16 +26,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
 
-  // Convert to buffer
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const ext = file.name.split('.').pop() || 'jpg';
-  const path = `${userId}/cover-${Date.now()}.${ext}`;
+  // Convert to buffer and then to JPEG (bucket may reject PNG)
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
+  const jpegBuffer = await sharp(rawBuffer)
+    .jpeg({ quality: 90 })
+    .toBuffer();
 
-  // Upload to storage
+  const path = `${userId}/cover-${Date.now()}.jpg`;
+
+  // Upload to storage as JPEG
   const { error: uploadError } = await supabaseAdmin.storage
     .from('cookbook-pdfs')
-    .upload(path, buffer, {
-      contentType: file.type,
+    .upload(path, jpegBuffer, {
+      contentType: 'image/jpeg',
       upsert: true,
     });
 
