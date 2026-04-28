@@ -427,25 +427,15 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     color: WARM_WHITE,
   },
+  stepContent: {
+    flex: 1,
+  },
   stepText: {
     fontSize: 10,
     fontFamily: 'Source Sans Pro',
     fontWeight: 400,
     color: CHARCOAL,
-    lineHeight: 1.5,
-    marginBottom: 2,
-  },
-  stepTimer: {
-    fontSize: 9,
-    fontFamily: 'Source Sans Pro',
-    fontWeight: 600,
-    color: RUST,
-    backgroundColor: CREAM,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    borderRadius: 2,
+    lineHeight: 1.6,
   },
 
   // Notes
@@ -656,17 +646,17 @@ function RecipePage({ recipe }: { recipe: CookbookRecipe }) {
             if (step.group_label) currentStepGroup = step.group_label;
 
             return (
-              <View key={si}>
+              <View key={si} wrap={false}>
                 {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
                 <View style={styles.stepRow}>
                   <View style={styles.stepNumber}>
                     <Text style={styles.stepNumberText}>{step.step_number}</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.stepText}>{fixTimerCharacter(step.instruction)}</Text>
-                    {step.timer_minutes && (
-                      <Text style={styles.stepTimer}>{step.timer_minutes} min</Text>
-                    )}
+                  <View style={styles.stepContent}>
+                    <Text style={styles.stepText}>
+                      {fixTimerCharacter(step.instruction)}
+                      {step.timer_minutes ? ` (${step.timer_minutes} min)` : ''}
+                    </Text>
                   </View>
                 </View>
               </View>
