@@ -1,6 +1,33 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session COOKBOOK-BUILDER) TYPE: FEATURE
+
+### Complete Cookbook Builder Overhaul
+
+**New Features:**
+- Cover image upload in wizard Step 2 (uploads to Supabase storage)
+- Per-recipe image selection (new step between recipe selection and details)
+- B&W PDF rendering with sharp grayscale conversion
+- 7-step wizard flow (was 6)
+
+**Three New Templates:**
+- Heritage (farmhouse/Magnolia Table style) - Libre Baskerville + Source Sans, sage green accents
+- Nordic (Scandinavian/Noma style) - Work Sans only, ultra-minimal, muted blue accents
+- Spice (Middle Eastern/Ottolenghi style) - Cormorant Garamond + Lato, saffron/pomegranate/teal
+
+**Bug Fixes:**
+- Fixed timer emoji rendering as ñ (removed emoji, fonts don't support it)
+- Fixed Garden template italic font error (removed unsupported fontStyle)
+
+**Migrations:** 061 (foreword), 062 (new template styles)
+
+**Files created:** heritage.tsx, nordic.tsx, spice.tsx (apps/web/lib/pdf-templates/)
+
+**Deployment:** Commit ca9d73d, deployed to RPi5
+
+---
+
 ## 2026-04-27 (session PDF-POLISH) TYPE: UI POLISH
 
 ### Cookbook PDF Template Polish Pass
