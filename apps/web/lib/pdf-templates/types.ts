@@ -115,11 +115,11 @@ export function truncate(text: string, maxLen: number): string {
 }
 
 /**
- * Fix timer character bug (ñ → ⏱ or remove)
+ * Fix timer character bug (ñ → remove, don't use emoji - fonts don't support it)
  */
 export function fixTimerCharacter(text: string): string {
-  let fixed = text.replace(/ñ\s*(\d)/g, '⏱ $1');
+  let fixed = text.replace(/ñ\s*(\d)/g, '$1');
   fixed = fixed.replace(/ñ(?!\w)/g, '');
-  fixed = fixed.replace(/ñ\s+/g, '⏱ ');
+  fixed = fixed.replace(/ñ\s+/g, '');
   return fixed;
 }

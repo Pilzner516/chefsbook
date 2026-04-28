@@ -558,7 +558,7 @@ function RecipeContentPage({ recipe }: { recipe: CookbookRecipe }) {
               <Text style={styles.ghostNumber}>{step.step_number}</Text>
               <Text style={styles.stepText}>{instruction}</Text>
               {step.timer_minutes && step.timer_minutes > 0 && (
-                <Text style={styles.stepTimer}>⏱ {formatDuration(step.timer_minutes)}</Text>
+                <Text style={styles.stepTimer}>{formatDuration(step.timer_minutes)}</Text>
               )}
             </View>
           );

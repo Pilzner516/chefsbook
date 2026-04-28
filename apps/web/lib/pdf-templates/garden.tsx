@@ -378,7 +378,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter',
     fontWeight: 300,
-    fontStyle: 'italic',
     color: DARK,
     lineHeight: 1.8,
     textAlign: 'center',
