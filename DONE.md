@@ -1,6 +1,87 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session CANVAS-EDITOR-4) TYPE: UI FIX
+
+### Print My ChefsBook Canvas Editor UI Improvements
+
+**Overview:**
+Fixed three UI issues in the Print My ChefsBook canvas editor:
+
+**FIX 1 - Visual Page Thumbnails:**
+- Replaced text-based page icons (📷📄✨) with visual thumbnail images
+- Thumbnails are 80x110px with cream background (#FAF7F2)
+- Border: 1px solid #E0D9D0, border-radius 4px
+- Box-shadow: 0 1px 4px rgba(0,0,0,0.10)
+- Displayed in a horizontal scrollable strip
+- Image pages show actual image preview with quality badge
+- Content pages show document icon with "Recipe Part X" label
+- Custom pages show image or text preview
+
+**FIX 2 - Page Editor Modal:**
+- Clicking any thumbnail opens a full page editor modal
+- Image page modal: shows full image preview, quality badge, "Change Photo" button
+- Content page modal: read-only view explaining auto-generated content
+- Custom page modal: image upload, 500-char text area, caption input, delete button
+- Removed inline page editing from expanded view (modal replaces it)
+
+**FIX 3 - Quality Badges Always Visible:**
+- Quality badges (🟢🟡🔴) now show for ALL images, including excellent (green)
+- Previously only showed badges for acceptable/poor quality images
+- Updated QualityBadge component with `compact` prop for thumbnail-size badges
+
+**Files Modified:**
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx` - All three fixes implemented
+
+**Deployment:** Built and deployed to RPi5 at https://chefsbk.app/dashboard/print-cookbook/[id]
+
+---
+
+## 2026-04-28 (session CANVAS-EDITOR-1) TYPE: FEATURE
+
+### Visual Canvas Editor for Print Cookbook
+
+**Overview:**
+Built the new visual canvas editor at `/dashboard/print-cookbook` to replace steps 1-4 of the existing wizard with a drag-and-drop canvas interface.
+
+**New Features:**
+- Visual canvas editor with drag-and-drop card reordering (`@hello-pangea/dnd`)
+- BookLayout JSONB data model stored in `printed_cookbooks.book_layout`
+- 6 card types: cover, foreword, TOC, recipe, index, back
+- Recipe cards with multiple pages (image, content, custom)
+- Auto-save with 800ms debounce (`use-debounce`)
+- Recipe picker side panel with search
+- Book settings panel with cover customization
+- Generate PDF button with progress/success modal
+- Multi-language support (en/fr/es/it/de) via book-strings.ts
+
+**Database Migrations:**
+- `20260428_063_book_layout.sql` - Added `book_layout JSONB` column to printed_cookbooks
+- `20260428_064_cookbook_templates.sql` - Created `cookbook_templates` table with 6 seeded templates
+
+**API Routes:**
+- `/api/print-cookbook` - POST (create), GET (list) cookbooks
+- `/api/print-cookbook/[id]` - GET, PATCH, DELETE operations
+
+**Files Created:**
+- `apps/web/lib/book-layout.ts` - TypeScript types + helper functions
+- `apps/web/lib/pdf-templates/book-strings.ts` - Localized strings for PDFs
+- `apps/web/app/api/print-cookbook/route.ts`
+- `apps/web/app/api/print-cookbook/[id]/route.ts`
+- `apps/web/app/dashboard/print-cookbook/page.tsx` - List page
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx` - Canvas editor
+
+**Files Modified:**
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts` - Added book_layout support
+- `apps/web/components/Sidebar.tsx` - Added "Print My ChefsBook" nav item
+
+**Dependencies:**
+- Added `use-debounce@10.0.4` to web app
+
+**Deployment:** Built and deployed to RPi5 at https://chefsbk.app/dashboard/print-cookbook
+
+---
+
 ## 2026-04-28 (session COOKBOOK-BUILDER-3) TYPE: CODE FIX + FEATURE
 
 ### Cookbook Builder - Final Fixes + BBQ Template
