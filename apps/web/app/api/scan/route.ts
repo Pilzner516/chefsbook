@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scanRecipe, scanRecipeMultiPage } from '@chefsbook/ai';
+import { scanRecipe, scanRecipeMultiPage, getApiKey } from '@chefsbook/ai';
 
 // POST /api/scan - Scan recipe from image(s)
 export async function POST(request: NextRequest) {
+  // Debug: log env var availability
+  const apiKey = getApiKey();
+  console.log('[/api/scan] API key available:', !!apiKey, 'length:', apiKey?.length || 0);
+  console.log('[/api/scan] process.env.ANTHROPIC_API_KEY:', !!process.env.ANTHROPIC_API_KEY);
+
   try {
     const body = await request.json();
     const { imageBase64, mimeType, images } = body;
