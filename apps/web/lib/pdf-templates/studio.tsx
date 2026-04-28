@@ -14,6 +14,7 @@ import {
   truncate,
   fixTimerCharacter,
 } from './types';
+import { getStrings, type BookStrings } from './book-strings';
 
 // Register fonts
 Font.register({
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null }) {
+function CoverPage({ cookbook, chefsHatBase64, strings }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings }) {
   if (cookbook.cover_image_url) {
     return (
       <Page size="LETTER" style={styles.coverPage}>
@@ -484,10 +485,10 @@ function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions[
   );
 }
 
-function TOCPage({ recipes, startPage }: { recipes: CookbookRecipe[]; startPage: number }) {
+function TOCPage({ recipes, startPage, strings }: { recipes: CookbookRecipe[]; startPage: number; strings: BookStrings }) {
   return (
     <Page size="LETTER" style={styles.tocPage}>
-      <Text style={styles.tocLabel}>CONTENTS</Text>
+      <Text style={styles.tocLabel}>{strings.contents.toUpperCase()}</Text>
       {recipes.map((recipe, idx) => (
         <View key={recipe.id} style={styles.tocEntry}>
           <Text style={styles.tocRecipe}>{recipe.title}</Text>
@@ -498,12 +499,12 @@ function TOCPage({ recipes, startPage }: { recipes: CookbookRecipe[]; startPage:
   );
 }
 
-function RecipeImagePage({ recipe }: { recipe: CookbookRecipe }) {
+function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
   if (recipe.total_minutes) meta.push(formatDuration(recipe.total_minutes));
-  if (recipe.servings) meta.push(`${recipe.servings} servings`);
+  if (recipe.servings) meta.push(`${recipe.servings} ${strings.servings}`);
 
   const primaryImage = recipe.image_urls[0];
 
@@ -530,14 +531,14 @@ function RecipeImagePage({ recipe }: { recipe: CookbookRecipe }) {
   );
 }
 
-function RecipeContentPage({ recipe }: { recipe: CookbookRecipe }) {
+function RecipeContentPage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
   const allIngredients = ingredientGroups.flatMap(g => g.items);
 
   return (
     <Page size="LETTER" style={styles.contentPage}>
       <View style={styles.ingredientBand}>
-        <Text style={styles.ingredientLabel}>INGREDIENTS</Text>
+        <Text style={styles.ingredientLabel}>{strings.ingredients.toUpperCase()}</Text>
         <View style={styles.ingredientFlow}>
           {allIngredients.map((ing, i) => {
             const qty = formatQuantity(ing.quantity);
@@ -555,7 +556,7 @@ function RecipeContentPage({ recipe }: { recipe: CookbookRecipe }) {
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
-            <View key={step.step_number} style={styles.stepWrap} wrap={false}>
+            <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
               <Text style={styles.ghostNumber}>{step.step_number}</Text>
               <Text style={styles.stepText}>{instruction}</Text>
               {step.timer_minutes && step.timer_minutes > 0 && (
@@ -567,8 +568,8 @@ function RecipeContentPage({ recipe }: { recipe: CookbookRecipe }) {
       </View>
 
       {recipe.notes && (
-        <View style={styles.notesSection}>
-          <Text style={styles.notesLabel}>NOTES</Text>
+        <View style={styles.notesSection} wrap={false}>
+          <Text style={styles.notesLabel}>{strings.notes.toUpperCase()}</Text>
           <Text style={styles.notesText}>{recipe.notes}</Text>
         </View>
       )}
@@ -582,7 +583,7 @@ function RecipeContentPage({ recipe }: { recipe: CookbookRecipe }) {
   );
 }
 
-function ForewordPage({ foreword, authorName }: { foreword: string; authorName: string }) {
+function ForewordPage({ foreword, authorName, strings }: { foreword: string; authorName: string; strings: BookStrings }) {
   return (
     <Page size="LETTER" style={styles.forewordPage}>
       <Text style={styles.forewordLabel}>F O R E W O R D</Text>
@@ -593,12 +594,12 @@ function ForewordPage({ foreword, authorName }: { foreword: string; authorName: 
   );
 }
 
-function BackPage({ chefsHatBase64 }: { chefsHatBase64?: string | null }) {
+function BackPage({ chefsHatBase64, strings }: { chefsHatBase64?: string | null; strings: BookStrings }) {
   return (
     <Page size="LETTER" style={styles.backPage}>
       {chefsHatBase64 && <Image src={chefsHatBase64} style={styles.backHat} />}
       <Text style={styles.backWordmark}>ChefsBook</Text>
-      <Text style={styles.backTagline}>Your recipes, beautifully collected.</Text>
+      <Text style={styles.backTagline}>{strings.tagline}</Text>
       <View style={styles.backDivider} />
       <Text style={styles.backBlurb}>
         This cookbook was created with ChefsBook — the app that helps you save, organise, and share the recipes that matter most. Import from any website, scan handwritten cards, or create your own. Your collection, always with you.
@@ -608,33 +609,34 @@ function BackPage({ chefsHatBase64 }: { chefsHatBase64?: string | null }) {
   );
 }
 
-export function StudioDocument({ cookbook, recipes, chefsHatBase64 }: CookbookPdfOptions) {
+export function StudioDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
+  const strings = getStrings(language ?? 'en');
   const tocPages = Math.ceil(recipes.length / 20);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
 
   return (
     <Document>
-      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} />
+      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} />
 
       {/* Blank page after cover */}
       <Page size="LETTER" style={{ backgroundColor: DARK_BG }} />
 
-      <TOCPage recipes={recipes} startPage={startPage} />
+      <TOCPage recipes={recipes} startPage={startPage} strings={strings} />
 
       {/* Foreword page if text provided */}
       {hasForeword && (
-        <ForewordPage foreword={cookbook.foreword!} authorName={cookbook.author_name} />
+        <ForewordPage foreword={cookbook.foreword!} authorName={cookbook.author_name} strings={strings} />
       )}
 
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
-          <RecipeImagePage recipe={recipe} />
-          <RecipeContentPage recipe={recipe} />
+          <RecipeImagePage recipe={recipe} strings={strings} />
+          <RecipeContentPage recipe={recipe} strings={strings} />
         </React.Fragment>
       ))}
 
-      <BackPage chefsHatBase64={chefsHatBase64} />
+      <BackPage chefsHatBase64={chefsHatBase64} strings={strings} />
     </Document>
   );
 }

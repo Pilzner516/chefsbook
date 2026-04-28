@@ -17,6 +17,12 @@ These ship before anything else. Users are already hitting these.
 | 4 | Favourite toggle UI (heart/star button on cards + detail) | Filter pill exists but nothing to trigger it | S |
 | 5 | Recipe image remote patterns (`next.config.ts`) | Images broken for non-Supabase domains | S |
 
+## CANVAS-EDITOR-2 DEFERRED ITEMS
+
+Session CANVAS-EDITOR-2 completed Priorities 1-5. Priority 6 deferred:
+
+- [ ] **AI Template Generation** (`/admin/cookbook-templates/generate`) — Upload 1-5 inspiration images, fill preferences (name, category, accent colour, background mood, photo style, typography feel), call Claude Opus via `@chefsbook/ai` to analyse images and produce `TemplateConfig` JSON, generate preview PDF, admin tweaks in visual config panel, approve to save. Must follow `ai-cost.md`. Architecture note: Opus must read existing template code first to understand what TemplateConfig should contain.
+
 ## LULU PRINT COOKBOOK — GO-LIVE CHECKLIST
 
 Feature built (session LULU-PRINT). Before announcing:

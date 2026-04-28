@@ -14,6 +14,7 @@ import {
   truncate,
   fixTimerCharacter,
 } from './types';
+import { getStrings, type BookStrings } from './book-strings';
 
 // Register fonts via jsDelivr CDN
 Font.register({
@@ -331,20 +332,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Two column layout
-  recipeColumns: {
-    flexDirection: 'row',
+  // Stacked layout for better page breaks
+  ingredientsSection: {
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: CHARCOAL,
+  },
+  stepsSection: {
     flex: 1,
-  },
-  ingredientsColumn: {
-    width: '38%',
-    paddingRight: 20,
-    borderRightWidth: 1,
-    borderRightColor: SMOKE,
-  },
-  stepsColumn: {
-    width: '62%',
-    paddingLeft: 20,
   },
 
   // Ingredients
@@ -501,7 +497,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null }) {
+function CoverPage({ cookbook, chefsHatBase64, strings }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings }) {
   if (cookbook.cover_image_url) {
     return (
       <Page size="LETTER" style={styles.coverPage}>
@@ -516,7 +512,7 @@ function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions[
           </View>
         </View>
         <View style={styles.coverFooter}>
-          <Text style={styles.coverFooterText}>Created with ChefsBook</Text>
+          <Text style={styles.coverFooterText}>{strings.createdWith}</Text>
           <Text style={styles.coverFooterUrl}>chefsbk.app</Text>
         </View>
       </Page>
@@ -535,27 +531,27 @@ function CoverPage({ cookbook, chefsHatBase64 }: { cookbook: CookbookPdfOptions[
         <Text style={styles.cookbookLine}>A ChefsBook Cookbook</Text>
       </View>
       <View style={styles.coverFooter}>
-        <Text style={styles.coverFooterText}>Created with ChefsBook</Text>
+        <Text style={styles.coverFooterText}>{strings.createdWith}</Text>
         <Text style={styles.coverFooterUrl}>chefsbk.app</Text>
       </View>
     </Page>
   );
 }
 
-function ForewordPage({ foreword }: { foreword: string }) {
+function ForewordPage({ foreword, strings }: { foreword: string; strings: BookStrings }) {
   return (
     <Page size="LETTER" style={styles.forewordPage}>
-      <Text style={styles.forewordTitle}>From the Pitmaster</Text>
+      <Text style={styles.forewordTitle}>{strings.foreword}</Text>
       <View style={styles.forewordRule} />
       <Text style={styles.forewordText}>{foreword}</Text>
     </Page>
   );
 }
 
-function TOCPage({ recipes, startPage }: { recipes: CookbookRecipe[]; startPage: number }) {
+function TOCPage({ recipes, startPage, strings }: { recipes: CookbookRecipe[]; startPage: number; strings: BookStrings }) {
   return (
     <Page size="LETTER" style={styles.tocPage}>
-      <Text style={styles.tocTitle}>Contents</Text>
+      <Text style={styles.tocTitle}>{strings.contents}</Text>
       <View style={styles.tocRule} />
       {recipes.map((recipe, idx) => (
         <View key={recipe.id} style={styles.tocEntry}>
@@ -568,12 +564,12 @@ function TOCPage({ recipes, startPage }: { recipes: CookbookRecipe[]; startPage:
   );
 }
 
-function RecipeImagePage({ recipe }: { recipe: CookbookRecipe }) {
+function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
   if (recipe.total_minutes) meta.push(formatDuration(recipe.total_minutes));
-  if (recipe.servings) meta.push(`${recipe.servings} servings`);
+  if (recipe.servings) meta.push(`${recipe.servings} ${strings.servings}`);
 
   const primaryImage = recipe.image_urls[0];
 
@@ -598,113 +594,112 @@ function RecipeImagePage({ recipe }: { recipe: CookbookRecipe }) {
   );
 }
 
-function RecipePage({ recipe }: { recipe: CookbookRecipe }) {
+function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
   if (recipe.total_minutes) meta.push(formatDuration(recipe.total_minutes));
-  if (recipe.servings) meta.push(`${recipe.servings} servings`);
+  if (recipe.servings) meta.push(`${recipe.servings} ${strings.servings}`);
 
   const groups = groupIngredients(recipe.ingredients);
   let currentStepGroup: string | null = null;
 
   return (
-    <Page size="LETTER" style={styles.recipePage}>
+    <Page size="LETTER" style={styles.recipePage} wrap>
       <View style={styles.recipeHeader}>
         <Text style={styles.recipeTitle}>{recipe.title}</Text>
         {meta.length > 0 && <Text style={styles.recipeMeta}>{meta.join('  |  ')}</Text>}
         {recipe.description && <Text style={styles.recipeDescription}>{truncate(recipe.description, 200)}</Text>}
       </View>
 
-      <View style={styles.recipeColumns}>
-        <View style={styles.ingredientsColumn}>
-          <Text style={styles.ingredientsLabel}>Ingredients</Text>
-          {groups.map((group, gi) => (
-            <View key={gi}>
-              {group.label && <Text style={styles.ingredientGroupLabel}>{group.label}</Text>}
-              {group.items.map((ing, ii) => {
-                const qty = formatQuantity(ing.quantity);
-                const parts = [qty, ing.unit, ing.ingredient, ing.preparation].filter(Boolean);
-                return (
-                  <View key={ii} style={styles.ingredientRow}>
-                    <View style={styles.ingredientBullet} />
-                    <Text style={styles.ingredientText}>
-                      {parts.join(' ')}
-                      {ing.optional && ' (optional)'}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          ))}
-        </View>
+      {/* Ingredients section - stays together, doesn't break across pages */}
+      <View style={styles.ingredientsSection} wrap={false}>
+        <Text style={styles.ingredientsLabel}>{strings.ingredients}</Text>
+        {groups.map((group, gi) => (
+          <View key={gi}>
+            {group.label && <Text style={styles.ingredientGroupLabel}>{group.label}</Text>}
+            {group.items.map((ing, ii) => {
+              const qty = formatQuantity(ing.quantity);
+              const parts = [qty, ing.unit, ing.ingredient, ing.preparation].filter(Boolean);
+              return (
+                <View key={ii} style={styles.ingredientRow}>
+                  <View style={styles.ingredientBullet} />
+                  <Text style={styles.ingredientText}>
+                    {parts.join(' ')}
+                    {ing.optional && ' (optional)'}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ))}
+      </View>
 
-        <View style={styles.stepsColumn}>
-          <Text style={styles.stepsLabel}>Method</Text>
-          {recipe.steps.map((step, si) => {
-            const showGroupLabel = step.group_label && step.group_label !== currentStepGroup;
-            if (step.group_label) currentStepGroup = step.group_label;
+      {/* Steps section - flows across pages, individual steps don't break */}
+      <View style={styles.stepsSection}>
+        <Text style={styles.stepsLabel}>{strings.steps}</Text>
+        {recipe.steps.map((step, si) => {
+          const showGroupLabel = step.group_label && step.group_label !== currentStepGroup;
+          if (step.group_label) currentStepGroup = step.group_label;
 
-            return (
-              <View key={si} wrap={false}>
-                {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
-                <View style={styles.stepRow}>
-                  <View style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>{step.step_number}</Text>
-                  </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepText}>
-                      {fixTimerCharacter(step.instruction)}
-                      {step.timer_minutes ? ` (${step.timer_minutes} min)` : ''}
-                    </Text>
-                  </View>
+          return (
+            <View key={si} wrap={false} minPresenceAhead={40}>
+              {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
+              <View style={styles.stepRow}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>{step.step_number}</Text>
+                </View>
+                <View style={styles.stepContent}>
+                  <Text style={styles.stepText}>
+                    {fixTimerCharacter(step.instruction)}
+                    {step.timer_minutes ? ` (${step.timer_minutes} min)` : ''}
+                  </Text>
                 </View>
               </View>
-            );
-          })}
-
-          {recipe.notes && (
-            <View style={styles.notesBox}>
-              <Text style={styles.notesLabel}>Pitmaster Tips</Text>
-              <Text style={styles.notesText}>{recipe.notes}</Text>
             </View>
-          )}
-        </View>
+          );
+        })}
+
+        {recipe.notes && (
+          <View style={styles.notesBox} wrap={false}>
+            <Text style={styles.notesLabel}>{strings.notes}</Text>
+            <Text style={styles.notesText}>{recipe.notes}</Text>
+          </View>
+        )}
       </View>
     </Page>
   );
 }
 
-function BackPage({ chefsHatBase64 }: { chefsHatBase64?: string | null }) {
+function BackPage({ chefsHatBase64, strings }: { chefsHatBase64?: string | null; strings: BookStrings }) {
   return (
     <Page size="LETTER" style={styles.backPage}>
       {chefsHatBase64 && <Image src={chefsHatBase64} style={styles.backLogo} />}
       <Text style={styles.backTitle}>ChefsBook</Text>
-      <Text style={styles.backTagline}>
-        Your recipes. Your stories. Your legacy. ChefsBook helps you collect, organize, and share the dishes that matter most.
-      </Text>
+      <Text style={styles.backTagline}>{strings.tagline}</Text>
       <Text style={styles.backUrl}>chefsbk.app</Text>
     </Page>
   );
 }
 
-export function BBQDocument({ cookbook, recipes, chefsHatBase64 }: CookbookPdfOptions) {
+export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
+  const strings = getStrings(language ?? 'en');
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 2 + tocPages + (hasForeword ? 1 : 0) + 1;
 
   return (
     <Document>
-      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} />
-      {hasForeword && <ForewordPage foreword={cookbook.foreword!} />}
-      <TOCPage recipes={recipes} startPage={startPage} />
+      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} />
+      {hasForeword && <ForewordPage foreword={cookbook.foreword!} strings={strings} />}
+      <TOCPage recipes={recipes} startPage={startPage} strings={strings} />
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
-          <RecipeImagePage recipe={recipe} />
-          <RecipePage recipe={recipe} />
+          <RecipeImagePage recipe={recipe} strings={strings} />
+          <RecipePage recipe={recipe} strings={strings} />
         </React.Fragment>
       ))}
-      <BackPage chefsHatBase64={chefsHatBase64} />
+      <BackPage chefsHatBase64={chefsHatBase64} strings={strings} />
     </Document>
   );
 }

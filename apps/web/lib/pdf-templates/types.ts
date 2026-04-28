@@ -2,6 +2,8 @@
  * Shared types for PDF cookbook templates
  */
 
+import type { BookLocale } from './book-strings';
+
 export type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'bbq';
 
 export interface CookbookPdfOptions {
@@ -16,6 +18,7 @@ export interface CookbookPdfOptions {
   };
   recipes: CookbookRecipe[];
   chefsHatBase64?: string | null;
+  language?: BookLocale;
 }
 
 export interface CookbookRecipe {

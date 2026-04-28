@@ -12,6 +12,7 @@ import { NordicDocument } from '@/lib/pdf-templates/nordic';
 import { BBQDocument } from '@/lib/pdf-templates/bbq';
 import type { CookbookPdfOptions, CookbookRecipe, CoverStyle } from '@/lib/pdf-templates/types';
 import type { ProductOptions } from '@/lib/lulu';
+import type { BookLayout, RecipeCard, CoverCard, ForewordCard, BookLocale } from '@/lib/book-layout';
 
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -128,37 +129,88 @@ export async function POST(
     .update({ status: 'generating' })
     .eq('id', id);
 
-  // Parse selected_image_urls from JSONB
+  // Parse selected_image_urls from JSONB (legacy format)
   const selectedImageUrls: Record<string, string> = cookbook.selected_image_urls ?? {};
 
+  // Parse book_layout if present (new visual editor format)
+  const bookLayout = cookbook.book_layout as BookLayout | null;
+
   try {
+    // Extract data from book_layout if available, otherwise use legacy columns
+    let recipeIds: string[] = [];
+    let recipeDisplayNames: Record<string, string> = {};
+    let recipeImageUrls: Record<string, string | undefined> = {};
+    let coverInfo: { title: string; subtitle?: string; author: string; cover_style: CoverStyle; image_url?: string };
+    let forewordText: string | undefined;
+    let bookLanguage: BookLocale = 'en';
+
+    if (bookLayout) {
+      // Extract from book_layout cards
+      const coverCard = bookLayout.cards.find((c): c is CoverCard => c.type === 'cover');
+      const forewordCard = bookLayout.cards.find((c): c is ForewordCard => c.type === 'foreword');
+      const recipeCards = bookLayout.cards.filter((c): c is RecipeCard => c.type === 'recipe');
+
+      recipeIds = recipeCards.map((c) => c.recipe_id);
+      bookLanguage = bookLayout.language ?? 'en';
+
+      for (const card of recipeCards) {
+        recipeDisplayNames[card.recipe_id] = card.display_name;
+        const imagePage = card.pages.find((p) => p.kind === 'image');
+        if (imagePage && imagePage.kind === 'image') {
+          recipeImageUrls[card.recipe_id] = imagePage.image_url;
+        }
+      }
+
+      coverInfo = {
+        title: coverCard?.title ?? cookbook.title,
+        subtitle: coverCard?.subtitle,
+        author: coverCard?.author ?? cookbook.author_name,
+        cover_style: (coverCard?.cover_style ?? cookbook.cover_style ?? 'classic') as CoverStyle,
+        image_url: coverCard?.image_url,
+      };
+
+      forewordText = forewordCard?.text;
+    } else {
+      // Use legacy columns
+      recipeIds = cookbook.recipe_ids ?? [];
+      coverInfo = {
+        title: cookbook.title,
+        subtitle: cookbook.subtitle || undefined,
+        author: cookbook.author_name,
+        cover_style: (cookbook.cover_style ?? 'classic') as CoverStyle,
+        image_url: cookbook.cover_image_url || undefined,
+      };
+      forewordText = cookbook.foreword || undefined;
+    }
+
     // Fetch all recipes and convert to CookbookRecipe format
     const cookbookRecipes: CookbookRecipe[] = [];
 
-    for (const recipeId of cookbook.recipe_ids) {
+    for (const recipeId of recipeIds) {
       const recipe = await getRecipe(recipeId);
       if (recipe) {
-        // Fetch the selected image or fall back to available photos
+        // Fetch the selected image
         const imageUrls: string[] = [];
         try {
-          // Check if user selected a specific image for this recipe
-          const selectedUrl = selectedImageUrls[recipeId];
+          // Check new format first, then legacy
+          const selectedUrl = bookLayout
+            ? recipeImageUrls[recipeId]
+            : selectedImageUrls[recipeId];
+
           if (selectedUrl) {
-            // Pass grayscale flag for B&W printing
             const base64 = await fetchImageAsBase64(selectedUrl, useGrayscale);
             if (base64) imageUrls.push(base64);
-          } else {
-            // No selection = no image (user chose "None" or recipe has no images)
-            // Do NOT fall back to recipe.image_url — scraped images may have watermarks
           }
         } catch {
-          // Continue without images — will use placeholder
+          // Continue without images
         }
 
-        // Convert to CookbookRecipe format
+        // Use display_name from book_layout if available, otherwise recipe title
+        const displayName = recipeDisplayNames[recipeId] || recipe.title;
+
         cookbookRecipes.push({
           id: recipe.id,
-          title: recipe.title,
+          title: displayName,
           description: recipe.description ?? undefined,
           cuisine: recipe.cuisine ?? undefined,
           course: recipe.course ?? undefined,
@@ -214,28 +266,28 @@ export async function POST(
 
     // Fetch cover image and convert to base64 (react-pdf can't fetch auth-required URLs)
     let coverImageBase64: string | null = null;
-    if (cookbook.cover_image_url) {
+    if (coverInfo.image_url) {
       try {
-        coverImageBase64 = await fetchImageAsBase64(cookbook.cover_image_url, useGrayscale);
+        coverImageBase64 = await fetchImageAsBase64(coverInfo.image_url, useGrayscale);
       } catch {
         console.warn('Could not fetch cover image for PDF');
       }
     }
 
-    // Select template based on cover_style
-    const coverStyle = cookbook.cover_style as CoverStyle;
+    // Use coverInfo from book_layout or legacy columns
     const pdfOptions: CookbookPdfOptions = {
       cookbook: {
-        title: cookbook.title,
-        subtitle: cookbook.subtitle || undefined,
-        author_name: cookbook.author_name,
-        cover_style: coverStyle,
+        title: coverInfo.title,
+        subtitle: coverInfo.subtitle,
+        author_name: coverInfo.author,
+        cover_style: coverInfo.cover_style,
         cover_image_url: coverImageBase64 || undefined,
         selected_image_urls: cookbook.selected_image_urls || undefined,
-        foreword: cookbook.foreword || undefined,
+        foreword: forewordText,
       },
       recipes: cookbookRecipes,
       chefsHatBase64,
+      language: bookLanguage,
     };
 
     // Generate interior PDF using the appropriate template
@@ -247,7 +299,7 @@ export async function POST(
       nordic: NordicDocument,
       bbq: BBQDocument,
     };
-    const TemplateDocument = templateMap[coverStyle] ?? TrattoriaDocument;
+    const TemplateDocument = templateMap[coverInfo.cover_style] ?? TrattoriaDocument;
 
     const interiorBuffer = await renderToBuffer(TemplateDocument(pdfOptions));
 
@@ -263,10 +315,10 @@ export async function POST(
     };
     const coverBuffer = await renderToBuffer(
       CookbookCoverDocument({
-        title: cookbook.title,
-        subtitle: cookbook.subtitle || undefined,
-        authorName: cookbook.author_name,
-        coverStyle: coverStyleMap[coverStyle] ?? 'classic',
+        title: coverInfo.title,
+        subtitle: coverInfo.subtitle,
+        authorName: coverInfo.author,
+        coverStyle: coverStyleMap[coverInfo.cover_style] ?? 'classic',
         pageCount,
         spineWidth,
         chefsHatBase64,

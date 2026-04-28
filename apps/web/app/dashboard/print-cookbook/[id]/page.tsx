@@ -1162,21 +1162,21 @@ function RecipeCardBody({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                   </svg>
                   <span className="text-[9px] text-cb-muted text-center leading-tight">
-                    Recipe<br/>Part {page.part}
+                    Recipe<br/>Part {(page as { part: number }).part}
                   </span>
                 </div>
-              ) : (
+              ) : page.kind === 'custom' ? (
                 <div className="relative w-full h-full">
-                  {page.image_url ? (
+                  {(page as { image_url?: string }).image_url ? (
                     <img
-                      src={proxyIfNeeded(page.image_url)}
+                      src={proxyIfNeeded((page as { image_url?: string }).image_url || '')}
                       alt=""
                       className="w-full h-full object-cover"
                     />
-                  ) : page.text ? (
+                  ) : (page as { text?: string }).text ? (
                     <div className="w-full h-full p-1.5 overflow-hidden">
                       <p className="text-[8px] text-cb-secondary leading-tight line-clamp-6">
-                        {page.text}
+                        {(page as { text?: string }).text}
                       </p>
                     </div>
                   ) : (
@@ -1188,13 +1188,13 @@ function RecipeCardBody({
                     ✨
                   </div>
                   {/* Quality badge on custom page image */}
-                  {page.image_url && imageQualities[page.image_url] && (
+                  {(page as { image_url?: string }).image_url && imageQualities[(page as { image_url?: string }).image_url!] && (
                     <div className="absolute bottom-1 left-1 bg-white/90 rounded px-0.5">
-                      <QualityBadge quality={imageQualities[page.image_url]} compact />
+                      <QualityBadge quality={imageQualities[(page as { image_url?: string }).image_url!]} compact />
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
             </button>
           ))}
           {/* Add page button */}

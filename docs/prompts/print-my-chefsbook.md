@@ -651,11 +651,177 @@ Opens a right sidebar with:
 - Title (text input)
 - Subtitle (text input, optional)
 - Author name (text input)
-- Cover style (Classic / Studio / Garden — radio cards)
+- **Book language** (dropdown — see Language section below)
+- Cover style (template picker)
 - Cover image upload
 - Print options (size, binding, paper, finish — from existing print options step)
 
 Changes sync to the Cover card in the layout and to `printed_cookbooks` metadata columns.
+
+---
+
+## Language selection
+
+The user can choose the language for all auto-generated text in the printed book.
+This affects every label the template generates — section headers, card titles,
+foreword label, TOC title, index title, timer prefix, metadata labels, and the
+ChefsBook branding line on the back page.
+
+**Supported languages** (matching ChefsBook's existing 5 locales):
+- English (EN) — default
+- French (FR) — Français
+- Spanish (ES) — Español
+- Italian (IT) — Italiano
+- German (DE) — Deutsch
+
+**Where it lives in the data model:**
+
+Add `language` to `BookLayout` at the top level:
+
+```typescript
+export interface BookLayout {
+  version: 1
+  language: 'en' | 'fr' | 'es' | 'it' | 'de'  // default: 'en'
+  cards: BookCard[]
+}
+```
+
+Default to the user's current app language (read from their i18n preference) when
+creating a new cookbook. The user can override it in Book Settings.
+
+**Translation string table for PDF templates:**
+
+React-pdf renders server-side — it cannot use react-i18next hooks. Create a static
+string lookup at `apps/web/lib/pdf-templates/book-strings.ts`:
+
+```typescript
+export type BookLocale = 'en' | 'fr' | 'es' | 'it' | 'de'
+
+export interface BookStrings {
+  foreword: string        // "Foreword" / "Avant-propos" / "Prólogo" / "Prefazione" / "Vorwort"
+  contents: string        // "Contents" / "Table des matières" / "Índice" / "Sommario" / "Inhalt"
+  index: string           // "Index" / "Index" / "Índice" / "Indice" / "Register"
+  ingredients: string     // "Ingredients" / "Ingrédients" / "Ingredientes" / "Ingredienti" / "Zutaten"
+  steps: string           // "Steps" / "Étapes" / "Pasos" / "Procedimento" / "Zubereitung"
+  notes: string           // "Notes" / "Notes" / "Notas" / "Note" / "Hinweise"
+  servings: string        // "servings" / "portions" / "porciones" / "porzioni" / "Portionen"
+  timerPrefix: string     // "⏱" (same across all — keep as emoji)
+  createdWith: string     // "Created with ChefsBook" / "Créé avec ChefsBook" / etc.
+  tagline: string         // "Your recipes, beautifully collected." (translated)
+  pageLabel: string       // "Page" (for running footers, if needed)
+}
+
+export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
+  en: {
+    foreword: 'Foreword',
+    contents: 'Contents',
+    index: 'Index',
+    ingredients: 'Ingredients',
+    steps: 'Steps',
+    notes: 'Notes',
+    servings: 'servings',
+    timerPrefix: '⏱',
+    createdWith: 'Created with ChefsBook',
+    tagline: 'Your recipes, beautifully collected.',
+    pageLabel: 'Page',
+  },
+  fr: {
+    foreword: 'Avant-propos',
+    contents: 'Table des matières',
+    index: 'Index',
+    ingredients: 'Ingrédients',
+    steps: 'Étapes',
+    notes: 'Notes',
+    servings: 'portions',
+    timerPrefix: '⏱',
+    createdWith: 'Créé avec ChefsBook',
+    tagline: 'Vos recettes, magnifiquement rassemblées.',
+    pageLabel: 'Page',
+  },
+  es: {
+    foreword: 'Prólogo',
+    contents: 'Índice',
+    index: 'Índice',
+    ingredients: 'Ingredientes',
+    steps: 'Pasos',
+    notes: 'Notas',
+    servings: 'porciones',
+    timerPrefix: '⏱',
+    createdWith: 'Creado con ChefsBook',
+    tagline: 'Tus recetas, bellamente reunidas.',
+    pageLabel: 'Página',
+  },
+  it: {
+    foreword: 'Prefazione',
+    contents: 'Sommario',
+    index: 'Indice',
+    ingredients: 'Ingredienti',
+    steps: 'Procedimento',
+    notes: 'Note',
+    servings: 'porzioni',
+    timerPrefix: '⏱',
+    createdWith: 'Creato con ChefsBook',
+    tagline: 'Le tue ricette, meravigliosamente raccolte.',
+    pageLabel: 'Pagina',
+  },
+  de: {
+    foreword: 'Vorwort',
+    contents: 'Inhalt',
+    index: 'Register',
+    ingredients: 'Zutaten',
+    steps: 'Zubereitung',
+    notes: 'Hinweise',
+    servings: 'Portionen',
+    timerPrefix: '⏱',
+    createdWith: 'Erstellt mit ChefsBook',
+    tagline: 'Deine Rezepte, wunderschön gesammelt.',
+    pageLabel: 'Seite',
+  },
+}
+
+export function getStrings(locale: BookLocale): BookStrings {
+  return BOOK_STRINGS[locale] ?? BOOK_STRINGS['en']
+}
+```
+
+**How templates use it:**
+
+Every template receives the `language` from `book_layout.language` and calls
+`getStrings(language)` to get its label set. No hardcoded English strings in template
+code — all labels come from `BookStrings`.
+
+```typescript
+// In any template renderer:
+const s = getStrings(options.language ?? 'en')
+// Then use: s.ingredients, s.steps, s.foreword, etc.
+```
+
+**Language picker UI in Book Settings:**
+
+```
+Book language
+┌─────────────────────────────┐
+│ 🌐 English (EN)           ▾ │
+└─────────────────────────────┘
+  Options: English · Français · Español · Italiano · Deutsch
+```
+
+A simple select/dropdown. Changing language immediately updates the flipbook preview
+(re-renders page content with new labels) so the user can see the effect before
+generating the PDF.
+
+**Flipbook language support:**
+
+The `FlipbookPreview` component also uses `getStrings(language)` for its mini page
+previews — the TOC page shows "Table des matières" if French is selected, the
+content pages show "Ingrédients" and "Étapes", etc. This gives the user a true
+preview of the final printed language.
+
+**Note on recipe content:**
+
+The language setting controls UI labels only — it does not translate recipe titles,
+ingredient names, or step text. Those remain in the language the user wrote them in.
+The assumption is users write their recipes in their preferred language already.
 
 ---
 
@@ -739,6 +905,219 @@ Show upload progress indicator.
 
 ---
 
+## Image print quality checking
+
+**This is mandatory for every image used in the cookbook — recipe photos, cover image,
+and custom page images. A user who orders a printed book with blurry photos will not
+order again.**
+
+### Print resolution requirements
+
+Lulu prints at 300 DPI. The required pixel dimensions depend on how large the image
+prints on the page:
+
+| Usage | Print size | Minimum (150 DPI) | Recommended (300 DPI) |
+|---|---|---|---|
+| Full-bleed recipe photo | 8.5" × 5.5" | 1275 × 825 px | 2550 × 1650 px |
+| Full-bleed cover image | 8.75" × 11.25" (with bleed) | 1313 × 1688 px | 2625 × 3375 px |
+| Half-page photo (split layout) | 4.25" × 11" | 638 × 1650 px | 1275 × 3300 px |
+| Custom page full image | 8.5" × 10.5" | 1275 × 1575 px | 2550 × 3150 px |
+| Custom page half image (top) | 8.5" × 5.25" | 1275 × 788 px | 2550 × 1575 px |
+
+### Quality tiers
+
+```typescript
+export type PrintQuality = 'great' | 'acceptable' | 'poor' | 'unknown'
+
+export interface QualityResult {
+  quality: PrintQuality
+  widthPx: number
+  heightPx: number
+  effectiveDpi: number      // based on the larger dimension vs print size
+  minimumNeededPx: { width: number; height: number }
+  recommendedPx: { width: number; height: number }
+  message: string           // human-readable, shown to user
+  suggestion: string        // what to do about it
+}
+
+// Thresholds
+// ≥ 300 DPI → 'great'   — "This photo will print crisply"
+// 150–299 DPI → 'acceptable' — "This photo may appear slightly soft at print size"
+// < 150 DPI → 'poor'    — "This photo is too low resolution for print quality results"
+// Cannot determine → 'unknown'
+```
+
+### Quality check utility
+
+Create `apps/web/lib/print-quality.ts`:
+
+```typescript
+export async function checkImagePrintQuality(
+  imageUrl: string,
+  printWidthInches: number,
+  printHeightInches: number
+): Promise<QualityResult> {
+  // Load image in browser to get natural dimensions
+  const { width, height } = await getImageDimensions(imageUrl)
+
+  // Calculate effective DPI (use the more constrained dimension)
+  const dpiW = width / printWidthInches
+  const dpiH = height / printHeightInches
+  const effectiveDpi = Math.min(dpiW, dpiH)
+
+  const quality: PrintQuality =
+    effectiveDpi >= 300 ? 'great' :
+    effectiveDpi >= 150 ? 'acceptable' : 'poor'
+
+  return {
+    quality,
+    widthPx: width,
+    heightPx: height,
+    effectiveDpi: Math.round(effectiveDpi),
+    minimumNeededPx: {
+      width: Math.ceil(printWidthInches * 150),
+      height: Math.ceil(printHeightInches * 150),
+    },
+    recommendedPx: {
+      width: Math.ceil(printWidthInches * 300),
+      height: Math.ceil(printHeightInches * 300),
+    },
+    message: qualityMessage(quality, effectiveDpi),
+    suggestion: qualitySuggestion(quality, width, height, printWidthInches, printHeightInches),
+  }
+}
+
+async function getImageDimensions(url: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror = reject
+    img.src = url
+  })
+}
+```
+
+**Pre-flight check in Opus:** Before implementing, check whether `recipe_user_photos`
+already stores `width_px` / `height_px` columns. If so, use those instead of loading
+the image (faster, works server-side). If not, note in the architecture proposal whether
+adding those columns is worthwhile for performance.
+
+### Where quality checks appear
+
+**1. Recipe card image picker (canvas editor)**
+
+When the user selects or changes a recipe photo, run the quality check immediately.
+Show a badge on the selected image thumbnail:
+
+```
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│  🟢      │  │  🟡      │  │  🔴      │
+│ [photo1] │  │ [photo2] │  │ [photo3] │
+│ Print    │  │ Soft at  │  │ Too low  │
+│ ready    │  │ print    │  │ res      │
+└──────────┘  └──────────┘  └──────────┘
+```
+
+On selecting a 🟡 or 🔴 image, show an inline warning below the picker:
+
+```
+⚠️  This photo (640 × 480 px) may print soft.
+    For crisp results, use at least 1275 × 825 px.
+    [Upload a better photo]  [Use it anyway]
+```
+
+For 🔴 (poor):
+```
+🚫  This photo (320 × 240 px) is too low resolution for print.
+    It will appear noticeably blurry in the printed book.
+    Minimum needed: 1275 × 825 px.
+    [Upload a better photo]
+```
+
+Note: for 🔴 quality, "Use it anyway" is NOT offered — we don't want users
+accidentally printing blurry books. They must acknowledge by uploading or choosing
+a different image.
+
+**2. Cover image upload**
+
+Cover images have the highest quality bar (largest print size).
+Show quality indicator immediately after upload:
+
+```
+✅ Cover photo looks great (3024 × 4032 px · 346 DPI at print size)
+```
+
+or:
+
+```
+⚠️ Cover photo may print soft (1200 × 1600 px · 137 DPI at print size)
+   For a crisp cover, upload a photo at least 2625 × 3375 px.
+   [Replace photo]  [Keep this one]
+```
+
+**3. Custom page image upload**
+
+Same inline check immediately after upload. For custom pages with the user's
+own memories (family photos, etc.), we should be particularly gentle in the message —
+they may not have a higher resolution version:
+
+```
+⚠️  This photo is 800 × 600 px. It may appear soft when printed.
+    If you have a higher quality version of this photo, use that instead.
+    [Replace photo]  [Keep it — I understand]
+```
+
+Allow "Keep it" for custom pages (sentimental photos deserve to be included even
+if imperfect). The warning is still shown but not blocking.
+
+**4. Pre-generate quality summary**
+
+Before the user clicks "Generate PDF →", if any images are below 300 DPI, show
+a summary warning in the Generate button area:
+
+```
+┌──────────────────────────────────────────────────────┐
+│  ⚠️  3 photos may not print crisply                   │
+│  • Burger Buns — photo 2 (soft at print size)         │
+│  • Chimichurri — photo (soft at print size)           │
+│  • Cover image (soft at print size)                   │
+│                                                        │
+│  [Review photos]          [Generate anyway →]         │
+└──────────────────────────────────────────────────────┘
+```
+
+"Review photos" scrolls the canvas to the first affected card.
+"Generate anyway" proceeds but adds a watermark-style note in the admin cost log
+that quality warnings were overridden (for support purposes).
+
+If ANY image is 🔴 (poor quality), "Generate anyway" is replaced with:
+```
+[Fix low-resolution photos first]
+```
+— generation is blocked until all 🔴 images are replaced or removed.
+
+**5. Flipbook preview quality indicator**
+
+In the flipbook, recipe photo pages with quality issues show a subtle badge
+in the corner of the thumbnail strip:
+- 🟡 small dot on the thumbnail = acceptable
+- 🔴 small dot = poor (user should fix before printing)
+
+### Quality check timing
+
+- **On image selection** in the picker: check immediately (fast — just load image dims)
+- **On upload**: check immediately as part of the upload success handler
+- **On canvas load**: batch-check all currently selected images in the background
+  (don't block the UI — fill in quality badges as results arrive)
+- **On "Generate PDF" click**: re-validate all images synchronously before proceeding
+
+### Storage of quality results
+
+Cache quality results in component state — don't re-check the same URL repeatedly.
+Use a `Map<imageUrl, QualityResult>` in the canvas state.
+
+---
+
 ## Database verification before starting
 
 Run these on RPi5 before writing any migration:
@@ -791,14 +1170,104 @@ If any of these files are in a diff, stop and reconsider.
 
 ---
 
+---
+
+## Template Architecture — Extensibility Layer
+
+**OPUS MUST DESIGN THIS — do not assume any specific architecture.**
+
+Six templates already exist: Trattoria, Studio, Garden, Heritage, Nordic, BBQ.
+The template picker UI is already working. BBQ is the most recently built template.
+
+### Pre-flight: understand what already exists
+
+Before designing anything, fully audit the existing template system:
+
+```bash
+find apps/web/lib/pdf-templates apps/web/app -name "*.tsx" -o -name "*.ts" | \
+  xargs grep -l "template\|Template\|cover_style\|trattoria\|studio\|garden\|bbq\|heritage\|nordic" 2>/dev/null
+
+find apps/web -name "*.tsx" | xargs grep -l "Template Style\|templateStyle\|TemplateCard" 2>/dev/null
+
+find apps/web/app/api -name "route.ts" | xargs grep -l "template\|cover_style" 2>/dev/null
+
+grep -r "cover_style\|template_id\|templateId" apps/web --include="*.ts" --include="*.tsx" | head -30
+```
+
+Answer these questions from the code before writing anything:
+1. How are templates currently stored? (hardcoded imports, registry, DB?)
+2. How does `cover_style` flow from selection to PDF renderer?
+3. What does BBQ's implementation look like vs Trattoria? What's shared?
+4. Does any template config system already exist, or is each template bespoke?
+5. How does the existing picker get its list of templates?
+6. What would it take TODAY to add a 7th template? How many files need changing?
+
+### What Opus must design (goals, not prescription)
+
+After fully understanding the existing system, design an architecture that achieves:
+
+**Goal 1 — Adding a template requires touching ONE place only.**
+After this work, adding a new template = one file + one registry entry. Nothing else.
+
+**Goal 2 — Admin can activate/deactivate templates without a deploy.**
+A DB table controls which templates are visible. Admin toggles off → disappears immediately.
+
+**Goal 3 — Admin can manage template metadata.**
+Name, description, category (Classic, Holiday, Kids, BBQ, Seasonal), sort order,
+premium flag, preview image — all editable by admin without touching code.
+
+**Goal 4 — AI can generate new templates from inspiration images.**
+Admin uploads photos of cookbook layouts → describes the mood → AI produces a new
+template. Opus decides what "a template" is structured as so AI generation is possible
+(JSON config driving a universal renderer, generated TypeScript, or other approach).
+
+**Goal 5 — Template changes are additive, never breaking.**
+Existing cookbooks using old template IDs still render correctly.
+Generate route handles unknown/deprecated template IDs gracefully (fall back to Trattoria).
+
+### What Opus must produce (in this order)
+
+1. **Architecture proposal comment block** — at the top of the new registry/config file,
+   write what approach was chosen, why it fits the existing code, what trade-offs were made.
+   Required proof that Opus read the codebase before building.
+
+2. **`cookbook_templates` DB migration** — with all 6 existing templates seeded.
+
+3. **The extensibility layer** — whatever architecture Opus determines fits best.
+
+4. **Admin UI** — `/admin/cookbook-templates` page:
+   - List all templates (active/inactive) with preview images
+   - Per template: toggle active/inactive, edit metadata, sort order, premium flag
+   - "Generate New Template" button → AI generation flow
+   - "Preview" button → sample PDF with test recipes
+
+5. **AI template generation flow:**
+   - Admin uploads 1–5 inspiration images + fills preferences form
+   - System calls Claude via `@chefsbook/ai` — follow `ai-cost.md` MANDATORY
+   - Use `claude-opus-4-6` (vision required)
+   - Log every call to `ai_usage_log`
+   - Claude produces whatever representation fits the architecture Opus chose
+   - Preview generated immediately with test recipes
+   - Admin tweaks → approves → template live
+
+6. **Update the template picker** — reads from DB/registry so new templates appear
+   automatically, grouped by category.
+
 ## Implementation phases — build in this order
 
 ### Phase 1: Foundation (no UI yet)
-1. Apply DB migration (add `book_layout` column)
-2. Create `apps/web/lib/book-layout.ts` with all types and helper functions
-3. Create API routes: POST, PATCH, generate
-4. Verify TypeScript compiles: `npx tsc --noEmit`
-5. Add nav item to sidebar (route to placeholder page)
+1. Apply DB migrations:
+   - Add `book_layout` column to `printed_cookbooks`
+   - Create `cookbook_templates` table with seed data for 3 built-in templates
+2. Create `apps/web/lib/pdf-templates/config-types.ts` — `TemplateConfig` interface
+3. Create `apps/web/lib/pdf-templates/registry.ts` — registration system
+4. Create `apps/web/lib/pdf-templates/configurable-renderer.tsx` — JSON-driven renderer
+5. Refactor existing `trattoria.tsx`, `studio.tsx`, `garden.tsx` to use registry + configs
+6. Create `apps/web/lib/book-layout.ts` with all BookLayout types and helper functions
+   - Update `cover_style` type from fixed enum to `string` (template ID)
+7. Create API routes: POST, PATCH, generate, template list
+8. Verify TypeScript compiles: `npx tsc --noEmit`
+9. Add "Print My ChefsBook" nav item to sidebar (routes to placeholder page)
 
 ### Phase 2: Canvas shell
 1. Create `/dashboard/print-cookbook/page.tsx` (list of cookbooks + "Start New")
@@ -916,6 +1385,9 @@ psql: SELECT column_name FROM information_schema.columns WHERE table_name = 'pri
 - TOC page shows live page numbers matching the canvas card order
 - Dark pages (Studio template / back page) render correctly in the flipbook
 - Thumbnail strip highlights the current spread
+- Quality badges (🟢/🟡/🔴) appear on image thumbnails in the picker
+- Selecting a 🔴 quality image blocks "Generate PDF" with a clear message
+- Pre-generate quality summary lists all affected photos by name
 - No console errors during page turns
 
 ### Regression smoke test (from testing.md)
@@ -937,14 +1409,16 @@ Follow `wrapup.md` fully. Session name: PRINT-BOOK-EDITOR.
 
 Required proof:
 1. `npx tsc --noEmit` passes
-2. psql confirms `book_layout` column exists
+2. psql confirms `book_layout` column AND `cookbook_templates` table exist with 3 seed rows
 3. Screenshot of canvas with at least 3 recipe cards visible
 4. Screenshot of expanded recipe card showing page mini-cards
 5. Drag working: before + after screenshot showing reorder
 6. "Print My ChefsBook" nav item visible in sidebar
 7. Flipbook opens from "Preview Book ▶" button — screenshot showing 3D page turn mid-animation
-8. Regression smoke test: all items from testing.md checked
+8. `/admin/cookbook-templates` page loads and lists the 3 built-in templates
+9. Deactivating a template via admin removes it from the user-facing template picker
+10. Regression smoke test: all items from testing.md checked
 
 Update `feature-registry.md` with new feature entry.
-Update `pdf-design.md` if PDF generation pipeline changed.
+Update `pdf-design.md` — note registry + configurable renderer pattern replaces per-file templates.
 Log any incomplete phases in AGENDA.md with clear next steps.

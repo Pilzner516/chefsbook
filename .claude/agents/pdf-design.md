@@ -309,6 +309,67 @@ For smaller books, skip chapter dividers.
 
 ---
 
+## Page Break Handling (CRITICAL)
+
+React-pdf handles page breaks automatically, but improper layout causes large gaps and orphaned content.
+
+### Rules
+
+1. **Never use side-by-side columns for content that may overflow a page**
+   - Two-column flexbox layouts (`flexDirection: 'row'`) cannot flow across pages
+   - When content overflows, the entire row moves to the next page, leaving a huge gap
+   - Use stacked layouts (ingredients on top, steps below) instead
+
+2. **Use `wrap` prop correctly**
+   - `<Page wrap>` — allows content to flow to subsequent pages (default behavior)
+   - `<View wrap={false}>` — keeps the entire View on one page; if it doesn't fit, moves to next page
+   - Apply `wrap={false}` to individual items (steps, ingredients), NOT to entire sections
+
+3. **Use `minPresenceAhead` to prevent orphans**
+   - `<View minPresenceAhead={40}>` — ensures at least 40pt of content follows before a page break
+   - Apply to step Views so a step number is never stranded at the bottom of a page
+   - Typical value: 40-60pt (roughly 3-4 lines of body text)
+
+4. **Keep sections together intelligently**
+   - Ingredients section: use `wrap={false}` if it fits on one page; if it might be long, let it wrap
+   - Notes box: always `wrap={false}` — these are usually short
+   - Individual steps: always `wrap={false}` — a step shouldn't break mid-sentence
+
+### Example Pattern (correct)
+
+```tsx
+<Page size="LETTER" style={styles.recipePage} wrap>
+  {/* Ingredients at top — wrap={false} keeps it together */}
+  <View style={styles.ingredientsSection} wrap={false}>
+    <Text>INGREDIENTS</Text>
+    {ingredients.map(...)}
+  </View>
+
+  {/* Steps below — section wraps, individual steps don't */}
+  <View style={styles.stepsSection}>
+    <Text>METHOD</Text>
+    {steps.map((step) => (
+      <View wrap={false} minPresenceAhead={40}>
+        <Text>{step.number}</Text>
+        <Text>{step.instruction}</Text>
+      </View>
+    ))}
+  </View>
+</Page>
+```
+
+### Anti-Pattern (causes large gaps)
+
+```tsx
+{/* DON'T DO THIS — two-column layout breaks across pages */}
+<View style={{ flexDirection: 'row' }}>
+  <View style={{ width: '40%' }}>{/* Ingredients */}</View>
+  <View style={{ width: '60%' }}>{/* Steps */}</View>
+</View>
+```
+
+---
+
 ## Known Bugs to Always Fix
 
 1. **Timer character bug**: The "ñ" character appearing before timer durations is a
