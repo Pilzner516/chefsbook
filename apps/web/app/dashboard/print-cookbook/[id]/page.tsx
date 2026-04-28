@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useReducer, useCallback, use, useMemo } from 'react';
+import { useEffect, useState, useReducer, useCallback, use, useMemo, Component, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, PLAN_LIMITS, getPrimaryPhotos, listRecipePhotos } from '@chefsbook/db';
@@ -34,6 +34,47 @@ import {
 } from '@/lib/book-layout';
 import { useDebouncedCallback } from 'use-debounce';
 import FlipbookPreview from '@/components/print/FlipbookPreview';
+
+// Error boundary to catch rendering errors
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Canvas editor error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-cb-bg flex items-center justify-center p-8">
+          <div className="bg-white rounded-card p-6 max-w-lg shadow-lg">
+            <h2 className="text-xl font-bold text-red-600 mb-4">Something went wrong</h2>
+            <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-48 mb-4">
+              {this.state.error?.message}
+              {'\n\n'}
+              {this.state.error?.stack}
+            </pre>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-cb-primary text-white px-4 py-2 rounded-input"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 interface RecipePreview {
   id: string;
@@ -188,7 +229,15 @@ function layoutReducer(state: BookLayout, action: LayoutAction): BookLayout {
 
 const emptyLayout: BookLayout = { version: 1, language: 'en', cards: [] };
 
-export default function PrintCookbookCanvasPage({
+export default function PrintCookbookCanvasPage(props: { params: Promise<{ id: string }> }) {
+  return (
+    <ErrorBoundary>
+      <PrintCookbookCanvasPageInner {...props} />
+    </ErrorBoundary>
+  );
+}
+
+function PrintCookbookCanvasPageInner({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -299,8 +348,32 @@ export default function PrintCookbookCanvasPage({
     }
 
     const { cookbook } = await res.json();
+    console.log('[Canvas] Loaded cookbook:', cookbook);
+    console.log('[Canvas] book_layout:', JSON.stringify(cookbook.book_layout, null, 2));
+
     if (cookbook.book_layout) {
-      dispatch({ type: 'SET_LAYOUT', payload: cookbook.book_layout });
+      // Validate the layout structure before dispatching
+      const layout = cookbook.book_layout;
+      if (layout && Array.isArray(layout.cards)) {
+        // Ensure all recipe cards have valid pages arrays
+        const validatedLayout = {
+          ...layout,
+          cards: layout.cards.map((card: BookCard) => {
+            if (card.type === 'recipe') {
+              const recipeCard = card as RecipeCard;
+              return {
+                ...recipeCard,
+                pages: Array.isArray(recipeCard.pages) ? recipeCard.pages.filter((p: RecipePage) => p && p.kind) : [],
+              };
+            }
+            return card;
+          }),
+        };
+        console.log('[Canvas] Validated layout:', validatedLayout);
+        dispatch({ type: 'SET_LAYOUT', payload: validatedLayout });
+      } else {
+        console.error('[Canvas] Invalid layout structure:', layout);
+      }
     }
 
     setLoading(false);
@@ -1015,15 +1088,22 @@ function RecipeCardBody({
   session: { access_token: string } | null;
   cookbookId: string;
 }) {
+  // Debug logging
+  console.log('[RecipeCardBody] card:', card);
+  console.log('[RecipeCardBody] pages:', card.pages);
+
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const imagePage = card.pages.find((p) => p.kind === 'image');
+
+  // Defensive: ensure pages is always an array
+  const pages = Array.isArray(card.pages) ? card.pages : [];
+  const imagePage = pages.find((p) => p && p.kind === 'image');
   const imageUrl = imagePage?.kind === 'image' ? imagePage.image_url : primaryPhoto;
   const imagePageId = imagePage?.id;
 
   // Get the current page data from the card (not a stale copy)
-  const editingPage = editingPageId ? card.pages.find(p => p.id === editingPageId) : null;
+  const editingPage = editingPageId ? pages.find(p => p && p.id === editingPageId) : null;
 
   const handleOpenPageEditor = (page: RecipePage) => {
     setEditingPageId(page.id);
@@ -1123,14 +1203,18 @@ function RecipeCardBody({
       {/* Visual page thumbnails - horizontal strip */}
       <div className="mt-3 overflow-x-auto">
         <div className="flex gap-2 pb-2">
-          {card.pages.map((page, idx) => {
+          {pages.map((page, idx) => {
+            if (!page || !page.kind) {
+              console.warn('[RecipeCardBody] Invalid page at index', idx, page);
+              return null;
+            }
             const pageImageUrl = 'image_url' in page ? page.image_url : undefined;
             const pageText = 'text' in page ? page.text : undefined;
             const pagePart = 'part' in page ? page.part : undefined;
 
             return (
               <button
-                key={page.id}
+                key={page.id || idx}
                 onClick={() => handleOpenPageEditor(page)}
                 className="flex-shrink-0 w-[80px] h-[110px] rounded bg-[#FAF7F2] border border-[#E0D9D0] overflow-hidden hover:border-cb-primary/50 transition-colors"
                 style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}
