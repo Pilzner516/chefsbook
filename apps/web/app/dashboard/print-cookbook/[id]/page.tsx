@@ -1298,183 +1298,159 @@ function RecipeCardBody({
       )}
 
       {/* Page Editor Modal */}
-      {editingPage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={handleClosePageEditor} />
-          <div className="relative bg-cb-card rounded-card p-5 max-w-lg w-full shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">
-                {editingPage.kind === 'image' ? 'Image Page' : editingPage.kind === 'content' ? 'Recipe Content' : 'Custom Page'}
-              </h3>
-              <button onClick={handleClosePageEditor} className="text-cb-muted hover:text-cb-text">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      {editingPage && (() => {
+        const epImageUrl = 'image_url' in editingPage ? editingPage.image_url : undefined;
+        const epPart = 'part' in editingPage ? editingPage.part : 1;
+        const epLayout = 'layout' in editingPage ? editingPage.layout : 'image_and_text';
+        const epText = 'text' in editingPage ? editingPage.text : undefined;
+        const epCaption = 'caption' in editingPage ? editingPage.caption : undefined;
 
-            {editingPage.kind === 'image' && (
-              <div className="space-y-4">
-                <div className="relative aspect-[8.5/5.5] bg-[#FAF7F2] rounded-lg overflow-hidden border border-[#E0D9D0]">
-                  {(editingPage.image_url || primaryPhoto) ? (
-                    <>
-                      <img
-                        src={proxyIfNeeded(editingPage.image_url || primaryPhoto || '')}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                      {(editingPage.image_url && imageQualities[editingPage.image_url]) && (
-                        <div className="absolute top-2 left-2 bg-white/90 rounded px-2 py-1">
-                          <QualityBadge quality={imageQualities[editingPage.image_url]} />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <svg className="w-12 h-12 text-cb-muted mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                        </svg>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={handleClosePageEditor} />
+            <div className="relative bg-cb-card rounded-card p-5 max-w-lg w-full shadow-xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">
+                  {editingPage.kind === 'image' ? 'Image Page' : editingPage.kind === 'content' ? 'Recipe Content' : 'Custom Page'}
+                </h3>
+                <button onClick={handleClosePageEditor} className="text-cb-muted hover:text-cb-text">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {editingPage.kind === 'image' && (
+                <div className="space-y-4">
+                  <div className="relative aspect-[8.5/5.5] bg-[#FAF7F2] rounded-lg overflow-hidden border border-[#E0D9D0]">
+                    {(epImageUrl || primaryPhoto) ? (
+                      <>
+                        <img
+                          src={proxyIfNeeded(epImageUrl || primaryPhoto || '')}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                        {(epImageUrl && imageQualities[epImageUrl]) && (
+                          <div className="absolute top-2 left-2 bg-white/90 rounded px-2 py-1">
+                            <QualityBadge quality={imageQualities[epImageUrl]} />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
                         <p className="text-sm text-cb-muted">No image selected</p>
                       </div>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setShowImagePicker(true);
-                    handleClosePageEditor();
-                  }}
-                  className="w-full py-2.5 bg-cb-bg border border-cb-border rounded-input text-sm font-medium hover:border-cb-primary/50 transition-colors"
-                >
-                  Change Photo
-                </button>
-                <p className="text-xs text-cb-muted text-center">
-                  For best print quality, use images 2550×1650 px or larger (300 DPI).
-                </p>
-              </div>
-            )}
-
-            {editingPage.kind === 'content' && (
-              <div className="space-y-4">
-                <div className="aspect-[8.5/11] bg-[#FAF7F2] rounded-lg border border-[#E0D9D0] p-4 flex flex-col items-center justify-center">
-                  <svg className="w-16 h-16 text-cb-muted mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                  </svg>
-                  <p className="font-medium text-cb-text">Recipe Content — Part {editingPage.part}</p>
-                  <p className="text-sm text-cb-secondary mt-1">Title, Ingredients & Steps</p>
-                </div>
-                <p className="text-xs text-cb-muted text-center">
-                  This page is auto-generated from your recipe data and cannot be edited here.
-                </p>
-              </div>
-            )}
-
-            {editingPage.kind === 'custom' && (
-              <div className="space-y-4">
-                {/* Image upload for custom pages with image */}
-                {editingPage.layout !== 'text_only' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Photo</label>
-                    <div className="relative aspect-[8.5/5.5] bg-[#FAF7F2] rounded-lg overflow-hidden border border-[#E0D9D0]">
-                      {editingPage.image_url ? (
-                        <>
-                          <img
-                            src={proxyIfNeeded(editingPage.image_url)}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                          {imageQualities[editingPage.image_url] && (
-                            <div className="absolute top-2 left-2 bg-white/90 rounded px-2 py-1">
-                              <QualityBadge quality={imageQualities[editingPage.image_url]} />
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-sm text-cb-muted">No photo uploaded</span>
-                        </div>
-                      )}
-                    </div>
-                    <label className="mt-2 flex items-center justify-center py-2 bg-cb-bg border border-cb-border rounded-input cursor-pointer hover:border-cb-primary/50 transition-colors">
-                      <span className="text-sm font-medium">{uploading ? 'Uploading...' : 'Upload Photo'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        onChange={(e) => handleCustomImageUpload(e, editingPage.id)}
-                        disabled={uploading}
-                      />
-                    </label>
+                    )}
                   </div>
-                )}
-
-                {/* Text area for custom pages with text */}
-                {editingPage.layout !== 'image_only' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Text <span className="font-normal text-cb-muted">(max 500 characters)</span>
-                    </label>
-                    <textarea
-                      value={editingPage.text || ''}
-                      onChange={(e) =>
-                        dispatch({
-                          type: 'UPDATE_CUSTOM_PAGE',
-                          cardId: card.id,
-                          pageId: editingPage.id,
-                          updates: { text: e.target.value.slice(0, 500) },
-                        })
-                      }
-                      placeholder="Add personal notes, memories, or a dedication..."
-                      rows={5}
-                      className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm resize-none focus:outline-none focus:border-cb-primary"
-                    />
-                    <p className="text-xs text-cb-muted text-right mt-1">
-                      {(editingPage.text?.length || 0)}/500
-                    </p>
-                  </div>
-                )}
-
-                {/* Caption for pages with images */}
-                {editingPage.layout !== 'text_only' && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Caption <span className="font-normal text-cb-muted">(optional, max 100 characters)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={editingPage.caption || ''}
-                      onChange={(e) =>
-                        dispatch({
-                          type: 'UPDATE_CUSTOM_PAGE',
-                          cardId: card.id,
-                          pageId: editingPage.id,
-                          updates: { caption: e.target.value.slice(0, 100) },
-                        })
-                      }
-                      placeholder="Photo caption..."
-                      className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm focus:outline-none focus:border-cb-primary"
-                    />
-                  </div>
-                )}
-
-                {/* Delete custom page */}
-                <div className="pt-3 border-t border-cb-border">
                   <button
                     onClick={() => {
-                      dispatch({ type: 'REMOVE_PAGE', cardId: card.id, pageId: editingPage.id });
+                      setShowImagePicker(true);
                       handleClosePageEditor();
                     }}
-                    className="w-full py-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                    className="w-full py-2.5 bg-cb-bg border border-cb-border rounded-input text-sm font-medium hover:border-cb-primary/50 transition-colors"
                   >
-                    Delete This Page
+                    Change Photo
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+
+              {editingPage.kind === 'content' && (
+                <div className="space-y-4">
+                  <div className="aspect-[8.5/11] bg-[#FAF7F2] rounded-lg border border-[#E0D9D0] p-4 flex flex-col items-center justify-center">
+                    <span className="text-4xl mb-3">📄</span>
+                    <p className="font-medium text-cb-text">Recipe Content — Part {epPart}</p>
+                    <p className="text-sm text-cb-secondary mt-1">Title, Ingredients & Steps</p>
+                  </div>
+                  <p className="text-xs text-cb-muted text-center">
+                    This page is auto-generated from your recipe data.
+                  </p>
+                </div>
+              )}
+
+              {editingPage.kind === 'custom' && (
+                <div className="space-y-4">
+                  {epLayout !== 'text_only' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Photo</label>
+                      <div className="relative aspect-[8.5/5.5] bg-[#FAF7F2] rounded-lg overflow-hidden border border-[#E0D9D0]">
+                        {epImageUrl ? (
+                          <img src={proxyIfNeeded(epImageUrl)} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-sm text-cb-muted">No photo uploaded</span>
+                          </div>
+                        )}
+                      </div>
+                      <label className="mt-2 flex items-center justify-center py-2 bg-cb-bg border border-cb-border rounded-input cursor-pointer hover:border-cb-primary/50 transition-colors">
+                        <span className="text-sm font-medium">{uploading ? 'Uploading...' : 'Upload Photo'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          onChange={(e) => handleCustomImageUpload(e, editingPage.id)}
+                          disabled={uploading}
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {epLayout !== 'image_only' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Text (max 500 chars)</label>
+                      <textarea
+                        value={epText || ''}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'UPDATE_CUSTOM_PAGE',
+                            cardId: card.id,
+                            pageId: editingPage.id,
+                            updates: { text: e.target.value.slice(0, 500) },
+                          })
+                        }
+                        placeholder="Add personal notes or dedication..."
+                        rows={4}
+                        className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm resize-none focus:outline-none focus:border-cb-primary"
+                      />
+                    </div>
+                  )}
+
+                  {epLayout !== 'text_only' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Caption (optional)</label>
+                      <input
+                        type="text"
+                        value={epCaption || ''}
+                        onChange={(e) =>
+                          dispatch({
+                            type: 'UPDATE_CUSTOM_PAGE',
+                            cardId: card.id,
+                            pageId: editingPage.id,
+                            updates: { caption: e.target.value.slice(0, 100) },
+                          })
+                        }
+                        placeholder="Photo caption..."
+                        className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm focus:outline-none focus:border-cb-primary"
+                      />
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-cb-border">
+                    <button
+                      onClick={() => {
+                        dispatch({ type: 'REMOVE_PAGE', cardId: card.id, pageId: editingPage.id });
+                        handleClosePageEditor();
+                      }}
+                      className="w-full py-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                    >
+                      Delete This Page
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
