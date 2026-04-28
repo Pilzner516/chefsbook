@@ -9,7 +9,7 @@ import { StudioDocument } from '@/lib/pdf-templates/studio';
 import { GardenDocument } from '@/lib/pdf-templates/garden';
 import { HeritageDocument } from '@/lib/pdf-templates/heritage';
 import { NordicDocument } from '@/lib/pdf-templates/nordic';
-import { SpiceDocument } from '@/lib/pdf-templates/spice';
+import { BBQDocument } from '@/lib/pdf-templates/bbq';
 import type { CookbookPdfOptions, CookbookRecipe, CoverStyle } from '@/lib/pdf-templates/types';
 import type { ProductOptions } from '@/lib/lulu';
 
@@ -245,7 +245,7 @@ export async function POST(
       minimal: GardenDocument,
       heritage: HeritageDocument,
       nordic: NordicDocument,
-      spice: SpiceDocument,
+      bbq: BBQDocument,
     };
     const TemplateDocument = templateMap[coverStyle] ?? TrattoriaDocument;
 
@@ -259,7 +259,7 @@ export async function POST(
       minimal: 'minimal',
       heritage: 'classic',  // Heritage uses classic-style cover (warm, traditional)
       nordic: 'minimal',    // Nordic uses minimal-style cover (clean, white)
-      spice: 'classic',     // Spice uses classic-style cover (warm, ornate)
+      bbq: 'modern',        // BBQ uses modern-style cover (dark, bold)
     };
     const coverBuffer = await renderToBuffer(
       CookbookCoverDocument({

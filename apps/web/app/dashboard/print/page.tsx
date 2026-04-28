@@ -19,7 +19,7 @@ interface RecipePreview {
   image_url: string | null;
 }
 
-type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'spice';
+type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'bbq';
 
 interface PrintedCookbook {
   id: string;
@@ -985,43 +985,39 @@ export default function PrintCookbookPage() {
                   <div className="text-xs text-cb-secondary">Stark & minimal</div>
                 </button>
 
-                {/* Spice (Middle Eastern) */}
+                {/* BBQ (Smokehouse) */}
                 <button
-                  onClick={() => setCoverStyle('spice')}
+                  onClick={() => setCoverStyle('bbq')}
                   className={`p-3 rounded-card border text-left transition-all ${
-                    coverStyle === 'spice'
+                    coverStyle === 'bbq'
                       ? 'border-cb-primary ring-2 ring-cb-primary/20'
                       : 'border-cb-border hover:border-cb-primary/50'
                   }`}
                 >
-                  <div className="w-full aspect-[3/4] rounded bg-[#faf8f5] mb-3 relative overflow-hidden">
+                  <div className="w-full aspect-[3/4] rounded bg-[#2d2926] mb-3 relative overflow-hidden">
                     <svg viewBox="0 0 120 160" className="w-full h-full">
-                      {/* Ornate double frame */}
-                      <rect x="8" y="8" width="104" height="144" fill="none" stroke="#d4a84b" strokeWidth="1.5"/>
-                      <rect x="12" y="12" width="96" height="136" fill="none" stroke="#d4a3b0" strokeWidth="0.5"/>
-                      {/* Top/bottom accent bars */}
-                      <rect x="0" y="0" width="120" height="4" fill="#8b2942"/>
-                      <rect x="0" y="156" width="120" height="4" fill="#1a6b6b"/>
-                      {/* Diamond pattern decoration */}
-                      <line x1="40" y1="35" x2="55" y2="35" stroke="#d4a84b" strokeWidth="0.5"/>
-                      <rect x="57" y="33" width="6" height="6" fill="#d4a84b" transform="rotate(45 60 36)"/>
-                      <line x1="65" y1="35" x2="80" y2="35" stroke="#d4a84b" strokeWidth="0.5"/>
-                      {/* Title */}
-                      <text x="60" y="60" textAnchor="middle" fontFamily="serif" fontSize="11" fontWeight="bold" fill="#2a2520">My Cookbook</text>
-                      <text x="60" y="75" textAnchor="middle" fontFamily="serif" fontSize="6" fontStyle="italic" fill="#8b2942">A Collection</text>
-                      <rect x="45" y="82" width="30" height="1" fill="#d4a84b"/>
-                      <text x="60" y="96" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#6a5a4a">by Author Name</text>
-                      {/* Saffron ingredient box preview */}
-                      <rect x="20" y="110" width="80" height="35" fill="#f5e6c8"/>
-                      <rect x="20" y="110" width="2" height="35" fill="#d4a84b"/>
-                      <text x="28" y="122" fontFamily="sans-serif" fontSize="4" fill="#8b2942">INGREDIENTS</text>
-                      {/* Teal step number */}
-                      <circle cx="90" y="130" r="6" fill="#1a6b6b"/>
-                      <text x="90" y="132" textAnchor="middle" fontFamily="sans-serif" fontSize="6" fill="white" fontWeight="bold">1</text>
+                      {/* Top amber stripe */}
+                      <rect x="0" y="12" width="120" height="4" fill="#d4a03a"/>
+                      {/* Bottom rust stripe */}
+                      <rect x="0" y="144" width="120" height="4" fill="#b54b32"/>
+                      {/* Title - bold uppercase */}
+                      <text x="60" y="70" textAnchor="middle" fontFamily="sans-serif" fontSize="12" fontWeight="bold" fill="#fffdf8" letterSpacing="2">MY COOKBOOK</text>
+                      <text x="60" y="84" textAnchor="middle" fontFamily="sans-serif" fontSize="6" fill="#d4a03a">A Collection</text>
+                      {/* Amber divider */}
+                      <rect x="40" y="92" width="40" height="2" fill="#d4a03a"/>
+                      <text x="60" y="106" textAnchor="middle" fontFamily="sans-serif" fontSize="5" fill="#f5f0e8">by Author Name</text>
+                      {/* Recipe preview - cream background */}
+                      <rect x="15" y="115" width="90" height="30" fill="#f5f0e8"/>
+                      {/* Charcoal step circle */}
+                      <circle cx="28" cy="130" r="6" fill="#2d2926"/>
+                      <text x="28" y="132" textAnchor="middle" fontFamily="sans-serif" fontSize="6" fill="#fffdf8" fontWeight="bold">1</text>
+                      {/* Amber bullet */}
+                      <rect x="80" y="122" width="4" height="4" fill="#d4a03a"/>
+                      <rect x="80" y="130" width="4" height="4" fill="#d4a03a"/>
                     </svg>
                   </div>
-                  <div className="font-semibold text-sm">Spice</div>
-                  <div className="text-xs text-cb-secondary">Rich & ornate</div>
+                  <div className="font-semibold text-sm">BBQ</div>
+                  <div className="text-xs text-cb-secondary">Bold & smoky</div>
                 </button>
               </div>
             </div>

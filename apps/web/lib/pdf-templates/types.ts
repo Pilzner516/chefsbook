@@ -2,7 +2,7 @@
  * Shared types for PDF cookbook templates
  */
 
-export type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'spice';
+export type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'bbq';
 
 export interface CookbookPdfOptions {
   cookbook: {
