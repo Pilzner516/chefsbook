@@ -274,6 +274,39 @@ function PrintCookbookCanvasPageInner({
   // Flipbook preview state
   const [showFlipbook, setShowFlipbook] = useState(false);
 
+  // Quality warning state (must be before any early return)
+  const [showQualityWarning, setShowQualityWarning] = useState(false);
+
+  // Compute quality issues for pre-generate check (must be before any early return)
+  const qualityIssues = useMemo(() => {
+    const issues: { name: string; tier: QualityTier }[] = [];
+
+    // Check cover image
+    const coverCard = layout.cards.find((c) => c.type === 'cover') as CoverCard | undefined;
+    if (coverCard?.image_url && imageQualities[coverCard.image_url]) {
+      const q = imageQualities[coverCard.image_url];
+      if (q.tier !== 'excellent') {
+        issues.push({ name: 'Cover image', tier: q.tier });
+      }
+    }
+
+    // Check recipe images
+    for (const card of getRecipeCards(layout)) {
+      const imagePage = card.pages.find((p) => p.kind === 'image');
+      if (imagePage?.kind === 'image' && imagePage.image_url && imageQualities[imagePage.image_url]) {
+        const q = imageQualities[imagePage.image_url];
+        if (q.tier !== 'excellent') {
+          issues.push({ name: card.display_name, tier: q.tier });
+        }
+      }
+    }
+
+    return issues;
+  }, [layout, imageQualities]);
+
+  const hasPoorQuality = qualityIssues.some((i) => i.tier === 'poor');
+  const hasAcceptableQuality = qualityIssues.some((i) => i.tier === 'acceptable');
+
   // Update page map when layout changes
   useEffect(() => {
     if (layout.cards.length > 0) {
@@ -501,37 +534,6 @@ function PrintCookbookCanvasPageInner({
 
   const totalPages = getTotalPageCount(layout);
   const recipeCount = getRecipeCards(layout).length;
-
-  // Compute quality issues for pre-generate check
-  const qualityIssues = useMemo(() => {
-    const issues: { name: string; tier: QualityTier }[] = [];
-
-    // Check cover image
-    const coverCard = layout.cards.find((c) => c.type === 'cover') as CoverCard | undefined;
-    if (coverCard?.image_url && imageQualities[coverCard.image_url]) {
-      const q = imageQualities[coverCard.image_url];
-      if (q.tier !== 'excellent') {
-        issues.push({ name: 'Cover image', tier: q.tier });
-      }
-    }
-
-    // Check recipe images
-    for (const card of getRecipeCards(layout)) {
-      const imagePage = card.pages.find((p) => p.kind === 'image');
-      if (imagePage?.kind === 'image' && imagePage.image_url && imageQualities[imagePage.image_url]) {
-        const q = imageQualities[imagePage.image_url];
-        if (q.tier !== 'excellent') {
-          issues.push({ name: card.display_name, tier: q.tier });
-        }
-      }
-    }
-
-    return issues;
-  }, [layout, imageQualities]);
-
-  const hasPoorQuality = qualityIssues.some((i) => i.tier === 'poor');
-  const hasAcceptableQuality = qualityIssues.some((i) => i.tier === 'acceptable');
-  const [showQualityWarning, setShowQualityWarning] = useState(false);
 
   return (
     <div className="min-h-screen bg-cb-bg">
