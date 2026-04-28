@@ -1,6 +1,28 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session PDF-POLISH) TYPE: UI POLISH
+
+### Cookbook PDF Template Polish Pass
+
+Implemented 8 fixes across all three PDF templates:
+
+- Add foreword textarea to wizard Step 2 (1000 char limit with counter)
+- Add ForewordPage component to all templates (appears between TOC and recipes)
+- Add "A ChefsBook Cookbook" branding line to all template title pages
+- Update back page with warm ChefsBook description blurb
+- Fix Trattoria image page title position (cream bar height 120→230)
+- Fix Trattoria left column dead space (alignSelf: flex-start)
+- Remove fallback to scraped recipe.image_url (prevents stock photo watermarks)
+- Add "Add your own photo" hint on recipe cards without user-uploaded photos
+- Verified no ñ characters in DB (0 rows in recipe_steps.instruction)
+
+**Migration 061:** Add foreword TEXT column to printed_cookbooks
+
+**Deployment:** Commit f99ded5, deployed to RPi5
+
+---
+
 ## 2026-04-27 (session PDF-REACT-PDF) TYPE: FEATURE
 
 ### Three Distinct PDF Cookbook Templates
