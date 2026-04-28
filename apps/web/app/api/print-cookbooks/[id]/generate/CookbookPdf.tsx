@@ -142,31 +142,41 @@ const s = StyleSheet.create({
     marginBottom: 24,
     width: '100%',
   },
+  // TOC entry - table-style layout with solid leader line
+  // Uses flexbox to ensure single-line entries (no wrapping)
+  tocTable: {
+    width: '100%',
+  },
   tocEntry: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     marginBottom: 10,
+    width: '100%',
   },
   tocRecipe: {
     fontSize: 13,
     fontFamily: 'Playfair Display',
     fontWeight: 400,
+    color: DARK,
+    flexShrink: 0, // Never compress the title
+    paddingRight: 8,
   },
-  tocDots: {
-    flex: 1,
-    fontSize: 10,
-    fontFamily: 'Inter',
-    fontWeight: 300,
-    letterSpacing: 2,
-    color: BORDER,
-    marginHorizontal: 8,
-    marginBottom: 1,
+  tocLeader: {
+    flex: 1, // Fill remaining space
+    height: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+    marginBottom: 4, // Align with text baseline
   },
   tocPageNumber: {
     fontSize: 11,
     fontFamily: 'Inter',
     fontWeight: 300,
     color: MUTED,
+    flexShrink: 0, // Never compress page number
+    paddingLeft: 8,
+    textAlign: 'right',
+    minWidth: 24,
   },
 
   // Recipe page — per pdf-design.md
@@ -380,14 +390,16 @@ function truncateTitle(title: string, maxLen = 40): string {
   return title.slice(0, maxLen - 1) + '…';
 }
 
-// Helper to generate dotted leader string
-function generateDots(count = 80): string {
-  return ' . '.repeat(count);
-}
-
-// Helper to fix timer character bug (ñ → ⏱)
+// Helper to fix timer character bug (ñ → ⏱ or remove)
+// The ñ appears when a clock emoji fails to render or is pasted incorrectly
 function fixTimerCharacter(text: string): string {
-  return text.replace(/ñ\s*(\d)/g, '⏱ $1');
+  // Replace ñ followed by a time value with timer emoji
+  let fixed = text.replace(/ñ\s*(\d)/g, '⏱ $1');
+  // Also strip any remaining standalone ñ that don't precede digits (stray artifacts)
+  fixed = fixed.replace(/ñ(?!\w)/g, '');
+  // Handle cases like "ñ " (ñ followed by space before time)
+  fixed = fixed.replace(/ñ\s+/g, '⏱ ');
+  return fixed;
 }
 
 // Helper to normalize bullet characters (- → •)
@@ -446,16 +458,19 @@ export function CookbookInteriorDocument({
       </Page>
 
       {/* Table of Contents — per pdf-design.md */}
+      {/* Uses table-style layout with solid leader line (dotted borders not supported in @react-pdf/renderer) */}
       <Page size="LETTER" style={s.tocPage}>
         <Text style={s.tocTitle}>Contents</Text>
         <View style={s.tocDivider} />
-        {recipes.map((recipe, idx) => (
-          <View key={recipe.id} style={s.tocEntry}>
-            <Text style={s.tocRecipe}>{recipe.title}</Text>
-            <Text style={s.tocDots}>{generateDots()}</Text>
-            <Text style={s.tocPageNumber}>{recipeStartPage + idx * 2}</Text>
-          </View>
-        ))}
+        <View style={s.tocTable}>
+          {recipes.map((recipe, idx) => (
+            <View key={recipe.id} style={s.tocEntry}>
+              <Text style={s.tocRecipe}>{recipe.title}</Text>
+              <View style={s.tocLeader} />
+              <Text style={s.tocPageNumber}>{recipeStartPage + idx * 2}</Text>
+            </View>
+          ))}
+        </View>
         <Text style={s.pageNumber} render={({ pageNumber }) => `${pageNumber}`} fixed />
       </Page>
 
@@ -608,8 +623,8 @@ const coverStyles = {
   modern: {
     bg: '#1a1a1a',
     titleColor: '#ffffff',
-    subtitleColor: CREAM,
-    authorColor: '#888888',
+    subtitleColor: RED, // Red subtitle per spec
+    authorColor: 'rgba(255,255,255,0.6)', // Semi-transparent white per spec
     accentColor: RED,
     spineBg: '#1a1a1a',
     spineTextColor: '#ffffff',
@@ -762,17 +777,33 @@ export function CookbookCoverDocument({
       left: 24,
       right: 24,
       bottom: 24,
-      borderWidth: 1,
+      borderWidth: 1.5, // 1.5pt per spec
       borderColor: RED,
     },
-    // Minimal style: red accent bar at top
-    accentBar: {
+    // Modern style: horizontal red accent bar at 40% down the page
+    modernAccentBar: {
+      position: 'absolute',
+      top: coverHeight * 0.4, // 40% down
+      left: 0,
+      right: 0,
+      height: 8, // 8pt tall per spec
+      backgroundColor: RED,
+    },
+    // Minimal style: red accent bar at top only (6pt)
+    minimalTopBar: {
       position: 'absolute',
       top: 0,
       left: 0,
       right: 0,
-      height: 12,
+      height: 6, // 6pt per spec
       backgroundColor: RED,
+    },
+    // Minimal style: small red horizontal rule (replaces hat icon)
+    minimalRule: {
+      width: 40,
+      height: 2,
+      backgroundColor: RED,
+      marginBottom: 24,
     },
     frontHatIcon: {
       width: 50,
@@ -781,17 +812,17 @@ export function CookbookCoverDocument({
     },
     frontTitle: {
       fontSize: 42,
-      fontFamily: 'Playfair Display',
-      fontWeight: 700,
+      fontFamily: coverStyle === 'minimal' ? 'Inter' : 'Playfair Display', // Minimal uses Inter Bold
+      fontWeight: coverStyle === 'minimal' ? 600 : 700,
       color: style.titleColor,
       textAlign: 'center',
       marginBottom: 12,
     },
     frontSubtitle: {
       fontSize: 18,
-      fontFamily: 'Playfair Display',
-      fontWeight: 400,
-      fontStyle: 'italic',
+      fontFamily: coverStyle === 'minimal' ? 'Inter' : 'Playfair Display',
+      fontWeight: 300,
+      fontStyle: coverStyle === 'minimal' ? 'normal' : 'italic',
       color: style.subtitleColor,
       textAlign: 'center',
       marginBottom: 24,
@@ -845,13 +876,19 @@ export function CookbookCoverDocument({
           {/* Classic style: inset border frame */}
           {coverStyle === 'classic' && <View style={cs.frontFrame} />}
 
-          {/* Minimal style: red accent bar at top */}
-          {coverStyle === 'minimal' && <View style={cs.accentBar} />}
+          {/* Modern style: horizontal red accent bar at 40% down */}
+          {coverStyle === 'modern' && <View style={cs.modernAccentBar} />}
 
-          {/* Chef hat icon */}
-          {chefsHatBase64 && (
+          {/* Minimal style: red accent bar at top only */}
+          {coverStyle === 'minimal' && <View style={cs.minimalTopBar} />}
+
+          {/* Chef hat icon (Classic and Modern only) */}
+          {coverStyle !== 'minimal' && chefsHatBase64 && (
             <Image src={chefsHatBase64} style={cs.frontHatIcon} />
           )}
+
+          {/* Minimal style: small red horizontal rule instead of hat */}
+          {coverStyle === 'minimal' && <View style={cs.minimalRule} />}
 
           <Text style={cs.frontTitle}>{title}</Text>
           {subtitle && <Text style={cs.frontSubtitle}>{subtitle}</Text>}
