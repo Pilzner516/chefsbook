@@ -64,8 +64,8 @@ PDF version:      1.4 minimum (Puppeteer default is fine)
 | Ingredient group header  | Inter                   | 11pt   | 600    | normal  |
 | Step number              | Playfair Display        | 14pt   | 700    | normal  |
 | Step text                | Inter                   | 11pt   | 400    | normal  |
-| Timer text               | Inter                   | 10pt   | 400    | italic  |
-| Notes text               | Inter                   | 10.5pt | 400    | italic  |
+| Timer text               | Inter                   | 10pt   | 300    | normal  |
+| Notes text               | Inter                   | 10.5pt | 300    | normal  |
 | Running footer           | Inter                   | 8pt    | 300    | normal  |
 | Page number              | Inter                   | 9pt    | 400    | normal  |
 

@@ -48,6 +48,12 @@ Rebuilt the @react-pdf/renderer cookbook PDF templates to match award-winning co
 - Server: https://chefsbk.app returns HTTP 200
 - NOTE: Manual UI test required — log in and regenerate a cookbook at /dashboard/print
 
+**Hotfix (same session):**
+- Fixed "Could not resolve font for Inter, fontWeight 400, fontStyle italic"
+- Root cause: Inter fonts registered without italic variants
+- Fix: Changed stepTimer and notes to use fontWeight 300 (light) instead of fontStyle italic
+- Deployed: commit 1ff5b9e
+
 **Manual testing instructions:**
 1. Log in at https://chefsbk.app
 2. Go to /dashboard/print
