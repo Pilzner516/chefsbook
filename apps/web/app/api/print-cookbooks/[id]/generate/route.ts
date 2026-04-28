@@ -212,6 +212,16 @@ export async function POST(
       console.warn('Could not fetch chef hat icon for PDF');
     }
 
+    // Fetch cover image and convert to base64 (react-pdf can't fetch auth-required URLs)
+    let coverImageBase64: string | null = null;
+    if (cookbook.cover_image_url) {
+      try {
+        coverImageBase64 = await fetchImageAsBase64(cookbook.cover_image_url, useGrayscale);
+      } catch {
+        console.warn('Could not fetch cover image for PDF');
+      }
+    }
+
     // Select template based on cover_style
     const coverStyle = cookbook.cover_style as CoverStyle;
     const pdfOptions: CookbookPdfOptions = {
@@ -220,7 +230,7 @@ export async function POST(
         subtitle: cookbook.subtitle || undefined,
         author_name: cookbook.author_name,
         cover_style: coverStyle,
-        cover_image_url: cookbook.cover_image_url || undefined,
+        cover_image_url: coverImageBase64 || undefined,
         selected_image_urls: cookbook.selected_image_urls || undefined,
         foreword: cookbook.foreword || undefined,
       },

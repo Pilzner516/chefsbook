@@ -145,8 +145,9 @@ const styles = StyleSheet.create({
   // Cover without image
   coverNoCover: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: '45%',
     backgroundColor: CREAM,
     position: 'relative',
   },

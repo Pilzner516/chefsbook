@@ -97,9 +97,10 @@ const styles = StyleSheet.create({
   // Cover without image
   coverNoCover: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     paddingHorizontal: 48,
-    paddingBottom: 80,
+    paddingTop: '45%',
     backgroundColor: WHITE,
   },
   coverNoImageAccent: {

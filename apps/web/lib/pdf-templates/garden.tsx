@@ -94,8 +94,9 @@ const styles = StyleSheet.create({
   coverNoImage: {
     flex: 1,
     backgroundColor: WHITE,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: '45%',
     position: 'relative',
   },
   coverTopBar: {

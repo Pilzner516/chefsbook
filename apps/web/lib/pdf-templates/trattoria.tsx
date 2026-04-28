@@ -72,9 +72,10 @@ const styles = StyleSheet.create({
   },
   coverNoCover: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: CREAM,
+    paddingTop: '45%',
   },
   coverFrame: {
     position: 'absolute',
