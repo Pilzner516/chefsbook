@@ -1,6 +1,36 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session PRINT-AUTH-FIX) TYPE: CODE FIX
+
+### Fix "Unauthorized" Error on Cookbook Generate API
+
+**Root cause:** All 8 print-related API routes used `supabase.auth.getUser(token)`
+(anon client) to validate JWT tokens. The anon client cannot verify JWTs — only
+the service role client can do this.
+
+**Fix:** Changed all routes to use `supabaseAdmin.auth.getUser(token)` instead.
+Also updated `checkProPlan()` to use `supabaseAdmin` and removed unused `supabase`
+imports.
+
+**Files changed (8 routes):**
+- apps/web/app/api/print-cookbooks/route.ts
+- apps/web/app/api/print-cookbooks/[id]/route.ts
+- apps/web/app/api/print-cookbooks/[id]/generate/route.ts
+- apps/web/app/api/print-cookbooks/[id]/price/route.ts
+- apps/web/app/api/print-cookbooks/[id]/order/route.ts
+- apps/web/app/api/print-cookbooks/[id]/submit/route.ts
+- apps/web/app/api/print-orders/route.ts
+- apps/web/app/api/print-orders/[id]/route.ts
+
+**Verification:**
+- TypeScript: `npx tsc --noEmit` passes (0 errors)
+- Build: `next build` succeeds on RPi5 (~35s)
+- Deployed: PM2 online, commit 89efb09
+- Manual test required: click "Generate Preview" at /dashboard/print
+
+---
+
 ## 2026-04-28 (session PDF-FIXES) TYPE: CODE FIX
 
 ### Cookbook PDF — Timer, TOC, and Cover Style Fixes
