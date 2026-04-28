@@ -4,7 +4,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, createRecipe, createTechnique, checkRecipeLimit, saveRecipe } from '@chefsbook/db';
-import { scanRecipe } from '@chefsbook/ai';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import {
@@ -158,7 +157,16 @@ export default function ScanPage() {
       const gate = await checkRecipeLimit(user.id);
       if (!gate.allowed) throw new Error(gate.reason!);
       const base64 = await fileToBase64(file);
-      const scanned = await scanRecipe(base64, file.type || 'image/jpeg');
+      const scanRes = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType: file.type || 'image/jpeg' }),
+      });
+      if (!scanRes.ok) {
+        const err = await scanRes.json();
+        throw new Error(err.error || 'Scan failed');
+      }
+      const scanned = await scanRes.json();
       const { recipe, moderation } = await createRecipeWithModeration(user.id, scanned);
       if (moderation.verdict !== 'clean') showAlert({ title: 'Under Review', body: moderation.verdict === 'mild' ? 'Recipe saved but is under review.' : 'Recipe flagged — your account is under review.' });
       router.push(`/recipe/${recipe.id}`);
