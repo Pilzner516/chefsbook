@@ -267,8 +267,7 @@ const s = StyleSheet.create({
   stepTimer: {
     fontSize: 10,
     fontFamily: 'Inter',
-    fontWeight: 400,
-    fontStyle: 'italic',
+    fontWeight: 300, // Light weight for visual distinction (Inter has no italic)
     color: GREEN,
     marginTop: 4,
     paddingLeft: 0,
@@ -281,8 +280,7 @@ const s = StyleSheet.create({
   notes: {
     fontSize: 10.5,
     fontFamily: 'Inter',
-    fontWeight: 400,
-    fontStyle: 'italic',
+    fontWeight: 300, // Light weight for visual distinction (Inter has no italic)
     color: DARK,
     lineHeight: 1.5,
   },
