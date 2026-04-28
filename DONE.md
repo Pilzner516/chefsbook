@@ -1,6 +1,43 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-27 (session PDF-REACT-PDF) TYPE: FEATURE
+
+### Three Distinct PDF Cookbook Templates
+
+Built three award-winning cookbook templates using @react-pdf/renderer:
+
+**Trattoria (Classic)** — Warm rustic Italian style
+- Cream background (#faf7f0), Playfair Display + Inter fonts
+- Red accent frame on cover, two-column recipe layout
+- Ingredient column on cream background, steps with red numbers
+
+**Studio (Modern)** — Dark dramatic chef's notebook
+- Dark background (#1a1a1a), white/cream text
+- Split cover (50% image, 50% black), horizontal ingredient band
+- Ghost step numbers as background art (72pt, 6% opacity)
+
+**Garden (Minimal)** — Clean airy editorial style
+- White background, green accent (#009246) instead of red
+- Inter font only (key differentiator), en-dash bullets
+- Framed images, generous whitespace
+
+**Files created:**
+- apps/web/lib/pdf-templates/trattoria.tsx
+- apps/web/lib/pdf-templates/studio.tsx
+- apps/web/lib/pdf-templates/garden.tsx
+- apps/web/lib/pdf-templates/types.ts
+- supabase/migrations/20260428_060_cookbook_cover_images.sql
+
+**Files modified:**
+- apps/web/app/api/print-cookbooks/[id]/generate/route.ts — template selector
+- apps/web/app/dashboard/print/page.tsx — SVG preview cards
+- .claude/agents/pdf-design.md — react-pdf patterns
+
+**Deployment:** Commit 051b842, deployed to RPi5
+
+---
+
 ## 2026-04-28 (session PRINT-AUTH-FIX) TYPE: CODE FIX
 
 ### Fix "Unauthorized" Error on Cookbook Generate API
