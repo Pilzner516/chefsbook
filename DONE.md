@@ -1,6 +1,45 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-29 (session PRINT-QUALITY-3) TYPE: CODE FIX
+
+### Print My ChefsBook — Preview vs Print Upscaling & Custom Pages
+
+**ISSUE 1 — Confirm Preview Does NOT Trigger Upscaling (CODE FIX):**
+- CONFIRMED: Preview and print paths were NOT separated before this session
+- Both paths called `fetchImageWithUpscaling()` which triggers Replicate API calls
+- FIX: Preview path now uses `fetchImageAsBase64()` — no Replicate calls, no upscaling
+- FIX: Print path continues using `fetchImageWithUpscaling()` — upscales low-DPI images
+- Added explicit comments: "// Preview path — no upscaling" and "// Print path — upscaling enabled"
+- Applied to all image fetching: recipe images, custom page images, cover image
+
+**ISSUE 2 — Custom Pages in Canvas Editor Not Appearing in PDF (CODE FIX):**
+- ROOT CAUSE: Generate route only extracted `kind === 'image'` pages, ignored `kind === 'custom'`
+- FIX: Added `CustomPageData` interface to `lib/pdf-templates/types.ts`
+- FIX: Generate route now extracts custom pages from `card.pages` in book_layout
+- FIX: Custom page images processed with same preview/print upscaling logic
+- FIX: `CookbookRecipe` type now includes `custom_pages?: CustomPageData[]`
+- FIX: Added `CustomPage` component to all 6 PDF templates (trattoria, studio, garden, heritage, nordic, bbq)
+- Supports three layouts: `image_only`, `text_only`, `image_and_text`
+- Custom pages render after additional images, before recipe content page
+
+**ISSUE 3 — Custom Page Modal Missing Save Button:**
+- ALREADY FIXED in session PRINT-QUALITY-2 (Done button at line 1671)
+
+**Files Modified:**
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts`
+- `apps/web/lib/pdf-templates/types.ts`
+- `apps/web/lib/pdf-templates/trattoria.tsx`
+- `apps/web/lib/pdf-templates/studio.tsx`
+- `apps/web/lib/pdf-templates/garden.tsx`
+- `apps/web/lib/pdf-templates/heritage.tsx`
+- `apps/web/lib/pdf-templates/nordic.tsx`
+- `apps/web/lib/pdf-templates/bbq.tsx`
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-28 (session PRINT-QUALITY-2) TYPE: CODE FIX
 
 ### Print My ChefsBook Bug Fixes (continuation)
