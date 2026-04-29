@@ -748,9 +748,9 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
           const showGroupLabel = step.group_label && step.group_label !== currentStepGroup;
           if (step.group_label) currentStepGroup = step.group_label;
 
-          // Map step numbers to colored circled digits
-          const circledDigits = ['❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿'];
-          const circledNum = circledDigits[step.step_number - 1] || `${step.step_number}.`;
+          // Map step numbers to emoji keycap digits (colorful)
+          const emojiDigits = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+          const circledNum = emojiDigits[step.step_number - 1] || `${step.step_number}.`;
           return (
             <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 18 }}>
               {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
