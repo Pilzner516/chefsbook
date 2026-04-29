@@ -30,6 +30,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-i18next": "^17.0.2",
+    "react-pdf": "^10.4.1",
+    "replicate": "^1.4.0",
     "resend": "^6.12.2",
     "stripe": "^16.0.0",
     "use-debounce": "^10.1.1",

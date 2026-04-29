@@ -3,6 +3,7 @@ import { supabaseAdmin, getRecipe, listRecipePhotos, PLAN_LIMITS } from '@chefsb
 import type { PlanTier, RecipeWithDetails } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
 import sharp from 'sharp';
+import Replicate from 'replicate';
 import { CookbookCoverDocument } from './CookbookPdf';
 import { TrattoriaDocument } from '@/lib/pdf-templates/trattoria';
 import { StudioDocument } from '@/lib/pdf-templates/studio';
@@ -13,12 +14,110 @@ import { BBQDocument } from '@/lib/pdf-templates/bbq';
 import type { CookbookPdfOptions, CookbookRecipe, CoverStyle } from '@/lib/pdf-templates/types';
 import type { ProductOptions } from '@/lib/lulu';
 import type { BookLayout, RecipeCard, CoverCard, ForewordCard, BookLocale } from '@/lib/book-layout';
+import { calculateQuality, type PrintUsage } from '@/lib/print-quality';
 
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN ?? '';
 
 // Chef hat icon for PDF branding
 const CHEF_HAT_PATH = '/images/chefs-hat.png';
+
+// DPI thresholds (matching print-quality.ts)
+const EXCELLENT_DPI = 300;
+
+// Initialize Replicate client
+const replicate = REPLICATE_API_TOKEN ? new Replicate({ auth: REPLICATE_API_TOKEN }) : null;
+
+// Cost per Real-ESRGAN upscale (approximate)
+const UPSCALE_COST_USD = 0.002;
+
+// Upscale image using Real-ESRGAN via Replicate
+async function upscaleImage(
+  imageUrl: string,
+  userId: string,
+  cookbookId: string,
+): Promise<{ upscaledBase64: string | null; upscaled: boolean }> {
+  if (!replicate) {
+    console.warn('[Upscale] Replicate API token not configured, skipping upscaling');
+    return { upscaledBase64: null, upscaled: false };
+  }
+
+  try {
+    console.log('[Upscale] Upscaling image:', imageUrl.substring(0, 80) + '...');
+
+    // Run Real-ESRGAN model
+    const output = await replicate.run(
+      'nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b',
+      { input: { image: imageUrl, scale: 4 } }
+    );
+
+    // Output is a URL to the upscaled image
+    const upscaledUrl = output as unknown as string;
+    if (!upscaledUrl || typeof upscaledUrl !== 'string') {
+      console.warn('[Upscale] Unexpected output from Replicate:', output);
+      return { upscaledBase64: null, upscaled: false };
+    }
+
+    // Fetch the upscaled image into memory (do NOT save to storage)
+    const upscaledRes = await fetch(upscaledUrl);
+    if (!upscaledRes.ok) {
+      console.warn('[Upscale] Failed to fetch upscaled image:', upscaledRes.status);
+      return { upscaledBase64: null, upscaled: false };
+    }
+
+    const upscaledBuf = await upscaledRes.arrayBuffer();
+    const upscaledBase64 = Buffer.from(upscaledBuf).toString('base64');
+    const contentType = upscaledRes.headers.get('content-type') ?? 'image/png';
+
+    // Log cost to ai_usage_log
+    try {
+      await supabaseAdmin.from('ai_usage_log').insert({
+        user_id: userId,
+        action: 'print_upscale',
+        model: 'real-esrgan-4x',
+        cost_usd: UPSCALE_COST_USD,
+        metadata: { cookbook_id: cookbookId },
+        success: true,
+      });
+    } catch (logErr) {
+      console.warn('[Upscale] Failed to log cost:', logErr);
+    }
+
+    console.log('[Upscale] Successfully upscaled image');
+    return { upscaledBase64: `data:${contentType};base64,${upscaledBase64}`, upscaled: true };
+  } catch (err) {
+    console.error('[Upscale] Upscaling failed:', err);
+
+    // Log failed attempt
+    try {
+      await supabaseAdmin.from('ai_usage_log').insert({
+        user_id: userId,
+        action: 'print_upscale',
+        model: 'real-esrgan-4x',
+        cost_usd: 0,
+        metadata: { cookbook_id: cookbookId, error: err instanceof Error ? err.message : 'Unknown error' },
+        success: false,
+      });
+    } catch {}
+
+    return { upscaledBase64: null, upscaled: false };
+  }
+}
+
+// Check if image needs upscaling based on DPI
+async function needsUpscaling(imageBuffer: Buffer, usage: PrintUsage): Promise<boolean> {
+  try {
+    const metadata = await sharp(imageBuffer).metadata();
+    if (!metadata.width || !metadata.height) return false;
+
+    const quality = calculateQuality(metadata.width, metadata.height, usage);
+    // Upscale if DPI is below excellent threshold
+    return quality.dpi < EXCELLENT_DPI;
+  } catch {
+    return false;
+  }
+}
 
 async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
@@ -71,6 +170,71 @@ async function fetchImageAsBase64(url: string, grayscale: boolean = false): Prom
   }
 }
 
+// Fetch image with upscaling support for print quality
+async function fetchImageWithUpscaling(
+  url: string,
+  grayscale: boolean,
+  usage: PrintUsage,
+  userId: string,
+  cookbookId: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { apikey: SUPABASE_ANON_KEY },
+    });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const imageBuffer = Buffer.from(buf);
+
+    // Check if image needs upscaling
+    const shouldUpscale = await needsUpscaling(imageBuffer, usage);
+
+    if (shouldUpscale && replicate) {
+      // Upscale using Real-ESRGAN
+      const { upscaledBase64, upscaled } = await upscaleImage(url, userId, cookbookId);
+      if (upscaled && upscaledBase64) {
+        // Apply grayscale to upscaled image if needed
+        if (grayscale) {
+          try {
+            const base64Data = upscaledBase64.split(',')[1];
+            const upscaledBuffer = Buffer.from(base64Data, 'base64');
+            const grayBuffer = await sharp(upscaledBuffer)
+              .grayscale()
+              .jpeg({ quality: 90 })
+              .toBuffer();
+            return `data:image/jpeg;base64,${grayBuffer.toString('base64')}`;
+          } catch {
+            // Return upscaled without grayscale
+            return upscaledBase64;
+          }
+        }
+        return upscaledBase64;
+      }
+      // Fall back to original if upscaling fails
+      console.log('[Generate PDF] Upscaling failed, using original image');
+    }
+
+    // No upscaling needed or Replicate not configured - use original
+    if (grayscale) {
+      try {
+        const grayBuffer = await sharp(imageBuffer)
+          .grayscale()
+          .jpeg({ quality: 90 })
+          .toBuffer();
+        return `data:image/jpeg;base64,${grayBuffer.toString('base64')}`;
+      } catch {
+        // Fall back to original if sharp fails
+      }
+    }
+
+    const base64 = imageBuffer.toString('base64');
+    const contentType = res.headers.get('content-type') ?? 'image/jpeg';
+    return `data:${contentType};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
 // Spine width calculation (based on page count)
 // Lulu's formula: approximately 0.002252" per page for standard paper
 function calculateSpineWidth(pageCount: number): number {
@@ -92,14 +256,16 @@ export async function POST(
 
   const canPrint = await checkProPlan(userId);
   if (!canPrint) {
-    return NextResponse.json({ error: 'Pro plan required' }, { status: 403 });
+    return NextResponse.json({ error: 'upgrade_required' }, { status: 403 });
   }
 
   // Parse product options from request body
   let productOptions: ProductOptions | null = null;
+  let isPreview = false;
   try {
     const body = await request.json();
     productOptions = body.productOptions ?? null;
+    isPreview = body.preview === true;
   } catch {
     // No body or invalid JSON — use defaults
   }
@@ -140,6 +306,7 @@ export async function POST(
     let recipeIds: string[] = [];
     let recipeDisplayNames: Record<string, string> = {};
     let recipeImageUrls: Record<string, string | undefined> = {};
+    let recipeAllImageUrls: Record<string, string[]> = {};
     let coverInfo: { title: string; subtitle?: string; author: string; cover_style: CoverStyle; image_url?: string };
     let forewordText: string | undefined;
     let bookLanguage: BookLocale = 'en';
@@ -155,9 +322,14 @@ export async function POST(
 
       for (const card of recipeCards) {
         recipeDisplayNames[card.recipe_id] = card.display_name;
-        const imagePage = card.pages.find((p) => p.kind === 'image');
-        if (imagePage && imagePage.kind === 'image') {
-          recipeImageUrls[card.recipe_id] = imagePage.image_url;
+        // Collect ALL image pages for this recipe
+        const imagePages = card.pages.filter((p) => p.kind === 'image');
+        recipeAllImageUrls[card.recipe_id] = imagePages
+          .map((p) => p.kind === 'image' ? p.image_url : undefined)
+          .filter((url): url is string => !!url);
+        // Keep first image for legacy compatibility
+        if (imagePages.length > 0 && imagePages[0].kind === 'image') {
+          recipeImageUrls[card.recipe_id] = imagePages[0].image_url;
         }
       }
 
@@ -170,6 +342,8 @@ export async function POST(
       };
 
       forewordText = forewordCard?.text;
+      console.log('[Generate PDF] Foreword card:', forewordCard);
+      console.log('[Generate PDF] Foreword text:', forewordText);
     } else {
       // Use legacy columns
       recipeIds = cookbook.recipe_ids ?? [];
@@ -189,16 +363,16 @@ export async function POST(
     for (const recipeId of recipeIds) {
       const recipe = await getRecipe(recipeId);
       if (recipe) {
-        // Fetch the selected image
+        // Fetch all selected images for this recipe
         const imageUrls: string[] = [];
         try {
-          // Check new format first, then legacy
-          const selectedUrl = bookLayout
-            ? recipeImageUrls[recipeId]
-            : selectedImageUrls[recipeId];
+          // Check new format first (supports multiple images), then legacy (single image)
+          const allUrls = bookLayout
+            ? (recipeAllImageUrls[recipeId] || [])
+            : (selectedImageUrls[recipeId] ? [selectedImageUrls[recipeId]] : []);
 
-          if (selectedUrl) {
-            const base64 = await fetchImageAsBase64(selectedUrl, useGrayscale);
+          for (const url of allUrls) {
+            const base64 = await fetchImageWithUpscaling(url, useGrayscale, 'full_bleed', userId, id);
             if (base64) imageUrls.push(base64);
           }
         } catch {
@@ -236,12 +410,22 @@ export async function POST(
       }
     }
 
-    if (cookbookRecipes.length < 5) {
+    // For preview mode, allow any number of recipes; for final generation, require minimum 5
+    if (!isPreview && cookbookRecipes.length < 5) {
       await supabaseAdmin
         .from('printed_cookbooks')
         .update({ status: 'draft' })
         .eq('id', id);
       return NextResponse.json({ error: 'Could not fetch minimum 5 recipes' }, { status: 400 });
+    }
+
+    // Still need at least 1 recipe to generate anything
+    if (cookbookRecipes.length < 1) {
+      await supabaseAdmin
+        .from('printed_cookbooks')
+        .update({ status: 'draft' })
+        .eq('id', id);
+      return NextResponse.json({ error: 'Add at least one recipe to preview' }, { status: 400 });
     }
 
     // Calculate page count
@@ -265,10 +449,11 @@ export async function POST(
     }
 
     // Fetch cover image and convert to base64 (react-pdf can't fetch auth-required URLs)
+    // Cover images are also upscaled if needed for print quality
     let coverImageBase64: string | null = null;
     if (coverInfo.image_url) {
       try {
-        coverImageBase64 = await fetchImageAsBase64(coverInfo.image_url, useGrayscale);
+        coverImageBase64 = await fetchImageWithUpscaling(coverInfo.image_url, useGrayscale, 'cover', userId, id);
       } catch {
         console.warn('Could not fetch cover image for PDF');
       }

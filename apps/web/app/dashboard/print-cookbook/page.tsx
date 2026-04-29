@@ -121,7 +121,7 @@ export default function PrintCookbookListPage() {
     );
   }
 
-  // Pro plan gate
+  // Plan gate - redirect free users
   if (!canPrintCookbook) {
     return (
       <div className="p-8">
@@ -134,13 +134,13 @@ export default function PrintCookbookListPage() {
           <h1 className="text-2xl font-bold mb-3">Print My ChefsBook</h1>
           <p className="text-cb-secondary mb-6">
             Create a professionally printed cookbook with your favorite recipes.
-            This feature is available on the Pro plan.
+            This feature is available on Chef, Family, and Pro plans.
           </p>
           <Link
-            href="/dashboard/plans"
+            href="/dashboard/plans?reason=print"
             className="inline-flex items-center gap-2 bg-cb-primary text-white px-6 py-3 rounded-input font-semibold hover:opacity-90 transition-opacity"
           >
-            Upgrade to Pro
+            Upgrade to Chef
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>

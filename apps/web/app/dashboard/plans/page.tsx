@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PLAN_LIMITS, devChangePlan, supabase } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
 
@@ -19,9 +20,12 @@ const FEATURES: { key: keyof typeof PLAN_LIMITS.free; label: string }[] = [
   { key: 'canAI', label: 'AI features' },
   { key: 'canMealPlan', label: 'Meal planning' },
   { key: 'canPDF', label: 'PDF export' },
+  { key: 'canPrintCookbook', label: 'Print My ChefsBook' },
 ];
 
 export default function PlansPage() {
+  const searchParams = useSearchParams();
+  const reason = searchParams.get('reason');
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
   const [currentPlan, setCurrentPlan] = useState<PlanTier>('free');
   const [changing, setChanging] = useState<string | null>(null);
@@ -50,6 +54,11 @@ export default function PlansPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {reason === 'print' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-input px-4 py-3 text-center text-amber-800 text-sm font-medium mb-4">
+          Print My ChefsBook is available on Chef, Family, and Pro plans.
+        </div>
+      )}
       <div className="bg-cb-primary-soft border border-cb-primary/20 rounded-input px-4 py-2 text-center text-cb-primary text-sm font-medium mb-6">
         Dev mode — billing not active
       </div>
