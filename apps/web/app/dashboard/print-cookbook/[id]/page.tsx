@@ -1668,6 +1668,13 @@ function RecipeCardBody({
                     </div>
                   )}
 
+                  <button
+                    onClick={handleClosePageEditor}
+                    className="w-full py-2.5 bg-cb-primary text-white rounded-input text-sm font-medium hover:bg-cb-primary/90 transition-colors"
+                  >
+                    Done
+                  </button>
+
                   <div className="pt-3 border-t border-cb-border">
                     <button
                       onClick={() => {

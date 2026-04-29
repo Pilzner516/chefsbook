@@ -1,6 +1,49 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session PRINT-QUALITY-2) TYPE: CODE FIX
+
+### Print My ChefsBook Bug Fixes (continuation)
+
+**FIX 1 - PDF Preview SSR Error (CODE FIX):**
+- FlipbookPreview used browser-only APIs (DOMMatrix) causing SSR crash
+- Changed to dynamic import with `ssr: false` in `/dashboard/print-cookbook/[id]/page.tsx`
+- Preview now loads correctly on all pages
+
+**FIX 2 - Additional Recipe Images Missing in PDF (CODE FIX):**
+- Added `AdditionalImagePage` component to all 6 PDF templates (bbq, garden, heritage, nordic, studio, trattoria)
+- Recipe image_urls array now renders all images, not just the first
+- Each additional image gets its own full-page spread with caption
+
+**FIX 3 - "Could not fetch minimum 5 recipes" with 6+ recipes (CODE FIX):**
+- `getRecipe()` uses anon client which has no JWT context in API routes
+- Changed `/api/print-cookbooks/[id]/generate/route.ts` to use `supabaseAdmin` directly
+- Now fetches recipes bypassing RLS, resolving the false "not enough recipes" error
+
+**FIX 4 - Replicate URL Timeout (CODE FIX):**
+- Replicate servers couldn't reach Tailscale IP (100.110.47.62)
+- Added `toPublicUrl()` helper to convert URLs to `api.chefsbk.app` before sending to Replicate
+- AI upscaling now works correctly for all images
+
+**FIX 5 - Custom Page Modal Missing Save Button (CODE FIX):**
+- Added "Done" primary button above "Delete This Page" in Custom Page modal
+- Changes are auto-saved on input, button closes the modal
+- Provides clear UX affordance for completing the edit
+
+**Files Modified:**
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx`
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts`
+- `apps/web/lib/pdf-templates/bbq.tsx`
+- `apps/web/lib/pdf-templates/garden.tsx`
+- `apps/web/lib/pdf-templates/heritage.tsx`
+- `apps/web/lib/pdf-templates/nordic.tsx`
+- `apps/web/lib/pdf-templates/studio.tsx`
+- `apps/web/lib/pdf-templates/trattoria.tsx`
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-28 (session PRINT-QUALITY-1) TYPE: FEATURE + CODE FIX
 
 ### Print My ChefsBook Quality Improvements
