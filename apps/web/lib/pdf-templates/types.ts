@@ -5,6 +5,15 @@
 import type { BookLocale } from './book-strings';
 
 export type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'bbq';
+export type FillType = 'blank' | 'chefs_notes' | 'quote' | 'decorative' | 'custom';
+export type PageSizeKey = 'letter' | 'trade' | 'large-trade' | 'digest' | 'square';
+
+export interface FillContent {
+  quoteText?: string;
+  quoteAttribution?: string;
+  customText?: string;
+  customImageUrl?: string;
+}
 
 export interface CookbookPdfOptions {
   cookbook: {
@@ -15,6 +24,7 @@ export interface CookbookPdfOptions {
     cover_image_url?: string;
     selected_image_urls?: Record<string, string[]>;
     foreword?: string;
+    pageSize?: PageSizeKey;
   };
   recipes: CookbookRecipe[];
   chefsHatBase64?: string | null;
@@ -54,6 +64,8 @@ export interface CookbookRecipe {
   notes?: string;
   image_urls: string[]; // all images for this recipe, primary first
   custom_pages?: CustomPageData[]; // user-added custom pages
+  fillType?: FillType; // fill zone at bottom of content page
+  fillContent?: FillContent;
 }
 
 export interface IngredientGroup {

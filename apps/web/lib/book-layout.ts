@@ -13,10 +13,12 @@
  */
 
 export type BookLocale = 'en' | 'fr' | 'es' | 'it' | 'de';
+export type PageSizeKey = 'letter' | 'trade' | 'large-trade' | 'digest' | 'square';
 
 export interface BookLayout {
   version: 1;
   language: BookLocale;
+  pageSize?: PageSizeKey;
   cards: BookCard[];
 }
 
@@ -80,10 +82,21 @@ export interface ImagePage {
   image_url?: string; // selected from recipe_user_photos; if empty, use styled placeholder
 }
 
+export type FillType = 'blank' | 'chefs_notes' | 'quote' | 'decorative' | 'custom';
+
+export interface FillContent {
+  quoteText?: string; // max 150 chars
+  quoteAttribution?: string;
+  customText?: string; // max 300 chars
+  customImageUrl?: string;
+}
+
 export interface ContentPage {
   id: string;
   kind: 'content';
   part: 1 | 2; // most recipes = 1; long recipes may need 2 content pages
+  fillType?: FillType; // defaults to 'blank'
+  fillContent?: FillContent;
 }
 
 export interface CustomPage {

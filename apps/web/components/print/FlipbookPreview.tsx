@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -8,27 +8,50 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+// Page size definitions (at 96dpi)
+export type PageSizeKey = 'letter' | 'trade' | 'large-trade' | 'digest' | 'square';
+
+const PAGE_SIZES: Record<PageSizeKey, { width: number; height: number; label: string }> = {
+  'letter':      { width: 816, height: 1056, label: '8.5 × 11 in' },
+  'trade':       { width: 576, height: 864, label: '6 × 9 in' },
+  'large-trade': { width: 672, height: 960, label: '7 × 10 in' },
+  'digest':      { width: 528, height: 816, label: '5.5 × 8.5 in' },
+  'square':      { width: 768, height: 768, label: '8 × 8 in' },
+};
+
 interface FlipbookPreviewProps {
   pdfUrl: string | null;
   onClose: () => void;
   loading?: boolean;
   error?: string | null;
+  pageSize?: PageSizeKey;
 }
 
-const PAGE_WIDTH = 380;
-const PAGE_HEIGHT = 492; // 8.5x11 ratio
+// Base dimensions - we scale from these
+const BASE_PAGE_WIDTH = 380;
 
 export default function FlipbookPreview({
   pdfUrl,
   onClose,
   loading = false,
   error = null,
+  pageSize = 'letter',
 }: FlipbookPreviewProps) {
   const [numPages, setNumPages] = useState(0);
   // -1 = closed (cover only), 0+ = spread index
   const [viewIndex, setViewIndex] = useState(-1);
   const [turning, setTurning] = useState<'forward' | 'backward' | null>(null);
   const [pdfLoading, setPdfLoading] = useState(true);
+  const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Get actual dimensions for the selected page size
+  const { width: realWidth, height: realHeight, label: sizeLabel } = PAGE_SIZES[pageSize] || PAGE_SIZES['letter'];
+  const aspectRatio = realHeight / realWidth;
+
+  // Calculate page dimensions maintaining aspect ratio
+  const PAGE_WIDTH = BASE_PAGE_WIDTH;
+  const PAGE_HEIGHT = Math.round(BASE_PAGE_WIDTH * aspectRatio);
 
   const isClosed = viewIndex === -1;
   // When open, viewIndex 0 = pages 2-3, viewIndex 1 = pages 4-5, etc.
@@ -59,6 +82,27 @@ export default function FlipbookPreview({
       setTurning(null);
     }, 400);
   }, [canGoBack, turning]);
+
+  // Calculate scale to fill available space
+  const calculateScale = useCallback(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const availableWidth = container.clientWidth - 96; // padding
+    const availableHeight = container.clientHeight - 180; // controls + padding
+    const spreadWidth = PAGE_WIDTH * 2 + 4; // two pages + spine
+    const scaleX = availableWidth / spreadWidth;
+    const scaleY = availableHeight / PAGE_HEIGHT;
+    const newScale = Math.min(scaleX, scaleY, 1.8); // cap at 1.8x upscale
+    setScale(Math.max(newScale, 0.5)); // minimum 0.5x
+  }, [PAGE_WIDTH, PAGE_HEIGHT]);
+
+  // Recalculate scale on mount and resize
+  useEffect(() => {
+    calculateScale();
+    const handleResize = () => calculateScale();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [calculateScale]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,13 +198,13 @@ export default function FlipbookPreview({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center">
+    <div ref={containerRef} className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center">
       <style>{flipbookStyles}</style>
 
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
         <div className="text-white/70 text-sm">
-          8.5 x 11 in &middot; Letter / Lulu standard &middot; Actual PDF Preview
+          {sizeLabel} &middot; Lulu standard &middot; Actual PDF Preview
         </div>
         <button
           onClick={onClose}
@@ -198,6 +242,7 @@ export default function FlipbookPreview({
             className="relative cursor-pointer"
             onClick={goForward}
             title="Click to open"
+            style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}
           >
             <div
               className="relative bg-white shadow-2xl overflow-hidden rounded-r-sm"
@@ -225,6 +270,8 @@ export default function FlipbookPreview({
             style={{
               perspective: '1200px',
               perspectiveOrigin: 'center center',
+              transform: `scale(${scale})`,
+              transformOrigin: 'center center',
             }}
           >
             {/* Left page */}

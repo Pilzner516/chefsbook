@@ -624,6 +624,57 @@ function CustomPage({ customPage }: { customPage: CustomPageData }) {
   );
 }
 
+function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; fillContent?: { quoteText?: string; quoteAttribution?: string }; accentColor: string }) {
+  if (!fillType || fillType === 'blank') return null;
+
+  if (fillType === 'chefs_notes') {
+    return (
+      <View style={{ flexGrow: 1, justifyContent: 'flex-end', paddingTop: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={{ fontSize: 10, fontFamily: 'Inter', fontWeight: 600, color: accentColor }}>Chef's Notes</Text>
+          <Text style={{ fontSize: 8, marginLeft: 4 }}>✎</Text>
+        </View>
+        <View style={{ borderBottomWidth: 0.5, borderBottomColor: '#ddd8cc', marginBottom: 16 }} />
+        {[1, 2, 3, 4].map((i) => (
+          <View key={i} style={{ borderBottomWidth: 0.5, borderBottomColor: '#e8e0d0', height: 24 }} />
+        ))}
+      </View>
+    );
+  }
+
+  if (fillType === 'quote' && fillContent?.quoteText) {
+    return (
+      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 20 }}>
+        <View style={{ borderTopWidth: 0.5, borderTopColor: '#ddd8cc', width: '60%', marginBottom: 16 }} />
+        <Text style={{ fontSize: 36, color: accentColor, marginBottom: 4 }}>"</Text>
+        <Text style={{ fontSize: 14, fontFamily: 'Playfair Display', fontStyle: 'italic', textAlign: 'center', maxWidth: '80%', lineHeight: 1.6 }}>
+          {fillContent.quoteText}
+        </Text>
+        {fillContent.quoteAttribution && (
+          <Text style={{ fontSize: 10, fontFamily: 'Inter', fontWeight: 300, color: '#7a6a5a', marginTop: 12 }}>
+            — {fillContent.quoteAttribution}
+          </Text>
+        )}
+        <View style={{ borderBottomWidth: 0.5, borderBottomColor: '#ddd8cc', width: '60%', marginTop: 16 }} />
+      </View>
+    );
+  }
+
+  if (fillType === 'decorative') {
+    return (
+      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 24 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 40, height: 0.5, backgroundColor: '#ddd8cc' }} />
+          <Text style={{ fontSize: 12, color: accentColor, marginHorizontal: 12 }}>✦</Text>
+          <View style={{ width: 40, height: 0.5, backgroundColor: '#ddd8cc' }} />
+        </View>
+      </View>
+    );
+  }
+
+  return null;
+}
+
 function RecipeContentPage({ recipe, pageNumber, strings }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
 
@@ -674,6 +725,9 @@ function RecipeContentPage({ recipe, pageNumber, strings }: { recipe: CookbookRe
           <Text style={styles.notesText}>{recipe.notes}</Text>
         </View>
       )}
+
+      {/* Fill zone - flexGrow fills remaining space */}
+      <FillZone fillType={recipe.fillType} fillContent={recipe.fillContent} accentColor={RED} />
 
       <View style={styles.footer} fixed>
         <Text style={styles.footerLeft}>ChefsBook</Text>

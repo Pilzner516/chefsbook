@@ -24,6 +24,10 @@ import {
   IndexCard,
   BackCard,
   RecipePage,
+  ContentPage,
+  FillType,
+  FillContent,
+  PageSizeKey,
   computePageMap,
   createRecipeCard,
   insertRecipeCard,
@@ -97,10 +101,12 @@ type LayoutAction =
   | { type: 'MOVE_CARD'; sourceIndex: number; destIndex: number }
   | { type: 'UPDATE_COVER'; payload: Partial<CoverCard> }
   | { type: 'UPDATE_FOREWORD'; text: string }
+  | { type: 'UPDATE_PAGE_SIZE'; pageSize: PageSizeKey }
   | { type: 'ADD_RECIPE'; recipe: RecipePreview; imageUrls: string[] }
   | { type: 'REMOVE_RECIPE'; cardId: string }
   | { type: 'UPDATE_RECIPE_DISPLAY_NAME'; cardId: string; displayName: string }
   | { type: 'UPDATE_RECIPE_IMAGE'; cardId: string; pageId: string; imageUrl: string | undefined }
+  | { type: 'UPDATE_FILL_ZONE'; cardId: string; pageId: string; fillType: FillType; fillContent?: FillContent }
   | { type: 'ADD_CUSTOM_PAGE'; cardId: string; layout: 'image_only' | 'text_only' | 'image_and_text' }
   | { type: 'UPDATE_CUSTOM_PAGE'; cardId: string; pageId: string; updates: { image_url?: string; text?: string; caption?: string } }
   | { type: 'REMOVE_PAGE'; cardId: string; pageId: string }
@@ -128,6 +134,25 @@ function layoutReducer(state: BookLayout, action: LayoutAction): BookLayout {
       const cards = state.cards.map((card) => {
         if (card.type === 'foreword') {
           return { ...card, text: action.text };
+        }
+        return card;
+      });
+      return { ...state, cards };
+    }
+
+    case 'UPDATE_PAGE_SIZE':
+      return { ...state, pageSize: action.pageSize };
+
+    case 'UPDATE_FILL_ZONE': {
+      const cards = state.cards.map((card) => {
+        if (card.type === 'recipe' && card.id === action.cardId) {
+          const pages = card.pages.map((page) => {
+            if (page.id === action.pageId && page.kind === 'content') {
+              return { ...page, fillType: action.fillType, fillContent: action.fillContent };
+            }
+            return page;
+          });
+          return { ...card, pages };
         }
         return card;
       });
@@ -909,8 +934,36 @@ function PrintCookbookCanvasPageInner({
                 </svg>
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <CoverSettingsPanel layout={layout} dispatch={dispatch} />
+            <div className="p-4 space-y-6">
+              {/* Page Size Selector */}
+              <div>
+                <label className="text-sm font-medium text-cb-text mb-2 block">Page Size</label>
+                <div className="space-y-2">
+                  {([
+                    { key: 'letter', label: '8.5 × 11 in', desc: 'Letter / Lulu standard' },
+                    { key: 'trade', label: '6 × 9 in', desc: 'Trade paperback' },
+                    { key: 'large-trade', label: '7 × 10 in', desc: 'Large trade' },
+                    { key: 'digest', label: '5.5 × 8.5 in', desc: 'Digest' },
+                    { key: 'square', label: '8 × 8 in', desc: 'Square format' },
+                  ] as const).map(({ key, label, desc }) => (
+                    <button
+                      key={key}
+                      onClick={() => dispatch({ type: 'UPDATE_PAGE_SIZE', pageSize: key })}
+                      className={`w-full text-left px-3 py-2 rounded-input border transition-colors ${
+                        (layout.pageSize || 'letter') === key
+                          ? 'border-cb-primary bg-cb-primary/5'
+                          : 'border-cb-border hover:border-cb-primary/50'
+                      }`}
+                    >
+                      <span className="font-medium text-sm">{label}</span>
+                      <span className="text-xs text-cb-muted ml-2">{desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-cb-border pt-4">
+                <CoverSettingsPanel layout={layout} dispatch={dispatch} />
+              </div>
             </div>
           </div>
         </div>
@@ -923,6 +976,7 @@ function PrintCookbookCanvasPageInner({
           onClose={() => setShowFlipbook(false)}
           loading={previewLoading}
           error={previewError}
+          pageSize={layout.pageSize || 'letter'}
         />
       )}
     </div>
@@ -1588,18 +1642,98 @@ function RecipeCardBody({
                 </div>
               )}
 
-              {editingPage.kind === 'content' && (
-                <div className="space-y-4">
-                  <div className="aspect-[8.5/11] bg-[#FAF7F2] rounded-lg border border-[#E0D9D0] p-4 flex flex-col items-center justify-center">
-                    <span className="text-4xl mb-3">📄</span>
-                    <p className="font-medium text-cb-text">Recipe Content — Part {epPart}</p>
-                    <p className="text-sm text-cb-secondary mt-1">Title, Ingredients & Steps</p>
+              {editingPage.kind === 'content' && (() => {
+                const epFillType = 'fillType' in editingPage ? (editingPage.fillType || 'blank') : 'blank';
+                const epFillContent = 'fillContent' in editingPage ? editingPage.fillContent : undefined;
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[8.5/11] bg-[#FAF7F2] rounded-lg border border-[#E0D9D0] p-4 flex flex-col items-center justify-center">
+                      <span className="text-4xl mb-3">📄</span>
+                      <p className="font-medium text-cb-text">Recipe Content — Part {epPart}</p>
+                      <p className="text-sm text-cb-secondary mt-1">Title, Ingredients & Steps</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Page fill zone</label>
+                      <p className="text-xs text-cb-muted mb-3">Fill blank space at the bottom of the recipe page</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          { key: 'blank', label: 'Blank', icon: '▢' },
+                          { key: 'chefs_notes', label: "Chef's Notes", icon: '📝' },
+                          { key: 'quote', label: 'Pull Quote', icon: '❝' },
+                          { key: 'decorative', label: 'Decorative', icon: '✦' },
+                        ] as const).map(({ key, label, icon }) => (
+                          <button
+                            key={key}
+                            onClick={() =>
+                              dispatch({
+                                type: 'UPDATE_FILL_ZONE',
+                                cardId: card.id,
+                                pageId: editingPage.id,
+                                fillType: key,
+                                fillContent: key === epFillType ? epFillContent : undefined,
+                              })
+                            }
+                            className={`py-2 px-3 rounded-input border text-left transition-colors ${
+                              epFillType === key
+                                ? 'border-cb-primary bg-cb-primary/5'
+                                : 'border-cb-border hover:border-cb-primary/50'
+                            }`}
+                          >
+                            <span className="mr-2">{icon}</span>
+                            <span className="text-sm">{label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {epFillType === 'quote' && (
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Quote (max 150 chars)</label>
+                          <textarea
+                            value={epFillContent?.quoteText || ''}
+                            onChange={(e) =>
+                              dispatch({
+                                type: 'UPDATE_FILL_ZONE',
+                                cardId: card.id,
+                                pageId: editingPage.id,
+                                fillType: 'quote',
+                                fillContent: { ...epFillContent, quoteText: e.target.value.slice(0, 150) },
+                              })
+                            }
+                            placeholder="Add a memorable quote..."
+                            rows={2}
+                            className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm resize-none focus:outline-none focus:border-cb-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Attribution (optional)</label>
+                          <input
+                            type="text"
+                            value={epFillContent?.quoteAttribution || ''}
+                            onChange={(e) =>
+                              dispatch({
+                                type: 'UPDATE_FILL_ZONE',
+                                cardId: card.id,
+                                pageId: editingPage.id,
+                                fillType: 'quote',
+                                fillContent: { ...epFillContent, quoteAttribution: e.target.value },
+                              })
+                            }
+                            placeholder="— Grandma"
+                            className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm focus:outline-none focus:border-cb-primary"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-cb-muted text-center pt-2">
+                      Recipe content is auto-generated from your recipe data.
+                    </p>
                   </div>
-                  <p className="text-xs text-cb-muted text-center">
-                    This page is auto-generated from your recipe data.
-                  </p>
-                </div>
-              )}
+                );
+              })()}
 
               {editingPage.kind === 'custom' && (
                 <div className="space-y-4">
