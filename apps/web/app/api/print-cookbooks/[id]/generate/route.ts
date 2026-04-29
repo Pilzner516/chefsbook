@@ -373,6 +373,7 @@ export async function POST(
 
     for (const recipeId of recipeIds) {
       const recipe = await getRecipe(recipeId);
+      console.log('[Generate PDF] DEBUG - fetching recipe:', recipeId, 'found:', !!recipe);
       if (recipe) {
         // Fetch all selected images for this recipe
         const imageUrls: string[] = [];
@@ -422,6 +423,7 @@ export async function POST(
     }
 
     // For preview mode, allow any number of recipes; for final generation, require minimum 5
+    console.log('[Generate PDF] DEBUG - recipeIds:', recipeIds.length, 'cookbookRecipes:', cookbookRecipes.length, 'isPreview:', isPreview);
     if (!isPreview && cookbookRecipes.length < 5) {
       await supabaseAdmin
         .from('printed_cookbooks')
