@@ -1,6 +1,49 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-29 (session ADMIN-COSTS-1) TYPE: FEATURE
+
+### Admin API Costs Dashboard Enhancement
+
+**TASK 1 — ai_usage_log Spending Breakdown (COMPLETE):**
+- Enhanced /api/admin?page=costs with service/feature/daily breakdowns
+- Model → Service mapping: claude-*→Anthropic, flux-*→Replicate, gpt-*→OpenAI
+- Action → Feature mapping: import_url→Recipe Import, generate_image→AI Image Generation, etc.
+- Added last 30 days and all-time totals
+- Added byServiceModel breakdown (service + model + feature combination)
+- Added dailySpend for 30-day chart
+
+**TASK 2 — OpenAI Balance (SKIPPED):**
+- No OPENAI_API_KEY configured on RPi5
+
+**TASK 3 — Stripe Balance (SKIPPED):**
+- No STRIPE_SECRET_KEY configured on RPi5
+
+**TASK 4 — Replicate Usage (COMPLETE):**
+- Replicate costs shown from ai_usage_log
+- Balance card includes link to replicate.com/account/billing
+
+**UI Updates:**
+- Summary cards: This Month, Last 30 Days, All Time, Top Feature
+- Service balance cards: Anthropic, Replicate, OpenAI (with billing page links)
+- Daily spend bar chart (30 days, hover tooltips)
+- Spending by service/model table (service pill, model, feature, calls, cost)
+- Spending by feature table (feature, calls, cost, avg cost per call)
+- Retained: cost by action bars, cost by model bars, top users, throttled users
+
+**Verification:**
+- psql SUM(cost_usd) for April = $4.02 matches API
+- curl https://chefsbk.app/ returns HTTP 200
+- curl https://chefsbk.app/admin returns HTTP 200
+
+**Files Modified:**
+- `apps/web/app/admin/costs/page.tsx` - complete rewrite with new sections
+- `apps/web/app/api/admin/route.ts` - expanded costs handler
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-29 (session USER-FEEDBACK-1) TYPE: CODE FIX + FEATURE
 
 ### Got an Idea iOS Fix + Feedback Tags + Meal Plan Shopping Cart Quantities
