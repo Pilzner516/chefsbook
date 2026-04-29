@@ -186,9 +186,9 @@ body {
   /* Print quantity column */
   .shop-item-grid .shop-print-qty {
     display: inline-block !important;
-    width: 120pt;
-    text-align: right;
-    padding-right: 10pt;
+    width: 100pt;
+    text-align: left !important;
+    padding-right: 8pt;
     font-size: 11pt;
     flex-shrink: 0;
   }
