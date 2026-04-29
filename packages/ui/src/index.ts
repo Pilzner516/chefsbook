@@ -111,7 +111,7 @@ export function abbreviateUnit(text: string): string {
 
 /** Readable abbreviations for recipe display (Tbsp, tsp, cup). */
 export function abbreviateUnitMedium(text: string): string {
-  let result = text;
+  let result = text.trim();
   for (const [pattern, replacement] of UNIT_MEDIUM) {
     result = result.replace(pattern, replacement);
   }

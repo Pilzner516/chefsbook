@@ -39,9 +39,13 @@ export async function POST(req: Request) {
         quantity: i.quantity_needed || [i.quantity, i.unit].filter(Boolean).join(' '),
       })));
       for (const s of aiResult) {
-        suggestions[s.ingredient.toLowerCase()] = { purchase_unit: s.purchase_unit, store_category: s.store_category };
+        if (s.purchase_unit) {
+          suggestions[s.ingredient.toLowerCase()] = { purchase_unit: s.purchase_unit, store_category: s.store_category };
+        }
       }
-    } catch {}
+    } catch (aiError) {
+      console.error('[add-items] AI suggestion failed:', aiError);
+    }
 
     // Use shared pipeline for dedup + merge + insert
     const result = await addItemsWithPipeline(listId, user.id, items, suggestions, db);
