@@ -1,6 +1,30 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-29 (session PRINT-QUALITY-4) TYPE: CODE FIX
+
+### Print My ChefsBook — Custom Page Ordering Fix
+
+**BUG:** Custom pages added in canvas editor rendered before the content page instead of after.
+
+**ROOT CAUSE:** In session PRINT-QUALITY-3, CustomPage was inserted before RecipeContentPage in all 6 templates.
+
+**FIX (CODE FIX):**
+- Moved CustomPage rendering to after RecipeContentPage in 5 templates (trattoria, studio, garden, heritage, nordic)
+- BBQ template already had correct order — no change needed
+- Correct order is now: Photo → Additional Images → Content → Custom Pages
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/trattoria.tsx`
+- `apps/web/lib/pdf-templates/studio.tsx`
+- `apps/web/lib/pdf-templates/garden.tsx`
+- `apps/web/lib/pdf-templates/heritage.tsx`
+- `apps/web/lib/pdf-templates/nordic.tsx`
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-29 (session PRINT-QUALITY-3) TYPE: CODE FIX
 
 ### Print My ChefsBook — Preview vs Print Upscaling & Custom Pages
