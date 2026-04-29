@@ -1833,6 +1833,13 @@ function RecipeCardBody({
                     <p className="text-xs text-cb-muted text-center pt-2">
                       Recipe content is auto-generated from your recipe data.
                     </p>
+
+                    <button
+                      onClick={handleClosePageEditor}
+                      className="w-full py-2.5 mt-4 bg-cb-primary text-white rounded-input text-sm font-medium hover:bg-cb-primary/90 transition-colors"
+                    >
+                      Save
+                    </button>
                   </div>
                 );
               })()}

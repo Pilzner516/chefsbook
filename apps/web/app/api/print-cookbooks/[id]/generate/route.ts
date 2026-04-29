@@ -365,6 +365,9 @@ export async function POST(
     // Track custom pages per recipe
     let recipeCustomPages: Record<string, Array<{ id: string; layout: string; image_url?: string; text?: string; caption?: string }>> = {};
 
+    // Track fill zone data per recipe (from first content page)
+    let recipeFillZones: Record<string, { fillType?: string; fillContent?: { quoteText?: string; quoteAttribution?: string; customText?: string; customImageUrl?: string } }> = {};
+
     if (bookLayout) {
       // Extract from book_layout cards
       const coverCard = bookLayout.cards.find((c): c is CoverCard => c.type === 'cover');
@@ -400,6 +403,14 @@ export async function POST(
             }
             return { id: p.id, layout: 'text_only' };
           });
+        }
+        // Extract fill zone from first content page
+        const contentPage = card.pages.find((p) => p.kind === 'content');
+        if (contentPage && contentPage.kind === 'content' && contentPage.fillType) {
+          recipeFillZones[card.recipe_id] = {
+            fillType: contentPage.fillType,
+            fillContent: contentPage.fillContent,
+          };
         }
       }
 
@@ -489,6 +500,9 @@ export async function POST(
         // Use display_name from book_layout if available, otherwise recipe title
         const displayName = recipeDisplayNames[recipeId] || recipeWithDetails.title;
 
+        // Get fill zone data for this recipe
+        const fillZone = recipeFillZones[recipeId];
+
         cookbookRecipes.push({
           id: recipeWithDetails.id,
           title: displayName,
@@ -514,6 +528,8 @@ export async function POST(
           notes: recipeWithDetails.notes ?? undefined,
           image_urls: imageUrls,
           custom_pages: processedCustomPages.length > 0 ? processedCustomPages : undefined,
+          fillType: fillZone?.fillType as 'blank' | 'chefs_notes' | 'quote' | 'custom' | undefined,
+          fillContent: fillZone?.fillContent,
         });
       }
     }
@@ -579,6 +595,7 @@ export async function POST(
         cover_image_url: coverImageBase64 || undefined,
         selected_image_urls: cookbook.selected_image_urls || undefined,
         foreword: forewordText,
+        pageSize: bookLayout?.pageSize ?? 'letter',
       },
       recipes: cookbookRecipes,
       chefsHatBase64,
