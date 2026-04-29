@@ -40,7 +40,7 @@ export async function suggestPurchaseUnits(
     .join('\n');
 
   const prompt = `${PROMPT}\n\nIngredients:\n${list}`;
-  const text = await callClaude({ prompt, maxTokens: 800, model: HAIKU });
+  const text = await callClaude({ prompt, maxTokens: 2000, model: HAIKU });
   try {
     return extractJSON<PurchaseSuggestion[]>(text);
   } catch {
