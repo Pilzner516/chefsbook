@@ -669,7 +669,7 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
       <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 20 }}>
         <View style={{ borderTopWidth: 0.5, borderTopColor: SMOKE, width: '60%', marginBottom: 16 }} />
         <Text style={{ fontSize: 36, color: accentColor, marginBottom: 4 }}>"</Text>
-        <Text style={{ fontSize: 14, fontFamily: 'Source Sans Pro', fontWeight: 300, fontStyle: 'italic', textAlign: 'center', maxWidth: '80%', lineHeight: 1.6, color: CHARCOAL }}>
+        <Text style={{ fontSize: 14, fontFamily: 'Source Sans Pro', fontWeight: 300, textAlign: 'center', maxWidth: '80%', lineHeight: 1.6, color: CHARCOAL }}>
           {fillContent.quoteText}
         </Text>
         {fillContent.quoteAttribution && (
