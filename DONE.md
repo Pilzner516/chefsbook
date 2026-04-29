@@ -1,6 +1,48 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-29 (session CANVAS-FIXES-1) TYPE: CODE FIX
+
+### Three Print Cookbook Canvas Fixes
+
+**FIX 1 — Shopping List Print Shows Ingredients:**
+- Fixed CSS nth-child selectors that were incorrectly hiding print elements
+- Removed nth-child selectors, rely on `.shop-screen-only` class for screen hiding
+- Print now shows: checkbox, quantity, unit (full word), ingredient name, recipe source
+
+**FIX 2 — Page Size Margins for All Sizes:**
+- Added PAGE_SIZE_SPECS constant with Lulu-compliant dimensions:
+  - Letter: 612×792pt, margins 54/63/45pt
+  - Trade: 432×648pt, margins 48/54/36pt
+  - Large Trade: 504×720pt, margins 54/58/40pt
+  - Digest: 396×612pt, margins 44/50/32pt
+  - Square: 576×576pt, margins 48/54/54pt
+- All 6 PDF templates now use dynamic page sizes via getPageSize()
+- Removed hardcoded "LETTER" from all Page components
+
+**FIX 3 — Fill Zone UI Rebuilt:**
+- Removed 'decorative' option from FillType
+- Added 'custom' option with text (300 chars) and/or image upload
+- Updated all 6 PDF templates to render custom fill content
+- UI shows 4 options: Blank, Chef's Notes, Pull Quote, Custom
+- Custom upload uses existing /api/print-cookbooks/upload-custom route
+
+**Files Modified:**
+- `apps/web/app/globals.css` — removed incorrect nth-child print selectors
+- `apps/web/lib/book-layout.ts` — FillType without 'decorative'
+- `apps/web/lib/pdf-templates/types.ts` — PAGE_SIZE_SPECS + getPageSize() + getPageMargins()
+- `apps/web/lib/pdf-templates/studio.tsx` — pageSize + custom fill zone
+- `apps/web/lib/pdf-templates/trattoria.tsx` — pageSize + custom fill zone
+- `apps/web/lib/pdf-templates/garden.tsx` — pageSize + custom fill zone
+- `apps/web/lib/pdf-templates/heritage.tsx` — pageSize + custom fill zone
+- `apps/web/lib/pdf-templates/nordic.tsx` — pageSize + custom fill zone
+- `apps/web/lib/pdf-templates/bbq.tsx` — pageSize + custom fill zone
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx` — fill zone UI with custom inputs
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-29 (session SHOPPING-PRINT-1) TYPE: CODE FIX + DESIGN
 
 ### Shopping List Print Layout Redesign
