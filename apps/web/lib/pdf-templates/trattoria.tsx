@@ -739,11 +739,11 @@ export function TrattoriaDocument({ cookbook, recipes, chefsHatBase64, language 
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} />
           ))}
-          {/* Render custom pages added by user */}
+          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} />
+          {/* Render custom pages after content page */}
           {recipe.custom_pages?.map((cp) => (
             <CustomPage key={cp.id} customPage={cp} />
           ))}
-          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} />
         </React.Fragment>
       ))}
 
