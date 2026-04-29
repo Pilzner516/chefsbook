@@ -868,8 +868,8 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: 
           const instruction = fixTimerCharacter(step.instruction);
           return (
             <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{step.step_number}</Text>
+              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#d4dccf', justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 }}>
+                <Text style={{ fontSize: 11, fontFamily: 'Libre Baskerville', fontWeight: 700, color: '#3a3028' }}>{step.step_number}</Text>
               </View>
               <View style={styles.stepContent}>
                 <Text style={styles.stepText}>{instruction}</Text>

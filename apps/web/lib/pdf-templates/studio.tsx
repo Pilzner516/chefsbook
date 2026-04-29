@@ -670,7 +670,7 @@ function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookReci
           const instruction = fixTimerCharacter(step.instruction);
           return (
             <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
-              <Text style={styles.ghostNumber}>{step.step_number}</Text>
+              <Text style={{ position: 'absolute', top: -20, left: 0, fontSize: 72, fontFamily: 'Playfair Display', fontWeight: 700, color: 'rgba(255, 255, 255, 0.04)' }}>{step.step_number}</Text>
               <Text style={styles.stepText}>{instruction}</Text>
               {step.timer_minutes && step.timer_minutes > 0 && (
                 <Text style={styles.stepTimer}>{formatDuration(step.timer_minutes)}</Text>

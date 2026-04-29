@@ -752,8 +752,8 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
             <View key={si} wrap={false} minPresenceAhead={40}>
               {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
               <View style={styles.stepRow}>
-                <View style={styles.stepNumber}>
-                  <Text style={styles.stepNumberText}>{step.step_number}</Text>
+                <View style={{ width: 22, height: 22, backgroundColor: '#2d2926', borderRadius: 11, justifyContent: 'center', alignItems: 'center', marginRight: 10, flexShrink: 0 }}>
+                  <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: '#fffdf8' }}>{step.step_number}</Text>
                 </View>
                 <View style={styles.stepContent}>
                   <Text style={styles.stepText}>
