@@ -341,18 +341,24 @@ export default function PlanPage() {
     try {
       const recipePlans = plans.filter((p: any) => p.recipe_id);
       if (recipePlans.length === 0) { setAddingToShop(false); return; }
-      // Count how many times each recipe appears in the week
-      const recipeCounts = new Map<string, number>();
-      for (const p of recipePlans) {
-        recipeCounts.set(p.recipe_id!, (recipeCounts.get(p.recipe_id!) ?? 0) + 1);
+
+      // Build map of recipe_id -> total servings scale factor
+      // Accounts for meal plan servings vs recipe base servings AND multiple appearances
+      const recipeScaleFactors = new Map<string, number>();
+      for (const p of recipePlans as any[]) {
+        const planServings = p.servings ?? p.recipe?.servings ?? 4;
+        const recipeServings = p.recipe?.servings ?? 4;
+        const scaleFactor = planServings / recipeServings;
+        recipeScaleFactors.set(p.recipe_id!, (recipeScaleFactors.get(p.recipe_id!) ?? 0) + scaleFactor);
       }
-      const recipeDetails = await Promise.all([...recipeCounts.keys()].map((rid) => getRecipe(rid)));
+
+      const recipeDetails = await Promise.all([...recipeScaleFactors.keys()].map((rid) => getRecipe(rid)));
       const items: any[] = [];
       for (const r of recipeDetails) {
         if (!r) continue;
-        const count = recipeCounts.get(r.id) ?? 1;
+        const totalScaleFactor = recipeScaleFactors.get(r.id) ?? 1;
         for (const ing of r.ingredients) {
-          const scaledQty = ing.quantity != null ? Math.round(ing.quantity * count * 100) / 100 : null;
+          const scaledQty = ing.quantity != null ? Math.round(ing.quantity * totalScaleFactor * 100) / 100 : null;
           items.push({ ingredient: ing.ingredient, quantity: scaledQty, unit: ing.unit, quantity_needed: [scaledQty, ing.unit].filter(Boolean).join(' ') || null, recipe_name: r.title, recipe_id: r.id });
         }
       }
@@ -395,20 +401,26 @@ export default function PlanPage() {
         const list = await createShoppingList(userId, `${dayName} meals`);
         listId = list.id;
       }
-      const dayPlans = plans.filter((p: any) => p.plan_date === dayShopDate && p.recipe_id);
+      const dayPlans = plans.filter((p: any) => p.plan_date === dayShopDate && p.recipe_id) as any[];
       if (dayPlans.length === 0) { setAddingToShop(false); setDayShopDate(null); return; }
-      // Count how many times each recipe appears on this day
-      const recipeCounts = new Map<string, number>();
+
+      // Build map of recipe_id -> total servings scale factor
+      // Accounts for meal plan servings vs recipe base servings AND multiple appearances
+      const recipeScaleFactors = new Map<string, number>();
       for (const p of dayPlans) {
-        recipeCounts.set(p.recipe_id!, (recipeCounts.get(p.recipe_id!) ?? 0) + 1);
+        const planServings = p.servings ?? p.recipe?.servings ?? 4;
+        const recipeServings = p.recipe?.servings ?? 4;
+        const scaleFactor = planServings / recipeServings;
+        recipeScaleFactors.set(p.recipe_id!, (recipeScaleFactors.get(p.recipe_id!) ?? 0) + scaleFactor);
       }
-      const recipeDetails = await Promise.all([...recipeCounts.keys()].map((rid) => getRecipe(rid)));
+
+      const recipeDetails = await Promise.all([...recipeScaleFactors.keys()].map((rid) => getRecipe(rid)));
       const items: any[] = [];
       for (const r of recipeDetails) {
         if (!r) continue;
-        const count = recipeCounts.get(r.id) ?? 1;
+        const totalScaleFactor = recipeScaleFactors.get(r.id) ?? 1;
         for (const ing of r.ingredients) {
-          const scaledQty = ing.quantity != null ? Math.round(ing.quantity * count * 100) / 100 : null;
+          const scaledQty = ing.quantity != null ? Math.round(ing.quantity * totalScaleFactor * 100) / 100 : null;
           items.push({ ingredient: ing.ingredient, quantity: scaledQty, unit: ing.unit, quantity_needed: [scaledQty, ing.unit].filter(Boolean).join(' ') || null, recipe_name: r.title, recipe_id: r.id });
         }
       }

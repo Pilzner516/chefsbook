@@ -15,8 +15,11 @@ interface FeedbackRow {
   id: string;
   user_id: string | null;
   username: string | null;
+  user_email: string | null;
   display_name: string | null;
-  type: 'bug' | 'suggestion' | 'praise';
+  type: 'bug' | 'suggestion' | 'praise' | 'feature_request' | 'question' | 'other';
+  tag: 'Bug' | 'Feature Request' | 'Question' | 'Other' | null;
+  source: 'feedback' | 'got_an_idea' | 'qa_notepad' | null;
   screen: string | null;
   description: string;
   app_version: string | null;
@@ -50,6 +53,16 @@ const TYPE_BADGES: Record<string, { bg: string; text: string; icon: string }> = 
   bug: { bg: 'bg-red-100', text: 'text-red-700', icon: '🐛' },
   suggestion: { bg: 'bg-blue-100', text: 'text-blue-700', icon: '💡' },
   praise: { bg: 'bg-green-100', text: 'text-green-700', icon: '🎉' },
+  feature_request: { bg: 'bg-purple-100', text: 'text-purple-700', icon: '✨' },
+  question: { bg: 'bg-cyan-100', text: 'text-cyan-700', icon: '❓' },
+  other: { bg: 'bg-gray-100', text: 'text-gray-700', icon: '💬' },
+};
+
+const TAG_BADGES: Record<string, { bg: string; text: string }> = {
+  'Bug': { bg: 'bg-red-100', text: 'text-red-700' },
+  'Feature Request': { bg: 'bg-purple-100', text: 'text-purple-700' },
+  'Question': { bg: 'bg-cyan-100', text: 'text-cyan-700' },
+  'Other': { bg: 'bg-gray-100', text: 'text-gray-600' },
 };
 
 function timeAgo(d: string) {
@@ -194,11 +207,28 @@ function FeedbackCard({
               ) : (
                 <span className="text-sm text-gray-500">Anonymous</span>
               )}
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.bg} ${badge.text}`}
-              >
-                {badge.icon} {feedback.type}
-              </span>
+              {/* Tag pill (primary classification for Got an Idea) */}
+              {feedback.tag && (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${TAG_BADGES[feedback.tag]?.bg ?? 'bg-gray-100'} ${TAG_BADGES[feedback.tag]?.text ?? 'text-gray-600'}`}
+                >
+                  {feedback.tag}
+                </span>
+              )}
+              {/* Type badge (fallback when no tag) */}
+              {!feedback.tag && (
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${badge.bg} ${badge.text}`}
+                >
+                  {badge.icon} {feedback.type}
+                </span>
+              )}
+              {/* Got an Idea source badge */}
+              {feedback.source === 'got_an_idea' && (
+                <span className="text-[9px] font-medium bg-amber-50 text-amber-600 border border-amber-200 px-1.5 py-0.5 rounded">
+                  💡 Got an Idea
+                </span>
+              )}
               {feedback.screen && (
                 <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
                   {feedback.screen}
@@ -367,6 +397,8 @@ export default function UserFeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
+  const [filterTag, setFilterTag] = useState<string>('all');
+  const [filterSource, setFilterSource] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [confirm, ConfirmDialogEl] = useConfirmDialog();
 
@@ -423,12 +455,17 @@ export default function UserFeedbackPage() {
 
   let filtered = feedback;
   if (filterType !== 'all') filtered = filtered.filter((f) => f.type === filterType);
+  if (filterTag !== 'all') filtered = filtered.filter((f) => f.tag === filterTag);
+  if (filterSource !== 'all') filtered = filtered.filter((f) => f.source === filterSource);
   if (filterStatus === 'under_review') filtered = filtered.filter((f) => f.status === 'under_review');
 
   const stats = {
-    bug: feedback.filter((f) => f.type === 'bug').length,
+    bug: feedback.filter((f) => f.type === 'bug' || f.tag === 'Bug').length,
     suggestion: feedback.filter((f) => f.type === 'suggestion').length,
     praise: feedback.filter((f) => f.type === 'praise').length,
+    feature_request: feedback.filter((f) => f.type === 'feature_request' || f.tag === 'Feature Request').length,
+    question: feedback.filter((f) => f.type === 'question' || f.tag === 'Question').length,
+    got_an_idea: feedback.filter((f) => f.source === 'got_an_idea').length,
     under_review: feedback.filter((f) => f.status === 'under_review').length,
   };
 
@@ -445,33 +482,39 @@ export default function UserFeedbackPage() {
 
       <div className="flex flex-wrap gap-2 mb-4">
         <button
-          onClick={() => { setFilterType('all'); setFilterStatus('all'); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterType === 'all' && filterStatus === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => { setFilterType('all'); setFilterTag('all'); setFilterSource('all'); setFilterStatus('all'); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterType === 'all' && filterTag === 'all' && filterSource === 'all' && filterStatus === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
         >
           All ({feedback.length})
         </button>
         <button
-          onClick={() => { setFilterType('bug'); setFilterStatus('all'); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterType === 'bug' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}
+          onClick={() => { setFilterTag('Bug'); setFilterType('all'); setFilterSource('all'); setFilterStatus('all'); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterTag === 'Bug' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}
         >
           🐛 Bugs ({stats.bug})
         </button>
         <button
-          onClick={() => { setFilterType('suggestion'); setFilterStatus('all'); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterType === 'suggestion' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+          onClick={() => { setFilterTag('Feature Request'); setFilterType('all'); setFilterSource('all'); setFilterStatus('all'); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterTag === 'Feature Request' ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}
         >
-          💡 Suggestions ({stats.suggestion})
+          ✨ Features ({stats.feature_request})
         </button>
         <button
-          onClick={() => { setFilterType('praise'); setFilterStatus('all'); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterType === 'praise' ? 'bg-green-600 text-white' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}
+          onClick={() => { setFilterTag('Question'); setFilterType('all'); setFilterSource('all'); setFilterStatus('all'); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterTag === 'Question' ? 'bg-cyan-600 text-white' : 'bg-cyan-50 text-cyan-700 hover:bg-cyan-100'}`}
         >
-          🎉 Praise ({stats.praise})
+          ❓ Questions ({stats.question})
         </button>
         <span className="border-l border-gray-300 mx-1" />
         <button
-          onClick={() => { setFilterType('all'); setFilterStatus('under_review'); }}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterStatus === 'under_review' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+          onClick={() => { setFilterSource('got_an_idea'); setFilterType('all'); setFilterTag('all'); setFilterStatus('all'); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterSource === 'got_an_idea' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+        >
+          💡 Got an Idea ({stats.got_an_idea})
+        </button>
+        <button
+          onClick={() => { setFilterStatus('under_review'); setFilterType('all'); setFilterTag('all'); setFilterSource('all'); }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${filterStatus === 'under_review' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
         >
           ⏳ Under Review ({stats.under_review})
         </button>
