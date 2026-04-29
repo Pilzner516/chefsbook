@@ -748,11 +748,14 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
           const showGroupLabel = step.group_label && step.group_label !== currentStepGroup;
           if (step.group_label) currentStepGroup = step.group_label;
 
+          // Map step numbers to colored circled digits
+          const circledDigits = ['❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾', '❿'];
+          const circledNum = circledDigits[step.step_number - 1] || `${step.step_number}.`;
           return (
-            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 14 }}>
+            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 18 }}>
               {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
               <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                <Text style={{ width: 24, fontSize: 14, fontFamily: 'Oswald', fontWeight: 700, color: '#d4a03a' }}>{step.step_number}.</Text>
+                <Text style={{ width: 24, fontSize: 14, marginRight: 8 }}>{circledNum}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 10, fontFamily: 'Source Sans Pro', fontWeight: 400, color: '#2d2926', lineHeight: 1.6 }}>
                     {fixTimerCharacter(step.instruction)}
