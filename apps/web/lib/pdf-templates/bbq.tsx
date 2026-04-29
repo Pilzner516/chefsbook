@@ -594,6 +594,17 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
   );
 }
 
+function AdditionalImagePage({ imageUrl, recipeName }: { imageUrl: string; recipeName: string }) {
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      <Image src={imageUrl} style={styles.recipeFullImage} />
+      <View style={styles.recipeImageOverlay}>
+        <Text style={styles.recipeImageTitle}>{recipeName}</Text>
+      </View>
+    </Page>
+  );
+}
+
 function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
@@ -697,6 +708,10 @@ export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: Coo
         <React.Fragment key={recipe.id}>
           <RecipeImagePage recipe={recipe} strings={strings} />
           <RecipePage recipe={recipe} strings={strings} />
+          {/* Render additional image pages if they exist */}
+          {recipe.image_urls.slice(1).map((imageUrl, idx) => (
+            <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} />
+          ))}
         </React.Fragment>
       ))}
       <BackPage chefsHatBase64={chefsHatBase64} strings={strings} />

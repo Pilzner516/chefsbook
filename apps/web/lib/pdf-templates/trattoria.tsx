@@ -573,9 +573,20 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
   );
 }
 
+// Additional image pages (for images beyond the first one)
+function AdditionalImagePage({ imageUrl, recipeTitle }: { imageUrl: string; recipeTitle: string }) {
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      <Image src={imageUrl} style={styles.recipeFullImage} />
+      <View style={styles.recipeImageOverlay}>
+        <Text style={styles.recipeImageMeta}>{recipeTitle}</Text>
+      </View>
+    </Page>
+  );
+}
+
 function RecipeContentPage({ recipe, pageNumber, strings }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
-  const secondImage = recipe.image_urls[1];
 
   return (
     <Page size="LETTER" style={styles.contentPage} wrap>
@@ -616,8 +627,6 @@ function RecipeContentPage({ recipe, pageNumber, strings }: { recipe: CookbookRe
             </View>
           );
         })}
-
-        {secondImage && <Image src={secondImage} style={styles.secondImage} />}
       </View>
 
       {recipe.notes && (
@@ -687,6 +696,10 @@ export function TrattoriaDocument({ cookbook, recipes, chefsHatBase64, language 
       {recipes.map((recipe, idx) => (
         <React.Fragment key={recipe.id}>
           <RecipeImagePage recipe={recipe} strings={strings} />
+          {/* Render additional image pages (images beyond the first one) */}
+          {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
+            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} />
+          ))}
           <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} />
         </React.Fragment>
       ))}

@@ -537,6 +537,18 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
   );
 }
 
+// Additional image pages (for images beyond the first one)
+function AdditionalImagePage({ imageUrl, recipeTitle }: { imageUrl: string; recipeTitle: string }) {
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      <Image src={imageUrl} style={styles.recipeFullImage} />
+      <View style={styles.recipeImageOverlay}>
+        <Text style={styles.recipeImageMeta}>{recipeTitle}</Text>
+      </View>
+    </Page>
+  );
+}
+
 function RecipeContentPage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
   const allIngredients = ingredientGroups.flatMap(g => g.items);
@@ -640,6 +652,10 @@ export function NordicDocument({ cookbook, recipes, chefsHatBase64, language }: 
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
           <RecipeImagePage recipe={recipe} strings={strings} />
+          {/* Render additional image pages (images beyond the first one) */}
+          {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
+            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} />
+          ))}
           <RecipeContentPage recipe={recipe} strings={strings} />
         </React.Fragment>
       ))}

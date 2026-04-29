@@ -532,6 +532,21 @@ function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: Book
   );
 }
 
+// Additional image pages (for images beyond the first one)
+function AdditionalImagePage({ imageUrl, recipeTitle }: { imageUrl: string; recipeTitle: string }) {
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      <View style={styles.recipeImageTop}>
+        <Image src={imageUrl} style={styles.recipeImage} />
+        <View style={styles.recipeImageFrame} />
+      </View>
+      <View style={styles.recipeHeader}>
+        <Text style={styles.recipeMeta}>{recipeTitle}</Text>
+      </View>
+    </Page>
+  );
+}
+
 function RecipeContentPage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
 
@@ -645,6 +660,10 @@ export function GardenDocument({ cookbook, recipes, chefsHatBase64, language }: 
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
           <RecipePage recipe={recipe} strings={strings} />
+          {/* Render additional image pages (images beyond the first one) */}
+          {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
+            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} />
+          ))}
           <RecipeContentPage recipe={recipe} strings={strings} />
         </React.Fragment>
       ))}

@@ -723,6 +723,19 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
   );
 }
 
+// Additional image pages (for images beyond the first one)
+function AdditionalImagePage({ imageUrl, recipeTitle }: { imageUrl: string; recipeTitle: string }) {
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      <View style={styles.recipeImageFrame} />
+      <Image src={imageUrl} style={styles.recipeFullImage} />
+      <View style={styles.recipeImageTextArea}>
+        <Text style={styles.recipeImageMeta}>{recipeTitle}</Text>
+      </View>
+    </Page>
+  );
+}
+
 function RecipeContentPage({ recipe, pageNumber, strings }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
 
@@ -843,6 +856,10 @@ export function HeritageDocument({ cookbook, recipes, chefsHatBase64, language }
       {recipes.map((recipe, idx) => (
         <React.Fragment key={recipe.id}>
           <RecipeImagePage recipe={recipe} strings={strings} />
+          {/* Render additional image pages (images beyond the first one) */}
+          {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
+            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} />
+          ))}
           <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} />
         </React.Fragment>
       ))}
