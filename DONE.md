@@ -53,6 +53,7 @@
 1. **Replicate URL fix**: Converted Tailscale URLs (100.110.47.62) to public URLs (api.chefsbk.app) before sending to Replicate — their servers can't reach private Tailscale network
 2. **Multi-image PDF rendering**: Added AdditionalImagePage component to all 6 PDF templates — previously only first image was rendered, now all recipe images from canvas editor are included as separate full-bleed pages
 3. **SSR DOMMatrix fix**: Changed FlipbookPreview to dynamic import with `ssr: false` — react-pdf uses browser APIs that don't exist on server
+4. **RLS recipe fetch fix**: Generate route now uses `supabaseAdmin` directly to fetch recipes instead of `getRecipe()` — the anon client had no auth context in API routes, causing RLS to block reads and trigger "Could not fetch minimum 5 recipes" error even with 6+ recipes on canvas
 
 **Deployment:** Built and deployed to RPi5 at https://chefsbk.app
 
