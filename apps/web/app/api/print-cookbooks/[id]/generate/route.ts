@@ -41,6 +41,42 @@ function toPublicUrl(url: string): string {
     .replace('http://localhost:8000', 'https://api.chefsbk.app');
 }
 
+// Generate a signed URL for Replicate (external servers can't use apikey header)
+async function getSignedUrlForReplicate(imageUrl: string): Promise<string | null> {
+  try {
+    // Normalize URL and parse storage path
+    // Expected format: .../storage/v1/object/public/{bucket}/{path}
+    const normalized = imageUrl
+      .replace('http://100.110.47.62:8000', 'https://api.chefsbk.app')
+      .replace('http://localhost:8000', 'https://api.chefsbk.app');
+    const urlObj = new URL(normalized);
+    const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+
+    if (!pathMatch) {
+      console.warn('[Upscale] Could not parse storage path from URL:', imageUrl.substring(0, 80));
+      return null;
+    }
+
+    const [, bucket, path] = pathMatch;
+
+    // Create signed URL valid for 300 seconds
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucket)
+      .createSignedUrl(decodeURIComponent(path), 300);
+
+    if (error || !data?.signedUrl) {
+      console.warn('[Upscale] Failed to create signed URL:', error?.message);
+      return null;
+    }
+
+    // Convert the signed URL to public domain
+    return toPublicUrl(data.signedUrl);
+  } catch (err) {
+    console.warn('[Upscale] Error creating signed URL:', err);
+    return null;
+  }
+}
+
 // Upscale image using Real-ESRGAN via Replicate
 async function upscaleImage(
   imageUrl: string,
@@ -53,14 +89,18 @@ async function upscaleImage(
   }
 
   try {
-    // Convert to public URL so Replicate can fetch it
-    const publicUrl = toPublicUrl(imageUrl);
-    console.log('[Upscale] Upscaling image:', publicUrl.substring(0, 80) + '...');
+    // Generate a signed URL so Replicate can fetch without apikey header
+    const signedUrl = await getSignedUrlForReplicate(imageUrl);
+    if (!signedUrl) {
+      console.warn('[Upscale] Could not generate signed URL, skipping upscaling');
+      return { upscaledBase64: null, upscaled: false };
+    }
+    console.log('[Upscale] Upscaling image with signed URL');
 
     // Run Real-ESRGAN model
     const output = await replicate.run(
       'nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b',
-      { input: { image: publicUrl, scale: 4 } }
+      { input: { image: signedUrl, scale: 4 } }
     );
 
     // Output is a URL to the upscaled image

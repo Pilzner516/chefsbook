@@ -1,6 +1,24 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-29 (session PRINT-QUALITY-5) TYPE: CODE FIX
+
+### Print My ChefsBook — Replicate Upscaling 401 Fix
+
+**BUG:** Replicate returned 401 when trying to fetch recipe images for upscaling. Storage URLs at api.chefsbk.app require the `apikey` header, which Replicate can't provide.
+
+**FIX (CODE FIX):**
+- Added `getSignedUrlForReplicate()` helper that generates Supabase signed URLs with 300-second expiry
+- Modified `upscaleImage()` to use signed URLs instead of direct storage URLs
+- Signed URLs embed the auth token in the URL itself, allowing Replicate to fetch without headers
+
+**Files Modified:**
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts`
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-29 (session PRINT-QUALITY-4) TYPE: CODE FIX
 
 ### Print My ChefsBook — Custom Page Ordering Fix
