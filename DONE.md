@@ -39,14 +39,28 @@
 - Fix: Added `__pending__` case that finds and updates pending item quantities
   instead of inserting new rows
 
+**TASK 6 — Shopping Cart Unit Display Fix (CODE FIX):**
+- Bug: Units still showing as abbreviations (2t, 3c) after TASK 4 fix
+- Root cause: Shop page called `abbreviateUnit()` on quantity_needed display,
+  re-converting "2 tsp" back to "2t" — undoing the expansion
+- Fix: Removed abbreviateUnit() call from shop page display, show raw value
+
+**TASK 7 — Purchase Unit Suggestions (CODE FIX):**
+- Bug: Purchase units showed as dash for meal plan imports
+- Fix: Added error logging to AI suggestion call in add-items route
+- Fix: Filter out empty purchase_unit suggestions before building map
+- Fix: Added whitespace trim to abbreviateUnitMedium for edge cases
+
 **Files Modified:**
 - `apps/web/components/FeedbackCard.tsx` - iOS keyboard fix + tags + user_feedback routing
 - `apps/mobile/components/FeedbackCard.tsx` - tags + user_feedback routing
 - `apps/web/app/admin/feedback/page.tsx` - tag/source badges + filters
 - `apps/web/app/admin/layout.tsx` - removed User Ideas nav item
 - `apps/web/app/dashboard/plan/page.tsx` - servings scaling + unit formatting
+- `apps/web/app/dashboard/shop/page.tsx` - removed abbreviateUnit from display
+- `apps/web/app/api/shopping/add-items/route.ts` - error logging + filter empty suggestions
 - `packages/db/src/queries/shopping.ts` - batch deduplication fix
-- `packages/ui/src/index.ts` - unit expansion patterns
+- `packages/ui/src/index.ts` - unit expansion patterns + whitespace trim
 - `supabase/migrations/20260429_065_feedback_tags_source.sql`
 
 **Deployed:** RPi5 via deploy-staging.sh, PM2 online
