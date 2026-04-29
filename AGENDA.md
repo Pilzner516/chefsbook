@@ -35,6 +35,7 @@ Feature built (session LULU-PRINT). Before announcing:
 - [ ] Test one real order end-to-end before announcing feature
 - [ ] Wire Stripe Elements for real payment (currently mock flow)
 - [ ] Add email notification on shipped status (via Resend)
+- [ ] Test AI upscaling with a real low-res image end-to-end (PRINT-QUALITY-1 added Real-ESRGAN 4x, verify it works in production)
 
 ---
 

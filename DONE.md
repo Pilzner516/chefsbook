@@ -1,6 +1,58 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-28 (session PRINT-QUALITY-1) TYPE: FEATURE + CODE FIX
+
+### Print My ChefsBook Quality Improvements
+
+**TASK 1 - Plan Gating (CODE FIX):**
+- Changed `canPrintCookbook` from `false` to `true` for chef and family tiers in `packages/db/src/subscriptions.ts`
+- Print cookbook now available on Chef ($4.99), Family ($9.99), and Pro ($14.99) plans
+- `/dashboard/print-cookbook/[id]` and list page redirect free users to `/dashboard/plans?reason=print`
+- Plans page shows amber banner "Print My ChefsBook is available on Chef, Family, and Pro plans." when redirected
+- `/api/print-cookbooks/[id]/generate` returns 403 `{ error: "upgrade_required" }` for free users
+- Added `canPrintCookbook` to FEATURES list on plans page
+
+**TASK 2 - AI Image Upscaling (FEATURE):**
+- Added Replicate Real-ESRGAN 4x upscaling in `/api/print-cookbooks/[id]/generate/route.ts`
+- Images with < 300 DPI (yellow/red quality) are upscaled at PDF generate time
+- Upscaled images used in-memory only — not saved to Supabase Storage
+- Falls back to original image if upscaling fails (logs error, doesn't abort PDF)
+- Logs to `ai_usage_log` with action `upscale`, model `real-esrgan-4x`, cost `0.002`
+- Added `REPLICATE_API_TOKEN` to RPi5 `.env.local`
+
+**TASK 3 - Cover Card Upload (FEATURE):**
+- Added click-to-upload and drag-and-drop to cover card placeholder in canvas editor
+- Shows loading spinner during upload
+- Shows uploaded image preview with "Change Photo" button overlay
+- Uses existing `/api/print-cookbooks/upload-cover` route
+- Saves cover image URL to `book_layout.coverCard.image_url` via existing auto-save
+
+**TASK 4 - Sidebar Nav Label Fix (CODE FIX):**
+- Added `printCookbook: "Print My ChefsBook"` translation key to all 5 locale files (en/fr/es/it/de)
+- Sidebar now shows localized label instead of raw key "web.printCookbook"
+
+**TASK 5 - Quality Badge Messaging (CODE FIX):**
+- Updated badge labels: Green = "Print ready", Yellow/Red = "Will be enhanced at print time"
+- Removed `hasPoorQuality` blocking on Generate button — upscaling handles it automatically
+- Quality badges are now informational only
+
+**Files Modified:**
+- `packages/db/src/subscriptions.ts`
+- `apps/web/locales/en.json`, `fr.json`, `es.json`, `it.json`, `de.json`
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx`
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts`
+- `apps/web/app/dashboard/plans/page.tsx`
+- `apps/web/app/dashboard/print-cookbook/page.tsx`
+- `apps/web/components/print/FlipbookPreview.tsx`
+
+**Dependencies:**
+- Added `replicate@1.0.4` to web app
+
+**Deployment:** Built and deployed to RPi5 at https://chefsbk.app
+
+---
+
 ## 2026-04-28 (session CANVAS-EDITOR-4) TYPE: UI FIX
 
 ### Print My ChefsBook Canvas Editor UI Improvements
