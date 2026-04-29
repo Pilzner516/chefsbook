@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { supabase, getMealPlansForWeek, addMealPlan, deleteMealPlan, updateMealPlan, listRecipes, getRecipe, createShoppingList, listShoppingLists } from '@chefsbook/db';
+import { supabase, getMealPlansForWeek, addMealPlan, deleteMealPlan, updateMealPlan, listRecipes, getRecipe, createShoppingList, listShoppingLists, getPrimaryPhotos } from '@chefsbook/db';
 import type { MealPlan, Recipe, ShoppingList } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import MealPlanWizard from '@/components/MealPlanWizard';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import ChefsDialog from '@/components/ChefsDialog';
-import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
+import { proxyIfNeeded, CHEFS_HAT_URL, getRecipeImageUrl } from '@/lib/recipeImage';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import { abbreviateUnitMedium } from '@chefsbook/ui';
 
@@ -40,10 +40,11 @@ const SLOT_COLORS: Record<string, string> = {
   snack: 'bg-green-100 text-green-700',
 };
 
-function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop, onRemovePlan, onRefresh }: {
+function DayCard({ date, dayName, plans, primaryPhotos, onOpenPicker, onOpenNote, onOpenDayShop, onRemovePlan, onRefresh }: {
   date: string;
   dayName: string;
   plans: any[];
+  primaryPhotos: Record<string, string>;
   onOpenPicker: (date: string) => void;
   onOpenNote: (date: string) => void;
   onOpenDayShop: (date: string) => void;
@@ -87,13 +88,16 @@ function DayCard({ date, dayName, plans, onOpenPicker, onOpenNote, onOpenDayShop
                 </button>
                 <Link href={`/recipe/${plan.recipe_id}`} className="block">
                   <div className="relative">
-                    {plan.recipe?.image_url ? (
-                      <img src={proxyIfNeeded(plan.recipe.image_url) ?? CHEFS_HAT_URL} alt={plan.recipe?.title ?? ''} className="w-full aspect-[3/2] object-cover rounded-input" />
-                    ) : (
-                      <div className="w-full aspect-[3/2] bg-cb-bg rounded-input flex items-center justify-center">
-                        <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30" />
-                      </div>
-                    )}
+                    {(() => {
+                      const imgUrl = getRecipeImageUrl(primaryPhotos[plan.recipe_id], plan.recipe?.image_url, plan.recipe?.youtube_video_id);
+                      return imgUrl ? (
+                        <img src={imgUrl} alt={plan.recipe?.title ?? ''} className="w-full aspect-[3/2] object-cover rounded-input" />
+                      ) : (
+                        <div className="w-full aspect-[3/2] bg-cb-bg rounded-input flex items-center justify-center">
+                          <img src={CHEFS_HAT_URL} alt="" className="w-10 h-10 object-contain opacity-30" />
+                        </div>
+                      );
+                    })()}
                     {/* Daypart pill — bottom-left */}
                     <button
                       onClick={(e) => {
@@ -232,6 +236,7 @@ export default function PlanPage() {
   const [confirmMismatch, ConfirmMismatchDialog] = useConfirmDialog();
   const [showAlert, AlertDialog] = useAlertDialog();
   const [plans, setPlans] = useState<MealPlan[]>([]);
+  const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -243,6 +248,7 @@ export default function PlanPage() {
   const [pickerDate, setPickerDate] = useState<string | null>(null);
   const [pickerSlot, setPickerSlot] = useState<string>('dinner');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [pickerPhotos, setPickerPhotos] = useState<Record<string, string>>({});
   const [recipeSearch, setRecipeSearch] = useState('');
   const [pickerTab, setPickerTab] = useState<'favourites' | 'all' | 'ai'>('all');
   const [cuisineFilter, setCuisineFilter] = useState('');
@@ -280,6 +286,12 @@ export default function PlanPage() {
     if (weekDates.length === 7) {
       const data = await getMealPlansForWeek(userId, weekDates[0]!, weekDates[6]!);
       setPlans(data);
+      // Fetch primary photos for all recipes in the meal plans
+      const recipeIds = [...new Set(data.filter((p) => p.recipe_id).map((p) => p.recipe_id!))];
+      if (recipeIds.length > 0) {
+        const photos = await getPrimaryPhotos(recipeIds);
+        setPrimaryPhotos(photos);
+      }
     }
     setLoading(false);
   };
@@ -302,6 +314,7 @@ export default function PlanPage() {
     if (userId && recipes.length === 0) {
       const data = await listRecipes({ userId, limit: 500 });
       setRecipes(data);
+      getPrimaryPhotos(data.map((r) => r.id)).then(setPickerPhotos);
     }
   };
 
@@ -493,14 +506,14 @@ export default function PlanPage() {
           <div className="grid grid-cols-5 gap-3">
             {weekDates.slice(0, 5).map((date, i) => {
               const dayPlans = plans.filter((p: any) => p.plan_date === date);
-              return <DayCard key={date} date={date} dayName={DAYS[i]!} plans={dayPlans} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} onRefresh={loadPlans} />;
+              return <DayCard key={date} date={date} dayName={DAYS[i]!} plans={dayPlans} primaryPhotos={primaryPhotos} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} onRefresh={loadPlans} />;
             })}
           </div>
           {/* Row 2: Sat–Sun (same column width as row 1) */}
           <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(2, calc((100% - 4 * 0.75rem) / 5))' }}>
             {weekDates.slice(5, 7).map((date, i) => {
               const dayPlans = plans.filter((p: any) => p.plan_date === date);
-              return <DayCard key={date} date={date} dayName={DAYS[5 + i]!} plans={dayPlans} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} onRefresh={loadPlans} />;
+              return <DayCard key={date} date={date} dayName={DAYS[5 + i]!} plans={dayPlans} primaryPhotos={primaryPhotos} onOpenPicker={openPicker} onOpenNote={openNoteEntry} onOpenDayShop={openDayShop} onRemovePlan={removePlan} onRefresh={loadPlans} />;
             })}
           </div>
         </div>
@@ -642,7 +655,10 @@ export default function PlanPage() {
                 filteredRecipes.map((r) => (
                   <button key={r.id} onClick={() => setSelectedRecipeId(selectedRecipeId === r.id ? null : r.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-input transition-colors text-left ${selectedRecipeId === r.id ? 'bg-cb-primary/10 ring-2 ring-cb-primary/30' : 'hover:bg-cb-bg'}`}>
                     <div className="w-12 h-12 rounded-input overflow-hidden bg-cb-bg shrink-0">
-                      {r.image_url ? <img src={proxyIfNeeded(r.image_url)} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 object-contain opacity-30 mx-auto" />}
+                      {(() => {
+                        const imgUrl = getRecipeImageUrl(pickerPhotos[r.id], r.image_url, r.youtube_video_id);
+                        return imgUrl ? <img src={imgUrl} alt="" className="w-full h-full object-cover" /> : <img src={CHEFS_HAT_URL} alt="" className="w-8 h-8 object-contain opacity-30 mx-auto" />;
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.title}</p>
