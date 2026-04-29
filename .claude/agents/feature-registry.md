@@ -133,7 +133,7 @@
 | Consolidated "All [Store]" view | LIVE | apps/web/dashboard/shop/, apps/mobile | 84,96,115 | Uses same shop-item-grid layout as individual lists; view mode toggle (Dept/Recipe/A-Z); font size toggle; purchase unit + recipe source + usage |
 | Offline shopping cache | LIVE | apps/mobile/lib/shoppingCache.ts | 74 | FileSystem cache, sync on reconnect |
 | Add to shopping from recipe | LIVE | apps/web, apps/mobile | 03 | AI purchase unit suggestions |
-| Add week/day to shopping from meal plan | LIVE | apps/web/dashboard/plan/, apps/mobile | 04 | |
+| Add week/day to shopping from meal plan | LIVE | apps/web/dashboard/plan/, apps/mobile | 04, USER-FEEDBACK-1 | Quantities scaled by (planServings/recipeServings) factor |
 | Print shopping list | LIVE | apps/web | 35 | @media print CSS |
 | Realtime sync (Supabase Realtime) | LIVE | apps/mobile shoppingStore | 02 | WebSocket via wss://api.chefsbk.app |
 
@@ -177,10 +177,11 @@
 ## FEEDBACK & SUPPORT
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
-| "Got an Idea?" feedback card | LIVE | FeedbackCard component (web + mobile) | 73, 103 | Inline error display; min 10 chars; errors show inside modal |
+| "Got an Idea?" feedback card | LIVE | FeedbackCard component (web + mobile) | 73, 103, USER-FEEDBACK-1 | Routes to user_feedback table; tag pills (Bug/Feature Request/Question/Other); iOS keyboard-safe modal (dvh, sticky header submit); tapping outside closes |
 | QA Notepad send-to-admin | LIVE | apps/mobile/components/QANotepad.tsx | P-206 | Paper-plane icon in header sends all items as [QA NOTEPAD]-prefixed help_request; ChefsDialog confirm; success toast 2.5s; clears notepad on success |
-| Feedback stored in help_requests table | LIVE | packages/db, /api/feedback | 73 | |
-| Admin feedback management | LIVE | /admin/feedback, /api/admin/feedback/[id]/* | ADMIN-FEEDBACK-MANAGEMENT | Status (new/under_review), internal notes, threaded messaging with submitter; migrations 056-058 |
+| Feedback stored in user_feedback table | LIVE | packages/db, /api/feedback | 73, USER-FEEDBACK-1 | Migration 065 added tag, source, username, user_email columns; source='got_an_idea' for web/mobile Got an Idea submissions |
+| Admin feedback management | LIVE | /admin/feedback, /api/admin/feedback/[id]/* | ADMIN-FEEDBACK-MANAGEMENT, USER-FEEDBACK-1 | Status (new/under_review), internal notes, threaded messaging; tag pills + source badges + filters |
+| User Ideas admin section | REMOVED | /admin/help | USER-FEEDBACK-1 | Removed from nav; data preserved in help_requests table |
 | Privacy policy page | LIVE | apps/web/app/privacy/ | 77 | |
 
 ---

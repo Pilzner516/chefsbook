@@ -1,6 +1,44 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-29 (session USER-FEEDBACK-1) TYPE: CODE FIX + FEATURE
+
+### Got an Idea iOS Fix + Feedback Tags + Meal Plan Shopping Cart Quantities
+
+**TASK 1 — iOS Got an Idea Modal Fix (CODE FIX):**
+- Fixed modal keyboard blocking Send button on iOS
+- Modal now slides from bottom with 100dvh height
+- Submit button moved to sticky header (always visible with keyboard open)
+- Scrollable content area with WebkitOverflowScrolling touch
+- Tapping backdrop closes modal reliably
+
+**TASK 2 — Feedback Tags + Routing (CODE FIX + FEATURE):**
+- FeedbackCard (web + mobile) now routes to user_feedback table instead of help_requests
+- Added tag pills: Bug, Feature Request, Question, Other
+- Added source field for distinguishing got_an_idea submissions
+- Migration 065: tag, source, username, user_email columns on user_feedback
+- Admin feedback page shows tag pills + "Got an Idea" source badge
+- Admin feedback page has tag filter buttons
+- Removed User Ideas from admin nav (data preserved in help_requests)
+
+**TASK 3 — Meal Plan Shopping Cart Quantities Fix (CODE FIX):**
+- Root cause: Code only scaled by recipe count, not by servings adjustment
+- Fix: Now calculates (planServings / recipeServings) * count
+- Applied to both addDayToShoppingList and addWeekToShoppingList
+- Quantities now correctly reflect the meal plan's serving size
+
+**Files Modified:**
+- `apps/web/components/FeedbackCard.tsx` - iOS keyboard fix + tags + user_feedback routing
+- `apps/mobile/components/FeedbackCard.tsx` - tags + user_feedback routing
+- `apps/web/app/admin/feedback/page.tsx` - tag/source badges + filters
+- `apps/web/app/admin/layout.tsx` - removed User Ideas nav item
+- `apps/web/app/dashboard/plan/page.tsx` - servings scaling fix
+- `supabase/migrations/20260429_065_feedback_tags_source.sql`
+
+**Deployed:** RPi5 via deploy-staging.sh, PM2 online
+
+---
+
 ## 2026-04-29 (session PRINT-QUALITY-5) TYPE: CODE FIX
 
 ### Print My ChefsBook — Replicate Upscaling 401 Fix
