@@ -47,6 +47,9 @@
 
 **TASK 7 — Purchase Unit Suggestions (CODE FIX):**
 - Bug: Purchase units showed as dash for meal plan imports
+- Root cause: suggestPurchaseUnits used maxTokens=800, too low for meal plans
+- PM2 logs showed: ClaudeTruncatedError: Claude response truncated (stop_reason=max_tokens)
+- Fix: Increased maxTokens from 800 to 2000 in suggestPurchaseUnit.ts
 - Fix: Added error logging to AI suggestion call in add-items route
 - Fix: Filter out empty purchase_unit suggestions before building map
 - Fix: Added whitespace trim to abbreviateUnitMedium for edge cases
