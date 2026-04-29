@@ -749,14 +749,12 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
           if (step.group_label) currentStepGroup = step.group_label;
 
           return (
-            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 12 }}>
+            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 14 }}>
               {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
               <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                <View style={{ width: 22, height: 22, backgroundColor: '#2d2926', borderRadius: 11, justifyContent: 'center', alignItems: 'center', marginRight: 10, flexShrink: 0 }}>
-                  <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: '#fffdf8' }}>{step.step_number}</Text>
-                </View>
-                <View style={styles.stepContent}>
-                  <Text style={styles.stepText}>
+                <Text style={{ width: 24, fontSize: 14, fontFamily: 'Oswald', fontWeight: 700, color: '#d4a03a' }}>{step.step_number}.</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 10, fontFamily: 'Source Sans Pro', fontWeight: 400, color: '#2d2926', lineHeight: 1.6 }}>
                     {fixTimerCharacter(step.instruction)}
                     {step.timer_minutes ? ` (${step.timer_minutes} min)` : ''}
                   </Text>
