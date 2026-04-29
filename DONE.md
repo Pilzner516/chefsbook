@@ -54,6 +54,14 @@
 - Fix: Filter out empty purchase_unit suggestions before building map
 - Fix: Added whitespace trim to abbreviateUnitMedium for edge cases
 
+**TASK 8 — Meal Plan Recipe Images (CODE FIX):**
+- Bug: Recipe images showed placeholders on meal plan day cards (except Pear Pie)
+- Root cause: Plan page read recipes.image_url directly instead of recipe_user_photos
+- Fix: Added getPrimaryPhotos fetch after loadPlans
+- Fix: DayCard now uses getRecipeImageUrl(primaryPhotos[id], image_url, youtube_video_id)
+- Fix: Recipe picker panel also fetches and uses pickerPhotos state
+- Pattern matches dashboard/page.tsx and search/page.tsx
+
 **Files Modified:**
 - `apps/web/components/FeedbackCard.tsx` - iOS keyboard fix + tags + user_feedback routing
 - `apps/mobile/components/FeedbackCard.tsx` - tags + user_feedback routing
