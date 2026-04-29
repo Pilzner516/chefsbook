@@ -27,12 +27,26 @@
 - Applied to both addDayToShoppingList and addWeekToShoppingList
 - Quantities now correctly reflect the meal plan's serving size
 
+**TASK 4 — Meal Plan Shopping Cart Unit Abbreviations (CODE FIX):**
+- Bug: Units displayed as short forms (2t, 3T, 1c) instead of readable format
+- Fix: Added unit expansion patterns to abbreviateUnitMedium (T→Tbsp, t→tsp, c→cup)
+- Applied abbreviateUnitMedium when building quantity_needed strings
+
+**TASK 5 — Shopping Cart Batch Deduplication (CODE FIX):**
+- Bug: Same ingredient from multiple recipes in same batch created duplicate rows
+- Root cause: addItemsWithPipeline marked pending items with `__pending__` but
+  skipped merging with them, causing duplicates within same batch
+- Fix: Added `__pending__` case that finds and updates pending item quantities
+  instead of inserting new rows
+
 **Files Modified:**
 - `apps/web/components/FeedbackCard.tsx` - iOS keyboard fix + tags + user_feedback routing
 - `apps/mobile/components/FeedbackCard.tsx` - tags + user_feedback routing
 - `apps/web/app/admin/feedback/page.tsx` - tag/source badges + filters
 - `apps/web/app/admin/layout.tsx` - removed User Ideas nav item
-- `apps/web/app/dashboard/plan/page.tsx` - servings scaling fix
+- `apps/web/app/dashboard/plan/page.tsx` - servings scaling + unit formatting
+- `packages/db/src/queries/shopping.ts` - batch deduplication fix
+- `packages/ui/src/index.ts` - unit expansion patterns
 - `supabase/migrations/20260429_065_feedback_tags_source.sql`
 
 **Deployed:** RPi5 via deploy-staging.sh, PM2 online
