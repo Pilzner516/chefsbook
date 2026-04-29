@@ -8,6 +8,7 @@ import { Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/
 import {
   CookbookPdfOptions,
   CookbookRecipe,
+  CustomPageData,
   groupIngredients,
   formatDuration,
   formatQuantity,
@@ -544,6 +545,46 @@ function AdditionalImagePage({ imageUrl, recipeTitle }: { imageUrl: string; reci
   );
 }
 
+// Custom page component for user-added pages
+function CustomPage({ customPage }: { customPage: CustomPageData }) {
+  const hasImage = customPage.layout !== 'text_only' && customPage.image_url;
+  const hasText = customPage.layout !== 'image_only' && customPage.text;
+
+  if (customPage.layout === 'image_only' && customPage.image_url) {
+    return (
+      <Page size="LETTER" style={styles.recipeImagePage}>
+        <Image src={customPage.image_url} style={styles.recipeFullImage} />
+        <View style={styles.recipeImageGradient} />
+        {customPage.caption && (
+          <View style={styles.recipeImageText}>
+            <Text style={styles.recipeImageMeta}>{customPage.caption}</Text>
+          </View>
+        )}
+      </Page>
+    );
+  }
+
+  if (customPage.layout === 'text_only') {
+    return (
+      <Page size="LETTER" style={styles.contentPage}>
+        <Text style={styles.forewordText}>{customPage.text}</Text>
+      </Page>
+    );
+  }
+
+  // image_and_text layout
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      {hasImage && <Image src={customPage.image_url} style={styles.recipeFullImage} />}
+      <View style={styles.recipeImageGradient} />
+      <View style={styles.recipeImageText}>
+        {customPage.caption && <Text style={styles.recipeImageMeta}>{customPage.caption}</Text>}
+        {hasText && <Text style={{ ...styles.recipeImageMeta, marginTop: 8 }}>{customPage.text}</Text>}
+      </View>
+    </Page>
+  );
+}
+
 function RecipeContentPage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
   const allIngredients = ingredientGroups.flatMap(g => g.items);
@@ -648,6 +689,10 @@ export function StudioDocument({ cookbook, recipes, chefsHatBase64, language }: 
           {/* Render additional image pages (images beyond the first one) */}
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} />
+          ))}
+          {/* Render custom pages added by user */}
+          {recipe.custom_pages?.map((cp) => (
+            <CustomPage key={cp.id} customPage={cp} />
           ))}
           <RecipeContentPage recipe={recipe} strings={strings} />
         </React.Fragment>

@@ -21,6 +21,14 @@ export interface CookbookPdfOptions {
   language?: BookLocale;
 }
 
+export interface CustomPageData {
+  id: string;
+  layout: 'image_only' | 'text_only' | 'image_and_text';
+  image_url?: string;
+  text?: string;
+  caption?: string;
+}
+
 export interface CookbookRecipe {
   id: string;
   title: string;
@@ -45,6 +53,7 @@ export interface CookbookRecipe {
   }>;
   notes?: string;
   image_urls: string[]; // all images for this recipe, primary first
+  custom_pages?: CustomPageData[]; // user-added custom pages
 }
 
 export interface IngredientGroup {

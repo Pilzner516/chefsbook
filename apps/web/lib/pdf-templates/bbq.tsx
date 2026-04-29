@@ -8,6 +8,7 @@ import { Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/
 import {
   CookbookPdfOptions,
   CookbookRecipe,
+  CustomPageData,
   groupIngredients,
   formatDuration,
   formatQuantity,
@@ -605,6 +606,44 @@ function AdditionalImagePage({ imageUrl, recipeName }: { imageUrl: string; recip
   );
 }
 
+// Custom page component for user-added pages
+function CustomPage({ customPage }: { customPage: CustomPageData }) {
+  const hasImage = customPage.layout !== 'text_only' && customPage.image_url;
+  const hasText = customPage.layout !== 'image_only' && customPage.text;
+
+  if (customPage.layout === 'image_only' && customPage.image_url) {
+    return (
+      <Page size="LETTER" style={styles.recipeImagePage}>
+        <Image src={customPage.image_url} style={styles.recipeFullImage} />
+        {customPage.caption && (
+          <View style={styles.recipeImageOverlay}>
+            <Text style={styles.recipeImageTitle}>{customPage.caption}</Text>
+          </View>
+        )}
+      </Page>
+    );
+  }
+
+  if (customPage.layout === 'text_only') {
+    return (
+      <Page size="LETTER" style={styles.recipeTextOnlyPage}>
+        <Text style={styles.recipeTextOnlyTitle}>{customPage.text}</Text>
+      </Page>
+    );
+  }
+
+  // image_and_text layout
+  return (
+    <Page size="LETTER" style={styles.recipeImagePage}>
+      {hasImage && <Image src={customPage.image_url} style={styles.recipeFullImage} />}
+      <View style={styles.recipeImageOverlay}>
+        {customPage.caption && <Text style={styles.recipeImageTitle}>{customPage.caption}</Text>}
+        {hasText && <Text style={{ ...styles.recipeImageMeta, marginTop: 8 }}>{customPage.text}</Text>}
+      </View>
+    </Page>
+  );
+}
+
 function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
@@ -711,6 +750,10 @@ export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: Coo
           {/* Render additional image pages if they exist */}
           {recipe.image_urls.slice(1).map((imageUrl, idx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} />
+          ))}
+          {/* Render custom pages added by user */}
+          {recipe.custom_pages?.map((cp) => (
+            <CustomPage key={cp.id} customPage={cp} />
           ))}
         </React.Fragment>
       ))}

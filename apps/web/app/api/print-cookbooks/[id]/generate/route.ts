@@ -322,6 +322,9 @@ export async function POST(
     let forewordText: string | undefined;
     let bookLanguage: BookLocale = 'en';
 
+    // Track custom pages per recipe
+    let recipeCustomPages: Record<string, Array<{ id: string; layout: string; image_url?: string; text?: string; caption?: string }>> = {};
+
     if (bookLayout) {
       // Extract from book_layout cards
       const coverCard = bookLayout.cards.find((c): c is CoverCard => c.type === 'cover');
@@ -341,6 +344,22 @@ export async function POST(
         // Keep first image for legacy compatibility
         if (imagePages.length > 0 && imagePages[0].kind === 'image') {
           recipeImageUrls[card.recipe_id] = imagePages[0].image_url;
+        }
+        // Collect custom pages for this recipe
+        const customPages = card.pages.filter((p) => p.kind === 'custom');
+        if (customPages.length > 0) {
+          recipeCustomPages[card.recipe_id] = customPages.map((p) => {
+            if (p.kind === 'custom') {
+              return {
+                id: p.id,
+                layout: p.layout,
+                image_url: p.image_url,
+                text: p.text,
+                caption: p.caption,
+              };
+            }
+            return { id: p.id, layout: 'text_only' };
+          });
         }
       }
 
@@ -388,6 +407,8 @@ export async function POST(
         const recipeWithDetails = { ...recipe, ingredients: ingredients ?? [], steps: steps ?? [] };
 
         // Fetch all selected images for this recipe
+        // Preview path — no upscaling (fast, no Replicate calls)
+        // Print path — upscaling enabled for low-DPI images
         const imageUrls: string[] = [];
         try {
           // Check new format first (supports multiple images), then legacy (single image)
@@ -396,11 +417,33 @@ export async function POST(
             : (selectedImageUrls[recipeId] ? [selectedImageUrls[recipeId]] : []);
 
           for (const url of allUrls) {
-            const base64 = await fetchImageWithUpscaling(url, useGrayscale, 'full_bleed', userId, id);
+            const base64 = isPreview
+              ? await fetchImageAsBase64(url, useGrayscale) // Preview path — no upscaling
+              : await fetchImageWithUpscaling(url, useGrayscale, 'full_bleed', userId, id); // Print path — upscaling enabled
             if (base64) imageUrls.push(base64);
           }
         } catch {
           // Continue without images
+        }
+
+        // Process custom pages for this recipe
+        const customPagesForRecipe = recipeCustomPages[recipeId] || [];
+        const processedCustomPages: Array<{ id: string; layout: 'image_only' | 'text_only' | 'image_and_text'; image_url?: string; text?: string; caption?: string }> = [];
+        for (const cp of customPagesForRecipe) {
+          let processedImageUrl: string | undefined;
+          if (cp.image_url) {
+            const base64 = isPreview
+              ? await fetchImageAsBase64(cp.image_url, useGrayscale) // Preview path — no upscaling
+              : await fetchImageWithUpscaling(cp.image_url, useGrayscale, 'full_bleed', userId, id); // Print path — upscaling enabled
+            processedImageUrl = base64 ?? undefined;
+          }
+          processedCustomPages.push({
+            id: cp.id,
+            layout: cp.layout as 'image_only' | 'text_only' | 'image_and_text',
+            image_url: processedImageUrl,
+            text: cp.text,
+            caption: cp.caption,
+          });
         }
 
         // Use display_name from book_layout if available, otherwise recipe title
@@ -430,6 +473,7 @@ export async function POST(
           })),
           notes: recipeWithDetails.notes ?? undefined,
           image_urls: imageUrls,
+          custom_pages: processedCustomPages.length > 0 ? processedCustomPages : undefined,
         });
       }
     }
@@ -473,11 +517,13 @@ export async function POST(
     }
 
     // Fetch cover image and convert to base64 (react-pdf can't fetch auth-required URLs)
-    // Cover images are also upscaled if needed for print quality
+    // Preview path — no upscaling; Print path — upscaling enabled
     let coverImageBase64: string | null = null;
     if (coverInfo.image_url) {
       try {
-        coverImageBase64 = await fetchImageWithUpscaling(coverInfo.image_url, useGrayscale, 'cover', userId, id);
+        coverImageBase64 = isPreview
+          ? await fetchImageAsBase64(coverInfo.image_url, useGrayscale) // Preview path — no upscaling
+          : await fetchImageWithUpscaling(coverInfo.image_url, useGrayscale, 'cover', userId, id); // Print path — upscaling enabled
       } catch {
         console.warn('Could not fetch cover image for PDF');
       }
