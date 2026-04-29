@@ -285,11 +285,21 @@ export async function addItemsWithPipeline(
 
     const ex = existingMap.get(key);
     if (ex && ex.id !== '__pending__') {
-      // Merge quantities
+      // Merge with existing DB item
       const existingQty = parseQty(ex.quantity_needed);
       const newQty = parseQty(qtyNeeded);
       if (existingQty != null && newQty != null) {
         toUpdate.push({ id: ex.id, quantity_needed: formatQty(existingQty + newQty, ex.unit) });
+      }
+    } else if (ex && ex.id === '__pending__') {
+      // Merge with pending item from same batch
+      const pendingIdx = toInsert.findIndex((p) => p.ingredient.toLowerCase() === key);
+      if (pendingIdx !== -1) {
+        const pendingQty = parseQty(toInsert[pendingIdx]!.quantity_needed);
+        const newQty = parseQty(qtyNeeded);
+        if (pendingQty != null && newQty != null) {
+          toInsert[pendingIdx]!.quantity_needed = formatQty(pendingQty + newQty, toInsert[pendingIdx]!.unit);
+        }
       }
     } else {
       toInsert.push({
@@ -307,7 +317,7 @@ export async function addItemsWithPipeline(
         sort_order: (existing?.length ?? 0) + i,
         manually_added: false,
       });
-      // Add to map so subsequent dupes in same batch merge
+      // Mark in map so subsequent dupes in same batch get merged
       existingMap.set(key, { id: '__pending__', ingredient: item.ingredient, quantity_needed: qtyNeeded, unit: item.unit });
     }
   }

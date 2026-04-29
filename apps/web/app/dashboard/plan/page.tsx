@@ -10,6 +10,7 @@ import StorePickerDialog from '@/components/StorePickerDialog';
 import ChefsDialog from '@/components/ChefsDialog';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
+import { abbreviateUnitMedium } from '@chefsbook/ui';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MEAL_SLOTS = ['breakfast', 'brunch', 'lunch', 'dinner', 'snack'] as const;
@@ -359,7 +360,8 @@ export default function PlanPage() {
         const totalScaleFactor = recipeScaleFactors.get(r.id) ?? 1;
         for (const ing of r.ingredients) {
           const scaledQty = ing.quantity != null ? Math.round(ing.quantity * totalScaleFactor * 100) / 100 : null;
-          items.push({ ingredient: ing.ingredient, quantity: scaledQty, unit: ing.unit, quantity_needed: [scaledQty, ing.unit].filter(Boolean).join(' ') || null, recipe_name: r.title, recipe_id: r.id });
+          const displayUnit = ing.unit ? abbreviateUnitMedium(ing.unit) : null;
+          items.push({ ingredient: ing.ingredient, quantity: scaledQty, unit: displayUnit, quantity_needed: [scaledQty, displayUnit].filter(Boolean).join(' ') || null, recipe_name: r.title, recipe_id: r.id });
         }
       }
       if (items.length > 0) await addIngredientsToList(listId, items);
@@ -421,7 +423,8 @@ export default function PlanPage() {
         const totalScaleFactor = recipeScaleFactors.get(r.id) ?? 1;
         for (const ing of r.ingredients) {
           const scaledQty = ing.quantity != null ? Math.round(ing.quantity * totalScaleFactor * 100) / 100 : null;
-          items.push({ ingredient: ing.ingredient, quantity: scaledQty, unit: ing.unit, quantity_needed: [scaledQty, ing.unit].filter(Boolean).join(' ') || null, recipe_name: r.title, recipe_id: r.id });
+          const displayUnit = ing.unit ? abbreviateUnitMedium(ing.unit) : null;
+          items.push({ ingredient: ing.ingredient, quantity: scaledQty, unit: displayUnit, quantity_needed: [scaledQty, displayUnit].filter(Boolean).join(' ') || null, recipe_name: r.title, recipe_id: r.id });
         }
       }
       if (items.length > 0) await addIngredientsToList(listId, items);

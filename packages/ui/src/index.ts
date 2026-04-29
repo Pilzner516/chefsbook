@@ -78,6 +78,7 @@ const UNIT_SHORT: [RegExp, string][] = [
 ];
 
 // Medium abbreviations for recipe display (Tbsp, tsp, cup — readable)
+// Also expands short abbreviations (T, t, c) to medium format
 const UNIT_MEDIUM: [RegExp, string][] = [
   [/\bfluid ounces?\b/gi, 'fl oz'],
   [/\btablespoons?\b/gi, 'Tbsp'],
@@ -92,6 +93,10 @@ const UNIT_MEDIUM: [RegExp, string][] = [
   [/\bmilliliters?\b/gi, 'ml'],
   [/\bliters?\b/gi, 'L'],
   [/\binches?\b/gi, 'in'],
+  // Expand short abbreviations to medium
+  [/^T$/, 'Tbsp'],
+  [/^t$/, 'tsp'],
+  [/^c$/, 'cup'],
 ];
 
 /** Ultra-short units for tight spaces (T, t, c). No space before single-char. */
