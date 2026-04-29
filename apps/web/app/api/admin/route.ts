@@ -427,20 +427,80 @@ export async function GET(req: NextRequest) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Model → Service mapping
+    const modelToService = (model: string): string => {
+      if (model.includes('haiku') || model.includes('sonnet') || model.includes('opus') || model.includes('claude')) return 'Anthropic';
+      if (model.includes('gpt') || model.includes('openai')) return 'OpenAI';
+      if (model.includes('flux') || model.includes('esrgan') || model.includes('replicate')) return 'Replicate';
+      return 'Other';
+    };
+
+    // Action → Feature mapping
+    const actionToFeature = (action: string): string => {
+      const map: Record<string, string> = {
+        'recipe-import': 'Recipe Import',
+        'url-import': 'Recipe Import',
+        'youtube-import': 'YouTube Import',
+        'scan-recipe': 'Photo Scan',
+        'scan-dish': 'Photo Scan',
+        'dish-identify': 'Photo Scan',
+        'generate-image': 'AI Image Generation',
+        'regenerate-image': 'AI Image Generation',
+        'mobile-generate-image': 'AI Image Generation',
+        'upscale': 'Print Upscaling',
+        'translate': 'Translation',
+        'translate-recipe': 'Translation',
+        'translate-title': 'Translation',
+        'moderate': 'Moderation',
+        'moderate-recipe': 'Moderation',
+        'moderate-comment': 'Moderation',
+        'moderate-tag': 'Moderation',
+        'suggest-tags': 'Auto-Tagging',
+        'auto-tag': 'Auto-Tagging',
+        'meal-plan': 'Meal Plan Wizard',
+        'generate-meal-plan': 'Meal Plan Wizard',
+        'speak-recipe': 'Speak a Recipe',
+        'purchase-unit': 'Shopping Suggestions',
+        'suggest-purchase-units': 'Shopping Suggestions',
+        'sous-chef': 'Sous Chef Suggest',
+        'nutrition': 'Nutrition Generation',
+        'generate-nutrition': 'Nutrition Generation',
+        'is-recipe': 'Recipe Verification',
+        'rewrite-steps': 'Step Formatting',
+      };
+      for (const [key, feature] of Object.entries(map)) {
+        if (action.toLowerCase().includes(key)) return feature;
+      }
+      return action;
+    };
 
     // Today's cost
     const { data: todayRows } = await supabaseAdmin.from('ai_usage_log').select('cost_usd').gte('created_at', todayStart);
     const todayCost = (todayRows ?? []).reduce((s, r) => s + parseFloat(String(r.cost_usd)), 0);
 
-    // Month cost
+    // Current month data
     const { data: monthRows } = await supabaseAdmin.from('ai_usage_log').select('cost_usd, action, model, user_id, created_at').gte('created_at', monthStart);
     const monthCost = (monthRows ?? []).reduce((s, r) => s + parseFloat(String(r.cost_usd)), 0);
 
-    // Cost by action
+    // Last 30 days data
+    const { data: last30Rows } = await supabaseAdmin.from('ai_usage_log').select('cost_usd, action, model, created_at').gte('created_at', thirtyDaysAgo);
+    const last30Cost = (last30Rows ?? []).reduce((s, r) => s + parseFloat(String(r.cost_usd)), 0);
+
+    // All time data
+    const { data: allTimeRows } = await supabaseAdmin.from('ai_usage_log').select('cost_usd, action, model');
+    const allTimeCost = (allTimeRows ?? []).reduce((s, r) => s + parseFloat(String(r.cost_usd)), 0);
+
+    // Aggregate by action, model, user, day, service, feature for current month
     const byAction: Record<string, number> = {};
     const byModel: Record<string, number> = {};
     const byUser: Record<string, number> = {};
     const byDay: Record<string, number> = {};
+    const byService: Record<string, { cost: number; count: number }> = {};
+    const byFeature: Record<string, { cost: number; count: number }> = {};
+    const byServiceModel: Record<string, { service: string; model: string; action: string; cost: number; count: number }> = {};
+
     for (const r of monthRows ?? []) {
       const cost = parseFloat(String(r.cost_usd));
       byAction[r.action] = (byAction[r.action] ?? 0) + cost;
@@ -448,7 +508,45 @@ export async function GET(req: NextRequest) {
       if (r.user_id) byUser[r.user_id] = (byUser[r.user_id] ?? 0) + cost;
       const day = new Date(r.created_at).toISOString().slice(0, 10);
       byDay[day] = (byDay[day] ?? 0) + cost;
+
+      const service = modelToService(r.model);
+      const feature = actionToFeature(r.action);
+
+      if (!byService[service]) byService[service] = { cost: 0, count: 0 };
+      byService[service].cost += cost;
+      byService[service].count += 1;
+
+      if (!byFeature[feature]) byFeature[feature] = { cost: 0, count: 0 };
+      byFeature[feature].cost += cost;
+      byFeature[feature].count += 1;
+
+      const smKey = `${service}|${r.model}|${feature}`;
+      if (!byServiceModel[smKey]) byServiceModel[smKey] = { service, model: r.model, action: feature, cost: 0, count: 0 };
+      byServiceModel[smKey].cost += cost;
+      byServiceModel[smKey].count += 1;
     }
+
+    // All-time by service
+    const allTimeByService: Record<string, { cost: number; count: number }> = {};
+    for (const r of allTimeRows ?? []) {
+      const cost = parseFloat(String(r.cost_usd));
+      const service = modelToService(r.model);
+      if (!allTimeByService[service]) allTimeByService[service] = { cost: 0, count: 0 };
+      allTimeByService[service].cost += cost;
+      allTimeByService[service].count += 1;
+    }
+
+    // Last 30 days daily spend
+    const dailySpend: Record<string, number> = {};
+    for (const r of last30Rows ?? []) {
+      const cost = parseFloat(String(r.cost_usd));
+      const day = new Date(r.created_at).toISOString().slice(0, 10);
+      dailySpend[day] = (dailySpend[day] ?? 0) + cost;
+    }
+
+    // Find most expensive feature this month
+    const featuresArray = Object.entries(byFeature).map(([f, d]) => ({ feature: f, ...d })).sort((a, b) => b.cost - a.cost);
+    const mostExpensiveFeature = featuresArray[0] ?? null;
 
     // Top users
     const topUserIds = Object.entries(byUser).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => id);
@@ -468,13 +566,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       todayCost,
       monthCost,
+      last30Cost,
+      allTimeCost,
       avgPerUser: userCount ? monthCost / userCount : 0,
+      mostExpensiveFeature,
       byAction: Object.entries(byAction).sort((a, b) => b[1] - a[1]),
       byModel: Object.entries(byModel).sort((a, b) => b[1] - a[1]),
       byDay: Object.entries(byDay).sort((a, b) => a[0].localeCompare(b[0])),
+      byService: Object.entries(byService).map(([s, d]) => ({ service: s, ...d, allTimeCost: allTimeByService[s]?.cost ?? 0 })).sort((a, b) => b.cost - a.cost),
+      byFeature: featuresArray,
+      byServiceModel: Object.values(byServiceModel).sort((a, b) => b.cost - a.cost),
+      dailySpend: Object.entries(dailySpend).sort((a, b) => a[0].localeCompare(b[0])).map(([date, cost]) => ({ date, cost })),
       topUsers,
       throttled: throttled ?? [],
       totalCalls: (monthRows ?? []).length,
+      totalCallsLast30: (last30Rows ?? []).length,
+      totalCallsAllTime: (allTimeRows ?? []).length,
     });
   }
 
