@@ -32,6 +32,15 @@ const replicate = REPLICATE_API_TOKEN ? new Replicate({ auth: REPLICATE_API_TOKE
 // Cost per Real-ESRGAN upscale (approximate)
 const UPSCALE_COST_USD = 0.002;
 
+// Convert internal Tailscale URLs to public URLs for Replicate
+// Replicate servers can't reach 100.110.47.62 - they need api.chefsbk.app
+function toPublicUrl(url: string): string {
+  // Replace Tailscale IP with public domain
+  return url
+    .replace('http://100.110.47.62:8000', 'https://api.chefsbk.app')
+    .replace('http://localhost:8000', 'https://api.chefsbk.app');
+}
+
 // Upscale image using Real-ESRGAN via Replicate
 async function upscaleImage(
   imageUrl: string,
@@ -44,12 +53,14 @@ async function upscaleImage(
   }
 
   try {
-    console.log('[Upscale] Upscaling image:', imageUrl.substring(0, 80) + '...');
+    // Convert to public URL so Replicate can fetch it
+    const publicUrl = toPublicUrl(imageUrl);
+    console.log('[Upscale] Upscaling image:', publicUrl.substring(0, 80) + '...');
 
     // Run Real-ESRGAN model
     const output = await replicate.run(
       'nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b',
-      { input: { image: imageUrl, scale: 4 } }
+      { input: { image: publicUrl, scale: 4 } }
     );
 
     // Output is a URL to the upscaled image
