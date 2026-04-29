@@ -35,6 +35,40 @@ const DEPT_LABELS: Record<string, string> = {
   beverages: 'Beverages', household: 'Household', other: 'Other',
 };
 
+// Expand unit abbreviations for print (singular/plural based on quantity)
+function expandUnit(unit: string | null | undefined, qty: number | null | undefined): string {
+  if (!unit) return '';
+  const singular = qty === 1;
+  const abbrevMap: Record<string, [string, string]> = {
+    't': ['teaspoon', 'teaspoons'],
+    'tsp': ['teaspoon', 'teaspoons'],
+    'T': ['tablespoon', 'tablespoons'],
+    'tbsp': ['tablespoon', 'tablespoons'],
+    'Tbsp': ['tablespoon', 'tablespoons'],
+    'c': ['cup', 'cups'],
+    'C': ['cup', 'cups'],
+    'oz': ['ounce', 'ounces'],
+    'lb': ['pound', 'pounds'],
+    'lbs': ['pound', 'pounds'],
+    'pkg': ['package', 'packages'],
+    'pt': ['pint', 'pints'],
+    'qt': ['quart', 'quarts'],
+    'gal': ['gallon', 'gallons'],
+    'ml': ['ml', 'ml'],
+    'g': ['gram', 'grams'],
+    'kg': ['kilogram', 'kilograms'],
+    'l': ['liter', 'liters'],
+    'L': ['liter', 'liters'],
+  };
+  const lower = unit.toLowerCase();
+  for (const [abbr, [sing, plur]] of Object.entries(abbrevMap)) {
+    if (unit === abbr || lower === abbr.toLowerCase()) {
+      return singular ? sing : plur;
+    }
+  }
+  return unit;
+}
+
 export default function ShopPage() {
   const [confirm, ConfirmDialog] = useConfirmDialog();
   const [showAlert, AlertDialog] = useAlertDialog();
@@ -416,55 +450,81 @@ export default function ShopPage() {
           </button>
         </div>
 
+        {/* Print header - only visible when printing */}
+        <div className="shop-print-header hidden">
+          <img src="/images/watermark-chefsbook.png" alt="ChefsBook" />
+          <div className="shop-print-header-right">
+            <p className="shop-print-header-title">{currentList.name}</p>
+            <p className="shop-print-header-date">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+        </div>
+
         {/* Items grouped */}
-        <div style={{ fontSize }} className={currentList.items.length > 12 ? 'print-two-col' : ''}>
-          {grouped.map((group) => (
-            <div key={group.label} className="mb-5">
+        <div style={{ fontSize }} className="shop-print-content">
+          {grouped.map((group, groupIdx) => (
+            <div key={group.label} className={`mb-5 shop-dept-section ${group.items.length > 8 ? 'shop-dept-large' : ''}`}>
               {group.label && (
-                <h3 className="text-xs font-bold text-cb-primary uppercase tracking-wide mb-2 flex items-center gap-2">
-                  {group.label}
-                  <span className="text-cb-secondary font-normal">({group.items.length})</span>
-                </h3>
+                <>
+                  <h3 className="text-xs font-bold text-cb-primary uppercase tracking-wide mb-2 flex items-center gap-2 shop-dept-header">
+                    {group.label}
+                    <span className="text-cb-secondary font-normal shop-dept-count">({group.items.length} {group.items.length === 1 ? 'item' : 'items'})</span>
+                  </h3>
+                  <hr className="shop-dept-rule hidden" />
+                </>
               )}
-              {group.items.map((item) => (
-                <div key={item.id} className={`grid gap-1 py-1.5 group items-center shop-item-grid ${item.is_checked ? 'opacity-50' : ''}`}>
-                  {/* Col 1: Checkbox */}
-                  <button onClick={() => handleToggle(item.id, !item.is_checked)} className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${item.is_checked ? 'bg-cb-green border-cb-green text-white' : 'border-cb-border hover:border-cb-green'}`}>
-                    {item.is_checked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>}
-                  </button>
-                  {/* Col 2: Purchase unit */}
-                  <span className={`font-bold truncate ${item.is_checked ? 'line-through' : ''}`}>
-                    {item.purchase_unit || '\u2014'}
-                  </span>
-                  {/* Col 3: Quantity needed */}
-                  <span className="text-cb-secondary text-center truncate" style={{ fontSize: '0.8em' }}>
-                    {item.quantity_needed ? (
-                      <span className="inline-flex items-center gap-0.5">(<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>{item.quantity_needed})</span>
-                    ) : item.quantity != null ? (
-                      (() => { const c = convertIngredient(item.quantity, item.unit, unitSystem, item.ingredient); return <span>{c.quantity}{c.unit ? ` ${c.unit}` : ''}</span>; })()
-                    ) : null}
-                  </span>
-                  {/* Col 4: Ingredient name */}
-                  <span className={`truncate ${item.is_checked ? 'line-through text-cb-secondary' : ''}`}>
-                    {item.ingredient}
-                  </span>
-                  {/* Col 5: Recipe source (hidden on mobile via CSS) */}
-                  <span className="text-[10px] text-cb-secondary truncate shop-source">
-                    {item.recipe_name && viewMode !== 'recipe' ? item.recipe_name : ''}
-                  </span>
-                  {/* Col 6: Delete */}
-                  <button onClick={() => handleDeleteItem(item.id)} className="opacity-0 group-hover:opacity-100 text-cb-secondary hover:text-cb-primary transition-opacity">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-              ))}
+              {group.items.map((item) => {
+                const qtyNum = item.quantity != null ? Number(item.quantity) : null;
+                const printQty = item.purchase_unit || (qtyNum != null ? `${qtyNum} ${expandUnit(item.unit, qtyNum)}` : '');
+                return (
+                  <div key={item.id} className={`grid gap-1 py-1.5 group items-center shop-item-grid ${item.is_checked ? 'opacity-50' : ''}`}>
+                    {/* Print checkbox (hidden on screen) */}
+                    <span className="shop-print-checkbox hidden" />
+                    {/* Col 1: Checkbox (screen) */}
+                    <button onClick={() => handleToggle(item.id, !item.is_checked)} className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors shop-screen-only ${item.is_checked ? 'bg-cb-green border-cb-green text-white' : 'border-cb-border hover:border-cb-green'}`}>
+                      {item.is_checked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>}
+                    </button>
+                    {/* Print quantity (hidden on screen) */}
+                    <span className="shop-print-qty hidden">{printQty}</span>
+                    {/* Col 2: Purchase unit (screen) */}
+                    <span className={`font-bold truncate shop-screen-only ${item.is_checked ? 'line-through' : ''}`}>
+                      {item.purchase_unit || '\u2014'}
+                    </span>
+                    {/* Col 3: Quantity needed (screen) */}
+                    <span className="text-cb-secondary text-center truncate shop-screen-only" style={{ fontSize: '0.8em' }}>
+                      {item.quantity_needed ? (
+                        <span className="inline-flex items-center gap-0.5">(<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>{item.quantity_needed})</span>
+                      ) : item.quantity != null ? (
+                        (() => { const c = convertIngredient(item.quantity, item.unit, unitSystem, item.ingredient); return <span>{c.quantity}{c.unit ? ` ${c.unit}` : ''}</span>; })()
+                      ) : null}
+                    </span>
+                    {/* Print ingredient (hidden on screen) */}
+                    <span className="shop-print-ingredient hidden">{item.ingredient}</span>
+                    {/* Col 4: Ingredient name (screen) */}
+                    <span className={`truncate shop-screen-only ${item.is_checked ? 'line-through text-cb-secondary' : ''}`}>
+                      {item.ingredient}
+                    </span>
+                    {/* Print recipe source (hidden on screen) */}
+                    <span className="shop-print-recipe hidden">{item.recipe_name || ''}</span>
+                    {/* Col 5: Recipe source (screen, hidden on mobile via CSS) */}
+                    <span className="text-[10px] text-cb-secondary truncate shop-source shop-screen-only">
+                      {item.recipe_name && viewMode !== 'recipe' ? item.recipe_name : ''}
+                    </span>
+                    {/* Col 6: Delete (screen) */}
+                    <button onClick={() => handleDeleteItem(item.id)} className="opacity-0 group-hover:opacity-100 text-cb-secondary hover:text-cb-primary transition-opacity shop-screen-only">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
 
-        {/* Print watermark */}
-        <div className="print-watermark hidden">
-          Generated by ChefsBook &mdash; {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        {/* Print footer - only visible when printing */}
+        <div className="shop-print-footer hidden">
+          <span></span>
+          <span className="shop-print-footer-branding">Generated by ChefsBook \u2014 chefsbk.app</span>
+          <span className="shop-print-footer-page"></span>
         </div>
 
         {/* Manual add */}
