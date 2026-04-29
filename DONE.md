@@ -49,6 +49,11 @@
 **Dependencies:**
 - Added `replicate@1.0.4` to web app
 
+**Follow-up Bug Fixes (same session):**
+1. **Replicate URL fix**: Converted Tailscale URLs (100.110.47.62) to public URLs (api.chefsbk.app) before sending to Replicate — their servers can't reach private Tailscale network
+2. **Multi-image PDF rendering**: Added AdditionalImagePage component to all 6 PDF templates — previously only first image was rendered, now all recipe images from canvas editor are included as separate full-bleed pages
+3. **SSR DOMMatrix fix**: Changed FlipbookPreview to dynamic import with `ssr: false` — react-pdf uses browser APIs that don't exist on server
+
 **Deployment:** Built and deployed to RPi5 at https://chefsbk.app
 
 ---
