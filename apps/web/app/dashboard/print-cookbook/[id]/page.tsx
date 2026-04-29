@@ -33,7 +33,13 @@ import {
   getTotalPageCount,
 } from '@/lib/book-layout';
 import { useDebouncedCallback } from 'use-debounce';
-import FlipbookPreview from '@/components/print/FlipbookPreview';
+import dynamic from 'next/dynamic';
+
+// Dynamic import to avoid SSR issues with react-pdf (uses browser APIs like DOMMatrix)
+const FlipbookPreview = dynamic(
+  () => import('@/components/print/FlipbookPreview'),
+  { ssr: false }
+);
 
 // Error boundary to catch rendering errors
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
