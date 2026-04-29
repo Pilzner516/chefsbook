@@ -1658,11 +1658,11 @@ function RecipeCardBody({
                       <p className="text-xs text-cb-muted mb-3">Fill blank space at the bottom of the recipe page</p>
                       <div className="grid grid-cols-2 gap-2">
                         {([
-                          { key: 'blank', label: 'Blank', icon: '▢' },
-                          { key: 'chefs_notes', label: "Chef's Notes", icon: '📝' },
-                          { key: 'quote', label: 'Pull Quote', icon: '❝' },
-                          { key: 'decorative', label: 'Decorative', icon: '✦' },
-                        ] as const).map(({ key, label, icon }) => (
+                          { key: 'blank', label: 'Blank', icon: '▢', desc: '' },
+                          { key: 'chefs_notes', label: "Chef's Notes", icon: '📝', desc: 'Ruled lines for handwriting' },
+                          { key: 'quote', label: 'Pull Quote', icon: '❝', desc: '' },
+                          { key: 'custom', label: 'Custom', icon: '✎', desc: 'Text and/or image' },
+                        ] as const).map(({ key, label, icon, desc }) => (
                           <button
                             key={key}
                             onClick={() =>
@@ -1682,6 +1682,7 @@ function RecipeCardBody({
                           >
                             <span className="mr-2">{icon}</span>
                             <span className="text-sm">{label}</span>
+                            {desc && <span className="block text-[10px] text-cb-muted mt-0.5 ml-5">{desc}</span>}
                           </button>
                         ))}
                       </div>
@@ -1690,7 +1691,10 @@ function RecipeCardBody({
                     {epFillType === 'quote' && (
                       <div className="space-y-3 pt-2">
                         <div>
-                          <label className="block text-xs font-medium mb-1">Quote (max 150 chars)</label>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-medium">Quote</label>
+                            <span className="text-[10px] text-cb-muted">{(epFillContent?.quoteText || '').length}/150</span>
+                          </div>
                           <textarea
                             value={epFillContent?.quoteText || ''}
                             onChange={(e) =>
@@ -1708,7 +1712,10 @@ function RecipeCardBody({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium mb-1">Attribution (optional)</label>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-medium">Attribution (optional)</label>
+                            <span className="text-[10px] text-cb-muted">{(epFillContent?.quoteAttribution || '').length}/60</span>
+                          </div>
                           <input
                             type="text"
                             value={epFillContent?.quoteAttribution || ''}
@@ -1718,13 +1725,108 @@ function RecipeCardBody({
                                 cardId: card.id,
                                 pageId: editingPage.id,
                                 fillType: 'quote',
-                                fillContent: { ...epFillContent, quoteAttribution: e.target.value },
+                                fillContent: { ...epFillContent, quoteAttribution: e.target.value.slice(0, 60) },
                               })
                             }
                             placeholder="— Grandma"
                             className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm focus:outline-none focus:border-cb-primary"
                           />
                         </div>
+                      </div>
+                    )}
+
+                    {epFillType === 'custom' && (
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-medium">Custom Text (optional)</label>
+                            <span className="text-[10px] text-cb-muted">{(epFillContent?.customText || '').length}/300</span>
+                          </div>
+                          <textarea
+                            value={epFillContent?.customText || ''}
+                            onChange={(e) =>
+                              dispatch({
+                                type: 'UPDATE_FILL_ZONE',
+                                cardId: card.id,
+                                pageId: editingPage.id,
+                                fillType: 'custom',
+                                fillContent: { ...epFillContent, customText: e.target.value.slice(0, 300) },
+                              })
+                            }
+                            placeholder="Add your own text..."
+                            rows={3}
+                            className="w-full bg-cb-bg border border-cb-border rounded-input px-3 py-2 text-sm resize-none focus:outline-none focus:border-cb-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Image (optional)</label>
+                          {epFillContent?.customImageUrl ? (
+                            <div className="relative">
+                              <img
+                                src={proxyIfNeeded(epFillContent.customImageUrl)}
+                                alt=""
+                                className="w-full h-24 object-cover rounded-lg border border-cb-border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  dispatch({
+                                    type: 'UPDATE_FILL_ZONE',
+                                    cardId: card.id,
+                                    pageId: editingPage.id,
+                                    fillType: 'custom',
+                                    fillContent: { ...epFillContent, customImageUrl: undefined },
+                                  })
+                                }
+                                className="absolute top-1 right-1 w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white text-xs"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center justify-center py-3 bg-cb-bg border border-dashed border-cb-border rounded-input cursor-pointer hover:border-cb-primary/50 transition-colors">
+                              <span className="text-sm text-cb-muted">{uploading ? 'Uploading...' : 'Click to upload image'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="sr-only"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file || !session) return;
+                                  setUploading(true);
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    formData.append('cookbook_id', cookbookId);
+                                    const res = await fetch('/api/print-cookbooks/upload-custom', {
+                                      method: 'POST',
+                                      headers: { Authorization: `Bearer ${session.access_token}` },
+                                      body: formData,
+                                    });
+                                    if (!res.ok) throw new Error('Upload failed');
+                                    const { url } = await res.json();
+                                    dispatch({
+                                      type: 'UPDATE_FILL_ZONE',
+                                      cardId: card.id,
+                                      pageId: editingPage.id,
+                                      fillType: 'custom',
+                                      fillContent: { ...epFillContent, customImageUrl: url },
+                                    });
+                                  } catch (err) {
+                                    console.error('Fill zone image upload failed:', err);
+                                    alert('Upload failed. Please try again.');
+                                  } finally {
+                                    setUploading(false);
+                                  }
+                                }}
+                                disabled={uploading}
+                              />
+                            </label>
+                          )}
+                        </div>
+                        {!epFillContent?.customText && !epFillContent?.customImageUrl && (
+                          <p className="text-[10px] text-amber-600">Add text or image (or both) for this fill zone.</p>
+                        )}
                       </div>
                     )}
 

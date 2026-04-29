@@ -14,6 +14,8 @@ import {
   formatQuantity,
   truncate,
   fixTimerCharacter,
+  getPageSize,
+  PageSizeKey,
 } from './types';
 import { getStrings, type BookStrings } from './book-strings';
 
@@ -498,10 +500,10 @@ const styles = StyleSheet.create({
   },
 });
 
-function CoverPage({ cookbook, chefsHatBase64, strings }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings }) {
+function CoverPage({ cookbook, chefsHatBase64, strings, pageSize }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings; pageSize: PageSizeKey }) {
   if (cookbook.cover_image_url) {
     return (
-      <Page size="LETTER" style={styles.coverPage}>
+      <Page size={getPageSize(pageSize)} style={styles.coverPage}>
         <View style={styles.coverWithImage}>
           <Image src={cookbook.cover_image_url} style={styles.coverImage} />
           <View style={styles.coverOverlay}>
@@ -521,7 +523,7 @@ function CoverPage({ cookbook, chefsHatBase64, strings }: { cookbook: CookbookPd
   }
 
   return (
-    <Page size="LETTER" style={styles.coverPage}>
+    <Page size={getPageSize(pageSize)} style={styles.coverPage}>
       <View style={styles.coverStripe} />
       <View style={styles.coverStripeBottom} />
       <View style={styles.coverNoCover}>
@@ -539,9 +541,9 @@ function CoverPage({ cookbook, chefsHatBase64, strings }: { cookbook: CookbookPd
   );
 }
 
-function ForewordPage({ foreword, strings }: { foreword: string; strings: BookStrings }) {
+function ForewordPage({ foreword, strings, pageSize }: { foreword: string; strings: BookStrings; pageSize: PageSizeKey }) {
   return (
-    <Page size="LETTER" style={styles.forewordPage}>
+    <Page size={getPageSize(pageSize)} style={styles.forewordPage}>
       <Text style={styles.forewordTitle}>{strings.foreword}</Text>
       <View style={styles.forewordRule} />
       <Text style={styles.forewordText}>{foreword}</Text>
@@ -549,9 +551,9 @@ function ForewordPage({ foreword, strings }: { foreword: string; strings: BookSt
   );
 }
 
-function TOCPage({ recipes, startPage, strings }: { recipes: CookbookRecipe[]; startPage: number; strings: BookStrings }) {
+function TOCPage({ recipes, startPage, strings, pageSize }: { recipes: CookbookRecipe[]; startPage: number; strings: BookStrings; pageSize: PageSizeKey }) {
   return (
-    <Page size="LETTER" style={styles.tocPage}>
+    <Page size={getPageSize(pageSize)} style={styles.tocPage}>
       <Text style={styles.tocTitle}>{strings.contents}</Text>
       <View style={styles.tocRule} />
       {recipes.map((recipe, idx) => (
@@ -565,7 +567,7 @@ function TOCPage({ recipes, startPage, strings }: { recipes: CookbookRecipe[]; s
   );
 }
 
-function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
+function RecipeImagePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
@@ -576,7 +578,7 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
 
   if (primaryImage) {
     return (
-      <Page size="LETTER" style={styles.recipeImagePage}>
+      <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
         <Image src={primaryImage} style={styles.recipeFullImage} />
         <View style={styles.recipeImageOverlay}>
           <Text style={styles.recipeImageTitle}>{recipe.title}</Text>
@@ -587,7 +589,7 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
   }
 
   return (
-    <Page size="LETTER" style={styles.recipeTextOnlyPage}>
+    <Page size={getPageSize(pageSize)} style={styles.recipeTextOnlyPage}>
       <Text style={styles.recipeTextOnlyTitle}>{recipe.title}</Text>
       <View style={styles.recipeTextOnlyRule} />
       {meta.length > 0 && <Text style={styles.recipeTextOnlyMeta}>{meta.join('  |  ')}</Text>}
@@ -595,9 +597,9 @@ function RecipeImagePage({ recipe, strings }: { recipe: CookbookRecipe; strings:
   );
 }
 
-function AdditionalImagePage({ imageUrl, recipeName }: { imageUrl: string; recipeName: string }) {
+function AdditionalImagePage({ imageUrl, recipeName, pageSize }: { imageUrl: string; recipeName: string; pageSize: PageSizeKey }) {
   return (
-    <Page size="LETTER" style={styles.recipeImagePage}>
+    <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
       <Image src={imageUrl} style={styles.recipeFullImage} />
       <View style={styles.recipeImageOverlay}>
         <Text style={styles.recipeImageTitle}>{recipeName}</Text>
@@ -607,13 +609,13 @@ function AdditionalImagePage({ imageUrl, recipeName }: { imageUrl: string; recip
 }
 
 // Custom page component for user-added pages
-function CustomPage({ customPage }: { customPage: CustomPageData }) {
+function CustomPageComponent({ customPage, pageSize }: { customPage: CustomPageData; pageSize: PageSizeKey }) {
   const hasImage = customPage.layout !== 'text_only' && customPage.image_url;
   const hasText = customPage.layout !== 'image_only' && customPage.text;
 
   if (customPage.layout === 'image_only' && customPage.image_url) {
     return (
-      <Page size="LETTER" style={styles.recipeImagePage}>
+      <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
         <Image src={customPage.image_url} style={styles.recipeFullImage} />
         {customPage.caption && (
           <View style={styles.recipeImageOverlay}>
@@ -626,7 +628,7 @@ function CustomPage({ customPage }: { customPage: CustomPageData }) {
 
   if (customPage.layout === 'text_only') {
     return (
-      <Page size="LETTER" style={styles.recipeTextOnlyPage}>
+      <Page size={getPageSize(pageSize)} style={styles.recipeTextOnlyPage}>
         <Text style={styles.recipeTextOnlyTitle}>{customPage.text}</Text>
       </Page>
     );
@@ -634,7 +636,7 @@ function CustomPage({ customPage }: { customPage: CustomPageData }) {
 
   // image_and_text layout
   return (
-    <Page size="LETTER" style={styles.recipeImagePage}>
+    <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
       {hasImage && <Image src={customPage.image_url} style={styles.recipeFullImage} />}
       <View style={styles.recipeImageOverlay}>
         {customPage.caption && <Text style={styles.recipeImageTitle}>{customPage.caption}</Text>}
@@ -644,7 +646,7 @@ function CustomPage({ customPage }: { customPage: CustomPageData }) {
   );
 }
 
-function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; fillContent?: { quoteText?: string; quoteAttribution?: string }; accentColor: string }) {
+function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; fillContent?: { quoteText?: string; quoteAttribution?: string; customText?: string; customImageUrl?: string }; accentColor: string }) {
   if (!fillType || fillType === 'blank') return null;
 
   if (fillType === 'chefs_notes') {
@@ -680,14 +682,17 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
     );
   }
 
-  if (fillType === 'decorative') {
+  if (fillType === 'custom' && (fillContent?.customText || fillContent?.customImageUrl)) {
     return (
-      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 24 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 40, height: 0.5, backgroundColor: SMOKE }} />
-          <Text style={{ fontSize: 12, color: accentColor, marginHorizontal: 12 }}>✦</Text>
-          <View style={{ width: 40, height: 0.5, backgroundColor: SMOKE }} />
-        </View>
+      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 20 }}>
+        {fillContent.customImageUrl && (
+          <Image src={fillContent.customImageUrl} style={{ maxWidth: 200, maxHeight: 120, objectFit: 'contain', marginBottom: fillContent.customText ? 12 : 0 }} />
+        )}
+        {fillContent.customText && (
+          <Text style={{ fontSize: 11, fontFamily: 'Source Sans Pro', fontWeight: 300, color: CHARCOAL, textAlign: 'center', maxWidth: '80%', lineHeight: 1.5 }}>
+            {fillContent.customText}
+          </Text>
+        )}
       </View>
     );
   }
@@ -695,7 +700,7 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
   return null;
 }
 
-function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: BookStrings }) {
+function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
@@ -706,7 +711,7 @@ function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: Book
   let currentStepGroup: string | null = null;
 
   return (
-    <Page size="LETTER" style={styles.recipePage} wrap>
+    <Page size={getPageSize(pageSize)} style={styles.recipePage} wrap>
       <View style={styles.recipeHeader}>
         <Text style={styles.recipeTitle}>{recipe.title}</Text>
         {meta.length > 0 && <Text style={styles.recipeMeta}>{meta.join('  |  ')}</Text>}
@@ -774,9 +779,9 @@ function RecipePage({ recipe, strings }: { recipe: CookbookRecipe; strings: Book
   );
 }
 
-function BackPage({ chefsHatBase64, strings }: { chefsHatBase64?: string | null; strings: BookStrings }) {
+function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: string | null; strings: BookStrings; pageSize: PageSizeKey }) {
   return (
-    <Page size="LETTER" style={styles.backPage}>
+    <Page size={getPageSize(pageSize)} style={styles.backPage}>
       {chefsHatBase64 && <Image src={chefsHatBase64} style={styles.backLogo} />}
       <Text style={styles.backTitle}>ChefsBook</Text>
       <Text style={styles.backTagline}>{strings.tagline}</Text>
@@ -787,30 +792,31 @@ function BackPage({ chefsHatBase64, strings }: { chefsHatBase64?: string | null;
 
 export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
   const strings = getStrings(language ?? 'en');
+  const pageSize = cookbook.pageSize ?? 'letter';
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 2 + tocPages + (hasForeword ? 1 : 0) + 1;
 
   return (
     <Document>
-      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} />
-      {hasForeword && <ForewordPage foreword={cookbook.foreword!} strings={strings} />}
-      <TOCPage recipes={recipes} startPage={startPage} strings={strings} />
+      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} pageSize={pageSize} />
+      {hasForeword && <ForewordPage foreword={cookbook.foreword!} strings={strings} pageSize={pageSize} />}
+      <TOCPage recipes={recipes} startPage={startPage} strings={strings} pageSize={pageSize} />
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
-          <RecipeImagePage recipe={recipe} strings={strings} />
-          <RecipePage recipe={recipe} strings={strings} />
+          <RecipeImagePage recipe={recipe} strings={strings} pageSize={pageSize} />
+          <RecipePage recipe={recipe} strings={strings} pageSize={pageSize} />
           {/* Render additional image pages if they exist */}
           {recipe.image_urls.slice(1).map((imageUrl, idx) => (
-            <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} />
+            <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} pageSize={pageSize} />
           ))}
           {/* Render custom pages added by user */}
           {recipe.custom_pages?.map((cp) => (
-            <CustomPage key={cp.id} customPage={cp} />
+            <CustomPageComponent key={cp.id} customPage={cp} pageSize={pageSize} />
           ))}
         </React.Fragment>
       ))}
-      <BackPage chefsHatBase64={chefsHatBase64} strings={strings} />
+      <BackPage chefsHatBase64={chefsHatBase64} strings={strings} pageSize={pageSize} />
     </Document>
   );
 }

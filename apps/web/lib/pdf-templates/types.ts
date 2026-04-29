@@ -5,8 +5,51 @@
 import type { BookLocale } from './book-strings';
 
 export type CoverStyle = 'classic' | 'modern' | 'minimal' | 'heritage' | 'nordic' | 'bbq';
-export type FillType = 'blank' | 'chefs_notes' | 'quote' | 'decorative' | 'custom';
+export type FillType = 'blank' | 'chefs_notes' | 'quote' | 'custom';
 export type PageSizeKey = 'letter' | 'trade' | 'large-trade' | 'digest' | 'square';
+
+/**
+ * Page size specifications for PDF generation.
+ * All dimensions in points (1 inch = 72 pt).
+ * Includes Lulu printing margins (inner margin larger for binding gutter).
+ */
+export const PAGE_SIZE_SPECS: Record<PageSizeKey, {
+  width: number;
+  height: number;
+  marginTop: number;
+  marginBottom: number;
+  marginInner: number;
+  marginOuter: number;
+  bleed: number;
+}> = {
+  letter: { width: 612, height: 792, marginTop: 54, marginBottom: 54, marginInner: 63, marginOuter: 45, bleed: 9 },
+  trade: { width: 432, height: 648, marginTop: 48, marginBottom: 48, marginInner: 54, marginOuter: 36, bleed: 9 },
+  'large-trade': { width: 504, height: 720, marginTop: 54, marginBottom: 54, marginInner: 58, marginOuter: 40, bleed: 9 },
+  digest: { width: 396, height: 612, marginTop: 44, marginBottom: 44, marginInner: 50, marginOuter: 32, bleed: 9 },
+  square: { width: 576, height: 576, marginTop: 48, marginBottom: 48, marginInner: 54, marginOuter: 54, bleed: 9 },
+};
+
+/**
+ * Get page dimensions for React-PDF.
+ * Returns [width, height] tuple for the size prop.
+ */
+export function getPageSize(pageSize: PageSizeKey = 'letter'): [number, number] {
+  const spec = PAGE_SIZE_SPECS[pageSize];
+  return [spec.width, spec.height];
+}
+
+/**
+ * Get margins for a page, accounting for left/right pages having swapped inner/outer margins.
+ */
+export function getPageMargins(pageSize: PageSizeKey = 'letter', isRecto: boolean = true) {
+  const spec = PAGE_SIZE_SPECS[pageSize];
+  return {
+    top: spec.marginTop,
+    bottom: spec.marginBottom,
+    left: isRecto ? spec.marginInner : spec.marginOuter,
+    right: isRecto ? spec.marginOuter : spec.marginInner,
+  };
+}
 
 export interface FillContent {
   quoteText?: string;

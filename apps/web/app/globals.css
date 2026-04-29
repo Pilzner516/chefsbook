@@ -173,7 +173,7 @@ body {
     background: white !important;
   }
 
-  /* Print checkbox (replaces interactive button) */
+  /* Print checkbox */
   .shop-item-grid .shop-print-checkbox {
     display: inline-block !important;
     width: 14pt;
@@ -182,11 +182,8 @@ body {
     margin-right: 10pt;
     flex-shrink: 0;
   }
-  .shop-item-grid > button:first-child {
-    display: none !important;
-  }
 
-  /* Quantity column */
+  /* Print quantity column */
   .shop-item-grid .shop-print-qty {
     display: inline-block !important;
     width: 120pt;
@@ -195,13 +192,8 @@ body {
     font-size: 11pt;
     flex-shrink: 0;
   }
-  /* Hide original quantity/unit column in print */
-  .shop-item-grid > span:nth-child(2),
-  .shop-item-grid > span:nth-child(3) {
-    display: none !important;
-  }
 
-  /* Ingredient name - full width, no truncate */
+  /* Print ingredient name - full width, no truncate */
   .shop-item-grid .shop-print-ingredient {
     display: inline-block !important;
     flex: 1;
@@ -210,12 +202,8 @@ body {
     white-space: normal !important;
     text-overflow: clip !important;
   }
-  /* Hide original ingredient column */
-  .shop-item-grid > span:nth-child(4) {
-    display: none !important;
-  }
 
-  /* Recipe source */
+  /* Print recipe source */
   .shop-item-grid .shop-print-recipe {
     display: inline-block !important;
     width: 140pt;
@@ -223,13 +211,6 @@ body {
     font-size: 9pt;
     color: #888 !important;
     flex-shrink: 0;
-  }
-  /* Hide original recipe source and delete button */
-  .shop-item-grid .shop-source,
-  .shop-item-grid > span:nth-child(5),
-  .shop-item-grid > span:nth-child(6),
-  .shop-item-grid > button:last-child {
-    display: none !important;
   }
 
   /* Print footer */
