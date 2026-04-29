@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, getRecipe, listRecipePhotos, PLAN_LIMITS } from '@chefsbook/db';
+import { supabaseAdmin, listRecipePhotos, PLAN_LIMITS } from '@chefsbook/db';
 import type { PlanTier, RecipeWithDetails } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
 import sharp from 'sharp';
@@ -372,9 +372,21 @@ export async function POST(
     const cookbookRecipes: CookbookRecipe[] = [];
 
     for (const recipeId of recipeIds) {
-      const recipe = await getRecipe(recipeId);
-      console.log('[Generate PDF] DEBUG - fetching recipe:', recipeId, 'found:', !!recipe);
+      // Use supabaseAdmin to bypass RLS - getRecipe uses anon client which has no auth context here
+      const { data: recipe } = await supabaseAdmin
+        .from('recipes')
+        .select('*')
+        .eq('id', recipeId)
+        .single();
+
       if (recipe) {
+        // Fetch ingredients and steps
+        const [{ data: ingredients }, { data: steps }] = await Promise.all([
+          supabaseAdmin.from('recipe_ingredients').select('*').eq('recipe_id', recipeId).order('sort_order'),
+          supabaseAdmin.from('recipe_steps').select('*').eq('recipe_id', recipeId).order('step_number'),
+        ]);
+        const recipeWithDetails = { ...recipe, ingredients: ingredients ?? [], steps: steps ?? [] };
+
         // Fetch all selected images for this recipe
         const imageUrls: string[] = [];
         try {
@@ -392,17 +404,17 @@ export async function POST(
         }
 
         // Use display_name from book_layout if available, otherwise recipe title
-        const displayName = recipeDisplayNames[recipeId] || recipe.title;
+        const displayName = recipeDisplayNames[recipeId] || recipeWithDetails.title;
 
         cookbookRecipes.push({
-          id: recipe.id,
+          id: recipeWithDetails.id,
           title: displayName,
-          description: recipe.description ?? undefined,
-          cuisine: recipe.cuisine ?? undefined,
-          course: recipe.course ?? undefined,
-          total_minutes: recipe.total_minutes ?? undefined,
-          servings: recipe.servings ?? undefined,
-          ingredients: recipe.ingredients.map((ing) => ({
+          description: recipeWithDetails.description ?? undefined,
+          cuisine: recipeWithDetails.cuisine ?? undefined,
+          course: recipeWithDetails.course ?? undefined,
+          total_minutes: recipeWithDetails.total_minutes ?? undefined,
+          servings: recipeWithDetails.servings ?? undefined,
+          ingredients: recipeWithDetails.ingredients.map((ing: { quantity: number | null; unit: string | null; ingredient: string; preparation: string | null; optional: boolean | null; group_label: string | null }) => ({
             quantity: ing.quantity,
             unit: ing.unit,
             ingredient: ing.ingredient,
@@ -410,20 +422,19 @@ export async function POST(
             optional: ing.optional ?? false,
             group_label: ing.group_label,
           })),
-          steps: recipe.steps.map((step) => ({
+          steps: recipeWithDetails.steps.map((step: { step_number: number; instruction: string; timer_minutes: number | null; group_label: string | null }) => ({
             step_number: step.step_number,
             instruction: step.instruction,
             timer_minutes: step.timer_minutes,
             group_label: step.group_label ?? null,
           })),
-          notes: recipe.notes ?? undefined,
+          notes: recipeWithDetails.notes ?? undefined,
           image_urls: imageUrls,
         });
       }
     }
 
     // For preview mode, allow any number of recipes; for final generation, require minimum 5
-    console.log('[Generate PDF] DEBUG - recipeIds:', recipeIds.length, 'cookbookRecipes:', cookbookRecipes.length, 'isPreview:', isPreview);
     if (!isPreview && cookbookRecipes.length < 5) {
       await supabaseAdmin
         .from('printed_cookbooks')
