@@ -422,7 +422,7 @@ Log to ai_usage_log: action=generate_template, model=sonnet
 
 | Phase | Status | Session |
 |-------|--------|---------|
-| 1 | COMPLETE | TEMPLATE-ENGINE-REBUILD (infrastructure) + TEMPLATE-ENGINE-MIGRATION (templates) |
+| 1 | COMPLETE | TEMPLATE-ENGINE-REBUILD + TEMPLATE-STYLESHEETS-FIX + PHASE1-MINPRESENCE (minPresenceAhead 40→100) |
 | 2 | NOT STARTED | admin-template-dashboard.md |
 | 3 | NOT STARTED | ai-template-generation.md |
 

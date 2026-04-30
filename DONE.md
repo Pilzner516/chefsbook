@@ -1,6 +1,35 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PHASE1-MINPRESENCE) TYPE: CODE FIX
+
+### minPresenceAhead Fix — Phase 1 Final Polish
+
+**Purpose:** Fix step overflow at page boundaries on Square (8×8) page size.
+
+**Root Cause:** `minPresenceAhead={40}` was too small — steps starting near the bottom
+of a page would start rendering, then overflow into the next step when they couldn't fit.
+
+**The Fix:** Changed `minPresenceAhead` from 40 to 100 on all step row Views across all
+6 templates. This ensures steps are pushed to the next page if there isn't enough room.
+
+**Files Changed:**
+- `apps/web/lib/pdf-templates/trattoria.tsx` (line 728)
+- `apps/web/lib/pdf-templates/bbq.tsx` (line 855)
+- `apps/web/lib/pdf-templates/garden.tsx` (line 703)
+- `apps/web/lib/pdf-templates/nordic.tsx` (line 715)
+- `apps/web/lib/pdf-templates/studio.tsx` (line 708)
+- `apps/web/lib/pdf-templates/heritage.tsx` (line 924)
+
+**Verification:**
+- All 6 templates now show `minPresenceAhead={100}` (grep verified)
+- TypeScript: 0 errors
+- Deployed to RPi5: HTTP 200
+
+**Phase 1 is now COMPLETE.** Phase 2 (admin-template-dashboard.md) ready to run.
+
+---
+
 ## 2026-04-30 (session PHASE1-COMPLETE) TYPE: VERIFICATION
 
 ### PDF Template Audit — Phase 1 Complete
