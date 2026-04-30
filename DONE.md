@@ -1,6 +1,61 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session HOTFIX-TEMPLATE-CALL-CHAIN) TYPE: CODE FIX
+
+### "F is not a function" Runtime Error in PDF Generation
+
+**Root Cause:** **Cause B from hotfix documentation** — `renderToBuffer` from `@react-pdf/renderer`
+expects a React element (`React.ReactElement`), not a plain function call result. The generate
+route was calling `TemplateDocument(context)` as a plain function, which bypassed React's rendering
+system. When React-PDF tried to render the component's children or call internal methods, it
+encountered undefined values where functions were expected, causing "TypeError: F is not a function".
+
+Templates are React components that return JSX with `<Document>`, `<Page>`, etc. Calling them
+as plain functions instead of rendering them through `React.createElement()` breaks the React
+rendering lifecycle.
+
+**Changes Made:**
+
+1. **Added React import** (`apps/web/app/api/print-cookbooks/[id]/generate/route.ts` line 5):
+   ```typescript
+   import React from 'react';
+   ```
+
+2. **Changed template invocation** (line 621):
+   ```typescript
+   // BEFORE (wrong — plain function call):
+   const interiorBuffer = await renderToBuffer(TemplateDocument(context));
+   
+   // AFTER (correct — React element):
+   const interiorBuffer = await renderToBuffer(React.createElement(TemplateDocument, context));
+   ```
+
+3. **Added explanatory comment** to prevent regression
+
+**Why React.createElement() instead of JSX:**
+The generate route is a `.ts` file (not `.tsx`), so JSX syntax `<TemplateDocument {...context} />`
+is not available. `React.createElement(Component, props)` is the non-JSX equivalent that produces
+the same React element.
+
+**Template Files:** UNCHANGED — templates continue to export React component functions that accept
+props via destructuring. The fix only changed how they're invoked in the generate route.
+
+**Pattern Added:** New PATTERN 16 in `.claude/agents/publishing.md` documents this failure mode
+to prevent recurrence in any future session that touches the template call chain. Subsequent
+patterns renumbered 17-22.
+
+**Verification:**
+- TypeScript: 0 errors (verified with `npx tsc --noEmit`)
+- Deployed to RPi5: HTTP 200 on https://chefsbk.app/dashboard/print-cookbook
+- PM2: online, 0 restarts, no errors
+- Build: succeeded in ~27s
+
+**Follow-up:** Manual testing required — user should verify preview generation now works without
+"F is not a function" error. Test multiple templates (Trattoria, BBQ) and page sizes (Letter, Square).
+
+---
+
 ## 2026-04-30 (session HOTFIX-GENERATE-CONTEXT) TYPE: CODE FIX
 
 ### Generate Route TemplateContext Integration

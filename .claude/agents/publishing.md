@@ -236,37 +236,63 @@ the TOC layout. TOC entries must use a flex row with:
 - `tocPageNumber` (flexShrink: 0) — page number, won't compress
 Fixed in session PDF-FIXES. Never revert to text-based dots.
 
+**PATTERN 16 — Templates must be rendered as React elements, not called as plain functions**
+`renderToBuffer` from `@react-pdf/renderer` expects a React element (`React.ReactElement`),
+not the result of calling a template function directly. Templates are React components that
+return JSX — calling them as plain functions bypasses React's rendering system and causes
+"F is not a function" errors when React tries to render children or call lifecycle methods.
+
+Correct usage in generate route:
+```typescript
+import React from 'react';
+const TemplateDocument = TemplateEngine.getTemplate(coverInfo.cover_style);
+const context = TemplateEngine.buildContext(...);
+const buffer = await renderToBuffer(React.createElement(TemplateDocument, context));
+```
+
+WRONG (causes "F is not a function"):
+```typescript
+const buffer = await renderToBuffer(TemplateDocument(context));  // plain function call
+```
+
+The `.ts` route file cannot use JSX syntax (`<TemplateDocument {...context} />`), so
+`React.createElement()` must be used instead. Never remove the React import or change
+back to plain function invocation.
+
+Fixed in session HOTFIX-TEMPLATE-CALL-CHAIN. This error manifests as "TypeError: F is
+not a function" in PM2 logs and "Preview Generation Failed" in the browser UI.
+
 ---
 
 ### Lulu API integration
 
-**PATTERN 16 — Stripe payment intent BEFORE Lulu job submission, always**
+**PATTERN 17 — Stripe payment intent BEFORE Lulu job submission, always**
 The order of operations in `/api/print-cookbooks/[id]/submit` is immutable:
 1. Verify Stripe payment intent is `succeeded`
 2. Only then call Lulu API to create print job
 Never reverse this order. A user who gets charged but has no Lulu print job has no
 recourse. A Lulu job created before payment confirmation wastes production capacity.
 
-**PATTERN 17 — Lulu fetches PDFs by public URL**
+**PATTERN 18 — Lulu fetches PDFs by public URL**
 Lulu's print servers fetch interior.pdf and cover.pdf directly using the URLs provided
 in the print job API call. These URLs must be publicly accessible without authentication.
 If the `cookbook-pdfs` bucket is private or URLs require auth headers, every print job
 silently fails at Lulu's end. Verify bucket public access before any order testing.
 
-**PATTERN 18 — Lulu webhook events arrive out of order**
+**PATTERN 19 — Lulu webhook events arrive out of order**
 Lulu webhooks for `IN_PRODUCTION`, `SHIPPED`, `DELIVERED`, and `CANCELLED` can arrive
 out of sequence, especially in sandbox. The webhook handler in `/api/webhooks/lulu`
 must be idempotent — processing the same event twice must produce the same result.
 Status updates must never downgrade a status (e.g. do not set IN_PRODUCTION if order
 is already SHIPPED). Always check current status before updating.
 
-**PATTERN 19 — LULU_SANDBOX mode controls real vs sandbox orders**
+**PATTERN 20 — LULU_SANDBOX mode controls real vs sandbox orders**
 `LULU_SANDBOX=true` on RPi5 = sandbox API (no real prints, no real charges to Lulu account)
 `LULU_SANDBOX=false` on RPi5 = production API (real money, real prints, real shipping)
 The go-live checklist (below) must be complete before setting `LULU_SANDBOX=false`.
 Confirm the current value on RPi5 before any order-related session.
 
-**PATTERN 20 — Cost calculation uses post-generation page count**
+**PATTERN 21 — Cost calculation uses post-generation page count**
 The Lulu cost estimate endpoint calls `POST /print-jobs/cost-calculations/` with the
 exact page count of the generated interior PDF. Do not estimate page count before
 generation — Lulu's price depends on the actual page count and must be calculated
@@ -276,7 +302,7 @@ after `generate` completes. Show the user a price only after PDFs are generated.
 
 ### Cover PDF
 
-**PATTERN 21 — Cover spine width is page-count-dependent**
+**PATTERN 22 — Cover spine width is page-count-dependent**
 The one-piece cover PDF (back + spine + front) requires the spine width, which Lulu
 calculates from the interior page count. If the interior is regenerated (recipe list
 changed, recipe content changed), the cover PDF must also be regenerated — the old
