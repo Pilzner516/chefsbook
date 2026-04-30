@@ -5,12 +5,7 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import sharp from 'sharp';
 import Replicate from 'replicate';
 import { CookbookCoverDocument } from './CookbookPdf';
-import { TrattoriaDocument } from '@/lib/pdf-templates/trattoria';
-import { StudioDocument } from '@/lib/pdf-templates/studio';
-import { GardenDocument } from '@/lib/pdf-templates/garden';
-import { HeritageDocument } from '@/lib/pdf-templates/heritage';
-import { NordicDocument } from '@/lib/pdf-templates/nordic';
-import { BBQDocument } from '@/lib/pdf-templates/bbq';
+import { TemplateEngine } from '@/lib/pdf-templates/engine';
 import type { CookbookPdfOptions, CookbookRecipe, CoverStyle } from '@/lib/pdf-templates/types';
 import type { ProductOptions } from '@/lib/lulu';
 import type { BookLayout, RecipeCard, CoverCard, ForewordCard, BookLocale } from '@/lib/book-layout';
@@ -603,15 +598,8 @@ export async function POST(
     };
 
     // Generate interior PDF using the appropriate template
-    const templateMap: Record<CoverStyle, typeof TrattoriaDocument> = {
-      classic: TrattoriaDocument,
-      modern: StudioDocument,
-      minimal: GardenDocument,
-      heritage: HeritageDocument,
-      nordic: NordicDocument,
-      bbq: BBQDocument,
-    };
-    const TemplateDocument = templateMap[coverInfo.cover_style] ?? TrattoriaDocument;
+    // TemplateEngine ensures fonts are registered before template use
+    const TemplateDocument = TemplateEngine.getTemplate(coverInfo.cover_style);
 
     const interiorBuffer = await renderToBuffer(TemplateDocument(pdfOptions));
 
