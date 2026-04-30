@@ -1,6 +1,50 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session HOTFIX-TEMPLATE-PROPS) TYPE: CODE FIX
+
+### Props Type Mismatch in PDF Templates
+
+**Root Cause:** Templates were typed for `CookbookPdfOptions` but receiving `TemplateContext`
+from `buildContext()`. While TypeScript structural typing allowed this (TemplateContext is a
+superset), the templates were not using the pre-computed `layout` and `strings` from the context,
+causing React error #130 and "Cannot read properties of null (reading 'props')" errors.
+
+**Changes Made:**
+
+1. **Updated all 6 template signatures** to accept `TemplateContext` directly:
+   ```typescript
+   // BEFORE:
+   export function TrattoriaDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions)
+   
+   // AFTER:
+   export function TrattoriaDocument(ctx: TemplateContext) {
+     const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
+   ```
+
+2. **Updated getTemplate() return type** in `engine/index.ts` to `TemplateComponent`
+
+3. **Re-added CookbookPdfOptions** to imports in all templates for internal component type
+   annotations (e.g., `CoverPage`, `RecipeContentPage` still use `CookbookPdfOptions['cookbook']`)
+
+**Files Changed:**
+- `apps/web/lib/pdf-templates/trattoria.tsx`
+- `apps/web/lib/pdf-templates/bbq.tsx`
+- `apps/web/lib/pdf-templates/garden.tsx`
+- `apps/web/lib/pdf-templates/nordic.tsx`
+- `apps/web/lib/pdf-templates/studio.tsx`
+- `apps/web/lib/pdf-templates/heritage.tsx`
+- `apps/web/lib/pdf-templates/engine/index.ts`
+
+**Pattern Updated:** Added props type mismatch as a related failure mode to PATTERN 16 in
+`.claude/agents/publishing.md`.
+
+**Verification:**
+- TypeScript: 0 errors (verified with `npx tsc --noEmit`)
+- Deployed to RPi5: HTTP 200 on https://chefsbk.app
+
+---
+
 ## 2026-04-30 (session HOTFIX-TEMPLATE-CALL-CHAIN) TYPE: CODE FIX
 
 ### "F is not a function" Runtime Error in PDF Generation
