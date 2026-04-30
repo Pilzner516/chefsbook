@@ -775,13 +775,13 @@ function RecipePage({ recipe, strings, layout }: { recipe: CookbookRecipe; strin
         }}>{truncate(recipe.description, 200)}</Text>}
       </View>
 
-      {/* Ingredients section - stays together, doesn't break across pages */}
+      {/* Ingredients section - allows pagination for long lists */}
       <View style={{
         marginBottom: layout.sectionGap,
         paddingBottom: layout.sectionGap,
         borderBottomWidth: 2,
         borderBottomColor: CHARCOAL,
-      }} wrap={false}>
+      }}>
         <Text style={{
           fontSize: layout.fontSubtitle * 0.5,
           fontFamily: 'Oswald',

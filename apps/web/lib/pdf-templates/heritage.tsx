@@ -852,13 +852,13 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize, layout }: { 
       paddingRight: layout.marginOuter,
       backgroundColor: IVORY,
     }} wrap>
-      {/* Ingredients section - stays together on one page */}
+      {/* Ingredients section - allows pagination for long lists */}
       <View style={{
         paddingBottom: layout.sectionGap,
         marginBottom: layout.sectionGap,
         borderBottomWidth: 1,
         borderBottomColor: BORDER,
-      }} wrap={false}>
+      }}>
         <Text style={{
           fontSize: layout.fontCaption,
           fontFamily: 'Source Sans Pro',

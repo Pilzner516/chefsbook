@@ -699,8 +699,8 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize, layout }: { 
       paddingRight: layout.marginOuter,
       backgroundColor: CREAM,
     }} wrap>
-      {/* Ingredients section - stays together on one page */}
-      <View style={{ backgroundColor: CREAM_DARK, padding: layout.sectionGap, marginBottom: 20 }} wrap={false}>
+      {/* Ingredients section - allows pagination for long lists */}
+      <View style={{ backgroundColor: CREAM_DARK, padding: layout.sectionGap, marginBottom: 20 }}>
         <Text style={{ fontSize: 9, fontFamily: 'Inter', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: RED, marginBottom: 12 }}>{strings.ingredients.toUpperCase()}</Text>
         {ingredientGroups.map((group, gi) => (
           <View key={gi}>
