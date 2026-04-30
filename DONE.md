@@ -1,6 +1,38 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PHASE1-TEMPLATE-AUDIT) TYPE: CODE FIX
+
+### PDF Template LAYOUT-8 Compliance Fix
+
+**Purpose:** Execute phase1-final-template-fix.md audit to verify all 6 PDF templates
+comply with LAYOUT-7 and LAYOUT-8 rules established in Phase 1.
+
+**Pre-flight Audit Results:**
+- StyleSheet.create() with layout.* values: ALL 6 PASS (none found)
+- wrap={false} placement: 3 templates had wrap={false} on ingredients sections
+
+**Fixes Applied:**
+- Removed wrap={false} from ingredients sections in trattoria.tsx, bbq.tsx, heritage.tsx
+- Comment updated to "allows pagination for long lists"
+- garden.tsx, nordic.tsx, studio.tsx already compliant (no changes needed)
+
+**Post-fix State:**
+- All 6 templates: exactly 2 wrap={false} occurrences each (step rows + notes boxes only)
+- No layout.* values inside StyleSheet.create() in any template
+- TypeScript: 0 errors (apps/web)
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/trattoria.tsx` — removed wrap={false} from ingredients
+- `apps/web/lib/pdf-templates/bbq.tsx` — removed wrap={false} from ingredients
+- `apps/web/lib/pdf-templates/heritage.tsx` — removed wrap={false} from ingredients
+
+**Deployed:** HTTP 200 on chefsbk.app, PM2 online
+
+**Visual verification pending:** Square (8×8) rendering should be verified in browser.
+
+---
+
 ## 2026-04-30 (session PHASE3-AI-TEMPLATE-GENERATION) TYPE: FEATURE
 
 ### AI Template Generation — Phase 3 Complete
