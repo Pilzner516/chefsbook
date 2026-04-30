@@ -277,6 +277,36 @@ function PreviewPanel({
   );
 }
 
+interface GeneratedTemplate {
+  code: string;
+  manifest: {
+    id: string;
+    name: string;
+    description: string;
+    version: string;
+    isSystem: boolean;
+    status: string;
+    supportedPageSizes: string[];
+    luluCompliant: boolean;
+    fonts: Array<{ family: string; weights: number[]; italic?: number[] }>;
+    settings: {
+      palette: {
+        accent: string;
+        background: string;
+        text: string;
+        muted: string;
+        surface: string;
+      };
+      fonts: { heading: string; body: string };
+    };
+  };
+  validation: { valid: boolean; errors: string[]; warnings: string[] };
+  tokensUsed: number;
+  remaining: number;
+}
+
+const STYLE_OPTIONS = ['minimal', 'bold', 'editorial', 'rustic', 'modern'] as const;
+
 function UploadModal({
   onClose,
   onSuccess,
@@ -285,11 +315,46 @@ function UploadModal({
   onSuccess: () => void;
 }) {
   const [tab, setTab] = useState<'upload' | 'generate'>('upload');
+
+  // Upload tab state
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [uploadedTemplate, setUploadedTemplate] = useState<Template | null>(null);
+
+  // Generate tab state
+  const [description, setDescription] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [accentColor, setAccentColor] = useState('#ce2b37');
+  const [backgroundColor, setBackgroundColor] = useState('#faf7f0');
+  const [generating, setGenerating] = useState(false);
+  const [generatedTemplate, setGeneratedTemplate] = useState<GeneratedTemplate | null>(null);
+  const [rateLimit, setRateLimit] = useState<{ limit: number; used: number; remaining: number } | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Load rate limit on tab switch
+  useEffect(() => {
+    if (tab === 'generate') {
+      loadRateLimit();
+    }
+  }, [tab]);
+
+  const loadRateLimit = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
+      const res = await fetch('/api/admin/templates/generate', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRateLimit(data);
+      }
+    } catch {
+      // Ignore
+    }
+  };
 
   const handleUpload = async () => {
     if (!file) return;
@@ -353,9 +418,102 @@ function UploadModal({
     }
   };
 
+  const handleGenerate = async () => {
+    if (!description || description.length < 10) return;
+
+    setGenerating(true);
+    setError(null);
+    setGeneratedTemplate(null);
+
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const res = await fetch('/api/admin/templates/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          description,
+          accentColor,
+          backgroundColor,
+          style: selectedStyle,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 429) {
+        setError(data.error || 'Daily generation limit reached');
+        setRateLimit({ limit: data.limit, used: data.used, remaining: 0 });
+        return;
+      }
+
+      if (!res.ok) {
+        setError(data.error || 'Generation failed');
+        return;
+      }
+
+      setGeneratedTemplate(data);
+      if (data.remaining !== undefined) {
+        setRateLimit(prev => prev ? { ...prev, remaining: data.remaining, used: prev.limit - data.remaining } : null);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    if (!generatedTemplate || !generatedTemplate.validation.valid) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
+
+      // Save via direct insert endpoint
+      const res = await fetch('/api/admin/templates/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          code: generatedTemplate.code,
+          manifest: generatedTemplate.manifest,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to save template');
+        return;
+      }
+
+      onSuccess();
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg w-[600px] max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="font-semibold text-lg">Add Template</h2>
@@ -472,16 +630,193 @@ function UploadModal({
           )}
 
           {tab === 'generate' && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-700">Coming in Phase 3</h3>
-              <p className="text-sm text-gray-500 mt-2">
-                AI-generated templates will let you describe a style and have Claude create a complete template automatically.
-              </p>
+            <div>
+              {/* Rate limit display */}
+              {rateLimit && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${rateLimit.remaining === 0 ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                  {rateLimit.remaining === 0 ? (
+                    <span>Daily limit reached ({rateLimit.used}/{rateLimit.limit}). Try again tomorrow.</span>
+                  ) : (
+                    <span>Generations remaining today: {rateLimit.remaining}/{rateLimit.limit}</span>
+                  )}
+                </div>
+              )}
+
+              {!generatedTemplate ? (
+                <>
+                  {/* Description textarea */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Describe your template style
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="e.g. Modern Japanese minimalist with black accents and white space. Clean, editorial."
+                      rows={3}
+                      maxLength={300}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cb-primary focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-400 mt-1 text-right">{description.length}/300</p>
+                  </div>
+
+                  {/* Style pills */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
+                    <div className="flex flex-wrap gap-2">
+                      {STYLE_OPTIONS.map((style) => (
+                        <button
+                          key={style}
+                          onClick={() => setSelectedStyle(selectedStyle === style ? null : style)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
+                            selectedStyle === style
+                              ? 'bg-cb-primary text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {style.charAt(0).toUpperCase() + style.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Color pickers */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Error display */}
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 rounded-lg">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Generate button */}
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!description || description.length < 10 || generating || rateLimit?.remaining === 0}
+                    className="w-full py-2.5 bg-cb-primary text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cb-primary/90 transition flex items-center justify-center gap-2"
+                  >
+                    {generating ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor" className="opacity-75" />
+                        </svg>
+                        Generating... (15-30 seconds)
+                      </>
+                    ) : (
+                      'Generate Template'
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Generated template result */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="font-semibold text-lg">{generatedTemplate.manifest.name}</h3>
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">Draft</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">{generatedTemplate.manifest.description}</p>
+
+                    {/* Validation result */}
+                    <div className={`p-3 rounded-lg mb-4 ${generatedTemplate.validation.valid ? 'bg-green-50' : 'bg-red-50'}`}>
+                      <h4 className={`text-sm font-medium mb-2 ${generatedTemplate.validation.valid ? 'text-green-700' : 'text-red-700'}`}>
+                        {generatedTemplate.validation.valid ? 'Validation passed — ready to save' : 'Fix required before saving'}
+                      </h4>
+                      {generatedTemplate.validation.errors.length > 0 && (
+                        <ul className="space-y-1">
+                          {generatedTemplate.validation.errors.map((err, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-red-600">
+                              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              {err}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {generatedTemplate.validation.warnings.length > 0 && (
+                        <ul className="space-y-1 mt-2">
+                          {generatedTemplate.validation.warnings.map((warn, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-amber-600">
+                              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              {warn}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Token usage */}
+                    <p className="text-xs text-gray-400 mb-4">Generated using {generatedTemplate.tokensUsed.toLocaleString()} tokens</p>
+
+                    {/* Error display */}
+                    {error && (
+                      <div className="mb-4 p-3 bg-red-50 rounded-lg">
+                        <p className="text-sm text-red-700">{error}</p>
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setGeneratedTemplate(null);
+                          setError(null);
+                        }}
+                        className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                      >
+                        Regenerate
+                      </button>
+                      <button
+                        onClick={handleSaveAsDraft}
+                        disabled={!generatedTemplate.validation.valid || saving}
+                        className="flex-1 py-2.5 bg-cb-green text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cb-green/90 transition"
+                      >
+                        {saving ? 'Saving...' : 'Save as Draft'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
