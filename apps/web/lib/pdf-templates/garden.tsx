@@ -456,52 +456,62 @@ const styles = StyleSheet.create({
   },
 });
 
-function CoverPage({ cookbook, chefsHatBase64, strings, pageSize }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings; pageSize: PageSizeKey }) {
+function CoverPage({ cookbook, chefsHatBase64, strings, layout }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings; layout: ComputedLayout }) {
   if (cookbook.cover_image_url) {
     return (
-      <Page size={getPageSize(pageSize)} style={styles.coverPage}>
-        <Text style={styles.coverTitle}>{cookbook.title}</Text>
-        {cookbook.subtitle && <Text style={styles.coverSubtitle}>{cookbook.subtitle}</Text>}
-        <View style={styles.coverImageContainer}>
+      <Page size={{ width: layout.width, height: layout.height }} style={{
+        backgroundColor: WHITE,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: layout.marginOuter,
+      }}>
+        <Text style={{ fontSize: layout.fontTitle * 0.8, fontFamily: 'Inter', fontWeight: 700, color: DARK, textAlign: 'center', marginBottom: layout.stepGap }}>{cookbook.title}</Text>
+        {cookbook.subtitle && <Text style={{ fontSize: layout.fontSubtitle * 0.7, fontFamily: 'Inter', fontWeight: 300, color: MUTED, textAlign: 'center', marginBottom: layout.sectionGap }}>{cookbook.subtitle}</Text>}
+        <View style={{ width: '100%', maxHeight: layout.heroImageHeight * 2, borderWidth: 1, borderColor: GREEN, marginBottom: layout.sectionGap }}>
           <Image src={cookbook.cover_image_url} style={styles.coverImage} />
         </View>
-        <Text style={styles.coverAuthor}>by {cookbook.author_name}</Text>
-        <Text style={styles.cookbookLine}>A ChefsBook Cookbook</Text>
-        <Text style={styles.coverUrl}>chefsbk.app</Text>
+        <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>by {cookbook.author_name}</Text>
+        <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginTop: layout.sectionGap }}>A ChefsBook Cookbook</Text>
+        <Text style={{ position: 'absolute', bottom: 36, right: layout.marginOuter, fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 400, color: GREEN }}>chefsbk.app</Text>
       </Page>
     );
   }
 
   return (
-    <Page size={getPageSize(pageSize)}>
-      <View style={styles.coverNoImage}>
-        <View style={styles.coverTopBar} />
-        <Text style={styles.coverNoImageTitle}>{cookbook.title}</Text>
-        <View style={styles.coverRule} />
-        {cookbook.subtitle && <Text style={styles.coverNoImageSubtitle}>{cookbook.subtitle}</Text>}
-        <Text style={styles.coverAuthor}>by {cookbook.author_name}</Text>
-        <Text style={styles.cookbookLine}>A ChefsBook Cookbook</Text>
+    <Page size={{ width: layout.width, height: layout.height }}>
+      <View style={{ flex: 1, backgroundColor: WHITE, justifyContent: 'flex-start', alignItems: 'center', paddingTop: layout.marginTop * 4, position: 'relative' }}>
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, backgroundColor: GREEN }} />
+        <Text style={{ fontSize: layout.fontTitle, fontFamily: 'Inter', fontWeight: 700, color: DARK, textAlign: 'center', marginBottom: layout.sectionGap }}>{cookbook.title}</Text>
+        <View style={{ width: 48, height: 2, backgroundColor: GREEN, marginBottom: layout.sectionGap }} />
+        {cookbook.subtitle && <Text style={{ fontSize: layout.fontSubtitle * 0.7, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginBottom: layout.sectionGap * 2 }}>{cookbook.subtitle}</Text>}
+        <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>by {cookbook.author_name}</Text>
+        <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginTop: layout.sectionGap }}>A ChefsBook Cookbook</Text>
       </View>
     </Page>
   );
 }
 
-function TOCPage({ recipes, startPage, strings, pageSize }: { recipes: CookbookRecipe[]; startPage: number; strings: BookStrings; pageSize: PageSizeKey }) {
+function TOCPage({ recipes, startPage, strings, layout }: { recipes: CookbookRecipe[]; startPage: number; strings: BookStrings; layout: ComputedLayout }) {
   return (
-    <Page size={getPageSize(pageSize)} style={styles.tocPage}>
-      <View style={styles.tocTopRule} />
-      <Text style={styles.tocLabel}>{strings.contents.toUpperCase()}</Text>
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      paddingTop: layout.marginTop,
+      paddingBottom: layout.marginBottom,
+      paddingHorizontal: layout.marginOuter,
+      backgroundColor: WHITE,
+    }}>
+      <View style={{ height: 1, backgroundColor: GREEN, marginBottom: layout.sectionGap }} />
+      <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, letterSpacing: 4, color: GREEN, textTransform: 'uppercase', marginBottom: layout.sectionGap }}>{strings.contents.toUpperCase()}</Text>
       {recipes.map((recipe, idx) => (
-        <View key={recipe.id} style={styles.tocEntry}>
-          <Text style={styles.tocRecipe}>{recipe.title}</Text>
-          <Text style={styles.tocPageNum}>{startPage + idx * 2}</Text>
+        <View key={recipe.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: layout.stepGap, borderBottomWidth: 0.5, borderBottomColor: BORDER }}>
+          <Text style={{ flex: 1, fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 400, color: DARK }}>{recipe.title}</Text>
+          <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>{startPage + idx * 2}</Text>
         </View>
       ))}
     </Page>
   );
 }
 
-function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey }) {
+function RecipePage({ recipe, strings, layout }: { recipe: CookbookRecipe; strings: BookStrings; layout: ComputedLayout }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
@@ -509,63 +519,60 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
   if (recipe.servings) meta.push(`${recipe.servings} ${strings.servings}`);
 
   const primaryImage = recipe.image_urls[0];
-  const ingredientGroups = groupIngredients(recipe.ingredients);
 
   if (primaryImage) {
     return (
-      <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
-        <View style={styles.recipeImageTop}>
+      <Page size={{ width: layout.width, height: layout.height }} style={{ backgroundColor: WHITE, padding: 0 }}>
+        <View style={{ width: '100%', height: layout.heroImageHeight * 1.2, position: 'relative' }}>
           <Image src={primaryImage} style={styles.recipeImage} />
           <View style={styles.recipeImageFrame} />
         </View>
-        <View style={styles.recipeHeader}>
-          <Text style={styles.recipeTitle}>{recipe.title}</Text>
-          {meta.length > 0 && <Text style={styles.recipeMeta}>{meta.join('  ·  ')}</Text>}
+        <View style={{ paddingHorizontal: layout.marginOuter, paddingTop: layout.sectionGap, paddingBottom: layout.sectionGap }}>
+          <Text style={{ fontSize: layout.fontSubtitle * 0.8, fontFamily: 'Inter', fontWeight: 700, color: DARK, marginBottom: layout.stepGap }}>{recipe.title}</Text>
+          {meta.length > 0 && <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>{meta.join('  ·  ')}</Text>}
         </View>
       </Page>
     );
   }
 
   return (
-    <Page size={getPageSize(pageSize)}>
-      <View style={styles.recipeNoImage}>
-        <Text style={styles.recipeNoImageTitle}>{recipe.title}</Text>
-        {meta.length > 0 && <Text style={styles.recipeNoImageMeta}>{meta.join('  ·  ')}</Text>}
+    <Page size={{ width: layout.width, height: layout.height }}>
+      <View style={{ flex: 1, backgroundColor: WHITE, paddingTop: layout.marginTop * 1.5, paddingHorizontal: layout.marginOuter }}>
+        <Text style={{ fontSize: layout.fontSubtitle, fontFamily: 'Inter', fontWeight: 700, color: DARK, textAlign: 'center', marginBottom: layout.stepGap }}>{recipe.title}</Text>
+        {meta.length > 0 && <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED, textAlign: 'center', marginBottom: layout.sectionGap * 1.5 }}>{meta.join('  ·  ')}</Text>}
       </View>
     </Page>
   );
 }
 
-// Additional image pages (for images beyond the first one)
-function AdditionalImagePage({ imageUrl, recipeTitle, pageSize }: { imageUrl: string; recipeTitle: string; pageSize: PageSizeKey }) {
+function AdditionalImagePage({ imageUrl, recipeTitle, layout }: { imageUrl: string; recipeTitle: string; layout: ComputedLayout }) {
   return (
-    <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
-      <View style={styles.recipeImageTop}>
+    <Page size={{ width: layout.width, height: layout.height }} style={{ backgroundColor: WHITE, padding: 0 }}>
+      <View style={{ width: '100%', height: layout.heroImageHeight * 1.2, position: 'relative' }}>
         <Image src={imageUrl} style={styles.recipeImage} />
         <View style={styles.recipeImageFrame} />
       </View>
-      <View style={styles.recipeHeader}>
-        <Text style={styles.recipeMeta}>{recipeTitle}</Text>
+      <View style={{ paddingHorizontal: layout.marginOuter, paddingTop: layout.sectionGap }}>
+        <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>{recipeTitle}</Text>
       </View>
     </Page>
   );
 }
 
-// Custom page component for user-added pages
-function CustomPageComponent({ customPage, pageSize }: { customPage: CustomPageData; pageSize: PageSizeKey }) {
+function CustomPageComponent({ customPage, layout }: { customPage: CustomPageData; layout: ComputedLayout }) {
   const hasImage = customPage.layout !== 'text_only' && customPage.image_url;
   const hasText = customPage.layout !== 'image_only' && customPage.text;
 
   if (customPage.layout === 'image_only' && customPage.image_url) {
     return (
-      <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
-        <View style={styles.recipeImageTop}>
+      <Page size={{ width: layout.width, height: layout.height }} style={{ backgroundColor: WHITE, padding: 0 }}>
+        <View style={{ width: '100%', height: layout.heroImageHeight * 1.2, position: 'relative' }}>
           <Image src={customPage.image_url} style={styles.recipeImage} />
           <View style={styles.recipeImageFrame} />
         </View>
         {customPage.caption && (
-          <View style={styles.recipeHeader}>
-            <Text style={styles.recipeMeta}>{customPage.caption}</Text>
+          <View style={{ paddingHorizontal: layout.marginOuter, paddingTop: layout.sectionGap }}>
+            <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>{customPage.caption}</Text>
           </View>
         )}
       </Page>
@@ -574,42 +581,46 @@ function CustomPageComponent({ customPage, pageSize }: { customPage: CustomPageD
 
   if (customPage.layout === 'text_only') {
     return (
-      <Page size={getPageSize(pageSize)} style={styles.contentPage}>
-        <Text style={styles.forewordText}>{customPage.text}</Text>
+      <Page size={{ width: layout.width, height: layout.height }} style={{
+        paddingTop: layout.marginTop,
+        paddingBottom: layout.marginBottom,
+        paddingHorizontal: layout.marginOuter,
+        backgroundColor: WHITE,
+      }}>
+        <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: DARK, lineHeight: 1.8, textAlign: 'center', maxWidth: 450 }}>{customPage.text}</Text>
       </Page>
     );
   }
 
-  // image_and_text layout
   return (
-    <Page size={getPageSize(pageSize)} style={styles.recipeImagePage}>
+    <Page size={{ width: layout.width, height: layout.height }} style={{ backgroundColor: WHITE, padding: 0 }}>
       {hasImage && (
-        <View style={styles.recipeImageTop}>
+        <View style={{ width: '100%', height: layout.heroImageHeight * 1.2, position: 'relative' }}>
           <Image src={customPage.image_url} style={styles.recipeImage} />
           <View style={styles.recipeImageFrame} />
         </View>
       )}
-      <View style={styles.recipeHeader}>
-        {customPage.caption && <Text style={styles.recipeMeta}>{customPage.caption}</Text>}
-        {hasText && <Text style={{ ...styles.recipeMeta, marginTop: 8 }}>{customPage.text}</Text>}
+      <View style={{ paddingHorizontal: layout.marginOuter, paddingTop: layout.sectionGap }}>
+        {customPage.caption && <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>{customPage.caption}</Text>}
+        {hasText && <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginTop: layout.stepGap }}>{customPage.text}</Text>}
       </View>
     </Page>
   );
 }
 
-function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; fillContent?: { quoteText?: string; quoteAttribution?: string; customText?: string; customImageUrl?: string }; accentColor: string }) {
+function FillZone({ fillType, fillContent, accentColor, layout }: { fillType?: string; fillContent?: { quoteText?: string; quoteAttribution?: string; customText?: string; customImageUrl?: string }; accentColor: string; layout: ComputedLayout }) {
   if (!fillType || fillType === 'blank') return null;
 
   if (fillType === 'chefs_notes') {
     return (
-      <View style={{ flexGrow: 1, justifyContent: 'flex-end', paddingTop: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={{ fontSize: 10, fontFamily: 'Inter', fontWeight: 600, color: accentColor }}>Chef's Notes</Text>
-          <Text style={{ fontSize: 8, marginLeft: 4, color: MUTED }}>✎</Text>
+      <View style={{ flexGrow: 1, justifyContent: 'flex-end', paddingTop: layout.sectionGap }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: layout.stepGap }}>
+          <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 600, color: accentColor }}>Chef's Notes</Text>
+          <Text style={{ fontSize: layout.fontCaption * 0.8, marginLeft: 4, color: MUTED }}>✎</Text>
         </View>
-        <View style={{ borderBottomWidth: 0.5, borderBottomColor: BORDER, marginBottom: 16 }} />
+        <View style={{ borderBottomWidth: 0.5, borderBottomColor: BORDER, marginBottom: layout.sectionGap }} />
         {[1, 2, 3, 4].map((i) => (
-          <View key={i} style={{ borderBottomWidth: 0.5, borderBottomColor: BORDER, height: 24 }} />
+          <View key={i} style={{ borderBottomWidth: 0.5, borderBottomColor: BORDER, height: layout.sectionGap }} />
         ))}
       </View>
     );
@@ -617,30 +628,30 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
 
   if (fillType === 'quote' && fillContent?.quoteText) {
     return (
-      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 20 }}>
-        <View style={{ borderTopWidth: 0.5, borderTopColor: BORDER, width: '60%', marginBottom: 16 }} />
-        <Text style={{ fontSize: 36, color: accentColor, marginBottom: 4 }}>"</Text>
-        <Text style={{ fontSize: 14, fontFamily: 'Inter', fontWeight: 300, textAlign: 'center', maxWidth: '80%', lineHeight: 1.6, color: DARK }}>
+      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: layout.sectionGap }}>
+        <View style={{ borderTopWidth: 0.5, borderTopColor: BORDER, width: '60%', marginBottom: layout.sectionGap }} />
+        <Text style={{ fontSize: layout.fontSubtitle, color: accentColor, marginBottom: 4 }}>"</Text>
+        <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, textAlign: 'center', maxWidth: '80%', lineHeight: 1.6, color: DARK }}>
           {fillContent.quoteText}
         </Text>
         {fillContent.quoteAttribution && (
-          <Text style={{ fontSize: 10, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginTop: 12 }}>
+          <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginTop: layout.stepGap }}>
             — {fillContent.quoteAttribution}
           </Text>
         )}
-        <View style={{ borderBottomWidth: 0.5, borderBottomColor: BORDER, width: '60%', marginTop: 16 }} />
+        <View style={{ borderBottomWidth: 0.5, borderBottomColor: BORDER, width: '60%', marginTop: layout.sectionGap }} />
       </View>
     );
   }
 
   if (fillType === 'custom' && (fillContent?.customText || fillContent?.customImageUrl)) {
     return (
-      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 20 }}>
+      <View style={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingTop: layout.sectionGap }}>
         {fillContent.customImageUrl && (
-          <Image src={fillContent.customImageUrl} style={{ maxWidth: 200, maxHeight: 120, objectFit: 'contain', marginBottom: fillContent.customText ? 12 : 0 }} />
+          <Image src={fillContent.customImageUrl} style={{ maxWidth: layout.heroImageHeight * 0.85, maxHeight: layout.heroImageHeight * 0.5, objectFit: 'contain', marginBottom: fillContent.customText ? layout.stepGap : 0 }} />
         )}
         {fillContent.customText && (
-          <Text style={{ fontSize: 11, fontFamily: 'Inter', fontWeight: 300, color: DARK, textAlign: 'center', maxWidth: '80%', lineHeight: 1.5 }}>
+          <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: DARK, textAlign: 'center', maxWidth: '80%', lineHeight: 1.5 }}>
             {fillContent.customText}
           </Text>
         )}
@@ -723,7 +734,7 @@ function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: Cook
         </View>
       )}
 
-      <FillZone fillType={recipe.fillType} fillContent={recipe.fillContent} accentColor={GREEN} />
+      <FillZone fillType={recipe.fillType} fillContent={recipe.fillContent} accentColor={GREEN} layout={layout} />
 
       <View style={{ position: 'absolute', bottom: 30, left: layout.marginOuter, right: layout.marginOuter, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: BORDER, paddingTop: 8 }} fixed>
         <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>ChefsBook</Text>
@@ -734,71 +745,82 @@ function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: Cook
   );
 }
 
-function ForewordPage({ foreword, authorName, strings, pageSize }: { foreword: string; authorName: string; strings: BookStrings; pageSize: PageSizeKey }) {
+function ForewordPage({ foreword, authorName, strings, layout }: { foreword: string; authorName: string; strings: BookStrings; layout: ComputedLayout }) {
   const forewordLabel = strings.foreword.toUpperCase().split('').join(' ');
   return (
-    <Page size={getPageSize(pageSize)} style={styles.forewordPage}>
-      <Text style={styles.forewordLabel}>{forewordLabel}</Text>
-      <View style={styles.forewordRule} />
-      <Text style={styles.forewordText}>{foreword}</Text>
-      <Text style={styles.forewordAuthor}>— {authorName}</Text>
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      paddingTop: layout.marginTop * 1.5,
+      paddingBottom: layout.marginBottom,
+      paddingHorizontal: layout.marginOuter * 1.5,
+      backgroundColor: WHITE,
+      alignItems: 'center',
+    }}>
+      <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, letterSpacing: 4, color: GREEN, textTransform: 'uppercase', marginBottom: layout.stepGap }}>{forewordLabel}</Text>
+      <View style={{ width: 60, height: 1, backgroundColor: GREEN, marginBottom: layout.sectionGap * 1.5 }} />
+      <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: DARK, lineHeight: 1.8, textAlign: 'center', maxWidth: 450 }}>{foreword}</Text>
+      <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED, textAlign: 'right', marginTop: layout.sectionGap * 1.5 }}>— {authorName}</Text>
     </Page>
   );
 }
 
-function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: string | null; strings: BookStrings; pageSize: PageSizeKey }) {
+function BackPage({ chefsHatBase64, strings, layout }: { chefsHatBase64?: string | null; strings: BookStrings; layout: ComputedLayout }) {
   return (
-    <Page size={getPageSize(pageSize)} style={styles.backPage}>
-      <View style={styles.backTopBar} />
-      {chefsHatBase64 && <Image src={chefsHatBase64} style={styles.backHat} />}
-      <Text style={styles.backWordmark}>ChefsBook</Text>
-      <Text style={styles.backTagline}>{strings.tagline}</Text>
-      <View style={styles.backDivider} />
-      <Text style={styles.backBlurb}>
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: WHITE,
+      paddingHorizontal: layout.marginOuter,
+    }}>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, backgroundColor: GREEN }} />
+      {chefsHatBase64 && <Image src={chefsHatBase64} style={{ width: layout.badgeSize * 2.7, height: layout.badgeSize * 2.7, marginBottom: layout.sectionGap }} />}
+      <Text style={{ fontSize: layout.fontSubtitle * 0.8, fontFamily: 'Inter', fontWeight: 700, color: DARK, marginBottom: layout.stepGap }}>ChefsBook</Text>
+      <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginBottom: layout.sectionGap }}>{strings.tagline}</Text>
+      <View style={{ width: 60, height: 1, backgroundColor: BORDER, marginVertical: layout.sectionGap }} />
+      <Text style={{ fontSize: layout.fontBody - 1, fontFamily: 'Inter', fontWeight: 300, color: MUTED, textAlign: 'center', lineHeight: 1.6, marginBottom: layout.sectionGap }}>
         This cookbook was created with ChefsBook — the app that helps you save, organise, and share the recipes that matter most. Import from any website, scan handwritten cards, or create your own. Your collection, always with you.
       </Text>
-      <Text style={styles.backUrl}>Discover ChefsBook at chefsbk.app</Text>
+      <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 400, color: GREEN }}>Discover ChefsBook at chefsbk.app</Text>
     </Page>
   );
 }
 
 export function GardenDocument(ctx: TemplateContext) {
   const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
-  const pageSize = cookbook.pageSize ?? 'letter';
   const tocPages = Math.ceil(recipes.length / 20);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
 
   return (
     <Document>
-      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} pageSize={pageSize} />
+      <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} layout={layout} />
 
       {/* Blank page after cover */}
-      <Page size={getPageSize(pageSize)} style={{ backgroundColor: WHITE }} />
+      <Page size={{ width: layout.width, height: layout.height }} style={{ backgroundColor: WHITE }} />
 
-      <TOCPage recipes={recipes} startPage={startPage} strings={strings} pageSize={pageSize} />
+      <TOCPage recipes={recipes} startPage={startPage} strings={strings} layout={layout} />
 
       {/* Foreword page if text provided */}
       {hasForeword && (
-        <ForewordPage foreword={cookbook.foreword!} authorName={cookbook.author_name} strings={strings} pageSize={pageSize} />
+        <ForewordPage foreword={cookbook.foreword!} authorName={cookbook.author_name} strings={strings} layout={layout} />
       )}
 
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
-          <RecipePage recipe={recipe} strings={strings} pageSize={pageSize} />
+          <RecipePage recipe={recipe} strings={strings} layout={layout} />
           {/* Render additional image pages (images beyond the first one) */}
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
-            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} pageSize={pageSize} />
+            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} layout={layout} />
           ))}
-          <RecipeContentPage recipe={recipe} strings={strings} pageSize={pageSize} layout={layout} />
+          <RecipeContentPage recipe={recipe} strings={strings} pageSize={cookbook.pageSize ?? 'letter'} layout={layout} />
           {/* Render custom pages after content page */}
           {recipe.custom_pages?.map((cp) => (
-            <CustomPageComponent key={cp.id} customPage={cp} pageSize={pageSize} />
+            <CustomPageComponent key={cp.id} customPage={cp} layout={layout} />
           ))}
         </React.Fragment>
       ))}
 
-      <BackPage chefsHatBase64={chefsHatBase64} strings={strings} pageSize={pageSize} />
+      <BackPage chefsHatBase64={chefsHatBase64} strings={strings} layout={layout} />
     </Document>
   );
 }
