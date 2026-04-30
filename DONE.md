@@ -1,6 +1,51 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PDF-STEP-BADGE-FIX) TYPE: CODE FIX
+
+### BBQ Template Step Icon Rendering Bug
+
+**Problem:** BBQ PDF template step icons rendered as "ã" instead of numbered badges.
+Emoji keycap digits (`1️⃣`, `2️⃣`, etc.) cannot render in react-pdf — the fonts don't
+support them, causing fallback to Latin characters.
+
+**Root cause:** Session CANVAS-FIXES-2 added emoji keycap step numbers without testing
+PDF output. react-pdf font fallback converts unsupported Unicode to "ã" (U+00E3).
+
+**Fix (TYPE: CODE FIX):**
+Replaced emoji keycap digits with a `StepBadge` component using View (borderRadius 
+circle) + Text — primitives that always render correctly in react-pdf.
+
+```tsx
+const StepBadge = ({ number }: { number: number }) => (
+  <View style={{ width: 22, height: 22, backgroundColor: AMBER, borderRadius: 11, 
+                 justifyContent: 'center', alignItems: 'center' }}>
+    <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>
+      {String(number)}
+    </Text>
+  </View>
+);
+```
+
+**Bug 2 status (8×8 Square text overlap):**
+Pre-flight investigation found PATTERN 13 (fixed-height step containers) and PATTERN 14
+(hardcoded page sizes) already resolved. All 6 templates:
+- Use `getPageSize(pageSize)` prop (fixed in CANVAS-FIXES-1)
+- Have auto-height step rows with `wrap={false}`
+- No fixed height/minHeight/maxHeight on step containers
+
+No additional changes required for Bug 2.
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/bbq.tsx` — StepBadge component, removed emoji keycap digits
+
+**Verification:**
+- TypeScript: 0 errors (same as baseline)
+- Deployed to RPi5: HTTP 200 on chefsbk.app and /dashboard/print-cookbook
+- PM2: online, no startup errors
+
+---
+
 ## 2026-04-30 (session PUBLISHING-AGENT) TYPE: HOUSEKEEPING
 
 ### Install Publishing Agent

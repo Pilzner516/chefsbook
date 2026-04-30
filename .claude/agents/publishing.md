@@ -170,10 +170,11 @@ They render as ñ, ã, or other corrupted characters depending on font fallback.
 Rules:
 - Never use emoji in step instructions, ingredient lists, or any PDF text content
 - Timer display: use the text string "(X min)" inline, not an emoji character
-- Step badges: use SVG primitives (Svg, Circle, SvgText) not icon font characters
+- Step badges: use View with borderRadius + Text for circle badges (see BBQ template StepBadge component)
 - Use `fixTimerCharacter()` to sanitize any recipe data before rendering
-Introduced and fixed across sessions COOKBOOK-BUILDER, PDF-FIXES, PRINT-QUALITY-1, and the
-step icon bug. This pattern has recurred 4 times — do not introduce emoji in PDF content.
+Introduced and fixed across sessions COOKBOOK-BUILDER, PDF-FIXES, PRINT-QUALITY-1, and
+PDF-STEP-BADGE-FIX. This pattern has recurred 5 times — do not introduce emoji in PDF content.
+Session PDF-STEP-BADGE-FIX: replaced emoji keycap digits (1️⃣) with View+Text circle badge.
 
 **PATTERN 11 — Inter font has no italic variants registered**
 Inter fonts are registered with weights 300, 400, 500, 600. No italic variants are
@@ -188,14 +189,15 @@ and broke the reading order in 5 of 6 templates. BBQ already had the correct ord
 Always verify page component order in templates when adding new page types.
 Fixed in session PRINT-QUALITY-4.
 
-**PATTERN 13 — Fixed-height step containers break on non-letter page sizes**
+**PATTERN 13 — Fixed-height step containers break on non-letter page sizes** [RESOLVED]
 Step row `<View>` elements must never have a `height`, `minHeight`, or `maxHeight`.
 On 8×8 Square pages, the narrower text column causes steps to wrap to more lines than
 on letter-size pages, overflowing fixed containers and creating text overlap.
 Step rows must be auto-height (sized by content only) with `wrap={false}` to prevent
-mid-step page breaks. Current active bug as of session BOOK-PREVIEW-1.
+mid-step page breaks. Verified resolved as of session PDF-STEP-BADGE-FIX — all 6 templates
+have auto-height step rows with `wrap={false}`, no fixed heights.
 
-**PATTERN 14 — Page size must be a prop, never hardcoded**
+**PATTERN 14 — Page size must be a prop, never hardcoded** [RESOLVED]
 Templates must receive page dimensions via a `pageSize` prop from FlipbookPreview.
 Never hardcode `size="LETTER"` or any fixed size string in a `<Page>` component.
 FlipbookPreview must pass the correct dimensions for the selected size:
@@ -208,7 +210,7 @@ const PAGE_SIZES = {
   'square':      { width: 576, height: 576 },
 };
 ```
-Current active bug as of session BOOK-PREVIEW-1.
+Fixed in session CANVAS-FIXES-1 — all 6 templates use `getPageSize(pageSize)` prop.
 
 **PATTERN 15 — TOC leaders must use flexbox, not text-based dots**
 Text-based dot leaders (.......) wrap to multiple lines for long recipe titles, breaking
