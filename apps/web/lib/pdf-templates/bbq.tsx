@@ -862,7 +862,7 @@ function RecipePage({ recipe, strings, layout }: { recipe: CookbookRecipe; strin
                 marginTop: 14,
                 marginBottom: 8,
               }}>{step.group_label}</Text>}
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <View wrap={false} style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                 <StepBadge number={step.step_number} layout={layout} />
                 <View style={{ flex: 1, paddingLeft: 10 }}>
                   <Text style={{
