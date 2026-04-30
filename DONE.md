@@ -1,6 +1,48 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PHASE2-ADMIN-TEMPLATES) TYPE: FEATURE
+
+### Admin Template Management Dashboard — Phase 2 Complete
+
+**Purpose:** Build admin UI to manage, preview, upload, and enable/disable cookbook PDF templates.
+
+**Routes Created:**
+- `GET /api/admin/templates` — List all templates with manifest data
+- `POST /api/admin/templates` — Upload new template ZIP (component.tsx + manifest.json + thumbnail.png)
+- `PATCH /api/admin/templates/[id]` — Update template status (active/inactive/draft)
+- `DELETE /api/admin/templates/[id]` — Delete non-system templates only
+- `GET /api/admin/templates/[id]/preview` — Render template preview at any page size
+
+**UI Components:**
+- `/admin/templates` page with responsive grid layout
+- Template cards showing: thumbnail, name, status badge, page size pills, Lulu compliance, lock icon for system templates
+- Preview panel (slide-in from right) with page size tabs and PDF viewer
+- Upload modal with drag-and-drop zone, validation results display, draft/activate buttons
+- AI Generate tab placeholder (Coming in Phase 3)
+
+**Upload ZIP format:**
+- `component.tsx` — Template React component
+- `manifest.json` — Template metadata (id, name, settings, fonts)
+- `thumbnail.png` — Preview image (optional)
+
+**Validation checks on upload:**
+- ZIP file magic bytes verification
+- Required files present in ZIP root
+- Valid manifest.json structure (id, name, version, settings.palette, settings.fonts)
+- TemplateEngine.validate() on component code
+
+**New dependency:** jszip (for ZIP file parsing)
+
+**Admin nav:** Changed "Cookbook Templates" → "Templates" pointing to new `/admin/templates`
+
+**TypeScript:** 0 errors
+**Deployed:** HTTP 200 on chefsbk.app/admin/templates, PM2 online
+
+**Phase 2 is now COMPLETE.** Phase 3 (ai-template-generation.md) ready to run.
+
+---
+
 ## 2026-04-30 (session PHASE1-MINPRESENCE) TYPE: CODE FIX
 
 ### minPresenceAhead Fix — Phase 1 Final Polish

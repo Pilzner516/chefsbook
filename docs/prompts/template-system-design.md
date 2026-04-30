@@ -423,7 +423,7 @@ Log to ai_usage_log: action=generate_template, model=sonnet
 | Phase | Status | Session |
 |-------|--------|---------|
 | 1 | COMPLETE | TEMPLATE-ENGINE-REBUILD + TEMPLATE-STYLESHEETS-FIX + PHASE1-MINPRESENCE (minPresenceAhead 40→100) |
-| 2 | NOT STARTED | admin-template-dashboard.md |
+| 2 | COMPLETE | PHASE2-ADMIN-TEMPLATES (2026-04-30) |
 | 3 | NOT STARTED | ai-template-generation.md |
 
 ### Phase 1 must deliver:
