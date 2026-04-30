@@ -262,6 +262,19 @@ back to plain function invocation.
 Fixed in session HOTFIX-TEMPLATE-CALL-CHAIN. This error manifests as "TypeError: F is
 not a function" in PM2 logs and "Preview Generation Failed" in the browser UI.
 
+**Related failure mode — props type mismatch:**
+Templates must accept `TemplateContext` (from `engine/types.ts`), not `CookbookPdfOptions`.
+The `buildContext()` function returns `TemplateContext`, which includes pre-computed layout
+and strings. If a template is typed for `CookbookPdfOptions`, React error #130 occurs
+("Element type is invalid") and "Cannot read properties of null (reading 'props')".
+Fixed in session HOTFIX-TEMPLATE-PROPS — all 6 templates now use signature:
+```typescript
+export function TemplateDocument(ctx: TemplateContext) {
+  const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
+  // ...
+}
+```
+
 ---
 
 ### Lulu API integration
