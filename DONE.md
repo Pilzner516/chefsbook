@@ -1,6 +1,46 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PHASE1-COMPLETE) TYPE: VERIFICATION
+
+### PDF Template Audit — Phase 1 Complete
+
+**Purpose:** Verify that all 6 PDF templates correctly implement the dynamic layout pattern
+from session TEMPLATE-STYLESHEETS-FIX, and add permanent rules to publishing.md.
+
+**Pre-flight Audit Results:**
+
+1. **StyleSheet.create() audit** — PASS
+   - Ran: `grep -A 200 "StyleSheet.create" apps/web/lib/pdf-templates/*.tsx | grep "layout\."`
+   - Result: Empty output for all 6 templates
+   - Conclusion: No `layout.*` values inside StyleSheet.create() blocks
+
+2. **wrap={false} audit** — PASS
+   - Verified each `wrap={false}` usage:
+     - trattoria.tsx: ingredients section, individual step rows, notes box ✓
+     - garden.tsx: individual step rows, notes box ✓
+     - heritage.tsx: ingredients section, individual step rows, notes box ✓
+     - studio.tsx: individual step rows, notes box ✓
+     - nordic.tsx: individual step rows, notes box ✓
+     - bbq.tsx: ingredients section, individual step rows, notes box ✓
+   - Conclusion: wrap={false} correctly placed on individual items, not section containers
+
+3. **TypeScript** — PASS (0 errors)
+
+4. **Deployment** — PASS (chefsbk.app responding HTTP 200)
+
+**Files Updated:**
+- `.claude/agents/publishing.md` — added LAYOUT-7 and LAYOUT-8 permanent rules
+
+**Visual Verification Required:**
+- Generate PDF at Square (8×8) for each of the 6 templates
+- Confirm step text wraps within column, no text overflow
+- Confirm badges render with correct accent colors
+
+**Phase 2 Status:** admin-template-dashboard.md is now unblocked and ready to run
+
+---
+
 ## 2026-04-30 (session TEMPLATE-STYLESHEETS-FIX) TYPE: CODE FIX
 
 ### Dynamic Layout Migration for All PDF Templates

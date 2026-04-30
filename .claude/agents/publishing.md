@@ -412,6 +412,29 @@ const styles = StyleSheet.create({
 Never put `layout.*` values directly in `StyleSheet.create()` — they will be undefined
 or stale. This pattern was applied to all 6 templates in session TEMPLATE-STYLESHEETS-FIX.
 
+**LAYOUT-7 — StyleSheet.create() must NEVER contain layout.* values**
+StyleSheet.create() is computed at module load time when `layout` does not exist.
+Any `layout.*` reference evaluates to `undefined`. Use inline styles for all dynamic
+sizing. Only static values (colors, fontFamily, fontWeight, flex) may live in
+StyleSheet.create().
+
+Pre-wrapup verification command:
+```bash
+grep -A 200 "StyleSheet.create" apps/web/lib/pdf-templates/*.tsx | grep "layout\."
+# Must return EMPTY output
+```
+
+**LAYOUT-8 — wrap={false} must NEVER appear on a section container**
+`wrap={false}` must only appear on individual step rows and notes boxes. It must
+NEVER appear on a View that contains ALL steps or an entire section — this prevents
+pagination and causes text overflow on small page sizes like Square (8×8).
+
+Pre-wrapup verification command:
+```bash
+grep -n "wrap={false}" apps/web/lib/pdf-templates/*.tsx
+# Verify each result is on an individual step row or notes box, NOT a section container
+```
+
 ---
 
 ## Plan gating
