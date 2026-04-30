@@ -1,6 +1,74 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PHASE3-AI-TEMPLATE-GENERATION) TYPE: FEATURE
+
+### AI Template Generation — Phase 3 Complete
+
+**Purpose:** Add AI-powered template generation to the admin dashboard. Admins describe
+a template style in plain language, and Claude Sonnet generates a valid TypeScript
+template component.
+
+**Routes Created:**
+- `POST /api/admin/templates/generate` — Generate template from description + colors + style
+- `GET /api/admin/templates/generate` — Check rate limit status
+- `POST /api/admin/templates/save` — Save generated template to DB as draft
+
+**AI Generation Details:**
+- Model: Claude Sonnet (claude-sonnet-4-20250514) — code generation requires full capability
+- System prompt structure: 5 sections (role/format, technical constraints, Lulu spec, manifest structure, reference pattern)
+- Max tokens: 8000 (templates are ~4000-6000 tokens)
+- Typical response time: 15-30 seconds
+
+**Rate Limiting:**
+- 5 generations per admin per day
+- Tracked in ai_usage_log with action='generate_template'
+- Returns 429 with remaining count when limit reached
+- UI shows remaining count before generate button
+
+**Cost Tracking:**
+- Logged to ai_usage_log: action='generate_template', model='sonnet'
+- Estimated cost: ~$0.10-$0.15 per generation (6000-8000 tokens)
+
+**UI Components (AI Generate tab):**
+- Description textarea (10-300 chars, required)
+- Style selector pills (Minimal | Bold | Editorial | Rustic | Modern)
+- Accent color picker with hex input
+- Background color picker with hex input
+- Rate limit banner showing remaining/total
+- Generate button with loading spinner (15-30s)
+- Validation result display (green checkmarks / red X per rule)
+- Token count display
+- Regenerate button (same inputs, new generation)
+- Save as Draft button (only enabled if validation passes)
+
+**Validation on Generated Code:**
+- Uses existing TemplateEngine.validate() from Phase 1
+- Checks: no hardcoded page sizes, no emoji, no fixed step heights, correct export, approved imports
+- Generated templates MUST pass all validation before saving
+
+**Save Flow:**
+- Templates saved with status='draft'
+- Admin must manually activate via existing Enable button
+- Never auto-activates AI-generated templates
+
+**Files Created:**
+- `apps/web/app/api/admin/templates/generate/route.ts`
+- `apps/web/app/api/admin/templates/save/route.ts`
+
+**Files Modified:**
+- `apps/web/app/admin/templates/page.tsx` — Replaced Phase 2 placeholder with working AI Generate tab
+- `.claude/agents/ai-cost.md` — Added generate_template row
+- `.claude/agents/publishing.md` — Added AI-generated templates section
+- `docs/prompts/template-system-design.md` — Marked Phase 3 COMPLETE
+
+**TypeScript:** 0 errors
+**Deployed:** HTTP 200 on chefsbk.app/admin/templates, PM2 online
+
+**All three phases of the template system rebuild are now COMPLETE.**
+
+---
+
 ## 2026-04-30 (session PHASE2-ADMIN-TEMPLATES) TYPE: FEATURE
 
 ### Admin Template Management Dashboard — Phase 2 Complete

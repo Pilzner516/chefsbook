@@ -487,6 +487,24 @@ await logAiCall({
 
 ---
 
+## AI-generated templates (Phase 3)
+
+AI-generated templates use Claude Sonnet to produce a complete TypeScript template from
+a text description. Key rules:
+
+- **Same validation as uploaded templates**: AI-generated code runs through `validateTemplate()`
+  before saving. All LAYOUT rules apply — no hardcoded sizes, proper step structure, etc.
+- **Draft status required**: Generated templates are always saved with `status: 'draft'`.
+  Admin must preview and manually activate before the template is available for use.
+- **Admin-only**: The `/api/admin/templates/generate` route requires admin_users row.
+- **Rate limited**: 5 generations per admin per day. Tracked in ai_usage_log.
+- **Cost**: ~$0.10-$0.15 per generation (6000-8000 tokens via Sonnet).
+- **Uses TemplateEngine**: Once activated, AI-generated templates use the same
+  `TemplateEngine.getTemplate()` path as system templates. The `component_code` column
+  stores the TypeScript source for DB-loaded templates.
+
+---
+
 ## Go-live checklist — MUST be complete before LULU_SANDBOX=false
 
 - [ ] Get production Lulu API credentials from https://developers.lulu.com

@@ -52,6 +52,7 @@ Use the cheapest model that produces acceptable quality:
 | Purchase unit suggestions | claude-haiku-4-5 | Simple lookup/suggestion |
 | isActuallyARecipe verdict | claude-haiku-4-5 | Simple 3-way classification after completeness gate |
 | Sous Chef suggest (incomplete recipes) | claude-haiku-4-5 | Structured gap-fill, user-reviewed before save (~$0.0003–$0.0006/call) |
+| Template generation (admin) | claude-sonnet-4-6 | Code generation requires full Sonnet capability. Admin-only, rate limited to 5/day/admin. ~6000-8000 tokens/generation (~$0.10-$0.15/call) |
 
 **Never use Opus** for any automated background task. Opus is for one-off complex
 reasoning that a human initiates and waits for.
