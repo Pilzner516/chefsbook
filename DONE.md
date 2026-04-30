@@ -1,6 +1,48 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session HOTFIX-GENERATE-CONTEXT) TYPE: CODE FIX
+
+### Generate Route TemplateContext Integration
+
+**Root Cause:** The generate route was calling templates directly with `CookbookPdfOptions`
+instead of using `TemplateEngine.buildContext()` to construct a `TemplateContext`. While
+both types contained the same data, the architecture required templates to receive context
+through the engine's `buildContext()` method for consistency and to enable future template
+features like precomputed layout values.
+
+**Changes Made:**
+
+1. **Updated `TemplateContext` interface** (`apps/web/lib/pdf-templates/engine/types.ts`):
+   - Added `cookbook`, `recipes`, `chefsHatBase64`, and `language` fields
+   - Made TemplateContext a superset of CookbookPdfOptions for backward compatibility
+   - Templates can continue destructuring the same fields they always have
+
+2. **Updated `TemplateEngine.buildContext()`** (`apps/web/lib/pdf-templates/engine/index.ts`):
+   - Changed signature to accept full cookbook data instead of single recipe
+   - Added `CoverStyle` to imports
+   - Returns TemplateContext with all fields templates expect
+
+3. **Updated generate route** (`apps/web/app/api/print-cookbooks/[id]/generate/route.ts`):
+   - Lines 600-616: Added call to `TemplateEngine.buildContext()` before rendering
+   - Passes structured context to templates instead of raw pdfOptions
+   - Preserves preview/print path split exactly (no behavior changes)
+
+**Template Files:** UNCHANGED (per constraints) — templates continue to accept and destructure
+`{ cookbook, recipes, chefsHatBase64, language }` exactly as before, but now receive them
+via TemplateContext instead of CookbookPdfOptions.
+
+**Verification:**
+- TypeScript: 0 errors (verified with `npx tsc --noEmit`)
+- Deployed to RPi5: HTTP 200 on https://chefsbk.app/dashboard/print-cookbook
+- PM2: online, 0 restarts, no startup errors
+- Build: succeeded in ~27s (SWC lockfile warning is known non-fatal on arm64)
+
+**Follow-up:** Manual testing required — user should verify preview generation works
+and renders recipe content correctly for multiple templates and page sizes.
+
+---
+
 ## 2026-04-30 (session TEMPLATE-ENGINE-MIGRATION) TYPE: CODE FIX
 
 ### Template Engine Migration — All 6 Templates Now Use Layout Engine
