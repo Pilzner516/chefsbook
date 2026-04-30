@@ -62,7 +62,7 @@ export async function generateMealPlan(
       ? 'Vary cuisine every meal — maximum diversity'
       : 'Moderate variety — 3-4 different cuisines across the week';
 
-  const recipeSummary = userRecipes.slice(0, 50).map((r) =>
+  const recipeSummary = userRecipes.map((r) =>
     `{id:"${r.id}",title:"${r.title}",cuisine:"${r.cuisine ?? ''}",course:"${r.course ?? ''}",time:${r.total_minutes ?? 0}}`
   ).join('\n');
 
@@ -103,29 +103,31 @@ Cuisine: ${cuisineDirective}${preferences.preferredCuisines.length ? ` Preferred
 Effort level: ${effortRange}
 Adventurousness: ${preferences.adventurousness < 30 ? 'comfort food, familiar dishes' : preferences.adventurousness > 70 ? 'surprise me, try new things' : 'balanced mix'}
 Servings: ${preferences.servings}
-Source preference: ${preferences.source}
 ${nutritionSection}
 
-${preferences.source !== 'community' && userRecipes.length > 0 ? `User's recipe collection (prefer these when they match):\n${recipeSummary}` : ''}
+AVAILABLE RECIPES (you MUST ONLY select from this list):
+${recipeSummary || '(no recipes available)'}
 
-Rules:
-1. No protein repetition on consecutive days (no chicken Monday AND Tuesday dinner)
-2. Balance heavy and light meals within each day
-3. Breakfast should be quick unless effort=high
-4. Match cuisine variety directive
-5. Respect ALL dietary restrictions strictly
-6. If a matching recipe exists in user's collection, use its id
-7. For meals without a matching recipe: suggest a title only
-${hasNutritionGoals ? '8. If nutrition goals are set, distribute calories appropriately across meals (breakfast lighter, dinner larger)\n9. Include estimated nutrition for each meal' : ''}
+CRITICAL RULES:
+1. You MUST ONLY select recipes from the AVAILABLE RECIPES list above
+2. Do NOT invent, suggest, or reference ANY recipe not in the list
+3. If you cannot fill a meal slot with a recipe from the list, LEAVE IT EMPTY (set recipe_id to null and title to empty string)
+4. Every recipe_id you return MUST be an exact id from the list above
+5. No protein repetition on consecutive days (no chicken Monday AND Tuesday dinner)
+6. Balance heavy and light meals within each day
+7. Breakfast should be quick unless effort=high
+8. Match cuisine variety directive
+9. Respect ALL dietary restrictions strictly
+${hasNutritionGoals ? '10. If nutrition goals are set, distribute calories appropriately across meals (breakfast lighter, dinner larger)\n11. Include estimated nutrition for each meal' : ''}
 
 Return ONLY a JSON object with this structure:
 {
   "plan": [{
     "day": "monday",
     "slot": "dinner",
-    "recipe_id": "uuid-or-null",
-    "title": "Recipe Name",
-    "source": "my_recipe" | "ai_suggestion",
+    "recipe_id": "exact-uuid-from-list-or-null-if-empty",
+    "title": "Exact Recipe Title From List",
+    "source": "my_recipe",
     "cuisine": "Italian",
     "estimated_time": 30,
     "reason": "Brief explanation"${hasNutritionGoals ? ',\n    "estimated_nutrition": { "calories": 450, "protein_g": 35, "carbs_g": 40, "fat_g": 18 }' : ''}
@@ -133,7 +135,7 @@ Return ONLY a JSON object with this structure:
   "daily_summaries": { ... }` : ''}
 }
 
-Return exactly one entry per selected day+slot combination.`;
+IMPORTANT: Return exactly one entry per selected day+slot combination. If no suitable recipe exists for a slot, set recipe_id to null and title to empty string. NEVER invent recipe names.`;
 
   const text = await callClaude({ prompt, maxTokens: 6000 });
   try {
