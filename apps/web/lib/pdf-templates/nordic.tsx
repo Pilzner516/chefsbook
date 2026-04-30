@@ -712,7 +712,7 @@ function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: Cook
               paddingLeft: 4,
               borderLeftWidth: 2,
               borderLeftColor: BORDER,
-            }} wrap={false} minPresenceAhead={40}>
+            }} wrap={false} minPresenceAhead={100}>
               <Text style={{
                 fontSize: layout.fontCaption,
                 fontFamily: 'Work Sans',

@@ -921,7 +921,7 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize, layout }: { 
               flexDirection: 'row',
               alignItems: 'flex-start',
               marginBottom: layout.stepGap,
-            }} wrap={false} minPresenceAhead={40}>
+            }} wrap={false} minPresenceAhead={100}>
               <View style={{
                 width: layout.badgeSize,
                 height: layout.badgeSize,

@@ -852,7 +852,7 @@ function RecipePage({ recipe, strings, layout }: { recipe: CookbookRecipe; strin
           if (step.group_label) currentStepGroup = step.group_label;
 
           return (
-            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: layout.stepGap * 1.8 }}>
+            <View key={si} wrap={false} minPresenceAhead={100} style={{ marginBottom: layout.stepGap * 1.8 }}>
               {showGroupLabel && <Text style={{
                 fontSize: layout.fontCaption,
                 fontFamily: 'Oswald',

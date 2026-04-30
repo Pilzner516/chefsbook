@@ -725,7 +725,7 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize, layout }: { 
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
-            <View key={step.step_number} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: layout.stepGap }} wrap={false} minPresenceAhead={40}>
+            <View key={step.step_number} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: layout.stepGap }} wrap={false} minPresenceAhead={100}>
               {/* Badge - fixed size, never shrinks */}
               <View style={{
                 width: layout.badgeSize,

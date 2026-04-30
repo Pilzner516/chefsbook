@@ -705,7 +705,7 @@ function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: Cook
               position: 'relative',
               marginBottom: layout.stepGap * 2.4,
               paddingLeft: 8,
-            }} wrap={false} minPresenceAhead={40}>
+            }} wrap={false} minPresenceAhead={100}>
               <Text style={{
                 position: 'absolute',
                 top: -20,
