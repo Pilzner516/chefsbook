@@ -25,6 +25,7 @@ import type {
   CookbookRecipe,
   FillContent,
   CoverStyle,
+  TemplateComponent,
 } from './types';
 
 import { computeLayout, PAGE_SIZES, isValidPageSize } from './layout';
@@ -204,7 +205,7 @@ export class TemplateEngine {
    * Get a template component by ID
    * Returns the Document function for the specified template
    */
-  static getTemplate(id: string): typeof import('../trattoria').TrattoriaDocument {
+  static getTemplate(id: string): TemplateComponent {
     TemplateEngine.ensureFonts();
 
     // Import templates dynamically based on ID

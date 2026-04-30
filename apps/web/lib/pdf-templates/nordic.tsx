@@ -17,8 +17,8 @@ import {
   getPageSize,
   PageSizeKey,
 } from './types';
-import { getStrings, type BookStrings } from './book-strings';
-import { computeLayout, type ComputedLayout } from './engine';
+import type { BookStrings } from './book-strings';
+import type { ComputedLayout, TemplateContext } from './engine/types';
 
 // Register Work Sans only (Nordic template uses single font family)
 Font.register({
@@ -799,10 +799,9 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
   );
 }
 
-export function NordicDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
-  const strings = getStrings(language ?? 'en');
+export function NordicDocument(ctx: TemplateContext) {
+  const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
   const pageSize = cookbook.pageSize ?? 'letter';
-  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 20);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);

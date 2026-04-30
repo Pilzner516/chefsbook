@@ -17,8 +17,8 @@ import {
   getPageSize,
   PageSizeKey,
 } from './types';
-import { getStrings, type BookStrings } from './book-strings';
-import { computeLayout, type ComputedLayout } from './engine';
+import type { BookStrings } from './book-strings';
+import type { ComputedLayout, TemplateContext } from './engine/types';
 
 // Register fonts via jsDelivr CDN (reliable TTF files)
 Font.register({
@@ -792,10 +792,9 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
   );
 }
 
-export function TrattoriaDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
-  const strings = getStrings(language ?? 'en');
+export function TrattoriaDocument(ctx: TemplateContext) {
+  const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
   const pageSize = cookbook.pageSize ?? 'letter';
-  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
