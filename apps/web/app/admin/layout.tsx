@@ -29,7 +29,7 @@ const DEFAULT_REORDERABLE_NAV: AdminNavItem[] = [
   { key: 'copyright', href: '/admin/copyright', label: 'Copyright' },
   { key: 'costs', href: '/admin/costs', label: 'Costs' },
   { key: 'nutrition', href: '/admin/nutrition', label: 'Nutrition' },
-  { key: 'cookbook-templates', href: '/admin/cookbook-templates', label: 'Cookbook Templates' },
+  { key: 'templates', href: '/admin/templates', label: 'Templates' },
 ];
 
 const FIXED_NAV: AdminNavItem[] = [
