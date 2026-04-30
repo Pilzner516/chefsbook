@@ -1,6 +1,42 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session TEMPLATE-ENGINE-REBUILD) TYPE: FEATURE
+
+### Template Engine Infrastructure — Phase 1 of 3
+
+**Purpose:** Create a proportional layout engine that derives all sizing from page dimensions, eliminating hardcoded Letter-size values and enabling true multi-page-size support.
+
+**Deliverables:**
+
+1. **Engine directory** (`apps/web/lib/pdf-templates/engine/`):
+   - `types.ts` — ComputedLayout, TemplateContext, TemplateManifest, TemplateSettings interfaces
+   - `layout.ts` — computeLayout() function with PAGE_SIZES constant (5 sizes)
+   - `register-fonts.ts` — centralized font registration (PATTERN 11: no Inter italic)
+   - `validate.ts` — template code validation stubs for Phase 2
+   - `test-recipe.ts` — standardized test data for template development
+   - `index.ts` — TemplateEngine class with getTemplate(), computeLayout(), buildContext()
+
+2. **Generate route updated** (`apps/web/app/api/print-cookbooks/[id]/generate/route.ts`):
+   - Replaced 6 individual template imports with single TemplateEngine import
+   - Template selection via `TemplateEngine.getTemplate(coverInfo.cover_style)`
+
+3. **Migration 066** (`supabase/migrations/20260430_066_template_engine_columns.sql`):
+   - Added manifest, component_code, is_system, status, supported_page_sizes columns
+   - All 6 templates marked is_system=true, lulu_compliant=true, 5 page sizes
+
+**Verification:**
+- TypeScript: 0 errors
+- Migration applied via docker exec (SSH psql timed out)
+- Deployed to RPi5: HTTP 200 on chefsbk.app
+- DB verified: all 6 templates have is_system=true, status=active, 5 supported page sizes
+
+**Next phases:**
+- Phase 2: Admin template dashboard (list, enable/disable, preview)
+- Phase 3: AI template generation pipeline
+
+---
+
 ## 2026-04-30 (session BBQ-STEP-BADGE-REGRESSION-FIX) TYPE: CODE FIX
 
 ### BBQ Step Badge Regression Fix
