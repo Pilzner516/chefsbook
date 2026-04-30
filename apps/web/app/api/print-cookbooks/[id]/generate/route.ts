@@ -600,11 +600,7 @@ export async function POST(
 
     // Generate interior PDF using the appropriate template
     // TemplateEngine ensures fonts are registered before template use
-    console.log('[DEBUG] Requesting template for cover_style:', coverInfo.cover_style);
     const TemplateDocument = TemplateEngine.getTemplate(coverInfo.cover_style);
-    console.log('[DEBUG] TemplateDocument type:', typeof TemplateDocument);
-    console.log('[DEBUG] TemplateDocument is function:', typeof TemplateDocument === 'function');
-    console.log('[DEBUG] TemplateDocument name:', TemplateDocument?.name ?? 'undefined');
 
     // Build TemplateContext from pdfOptions
     const context = TemplateEngine.buildContext(
@@ -620,27 +616,10 @@ export async function POST(
         isPreview: isPreview,
       }
     );
-    console.log('[DEBUG] Context keys:', Object.keys(context));
-    console.log('[DEBUG] Context.layout defined:', !!context.layout);
-    console.log('[DEBUG] Context.strings defined:', !!context.strings);
-    console.log('[DEBUG] Context.recipes count:', context.recipes?.length);
 
     // Render template as React element (not plain function call)
     // renderToBuffer expects React.ReactElement, not function result
-    let interiorBuffer: Uint8Array;
-    try {
-      console.log('[DEBUG] Calling React.createElement with TemplateDocument');
-      const element = React.createElement(TemplateDocument, context);
-      console.log('[DEBUG] createElement succeeded, element type:', element?.type);
-      console.log('[DEBUG] element.type name:', (element?.type as any)?.name ?? 'no name');
-      interiorBuffer = await renderToBuffer(element);
-      console.log('[DEBUG] renderToBuffer succeeded, buffer length:', interiorBuffer.length);
-    } catch (err) {
-      console.error('[DEBUG] createElement or renderToBuffer failed:', err);
-      console.error('[DEBUG] Error name:', err instanceof Error ? err.name : 'unknown');
-      console.error('[DEBUG] Error message:', err instanceof Error ? err.message : 'unknown');
-      throw err;
-    }
+    const interiorBuffer = await renderToBuffer(React.createElement(TemplateDocument, context));
 
     // Generate cover PDF — per pdf-design.md
     // Map new templates to their base cover style for print cover generation
