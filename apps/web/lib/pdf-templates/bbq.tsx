@@ -500,6 +500,12 @@ const styles = StyleSheet.create({
   },
 });
 
+const StepBadge = ({ number }: { number: number }) => (
+  <View style={{ width: 22, height: 22, backgroundColor: AMBER, borderRadius: 11, justifyContent: 'center', alignItems: 'center' }}>
+    <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>{String(number)}</Text>
+  </View>
+);
+
 function CoverPage({ cookbook, chefsHatBase64, strings, pageSize }: { cookbook: CookbookPdfOptions['cookbook']; chefsHatBase64?: string | null; strings: BookStrings; pageSize: PageSizeKey }) {
   if (cookbook.cover_image_url) {
     return (
@@ -748,14 +754,13 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
           const showGroupLabel = step.group_label && step.group_label !== currentStepGroup;
           if (step.group_label) currentStepGroup = step.group_label;
 
-          // Map step numbers to emoji keycap digits (colorful)
-          const emojiDigits = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-          const circledNum = emojiDigits[step.step_number - 1] || `${step.step_number}.`;
           return (
             <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 18 }}>
               {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
               <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                <Text style={{ width: 24, fontSize: 14, marginRight: 8 }}>{circledNum}</Text>
+                <View style={{ marginRight: 10 }}>
+                  <StepBadge number={step.step_number} />
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 10, fontFamily: 'Source Sans Pro', fontWeight: 400, color: '#2d2926', lineHeight: 1.6 }}>
                     {fixTimerCharacter(step.instruction)}
