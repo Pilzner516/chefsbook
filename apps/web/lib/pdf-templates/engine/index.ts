@@ -24,6 +24,7 @@ import type {
   ValidationResult,
   CookbookRecipe,
   FillContent,
+  CoverStyle,
 } from './types';
 
 import { computeLayout, PAGE_SIZES, isValidPageSize } from './layout';
@@ -260,7 +261,21 @@ export class TemplateEngine {
    * Build a TemplateContext for rendering
    */
   static buildContext(
-    recipe: CookbookRecipe,
+    data: {
+      cookbook: {
+        title: string;
+        subtitle?: string;
+        author_name: string;
+        cover_style: CoverStyle;
+        cover_image_url?: string;
+        selected_image_urls?: Record<string, string[]>;
+        foreword?: string;
+        pageSize?: PageSizeKey;
+      };
+      recipes: CookbookRecipe[];
+      chefsHatBase64?: string | null;
+      language?: string;
+    },
     pageSize: PageSizeKey | PageDimensions,
     templateId: string,
     options?: {
@@ -270,10 +285,17 @@ export class TemplateEngine {
   ): TemplateContext {
     const layout = computeLayout(pageSize);
     const settings = TemplateEngine.getSettings(templateId);
-    const strings = getStrings('en');
+    const strings = getStrings(data.language ?? 'en');
 
     return {
-      recipe,
+      // Use first recipe as the primary recipe for single-recipe rendering
+      recipe: data.recipes[0] || ({} as CookbookRecipe),
+      // Full cookbook data for Document-level templates
+      cookbook: data.cookbook,
+      recipes: data.recipes,
+      chefsHatBase64: data.chefsHatBase64,
+      language: (data.language ?? 'en') as any,
+      // Computed values
       layout,
       settings,
       strings,

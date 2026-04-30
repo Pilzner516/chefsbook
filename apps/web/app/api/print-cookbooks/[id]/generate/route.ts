@@ -601,7 +601,22 @@ export async function POST(
     // TemplateEngine ensures fonts are registered before template use
     const TemplateDocument = TemplateEngine.getTemplate(coverInfo.cover_style);
 
-    const interiorBuffer = await renderToBuffer(TemplateDocument(pdfOptions));
+    // Build TemplateContext from pdfOptions
+    const context = TemplateEngine.buildContext(
+      {
+        cookbook: pdfOptions.cookbook,
+        recipes: pdfOptions.recipes,
+        chefsHatBase64: pdfOptions.chefsHatBase64,
+        language: pdfOptions.language,
+      },
+      pdfOptions.cookbook.pageSize ?? 'letter',
+      coverInfo.cover_style,
+      {
+        isPreview: isPreview,
+      }
+    );
+
+    const interiorBuffer = await renderToBuffer(TemplateDocument(context));
 
     // Generate cover PDF — per pdf-design.md
     // Map new templates to their base cover style for print cover generation

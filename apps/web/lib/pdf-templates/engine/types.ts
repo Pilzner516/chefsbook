@@ -103,7 +103,23 @@ export interface TemplateSettings {
  * Full context passed to every template component
  */
 export interface TemplateContext {
+  // Single recipe rendering (used by page components)
   recipe: import('../types').CookbookRecipe;
+  // Full cookbook data (used by Document-level templates)
+  cookbook: {
+    title: string;
+    subtitle?: string;
+    author_name: string;
+    cover_style: import('../types').CoverStyle;
+    cover_image_url?: string;
+    selected_image_urls?: Record<string, string[]>;
+    foreword?: string;
+    pageSize?: import('../types').PageSizeKey;
+  };
+  recipes: import('../types').CookbookRecipe[];
+  chefsHatBase64?: string | null;
+  language?: import('../book-strings').BookLocale;
+  // Computed layout values
   layout: ComputedLayout;
   settings: TemplateSettings;
   strings: import('../book-strings').BookStrings;
