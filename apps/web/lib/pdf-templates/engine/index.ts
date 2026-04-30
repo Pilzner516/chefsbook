@@ -207,29 +207,56 @@ export class TemplateEngine {
    */
   static getTemplate(id: string): TemplateComponent {
     TemplateEngine.ensureFonts();
+    console.log('[TemplateEngine] getTemplate called with id:', id);
 
     // Import templates dynamically based on ID
+    let mod: any;
+    let exportName: string;
     switch (id) {
       case 'trattoria':
       case 'classic':
-        return require('../trattoria').TrattoriaDocument;
+        mod = require('../trattoria');
+        exportName = 'TrattoriaDocument';
+        break;
       case 'studio':
       case 'modern':
-        return require('../studio').StudioDocument;
+        mod = require('../studio');
+        exportName = 'StudioDocument';
+        break;
       case 'garden':
       case 'minimal':
-        return require('../garden').GardenDocument;
+        mod = require('../garden');
+        exportName = 'GardenDocument';
+        break;
       case 'heritage':
-        return require('../heritage').HeritageDocument;
+        mod = require('../heritage');
+        exportName = 'HeritageDocument';
+        break;
       case 'nordic':
-        return require('../nordic').NordicDocument;
+        mod = require('../nordic');
+        exportName = 'NordicDocument';
+        break;
       case 'bbq':
-        return require('../bbq').BBQDocument;
+        mod = require('../bbq');
+        exportName = 'BBQDocument';
+        break;
       default:
-        // Default to trattoria for unknown IDs
         console.warn(`Unknown template ID "${id}", falling back to trattoria`);
-        return require('../trattoria').TrattoriaDocument;
+        mod = require('../trattoria');
+        exportName = 'TrattoriaDocument';
     }
+
+    console.log('[TemplateEngine] Module keys:', Object.keys(mod || {}));
+    console.log('[TemplateEngine] Looking for export:', exportName);
+    console.log('[TemplateEngine] Export type:', typeof mod?.[exportName]);
+    console.log('[TemplateEngine] Default export type:', typeof mod?.default);
+
+    const component = mod?.[exportName];
+    if (!component) {
+      console.error('[TemplateEngine] CRITICAL: Export not found!');
+      console.error('[TemplateEngine] Available exports:', Object.keys(mod || {}));
+    }
+    return component;
   }
 
   /**
