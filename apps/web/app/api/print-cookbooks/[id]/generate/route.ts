@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, listRecipePhotos, PLAN_LIMITS } from '@chefsbook/db';
 import type { PlanTier, RecipeWithDetails } from '@chefsbook/db';
 import { renderToBuffer } from '@react-pdf/renderer';
+import React from 'react';
 import sharp from 'sharp';
 import Replicate from 'replicate';
 import { CookbookCoverDocument } from './CookbookPdf';
@@ -616,7 +617,9 @@ export async function POST(
       }
     );
 
-    const interiorBuffer = await renderToBuffer(TemplateDocument(context));
+    // Render template as React element (not plain function call)
+    // renderToBuffer expects React.ReactElement, not function result
+    const interiorBuffer = await renderToBuffer(React.createElement(TemplateDocument, context));
 
     // Generate cover PDF — per pdf-design.md
     // Map new templates to their base cover style for print cover generation
