@@ -33,6 +33,14 @@ import { registerFonts, areFontsRegistered } from './register-fonts';
 import { validateTemplate, quickValidate } from './validate';
 import { getStrings } from './types';
 
+// Static imports for all templates — ensures proper bundling
+import { TrattoriaDocument } from '../trattoria';
+import { StudioDocument } from '../studio';
+import { GardenDocument } from '../garden';
+import { HeritageDocument } from '../heritage';
+import { NordicDocument } from '../nordic';
+import { BBQDocument } from '../bbq';
+
 // Re-export for convenience
 export { computeLayout, PAGE_SIZES, isValidPageSize } from './layout';
 export { registerFonts, areFontsRegistered } from './register-fonts';
@@ -207,56 +215,29 @@ export class TemplateEngine {
    */
   static getTemplate(id: string): TemplateComponent {
     TemplateEngine.ensureFonts();
-    console.log('[TemplateEngine] getTemplate called with id:', id);
 
-    // Import templates dynamically based on ID
-    let mod: any;
-    let exportName: string;
+    // Use statically imported templates (not dynamic require)
+    // This ensures proper bundling with webpack/Next.js
     switch (id) {
       case 'trattoria':
       case 'classic':
-        mod = require('../trattoria');
-        exportName = 'TrattoriaDocument';
-        break;
+        return TrattoriaDocument;
       case 'studio':
       case 'modern':
-        mod = require('../studio');
-        exportName = 'StudioDocument';
-        break;
+        return StudioDocument;
       case 'garden':
       case 'minimal':
-        mod = require('../garden');
-        exportName = 'GardenDocument';
-        break;
+        return GardenDocument;
       case 'heritage':
-        mod = require('../heritage');
-        exportName = 'HeritageDocument';
-        break;
+        return HeritageDocument;
       case 'nordic':
-        mod = require('../nordic');
-        exportName = 'NordicDocument';
-        break;
+        return NordicDocument;
       case 'bbq':
-        mod = require('../bbq');
-        exportName = 'BBQDocument';
-        break;
+        return BBQDocument;
       default:
         console.warn(`Unknown template ID "${id}", falling back to trattoria`);
-        mod = require('../trattoria');
-        exportName = 'TrattoriaDocument';
+        return TrattoriaDocument;
     }
-
-    console.log('[TemplateEngine] Module keys:', Object.keys(mod || {}));
-    console.log('[TemplateEngine] Looking for export:', exportName);
-    console.log('[TemplateEngine] Export type:', typeof mod?.[exportName]);
-    console.log('[TemplateEngine] Default export type:', typeof mod?.default);
-
-    const component = mod?.[exportName];
-    if (!component) {
-      console.error('[TemplateEngine] CRITICAL: Export not found!');
-      console.error('[TemplateEngine] Available exports:', Object.keys(mod || {}));
-    }
-    return component;
   }
 
   /**
