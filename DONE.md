@@ -1,6 +1,34 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session TEMPLATE-STEP-ROW-WRAP) TYPE: CODE FIX
+
+### BBQ Template Step Flex Row wrap={false} Fix
+
+**Problem:** In BBQ template, `wrap={false}` was on the outer container but NOT on the
+inner flex row that contains the badge and text. react-pdf does not cascade wrap
+prevention to child elements, so the badge/text could still split across pages.
+
+**Audit Results:**
+- trattoria: flex row has wrap={false} ✅
+- bbq: flex row missing wrap={false} ❌ FIXED
+- garden: flex row has wrap={false} ✅
+- nordic: vertical stack (no flex row) ✅
+- studio: vertical stack (no flex row) ✅
+- heritage: flex row has wrap={false} ✅
+
+**Fix Applied:**
+- Added `wrap={false}` to inner flex row in bbq.tsx (line 865)
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/bbq.tsx` — added wrap={false} to step flex row
+- `.claude/agents/publishing.md` — enhanced LAYOUT-8 with flex row clarification
+
+**TypeScript:** 0 errors
+**Deployed:** HTTP 200, PM2 online
+
+---
+
 ## 2026-04-30 (session PHASE1-TEMPLATE-AUDIT) TYPE: CODE FIX
 
 ### PDF Template LAYOUT-8 Compliance Fix

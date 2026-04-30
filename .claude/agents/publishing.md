@@ -429,10 +429,16 @@ grep -A 200 "StyleSheet.create" apps/web/lib/pdf-templates/*.tsx | grep "layout\
 NEVER appear on a View that contains ALL steps or an entire section — this prevents
 pagination and causes text overflow on small page sizes like Square (8×8).
 
+**CRITICAL: wrap={false} must be on the FLEX ROW itself** — the View with 
+`flexDirection: 'row'` that contains the badge and text. If a step has an outer
+wrapper container AND an inner flex row, wrap={false} must be on the inner flex row.
+react-pdf does NOT cascade wrap prevention to child elements.
+
 Pre-wrapup verification command:
 ```bash
 grep -n "wrap={false}" apps/web/lib/pdf-templates/*.tsx
 # Verify each result is on an individual step row or notes box, NOT a section container
+# For flex row steps, verify wrap={false} is on the flexDirection: 'row' View
 ```
 
 ---
