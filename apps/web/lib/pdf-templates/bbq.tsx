@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
 });
 
 const StepBadge = ({ number }: { number: number }) => (
-  <View style={{ width: 22, height: 22, backgroundColor: AMBER, borderRadius: 11, justifyContent: 'center', alignItems: 'center' }}>
+  <View style={{ width: 22, height: 22, backgroundColor: CHARCOAL, borderRadius: 11, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
     <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>{String(number)}</Text>
   </View>
 );
@@ -758,11 +758,9 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
             <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 18 }}>
               {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
               <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                <View style={{ marginRight: 10 }}>
-                  <StepBadge number={step.step_number} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 10, fontFamily: 'Source Sans Pro', fontWeight: 400, color: '#2d2926', lineHeight: 1.6 }}>
+                <StepBadge number={step.step_number} />
+                <View style={{ flex: 1, paddingLeft: 10 }}>
+                  <Text style={{ fontSize: 10, fontFamily: 'Source Sans Pro', fontWeight: 400, color: CHARCOAL, lineHeight: 1.6 }}>
                     {fixTimerCharacter(step.instruction)}
                     {step.timer_minutes ? ` (${step.timer_minutes} min)` : ''}
                   </Text>
