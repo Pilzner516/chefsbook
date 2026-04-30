@@ -1,6 +1,49 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session TEMPLATE-STYLESHEETS-FIX) TYPE: CODE FIX
+
+### Dynamic Layout Migration for All PDF Templates
+
+**Root Cause:** StyleSheet.create() is evaluated at module load time, so hardcoded pixel values
+(fontSize, padding, margin) were calibrated for Letter (8.5×11) and didn't scale for Square (8×8)
+pages, causing text overflow and cramped layouts.
+
+**The Fix:** All 6 PDF templates migrated to use dynamic `ComputedLayout` values instead of
+hardcoded pixels. Every page component now accepts `layout: ComputedLayout` instead of
+`pageSize: PageSizeKey` and uses computed values like `layout.fontTitle`, `layout.marginOuter`,
+`layout.sectionGap` etc.
+
+**Pattern Applied:**
+```typescript
+// BEFORE:
+function CoverPage({ pageSize }: { pageSize: PageSizeKey }) {
+  return (
+    <Page size={getPageSize(pageSize)} style={styles.coverPage}>
+      <Text style={styles.coverTitle}>{title}</Text>  // fontSize: 52 (hardcoded)
+
+// AFTER:
+function CoverPage({ layout }: { layout: ComputedLayout }) {
+  return (
+    <Page size={{ width: layout.width, height: layout.height }} style={styles.coverPage}>
+      <Text style={{ ...styles.coverTitle, fontSize: layout.fontTitle }}>{title}</Text>
+```
+
+**Files Changed:**
+- `apps/web/lib/pdf-templates/trattoria.tsx`
+- `apps/web/lib/pdf-templates/garden.tsx`
+- `apps/web/lib/pdf-templates/nordic.tsx`
+- `apps/web/lib/pdf-templates/studio.tsx`
+- `apps/web/lib/pdf-templates/heritage.tsx`
+- `apps/web/lib/pdf-templates/bbq.tsx`
+
+**Verification:**
+- TypeScript: 0 errors
+- Deployed to RPi5 staging
+- **Requires manual test:** Generate PDF at Letter AND Square sizes, verify no text overflow
+
+---
+
 ## 2026-04-30 (session HOTFIX-TEMPLATE-COMPLETE) TYPE: CODE FIX
 
 ### PDF Template Rendering — Static Imports Fix (Final Resolution)
