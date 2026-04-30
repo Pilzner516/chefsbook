@@ -1,6 +1,35 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session PUBLISHING-AGENT) TYPE: HOUSEKEEPING
+
+### Install Publishing Agent
+
+**Task:** Install new specialist agent file (`publishing.md`) into the project's agent system.
+
+**Deliverables:**
+1. `.claude/agents/publishing.md` — created from `docs/prompts/publishing.md` (350 lines, exact copy)
+2. `CLAUDE.md` — updated in two places:
+   - Agent lookup table: added `publishing.md (MANDATORY)` row below `pdf-design.md`
+   - SESSION START INSTRUCTIONS: added step 8 for publishing.md, renumbered steps 9-12
+
+**Source file:** `docs/prompts/publishing.md` (unchanged, remains source of truth)
+
+**Scope:** This agent owns the production pipeline for Lulu print-on-demand:
+- Lulu API integration (orders, webhooks, pricing)
+- Stripe payment flow for print orders
+- Image upscaling for print (Replicate Real-ESRGAN)
+- Cover PDF generation
+- Canvas editor state management
+
+**Relationship to pdf-design.md:** Complementary agents:
+- `pdf-design.md` = rendering (templates, fonts, layout)
+- `publishing.md` = production pipeline (Lulu API, Stripe, storage, image pipeline)
+
+**No application code, database, or deployment changes.**
+
+---
+
 ## 2026-04-30 (session MEAL-PLAN-FIX) TYPE: CODE FIX
 
 ### AI Meal Planner Phantom Recipe Bug Fix

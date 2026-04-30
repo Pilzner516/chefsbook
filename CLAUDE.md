@@ -33,6 +33,7 @@ agents before writing any code.
 | Any change to apps/web | deployment.md (ALWAYS for web sessions) |
 | Any feature that calls Claude API or @chefsbook/ai | ai-cost.md (MANDATORY) |
 | Any PDF generation or print template | pdf-design.md (MANDATORY) |
+| Any Lulu order, cookbook PDF generation, cover build, canvas editor, or image upscaling for print | publishing.md (MANDATORY) |
 | Before modifying ANY existing feature | feature-registry.md (ALWAYS) |
 
 `testing.md`, `deployment.md`, and `feature-registry.md` are MANDATORY on every session.
@@ -60,10 +61,11 @@ Every Claude Code session MUST begin with these steps in order:
 5. Read .claude/agents/feature-registry.md — check status of any feature your session will touch before writing a single line of code
 6. If session touches web: read .claude/agents/deployment.md — MANDATORY
 7. If session touches any AI feature or @chefsbook/ai: read .claude/agents/ai-cost.md
-8. Read all other applicable agents based on the lookup table above
-9. Run ALL pre-flight checklists from every agent loaded
-10. For any table you will query: run `\d tablename` on RPi5 to verify columns
-11. Only then begin writing code
+8. If session touches Lulu orders, cookbook PDF generation, cover builds, canvas editor, or image upscaling: read .claude/agents/publishing.md (MANDATORY)
+9. Read all other applicable agents based on the lookup table above
+10. Run ALL pre-flight checklists from every agent loaded
+11. For any table you will query: run `\d tablename` on RPi5 to verify columns
+12. Only then begin writing code
 
 Do not skip any step. Agents exist because the same bugs have been introduced
 and fixed 3-5 times each. Reading the agents prevents repeating known mistakes.
