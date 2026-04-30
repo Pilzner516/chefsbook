@@ -391,6 +391,27 @@ size variation — trust its output.
 ```
 Never use `size="LETTER"` or any hardcoded string.
 
+**LAYOUT-6 — StyleSheet.create is evaluated at module load, use inline overrides**
+`StyleSheet.create()` runs once at module load time — any hardcoded pixel values are
+frozen forever. To use dynamic layout values, spread the static base style and override
+with computed values inline:
+```tsx
+// Static base (runs once)
+const styles = StyleSheet.create({
+  coverTitle: {
+    fontFamily: 'Oswald',
+    fontWeight: 700,
+    color: WARM_WHITE,
+    textTransform: 'uppercase',
+  },
+});
+
+// Dynamic override at render time
+<Text style={{ ...styles.coverTitle, fontSize: layout.fontTitle }}>
+```
+Never put `layout.*` values directly in `StyleSheet.create()` — they will be undefined
+or stale. This pattern was applied to all 6 templates in session TEMPLATE-STYLESHEETS-FIX.
+
 ---
 
 ## Plan gating
