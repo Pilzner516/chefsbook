@@ -1,6 +1,32 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session CANVAS-FIXES-2) TYPE: CODE FIX
+
+### Shopping List Print + Production CSS Fix
+
+**Shopping List Print Improvements:**
+- Left-aligned quantity column (was right-aligned, looked uneven with varying lengths)
+- Tripled logo size for branding (24pt → 72pt)
+
+**Critical Production CSS Fix:**
+- Fixed Tailwind custom theme classes (`cb-bg`, `cb-primary`, `cb-text`, etc.) missing from production build
+- Root cause: `npx next build apps/web` from repo root caused Tailwind to look for content at wrong relative paths
+- Fix: Must build from `apps/web` directory so Tailwind content paths (`./app/**/*.{ts,tsx}`) resolve correctly
+- Site was completely unstyled in production until this fix
+
+**PDF Step Numbers (BBQ template):**
+- Added emoji keycap step numbers (1️⃣2️⃣3️⃣) with 18pt spacing between steps
+- Note: react-pdf may not render emoji - needs verification
+
+**Files Modified:**
+- `apps/web/app/globals.css` — left-align qty, 72pt logo
+- `apps/web/lib/pdf-templates/bbq.tsx` — emoji keycap step numbers
+
+**Deployed:** RPi5 via clean rebuild from correct directory
+
+---
+
 ## 2026-04-29 (session CANVAS-FIXES-1) TYPE: CODE FIX
 
 ### Three Print Cookbook Canvas Fixes
