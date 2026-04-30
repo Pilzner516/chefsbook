@@ -296,6 +296,8 @@
 | AI cost dashboard | LIVE | /admin/costs, /api/admin?page=costs | 174, ADMIN-COSTS-1 | Summary cards (month/30d/alltime/top feature), service balance cards (Anthropic/Replicate/OpenAI with billing links), daily spend chart (30d), spending by service/model/feature tables, cost by action/model bars, top users, throttled users |
 | Throttle system | LIVE | packages/db (checkAndUpdateThrottle, isUserThrottled), user_throttle table | 174 | Yellow/red levels from system_settings; grace period for new users; admin override; auto-restore at billing cycle |
 | Admin overview overhaul | LIVE | /admin page.tsx | 174 | Command center: 6 health KPIs, MRR/AI cost/margin, plan distribution, quick action links |
+| Template management dashboard | LIVE | /admin/templates, /api/admin/templates/* | PHASE2-ADMIN-TEMPLATES | Admin-only; system template list; preview panel; upload flow; enable/disable |
+| AI template generation | LIVE | /api/admin/templates/generate, /api/admin/templates/save, /admin/templates | PHASE3-AI-TEMPLATE-GENERATION | Admin-only; 5/day rate limit; Sonnet ~$0.10-$0.15/call; style options + color pickers; validation + draft status |
 
 ---
 
