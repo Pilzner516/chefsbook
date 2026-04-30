@@ -1,6 +1,55 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session TEMPLATE-ENGINE-MIGRATION) TYPE: CODE FIX
+
+### Template Engine Migration — All 6 Templates Now Use Layout Engine
+
+**Purpose:** Migrate all 6 PDF templates to use `computeLayout()` for all sizing values,
+eliminating hardcoded Letter-size values and enabling proper multi-page-size rendering.
+
+**Changes Applied to Each Template:**
+
+1. **Import engine:** Added `import { computeLayout, type ComputedLayout } from './engine'`
+2. **Compute layout:** Added `const layout = computeLayout(pageSize)` in Document function
+3. **Page sizing:** Changed from `getPageSize(pageSize)` to `{ width: layout.width, height: layout.height }`
+4. **Margin values:** Replaced hardcoded padding with `layout.marginTop`, `layout.marginBottom`, `layout.marginOuter`, `layout.marginInner`
+5. **Font sizes:** Replaced hardcoded font sizes with `layout.fontTitle`, `layout.fontSubtitle`, `layout.fontBody`, `layout.fontCaption`, `layout.fontStepNumber`
+6. **Step badges:** Updated to use `layout.badgeSize`, `layout.badgeFontSize`, `layout.stepGap`
+7. **Section gaps:** Replaced hardcoded margins with `layout.sectionGap`
+8. **Line height:** Using `layout.lineHeight` instead of hardcoded values
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/trattoria.tsx` — 18 layout.* references
+- `apps/web/lib/pdf-templates/garden.tsx` — 18 layout.* references  
+- `apps/web/lib/pdf-templates/nordic.tsx` — 22 layout.* references
+- `apps/web/lib/pdf-templates/studio.tsx` — 19 layout.* references
+- `apps/web/lib/pdf-templates/heritage.tsx` — 25 layout.* references
+- `apps/web/lib/pdf-templates/bbq.tsx` — 27 layout.* references + default export added
+
+**Render Test Results (30 combinations):**
+```
+trattoria:   letter ✓  trade ✓  large-trade ✓  digest ✓  square ✓
+garden:      letter ✓  trade ✓  large-trade ✓  digest ✓  square ✓
+nordic:      letter ✓  trade ✓  large-trade ✓  digest ✓  square ✓
+studio:      letter ✓  trade ✓  large-trade ✓  digest ✓  square ✓
+heritage:    letter ✓  trade ✓  large-trade ✓  digest ✓  square ✓
+bbq:         letter ✓  trade ✓  large-trade ✓  digest ✓  square ✓
+```
+
+**Verification:**
+- TypeScript: 0 errors
+- `grep -c "layout\."` confirms engine usage in all templates (18-27 references each)
+- Deployed to RPi5: HTTP 200 on chefsbk.app
+- PM2: online, no startup errors (SWC warning is known non-fatal on arm64)
+
+**Phase Status:**
+- Phase 1 infrastructure (TEMPLATE-ENGINE-REBUILD): COMPLETE
+- Phase 1 migration (this session): COMPLETE
+- Phase 2 (admin-template-dashboard.md): Ready to run
+
+---
+
 ## 2026-04-30 (session TEMPLATE-ENGINE-REBUILD) TYPE: FEATURE
 
 ### Template Engine Infrastructure — Phase 1 of 3

@@ -18,6 +18,7 @@ import {
   PageSizeKey,
 } from './types';
 import { getStrings, type BookStrings } from './book-strings';
+import { computeLayout, type ComputedLayout } from './engine';
 
 // Register fonts via jsDelivr CDN (reliable TTF files)
 Font.register({
@@ -680,23 +681,29 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
   return null;
 }
 
-function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings; pageSize: PageSizeKey }) {
+function RecipeContentPage({ recipe, pageNumber, strings, pageSize, layout }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings; pageSize: PageSizeKey; layout: ComputedLayout }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
 
   return (
-    <Page size={getPageSize(pageSize)} style={styles.contentPage} wrap>
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      paddingTop: layout.marginTop,
+      paddingBottom: layout.marginBottom,
+      paddingLeft: layout.marginInner,
+      paddingRight: layout.marginOuter,
+      backgroundColor: CREAM,
+    }} wrap>
       {/* Ingredients section - stays together on one page */}
-      <View style={styles.ingredientsSection} wrap={false}>
-        <Text style={styles.sectionLabel}>{strings.ingredients.toUpperCase()}</Text>
+      <View style={{ backgroundColor: CREAM_DARK, padding: layout.sectionGap, marginBottom: 20 }} wrap={false}>
+        <Text style={{ fontSize: 9, fontFamily: 'Inter', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: RED, marginBottom: 12 }}>{strings.ingredients.toUpperCase()}</Text>
         {ingredientGroups.map((group, gi) => (
           <View key={gi}>
-            {group.label && <Text style={styles.groupLabel}>{group.label}</Text>}
+            {group.label && <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 600, color: DARK, marginTop: 8, marginBottom: 4 }}>{group.label}</Text>}
             {group.items.map((ing, i) => {
               const qty = formatQuantity(ing.quantity);
               const unit = ing.unit ?? '';
               const prep = ing.preparation ? `, ${ing.preparation}` : '';
               return (
-                <Text key={i} style={styles.ingredient}>
+                <Text key={i} style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 400, color: DARK, marginBottom: 3 }}>
                   •  {qty} {unit} {ing.ingredient}{prep}{ing.optional ? ' (optional)' : ''}
                 </Text>
               );
@@ -706,17 +713,31 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: 
       </View>
 
       {/* Steps section - flows across pages, individual steps don't break */}
-      <View style={styles.stepsSection}>
-        <Text style={styles.sectionLabel}>{strings.steps.toUpperCase()}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 9, fontFamily: 'Inter', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: RED, marginBottom: 12 }}>{strings.steps.toUpperCase()}</Text>
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
-            <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
-              <Text style={{ width: 28, fontSize: 14, fontFamily: 'Playfair Display', fontWeight: 700, color: '#ce2b37' }}>{step.step_number}</Text>
-              <View style={styles.stepContent}>
-                <Text style={styles.stepText}>{instruction}</Text>
+            <View key={step.step_number} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: layout.stepGap }} wrap={false} minPresenceAhead={40}>
+              {/* Badge - fixed size, never shrinks */}
+              <View style={{
+                width: layout.badgeSize,
+                height: layout.badgeSize,
+                borderRadius: layout.badgeSize / 2,
+                backgroundColor: RED,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Text style={{ color: '#ffffff', fontSize: layout.badgeFontSize, fontFamily: 'Playfair Display', fontWeight: 700 }}>
+                  {String(step.step_number)}
+                </Text>
+              </View>
+              {/* Text - fills remaining row width, wraps naturally */}
+              <View style={{ flex: 1, paddingLeft: 8 }}>
+                <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 400, color: DARK, lineHeight: layout.lineHeight }}>{instruction}</Text>
                 {step.timer_minutes && step.timer_minutes > 0 && (
-                  <Text style={styles.stepTimer}>{formatDuration(step.timer_minutes)}</Text>
+                  <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: GREEN, marginTop: 4 }}>{formatDuration(step.timer_minutes)}</Text>
                 )}
               </View>
             </View>
@@ -725,19 +746,19 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: 
       </View>
 
       {recipe.notes && (
-        <View style={styles.notesSection} wrap={false}>
-          <Text style={styles.sectionLabel}>{strings.notes.toUpperCase()}</Text>
-          <Text style={styles.notesText}>{recipe.notes}</Text>
+        <View style={{ marginTop: layout.sectionGap, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: BORDER }} wrap={false}>
+          <Text style={{ fontSize: 9, fontFamily: 'Inter', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 2, color: RED, marginBottom: 12 }}>{strings.notes.toUpperCase()}</Text>
+          <Text style={{ fontSize: layout.fontBody - 0.5, fontFamily: 'Inter', fontWeight: 300, color: MUTED, lineHeight: 1.5 }}>{recipe.notes}</Text>
         </View>
       )}
 
       {/* Fill zone - flexGrow fills remaining space */}
       <FillZone fillType={recipe.fillType} fillContent={recipe.fillContent} accentColor={RED} />
 
-      <View style={styles.footer} fixed>
-        <Text style={styles.footerLeft}>ChefsBook</Text>
-        <Text style={styles.footerCenter}>{truncate(recipe.title, 40)}</Text>
-        <Text style={styles.footerRight} render={({ pageNumber: pn }) => `${pn}`} />
+      <View style={{ position: 'absolute', bottom: 30, left: layout.marginInner, right: layout.marginOuter, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: BORDER, paddingTop: 8 }} fixed>
+        <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>ChefsBook</Text>
+        <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 300, color: MUTED, maxWidth: 200, textAlign: 'center' }}>{truncate(recipe.title, 40)}</Text>
+        <Text style={{ fontSize: 9, fontFamily: 'Inter', fontWeight: 400, color: DARK }} render={({ pageNumber: pn }) => `${pn}`} />
       </View>
     </Page>
   );
@@ -774,6 +795,7 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
 export function TrattoriaDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
   const strings = getStrings(language ?? 'en');
   const pageSize = cookbook.pageSize ?? 'letter';
+  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
@@ -799,7 +821,7 @@ export function TrattoriaDocument({ cookbook, recipes, chefsHatBase64, language 
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} pageSize={pageSize} />
           ))}
-          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} pageSize={pageSize} />
+          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} pageSize={pageSize} layout={layout} />
           {/* Render custom pages after content page */}
           {recipe.custom_pages?.map((cp) => (
             <CustomPageComponent key={cp.id} customPage={cp} pageSize={pageSize} />

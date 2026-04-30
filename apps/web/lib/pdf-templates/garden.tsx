@@ -19,6 +19,7 @@ import {
   PageSizeKey,
 } from './types';
 import { getStrings, type BookStrings } from './book-strings';
+import { computeLayout, type ComputedLayout } from './engine';
 
 // Register Inter only (Garden template uses Inter for everything)
 Font.register({
@@ -650,13 +651,18 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
   return null;
 }
 
-function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey }) {
+function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey; layout: ComputedLayout }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
 
   return (
-    <Page size={getPageSize(pageSize)} style={styles.contentPage}>
-      <Text style={styles.sectionLabel}>{strings.ingredients.toUpperCase()}</Text>
-      <View style={styles.sectionRule} />
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      paddingTop: layout.marginTop,
+      paddingBottom: layout.marginBottom + 12,
+      paddingHorizontal: layout.marginOuter,
+      backgroundColor: WHITE,
+    }}>
+      <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 600, letterSpacing: 3, color: GREEN, textTransform: 'uppercase', marginBottom: 8 }}>{strings.ingredients.toUpperCase()}</Text>
+      <View style={{ height: 1, backgroundColor: GREEN, marginBottom: layout.sectionGap, width: 40 }} />
 
       {ingredientGroups.map((group, gi) => (
         <View key={gi}>
@@ -665,9 +671,9 @@ function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookReci
             const unit = ing.unit ?? '';
             const prep = ing.preparation ? `, ${ing.preparation}` : '';
             return (
-              <View key={i} style={styles.ingredientItem}>
-                <Text style={styles.ingredientBullet}>–</Text>
-                <Text style={styles.ingredientText}>
+              <View key={i} style={{ flexDirection: 'row', marginBottom: 6 }}>
+                <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 400, color: GREEN, marginRight: 8 }}>–</Text>
+                <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 400, color: DARK, lineHeight: 1.8 }}>
                   {qty} {unit} {ing.ingredient}{prep}{ing.optional ? ' (optional)' : ''}
                 </Text>
               </View>
@@ -676,19 +682,33 @@ function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookReci
         </View>
       ))}
 
-      <View style={styles.stepsSection}>
-        <Text style={styles.sectionLabel}>{strings.steps.toUpperCase()}</Text>
-        <View style={styles.sectionRule} />
+      <View style={{ marginTop: 32 }}>
+        <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 600, letterSpacing: 3, color: GREEN, textTransform: 'uppercase', marginBottom: 8 }}>{strings.steps.toUpperCase()}</Text>
+        <View style={{ height: 1, backgroundColor: GREEN, marginBottom: layout.sectionGap, width: 40 }} />
 
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
-            <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
-              <Text style={{ fontSize: 18, fontFamily: 'Inter', fontWeight: 700, color: '#009246', width: 32 }}>{step.step_number}</Text>
-              <View style={styles.stepContent}>
-                <Text style={styles.stepText}>{instruction}</Text>
+            <View key={step.step_number} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: layout.stepGap + 6 }} wrap={false} minPresenceAhead={40}>
+              {/* Badge - fixed size, never shrinks */}
+              <View style={{
+                width: layout.badgeSize,
+                height: layout.badgeSize,
+                borderRadius: layout.badgeSize / 2,
+                backgroundColor: GREEN,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Text style={{ color: '#ffffff', fontSize: layout.badgeFontSize, fontFamily: 'Inter', fontWeight: 700 }}>
+                  {String(step.step_number)}
+                </Text>
+              </View>
+              {/* Text - fills remaining row width, wraps naturally */}
+              <View style={{ flex: 1, paddingLeft: 8 }}>
+                <Text style={{ fontSize: layout.fontBody + 1, fontFamily: 'Inter', fontWeight: 300, color: DARK, lineHeight: 1.65 }}>{instruction}</Text>
                 {step.timer_minutes && step.timer_minutes > 0 && (
-                  <Text style={styles.stepTimer}>({formatDuration(step.timer_minutes)})</Text>
+                  <Text style={{ fontSize: layout.fontCaption, fontFamily: 'Inter', fontWeight: 300, color: MUTED, marginTop: 4 }}>({formatDuration(step.timer_minutes)})</Text>
                 )}
               </View>
             </View>
@@ -697,18 +717,18 @@ function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookReci
       </View>
 
       {recipe.notes && (
-        <View style={styles.notesSection} wrap={false}>
-          <Text style={styles.sectionLabel}>{strings.notes.toUpperCase()}</Text>
-          <Text style={styles.notesText}>{recipe.notes}</Text>
+        <View style={{ marginTop: 24, paddingTop: layout.sectionGap, borderTopWidth: 1, borderTopColor: GREEN }} wrap={false}>
+          <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 600, letterSpacing: 3, color: GREEN, textTransform: 'uppercase', marginBottom: 8 }}>{strings.notes.toUpperCase()}</Text>
+          <Text style={{ fontSize: layout.fontBody, fontFamily: 'Inter', fontWeight: 300, color: MUTED, lineHeight: 1.6 }}>{recipe.notes}</Text>
         </View>
       )}
 
       <FillZone fillType={recipe.fillType} fillContent={recipe.fillContent} accentColor={GREEN} />
 
-      <View style={styles.footer} fixed>
-        <Text style={styles.footerText}>ChefsBook</Text>
-        <Text style={styles.footerText}>{truncate(recipe.title, 40)}</Text>
-        <Text style={styles.footerText} render={({ pageNumber }) => `${pageNumber}`} />
+      <View style={{ position: 'absolute', bottom: 30, left: layout.marginOuter, right: layout.marginOuter, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: BORDER, paddingTop: 8 }} fixed>
+        <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>ChefsBook</Text>
+        <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 300, color: MUTED }}>{truncate(recipe.title, 40)}</Text>
+        <Text style={{ fontSize: 8, fontFamily: 'Inter', fontWeight: 300, color: MUTED }} render={({ pageNumber }) => `${pageNumber}`} />
       </View>
     </Page>
   );
@@ -745,6 +765,7 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
 export function GardenDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
   const strings = getStrings(language ?? 'en');
   const pageSize = cookbook.pageSize ?? 'letter';
+  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 20);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
@@ -770,7 +791,7 @@ export function GardenDocument({ cookbook, recipes, chefsHatBase64, language }: 
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} pageSize={pageSize} />
           ))}
-          <RecipeContentPage recipe={recipe} strings={strings} pageSize={pageSize} />
+          <RecipeContentPage recipe={recipe} strings={strings} pageSize={pageSize} layout={layout} />
           {/* Render custom pages after content page */}
           {recipe.custom_pages?.map((cp) => (
             <CustomPageComponent key={cp.id} customPage={cp} pageSize={pageSize} />

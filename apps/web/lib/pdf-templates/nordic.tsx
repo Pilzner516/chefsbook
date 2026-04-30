@@ -18,6 +18,7 @@ import {
   PageSizeKey,
 } from './types';
 import { getStrings, type BookStrings } from './book-strings';
+import { computeLayout, type ComputedLayout } from './engine';
 
 // Register Work Sans only (Nordic template uses single font family)
 Font.register({
@@ -644,22 +645,41 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
   return null;
 }
 
-function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey }) {
+function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey; layout: ComputedLayout }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
   const allIngredients = ingredientGroups.flatMap(g => g.items);
 
   return (
-    <Page size={getPageSize(pageSize)} style={styles.contentPage}>
-      <View style={styles.ingredientSection}>
-        <Text style={styles.sectionLabel}>{strings.ingredients}</Text>
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      paddingTop: layout.marginTop,
+      paddingBottom: layout.marginBottom + 12,
+      paddingHorizontal: layout.marginOuter,
+      backgroundColor: WHITE,
+    }}>
+      <View style={{ marginBottom: layout.sectionGap }}>
+        <Text style={{
+          fontSize: layout.fontCaption,
+          fontFamily: 'Work Sans',
+          fontWeight: 500,
+          letterSpacing: 3,
+          color: BLUE,
+          textTransform: 'uppercase',
+          marginBottom: layout.sectionGap,
+        }}>{strings.ingredients}</Text>
         <View style={styles.ingredientColumns}>
           {allIngredients.map((ing, i) => {
             const qty = formatQuantity(ing.quantity);
             const unit = ing.unit ?? '';
             return (
               <View key={i} style={styles.ingredientItem}>
-                <Text style={styles.ingredientText}>
-                  <Text style={styles.ingredientQty}>{qty}</Text> {unit} {ing.ingredient}
+                <Text style={{
+                  fontSize: layout.fontCaption,
+                  fontFamily: 'Work Sans',
+                  fontWeight: 400,
+                  color: CHARCOAL,
+                  lineHeight: layout.lineHeight,
+                }}>
+                  <Text style={{ fontWeight: 600, color: CHARCOAL }}>{qty}</Text> {unit} {ing.ingredient}
                 </Text>
               </View>
             );
@@ -668,15 +688,49 @@ function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookReci
       </View>
 
       <View style={styles.stepsSection}>
-        <Text style={styles.sectionLabel}>{strings.steps}</Text>
+        <Text style={{
+          fontSize: layout.fontCaption,
+          fontFamily: 'Work Sans',
+          fontWeight: 500,
+          letterSpacing: 3,
+          color: BLUE,
+          textTransform: 'uppercase',
+          marginBottom: layout.sectionGap,
+        }}>{strings.steps}</Text>
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
-            <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
-              <Text style={{ fontSize: 9, fontFamily: 'Work Sans', fontWeight: 500, color: '#5c7a8a', marginBottom: 4, marginLeft: 12 }}>{String(step.step_number).padStart(2, '0')}</Text>
-              <Text style={styles.stepText}>{instruction}</Text>
+            <View key={step.step_number} style={{
+              marginBottom: layout.stepGap * 2,
+              paddingLeft: 4,
+              borderLeftWidth: 2,
+              borderLeftColor: BORDER,
+            }} wrap={false} minPresenceAhead={40}>
+              <Text style={{
+                fontSize: layout.fontCaption,
+                fontFamily: 'Work Sans',
+                fontWeight: 500,
+                color: BLUE,
+                marginBottom: 4,
+                marginLeft: 12,
+              }}>{String(step.step_number).padStart(2, '0')}</Text>
+              <Text style={{
+                fontSize: layout.fontBody,
+                fontFamily: 'Work Sans',
+                fontWeight: 300,
+                color: CHARCOAL,
+                lineHeight: layout.lineHeight,
+                marginLeft: 12,
+              }}>{instruction}</Text>
               {step.timer_minutes && step.timer_minutes > 0 && (
-                <Text style={styles.stepTimer}>{formatDuration(step.timer_minutes)}</Text>
+                <Text style={{
+                  fontSize: layout.fontCaption,
+                  fontFamily: 'Work Sans',
+                  fontWeight: 400,
+                  color: BLUE_LIGHT,
+                  marginTop: 6,
+                  marginLeft: 12,
+                }}>{formatDuration(step.timer_minutes)}</Text>
               )}
             </View>
           );
@@ -684,9 +738,28 @@ function RecipeContentPage({ recipe, strings, pageSize }: { recipe: CookbookReci
       </View>
 
       {recipe.notes && (
-        <View style={styles.notesSection} wrap={false}>
-          <Text style={styles.sectionLabel}>{strings.notes}</Text>
-          <Text style={styles.notesText}>{recipe.notes}</Text>
+        <View style={{
+          marginTop: layout.sectionGap,
+          paddingTop: layout.sectionGap,
+          borderTopWidth: 1,
+          borderTopColor: BORDER,
+        }} wrap={false}>
+          <Text style={{
+            fontSize: layout.fontCaption,
+            fontFamily: 'Work Sans',
+            fontWeight: 500,
+            letterSpacing: 3,
+            color: BLUE,
+            textTransform: 'uppercase',
+            marginBottom: layout.sectionGap,
+          }}>{strings.notes}</Text>
+          <Text style={{
+            fontSize: layout.fontCaption,
+            fontFamily: 'Work Sans',
+            fontWeight: 300,
+            color: CHARCOAL_LIGHT,
+            lineHeight: layout.lineHeight,
+          }}>{recipe.notes}</Text>
         </View>
       )}
 
@@ -729,6 +802,7 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
 export function NordicDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
   const strings = getStrings(language ?? 'en');
   const pageSize = cookbook.pageSize ?? 'letter';
+  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 20);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
@@ -754,7 +828,7 @@ export function NordicDocument({ cookbook, recipes, chefsHatBase64, language }: 
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} pageSize={pageSize} />
           ))}
-          <RecipeContentPage recipe={recipe} strings={strings} pageSize={pageSize} />
+          <RecipeContentPage recipe={recipe} strings={strings} pageSize={pageSize} layout={layout} />
           {/* Render custom pages after content page */}
           {recipe.custom_pages?.map((cp) => (
             <CustomPageComponent key={cp.id} customPage={cp} pageSize={pageSize} />

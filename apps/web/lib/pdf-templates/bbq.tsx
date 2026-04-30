@@ -18,6 +18,7 @@ import {
   PageSizeKey,
 } from './types';
 import { getStrings, type BookStrings } from './book-strings';
+import { computeLayout, type ComputedLayout } from './engine';
 
 // Register fonts via jsDelivr CDN
 Font.register({
@@ -500,9 +501,17 @@ const styles = StyleSheet.create({
   },
 });
 
-const StepBadge = ({ number }: { number: number }) => (
-  <View style={{ width: 22, height: 22, backgroundColor: CHARCOAL, borderRadius: 11, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
-    <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>{String(number)}</Text>
+const StepBadge = ({ number, layout }: { number: number; layout: ComputedLayout }) => (
+  <View style={{
+    width: layout.badgeSize,
+    height: layout.badgeSize,
+    backgroundColor: CHARCOAL,
+    borderRadius: layout.badgeSize / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  }}>
+    <Text style={{ fontSize: layout.fontStepNumber, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>{String(number)}</Text>
   </View>
 );
 
@@ -706,7 +715,7 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
   return null;
 }
 
-function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey }) {
+function RecipePage({ recipe, strings, pageSize, layout }: { recipe: CookbookRecipe; strings: BookStrings; pageSize: PageSizeKey; layout: ComputedLayout }) {
   const meta: string[] = [];
   if (recipe.cuisine) meta.push(recipe.cuisine);
   if (recipe.course) meta.push(recipe.course);
@@ -717,26 +726,94 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
   let currentStepGroup: string | null = null;
 
   return (
-    <Page size={getPageSize(pageSize)} style={styles.recipePage} wrap>
-      <View style={styles.recipeHeader}>
-        <Text style={styles.recipeTitle}>{recipe.title}</Text>
-        {meta.length > 0 && <Text style={styles.recipeMeta}>{meta.join('  |  ')}</Text>}
-        {recipe.description && <Text style={styles.recipeDescription}>{truncate(recipe.description, 200)}</Text>}
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      backgroundColor: CREAM,
+      paddingTop: layout.marginTop,
+      paddingBottom: layout.marginBottom,
+      paddingHorizontal: layout.marginOuter,
+    }} wrap>
+      <View style={{
+        marginBottom: layout.sectionGap,
+        borderBottomWidth: 2,
+        borderBottomColor: CHARCOAL,
+        paddingBottom: layout.sectionGap,
+      }}>
+        <Text style={{
+          fontSize: layout.fontSubtitle,
+          fontFamily: 'Oswald',
+          fontWeight: 700,
+          color: CHARCOAL,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          marginBottom: 6,
+        }}>{recipe.title}</Text>
+        {meta.length > 0 && <Text style={{
+          fontSize: layout.fontCaption,
+          fontFamily: 'Source Sans Pro',
+          fontWeight: 400,
+          color: SMOKE,
+        }}>{meta.join('  |  ')}</Text>}
+        {recipe.description && <Text style={{
+          fontSize: layout.fontBody,
+          fontFamily: 'Source Sans Pro',
+          fontWeight: 400,
+          color: SMOKE,
+          lineHeight: layout.lineHeight,
+          marginTop: 10,
+        }}>{truncate(recipe.description, 200)}</Text>}
       </View>
 
       {/* Ingredients section - stays together, doesn't break across pages */}
-      <View style={styles.ingredientsSection} wrap={false}>
-        <Text style={styles.ingredientsLabel}>{strings.ingredients}</Text>
+      <View style={{
+        marginBottom: layout.sectionGap,
+        paddingBottom: layout.sectionGap,
+        borderBottomWidth: 2,
+        borderBottomColor: CHARCOAL,
+      }} wrap={false}>
+        <Text style={{
+          fontSize: layout.fontSubtitle * 0.5,
+          fontFamily: 'Oswald',
+          fontWeight: 600,
+          color: RUST,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          marginBottom: 12,
+        }}>{strings.ingredients}</Text>
         {groups.map((group, gi) => (
           <View key={gi}>
-            {group.label && <Text style={styles.ingredientGroupLabel}>{group.label}</Text>}
+            {group.label && <Text style={{
+              fontSize: layout.fontCaption,
+              fontFamily: 'Oswald',
+              fontWeight: 500,
+              color: CHARCOAL,
+              textTransform: 'uppercase',
+              marginTop: 12,
+              marginBottom: 6,
+            }}>{group.label}</Text>}
             {group.items.map((ing, ii) => {
               const qty = formatQuantity(ing.quantity);
               const parts = [qty, ing.unit, ing.ingredient, ing.preparation].filter(Boolean);
               return (
-                <View key={ii} style={styles.ingredientRow}>
-                  <View style={styles.ingredientBullet} />
-                  <Text style={styles.ingredientText}>
+                <View key={ii} style={{
+                  flexDirection: 'row',
+                  marginBottom: 6,
+                  alignItems: 'flex-start',
+                }}>
+                  <View style={{
+                    width: 6,
+                    height: 6,
+                    backgroundColor: AMBER,
+                    marginRight: 8,
+                    marginTop: 4,
+                  }} />
+                  <Text style={{
+                    fontSize: layout.fontCaption,
+                    fontFamily: 'Source Sans Pro',
+                    fontWeight: 400,
+                    color: CHARCOAL,
+                    flex: 1,
+                    lineHeight: layout.lineHeight,
+                  }}>
                     {parts.join(' ')}
                     {ing.optional && ' (optional)'}
                   </Text>
@@ -749,18 +826,40 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
 
       {/* Steps section - flows across pages, individual steps don't break */}
       <View style={styles.stepsSection}>
-        <Text style={styles.stepsLabel}>{strings.steps}</Text>
+        <Text style={{
+          fontSize: layout.fontSubtitle * 0.5,
+          fontFamily: 'Oswald',
+          fontWeight: 600,
+          color: RUST,
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          marginBottom: 12,
+        }}>{strings.steps}</Text>
         {recipe.steps.map((step, si) => {
           const showGroupLabel = step.group_label && step.group_label !== currentStepGroup;
           if (step.group_label) currentStepGroup = step.group_label;
 
           return (
-            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: 18 }}>
-              {showGroupLabel && <Text style={styles.stepGroupLabel}>{step.group_label}</Text>}
+            <View key={si} wrap={false} minPresenceAhead={40} style={{ marginBottom: layout.stepGap * 1.8 }}>
+              {showGroupLabel && <Text style={{
+                fontSize: layout.fontCaption,
+                fontFamily: 'Oswald',
+                fontWeight: 500,
+                color: CHARCOAL,
+                textTransform: 'uppercase',
+                marginTop: 14,
+                marginBottom: 8,
+              }}>{step.group_label}</Text>}
               <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                <StepBadge number={step.step_number} />
+                <StepBadge number={step.step_number} layout={layout} />
                 <View style={{ flex: 1, paddingLeft: 10 }}>
-                  <Text style={{ fontSize: 10, fontFamily: 'Source Sans Pro', fontWeight: 400, color: CHARCOAL, lineHeight: 1.6 }}>
+                  <Text style={{
+                    fontSize: layout.fontBody,
+                    fontFamily: 'Source Sans Pro',
+                    fontWeight: 400,
+                    color: CHARCOAL,
+                    lineHeight: layout.lineHeight,
+                  }}>
                     {fixTimerCharacter(step.instruction)}
                     {step.timer_minutes ? ` (${step.timer_minutes} min)` : ''}
                   </Text>
@@ -773,7 +872,13 @@ function RecipePage({ recipe, strings, pageSize }: { recipe: CookbookRecipe; str
         {recipe.notes && (
           <View style={styles.notesBox} wrap={false}>
             <Text style={styles.notesLabel}>{strings.notes}</Text>
-            <Text style={styles.notesText}>{recipe.notes}</Text>
+            <Text style={{
+              fontSize: layout.fontCaption,
+              fontFamily: 'Source Sans Pro',
+              fontWeight: 400,
+              color: SMOKE,
+              lineHeight: layout.lineHeight,
+            }}>{recipe.notes}</Text>
           </View>
         )}
       </View>
@@ -797,6 +902,7 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
 export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
   const strings = getStrings(language ?? 'en');
   const pageSize = cookbook.pageSize ?? 'letter';
+  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 2 + tocPages + (hasForeword ? 1 : 0) + 1;
@@ -809,7 +915,7 @@ export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: Coo
       {recipes.map((recipe) => (
         <React.Fragment key={recipe.id}>
           <RecipeImagePage recipe={recipe} strings={strings} pageSize={pageSize} />
-          <RecipePage recipe={recipe} strings={strings} pageSize={pageSize} />
+          <RecipePage recipe={recipe} strings={strings} pageSize={pageSize} layout={layout} />
           {/* Render additional image pages if they exist */}
           {recipe.image_urls.slice(1).map((imageUrl, idx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} pageSize={pageSize} />
@@ -824,3 +930,5 @@ export function BBQDocument({ cookbook, recipes, chefsHatBase64, language }: Coo
     </Document>
   );
 }
+
+export default BBQDocument;

@@ -18,6 +18,7 @@ import {
   PageSizeKey,
 } from './types';
 import { getStrings, type BookStrings } from './book-strings';
+import { computeLayout, type ComputedLayout } from './engine';
 
 // Register fonts via jsDelivr CDN
 Font.register({
@@ -833,25 +834,59 @@ function FillZone({ fillType, fillContent, accentColor }: { fillType?: string; f
   return null;
 }
 
-function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings; pageSize: PageSizeKey }) {
+function RecipeContentPage({ recipe, pageNumber, strings, pageSize, layout }: { recipe: CookbookRecipe; pageNumber: number; strings: BookStrings; pageSize: PageSizeKey; layout: ComputedLayout }) {
   const ingredientGroups = groupIngredients(recipe.ingredients);
 
   return (
-    <Page size={getPageSize(pageSize)} style={styles.contentPage} wrap>
+    <Page size={{ width: layout.width, height: layout.height }} style={{
+      paddingTop: layout.marginTop,
+      paddingBottom: layout.marginBottom,
+      paddingLeft: layout.marginInner,
+      paddingRight: layout.marginOuter,
+      backgroundColor: IVORY,
+    }} wrap>
       {/* Ingredients section - stays together on one page */}
-      <View style={styles.ingredientsSection} wrap={false}>
-        <Text style={styles.sectionLabel}>{strings.ingredients.toUpperCase()}</Text>
+      <View style={{
+        paddingBottom: layout.sectionGap,
+        marginBottom: layout.sectionGap,
+        borderBottomWidth: 1,
+        borderBottomColor: BORDER,
+      }} wrap={false}>
+        <Text style={{
+          fontSize: layout.fontCaption,
+          fontFamily: 'Source Sans Pro',
+          fontWeight: 600,
+          letterSpacing: 2,
+          textTransform: 'uppercase',
+          color: SAGE,
+          marginBottom: 4,
+        }}>{strings.ingredients.toUpperCase()}</Text>
         <View style={styles.sectionDeco} />
         {ingredientGroups.map((group, gi) => (
           <View key={gi}>
-            {group.label && <Text style={styles.groupLabel}>{group.label}</Text>}
+            {group.label && <Text style={{
+              fontSize: layout.fontBody,
+              fontFamily: 'Libre Baskerville',
+              fontWeight: 400,
+              fontStyle: 'italic',
+              color: BROWN,
+              marginTop: 12,
+              marginBottom: 6,
+            }}>{group.label}</Text>}
             {group.items.map((ing, i) => {
               const qty = formatQuantity(ing.quantity);
               const unit = ing.unit ?? '';
               const prep = ing.preparation ? `, ${ing.preparation}` : '';
               return (
-                <Text key={i} style={styles.ingredient}>
-                  <Text style={styles.ingredientBullet}>*  </Text>
+                <Text key={i} style={{
+                  fontSize: layout.fontBody,
+                  fontFamily: 'Source Sans Pro',
+                  fontWeight: 400,
+                  color: DARK,
+                  marginBottom: 4,
+                  lineHeight: layout.lineHeight,
+                }}>
+                  <Text style={{ color: SAGE }}>*  </Text>
                   {qty} {unit} {ing.ingredient}{prep}{ing.optional ? ' (optional)' : ''}
                 </Text>
               );
@@ -862,19 +897,57 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: 
 
       {/* Steps section - flows across pages, individual steps don't break */}
       <View style={styles.stepsSection}>
-        <Text style={styles.sectionLabel}>{strings.steps.toUpperCase()}</Text>
+        <Text style={{
+          fontSize: layout.fontCaption,
+          fontFamily: 'Source Sans Pro',
+          fontWeight: 600,
+          letterSpacing: 2,
+          textTransform: 'uppercase',
+          color: SAGE,
+          marginBottom: 4,
+        }}>{strings.steps.toUpperCase()}</Text>
         <View style={styles.sectionDeco} />
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
-            <View key={step.step_number} style={styles.stepWrap} wrap={false} minPresenceAhead={40}>
-              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#d4dccf', justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 }}>
-                <Text style={{ fontSize: 11, fontFamily: 'Libre Baskerville', fontWeight: 700, color: '#3a3028' }}>{step.step_number}</Text>
+            <View key={step.step_number} style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              marginBottom: layout.stepGap,
+            }} wrap={false} minPresenceAhead={40}>
+              <View style={{
+                width: layout.badgeSize,
+                height: layout.badgeSize,
+                borderRadius: layout.badgeSize / 2,
+                backgroundColor: SAGE_LIGHT,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 12,
+                flexShrink: 0,
+              }}>
+                <Text style={{
+                  fontSize: layout.fontStepNumber,
+                  fontFamily: 'Libre Baskerville',
+                  fontWeight: 700,
+                  color: DARK,
+                }}>{step.step_number}</Text>
               </View>
-              <View style={styles.stepContent}>
-                <Text style={styles.stepText}>{instruction}</Text>
+              <View style={{ flex: 1, paddingTop: 3 }}>
+                <Text style={{
+                  fontSize: layout.fontBody,
+                  fontFamily: 'Source Sans Pro',
+                  fontWeight: 400,
+                  color: DARK,
+                  lineHeight: layout.lineHeight,
+                }}>{instruction}</Text>
                 {step.timer_minutes && step.timer_minutes > 0 && (
-                  <Text style={styles.stepTimer}>{formatDuration(step.timer_minutes)}</Text>
+                  <Text style={{
+                    fontSize: layout.fontCaption,
+                    fontFamily: 'Source Sans Pro',
+                    fontWeight: 300,
+                    color: SAGE,
+                    marginTop: 4,
+                  }}>{formatDuration(step.timer_minutes)}</Text>
                 )}
               </View>
             </View>
@@ -883,9 +956,29 @@ function RecipeContentPage({ recipe, pageNumber, strings, pageSize }: { recipe: 
       </View>
 
       {recipe.notes && (
-        <View style={styles.notesSection} wrap={false}>
-          <Text style={styles.sectionLabel}>{strings.notes.toUpperCase()}</Text>
-          <Text style={styles.notesText}>{recipe.notes}</Text>
+        <View style={{
+          marginTop: layout.sectionGap,
+          paddingTop: layout.sectionGap,
+          borderTopWidth: 1,
+          borderTopColor: BORDER,
+        }} wrap={false}>
+          <Text style={{
+            fontSize: layout.fontCaption,
+            fontFamily: 'Source Sans Pro',
+            fontWeight: 600,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            color: SAGE,
+            marginBottom: 4,
+          }}>{strings.notes.toUpperCase()}</Text>
+          <Text style={{
+            fontSize: layout.fontCaption,
+            fontFamily: 'Libre Baskerville',
+            fontWeight: 400,
+            fontStyle: 'italic',
+            color: BROWN,
+            lineHeight: layout.lineHeight,
+          }}>{recipe.notes}</Text>
         </View>
       )}
 
@@ -935,6 +1028,7 @@ function BackPage({ chefsHatBase64, strings, pageSize }: { chefsHatBase64?: stri
 export function HeritageDocument({ cookbook, recipes, chefsHatBase64, language }: CookbookPdfOptions) {
   const strings = getStrings(language ?? 'en');
   const pageSize = cookbook.pageSize ?? 'letter';
+  const layout = computeLayout(pageSize);
   const tocPages = Math.ceil(recipes.length / 40); // Two-column layout fits more
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
@@ -960,7 +1054,7 @@ export function HeritageDocument({ cookbook, recipes, chefsHatBase64, language }
           {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
             <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} pageSize={pageSize} />
           ))}
-          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} pageSize={pageSize} />
+          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} pageSize={pageSize} layout={layout} />
           {/* Render custom pages after content page */}
           {recipe.custom_pages?.map((cp) => (
             <CustomPageComponent key={cp.id} customPage={cp} pageSize={pageSize} />

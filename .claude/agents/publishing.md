@@ -283,6 +283,51 @@ changed, recipe content changed), the cover PDF must also be regenerated — the
 cover PDF will have the wrong spine width. Never allow the interior and cover PDFs to
 become out of sync after a recipe content change.
 
+### Layout engine rules (established session TEMPLATE-ENGINE-MIGRATION)
+
+**LAYOUT-1 — All sizing must come from ctx.layout.\***
+Never use raw numbers for margins, font sizes, or image heights in templates. The only
+permitted hardcoded values are: `1` (divider line thickness), `0` (no spacing), border
+radius for small decorative elements (≤4pt), and step badge dimensions (use `layout.badgeSize`).
+
+**LAYOUT-2 — Step row structure (mandatory for all templates)**
+```tsx
+<View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: ctx.layout.stepGap }} wrap={false}>
+  <View style={{
+    width: ctx.layout.badgeSize,
+    height: ctx.layout.badgeSize,
+    borderRadius: ctx.layout.badgeSize / 2,
+    backgroundColor: ctx.settings.palette.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  }}>
+    <Text style={{ color: 'white', fontSize: ctx.layout.fontStepNumber, fontFamily: 'Helvetica-Bold' }}>
+      {String(index + 1)}
+    </Text>
+  </View>
+  <View style={{ flex: 1, paddingLeft: 8 }}>
+    <Text style={{ fontSize: ctx.layout.fontBody, lineHeight: ctx.layout.lineHeight }}>
+      {step.instruction}
+    </Text>
+  </View>
+</View>
+```
+
+**LAYOUT-3 — Badge color from settings, not hardcoded**
+Badge color comes from `ctx.settings.palette.accent`. For templates where the accent
+is too light for white text, define a dark variant as a constant at the top of the file.
+
+**LAYOUT-4 — No conditional logic based on page size key**
+Never write `if (pageSize === 'square')`. The `computeLayout()` function handles all
+size variation — trust its output.
+
+**LAYOUT-5 — Page component uses layout dimensions**
+```tsx
+<Page size={{ width: ctx.layout.width, height: ctx.layout.height }} style={pageStyle}>
+```
+Never use `size="LETTER"` or any hardcoded string.
+
 ---
 
 ## Plan gating
