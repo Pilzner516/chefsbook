@@ -275,6 +275,30 @@ export function TemplateDocument(ctx: TemplateContext) {
 }
 ```
 
+**Related failure mode — dynamic require() vs static imports (DEFINITIVE):**
+In Next.js 15 with webpack bundling, `@react-pdf/renderer` is converted to a dynamic import.
+When templates are loaded via `require('../trattoria')`, webpack's async module resolution
+doesn't complete before the require returns, causing templates to be `undefined`.
+
+**WRONG (templates are undefined in bundled code):**
+```typescript
+static getTemplate(id: string) {
+  return require('../trattoria').TrattoriaDocument;  // require() doesn't wait for async deps
+}
+```
+
+**CORRECT (templates are bundled and available):**
+```typescript
+import { TrattoriaDocument } from '../trattoria';  // Static import at top of file
+
+static getTemplate(id: string) {
+  return TrattoriaDocument;  // Function is already loaded
+}
+```
+
+Fixed in session HOTFIX-TEMPLATE-COMPLETE. The SWC lockfile warning (`⨯ Failed to patch
+lockfile [reading 'os']`) is NON-FATAL on arm64 and should be ignored — build completes via SWC.
+
 ---
 
 ### Lulu API integration

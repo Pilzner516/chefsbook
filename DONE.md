@@ -1,6 +1,64 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session HOTFIX-TEMPLATE-COMPLETE) TYPE: CODE FIX
+
+### PDF Template Rendering — Static Imports Fix (Final Resolution)
+
+**Root Cause Found:** The `TemplateEngine.getTemplate()` function was using dynamic `require()`
+calls to load templates at runtime. In Next.js 15 with webpack bundling, `@react-pdf/renderer`
+is converted to a dynamic import (`e.exports=import("@react-pdf/renderer")`). When templates
+are loaded via `require('../trattoria')`, webpack's async module resolution wasn't completing
+before the require returned, causing templates to be `undefined` at call time.
+
+**Error Chain:**
+```
+⚠ Found lockfile missing swc dependencies, patching... (NON-FATAL warning, ignore)
+[Error: Minified React error #130 args[]=undefined] — template function is undefined
+TypeError: Cannot read properties of null (reading 'props') — React can't render undefined
+```
+
+**The Fix:** Changed from dynamic `require()` calls to static ES module imports at the top of
+`engine/index.ts`. This ensures all templates are bundled properly by webpack and available
+synchronously when `getTemplate()` is called.
+
+**Before:**
+```typescript
+static getTemplate(id: string): TemplateComponent {
+  switch (id) {
+    case 'trattoria':
+      return require('../trattoria').TrattoriaDocument;  // BROKEN in Next.js 15 bundle
+  }
+}
+```
+
+**After:**
+```typescript
+import { TrattoriaDocument } from '../trattoria';  // Static import — always bundled
+
+static getTemplate(id: string): TemplateComponent {
+  switch (id) {
+    case 'trattoria':
+      return TrattoriaDocument;  // Works — function is already loaded
+  }
+}
+```
+
+**Files Changed:**
+- `apps/web/lib/pdf-templates/engine/index.ts` — added static imports, removed require() calls
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts` — removed temporary debug logging
+
+**SWC Lockfile Warning:** The `⚠ Found lockfile missing swc dependencies, patching... [TypeError: Cannot read properties of undefined (reading 'os')]` warning is NON-FATAL on arm64 (RPi5). Build completes via SWC in ~41s. Ignore this warning.
+
+**Verification:**
+- TypeScript: 0 errors
+- Build: Successful (~41s)
+- PM2: online, 0 restarts
+- HTTP 200 on https://chefsbk.app
+- **Requires manual test:** Open canvas editor → Generate Preview → confirm preview modal opens
+
+---
+
 ## 2026-04-30 (session HOTFIX-TEMPLATE-PROPS) TYPE: CODE FIX
 
 ### Props Type Mismatch in PDF Templates

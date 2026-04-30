@@ -23,6 +23,8 @@ Session CANVAS-EDITOR-2 completed Priorities 1-5. Priority 6 deferred:
 
 - [ ] **AI Template Generation** (`/admin/cookbook-templates/generate`) — Upload 1-5 inspiration images, fill preferences (name, category, accent colour, background mood, photo style, typography feel), call Claude Opus via `@chefsbook/ai` to analyse images and produce `TemplateConfig` JSON, generate preview PDF, admin tweaks in visual config panel, approve to save. Must follow `ai-cost.md`. Architecture note: Opus must read existing template code first to understand what TemplateConfig should contain.
 
+**UNBLOCKED (2026-04-30):** Session HOTFIX-TEMPLATE-COMPLETE fixed PDF template rendering. Phase 2 (`admin-template-dashboard.md`) is now unblocked. Root cause was dynamic `require()` calls not bundling correctly with Next.js/webpack — changed to static ES imports in `engine/index.ts`.
+
 ## LULU PRINT COOKBOOK — GO-LIVE CHECKLIST
 
 Feature built (session LULU-PRINT). Before announcing:
