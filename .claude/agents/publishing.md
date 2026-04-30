@@ -170,11 +170,27 @@ They render as ñ, ã, or other corrupted characters depending on font fallback.
 Rules:
 - Never use emoji in step instructions, ingredient lists, or any PDF text content
 - Timer display: use the text string "(X min)" inline, not an emoji character
-- Step badges: use View with borderRadius + Text for circle badges (see BBQ template StepBadge component)
+- Step badges: use View with borderRadius + Text for circle badges (see BBQ template StepBadge)
 - Use `fixTimerCharacter()` to sanitize any recipe data before rendering
-Introduced and fixed across sessions COOKBOOK-BUILDER, PDF-FIXES, PRINT-QUALITY-1, and
-PDF-STEP-BADGE-FIX. This pattern has recurred 5 times — do not introduce emoji in PDF content.
-Session PDF-STEP-BADGE-FIX: replaced emoji keycap digits (1️⃣) with View+Text circle badge.
+Introduced and fixed across sessions COOKBOOK-BUILDER, PDF-FIXES, PRINT-QUALITY-1,
+PDF-STEP-BADGE-FIX, and BBQ-STEP-BADGE-REGRESSION-FIX. This pattern has recurred 5 times.
+
+**BBQ StepBadge established pattern:**
+```tsx
+const StepBadge = ({ number }: { number: number }) => (
+  <View style={{ width: 22, height: 22, backgroundColor: CHARCOAL, borderRadius: 11,
+                 justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+    <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>
+      {String(number)}
+    </Text>
+  </View>
+);
+```
+Step row layout rules:
+- Badge MUST have `flexShrink: 0` to prevent compression
+- Text MUST be wrapped in `<View style={{ flex: 1, paddingLeft: 10 }}>` — placing Text
+  directly as a sibling of the badge causes text to overflow instead of wrapping
+- Badge color: CHARCOAL (#2d2926), not AMBER
 
 **PATTERN 11 — Inter font has no italic variants registered**
 Inter fonts are registered with weights 300, 400, 500, 600. No italic variants are

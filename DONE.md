@@ -1,6 +1,49 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session BBQ-STEP-BADGE-REGRESSION-FIX) TYPE: CODE FIX
+
+### BBQ Step Badge Regression Fix
+
+**Problem:** Session PDF-STEP-BADGE-FIX introduced two regressions:
+
+1. **Wrong badge color:** Used AMBER (#d4a03a) instead of CHARCOAL (#2d2926)
+2. **Text wrapping broken:** Badge wrapper View lacked flex constraints, causing
+   step text to overflow the page edge
+
+**Fixes Applied (TYPE: CODE FIX):**
+
+1. **Color fix:** Changed `backgroundColor` from `AMBER` to `CHARCOAL` constant
+   - Correct dark color: `#2d2926` (matches BBQ template aesthetic)
+
+2. **Flex layout fix:**
+   - Added `flexShrink: 0` to StepBadge View (prevents badge from shrinking)
+   - Removed unnecessary wrapper View around badge
+   - Changed from `marginRight` on wrapper to `paddingLeft: 10` on text container
+   - Text container already had `flex: 1` for proper wrapping
+
+**Final StepBadge structure:**
+```tsx
+const StepBadge = ({ number }: { number: number }) => (
+  <View style={{ width: 22, height: 22, backgroundColor: CHARCOAL, borderRadius: 11, 
+                 justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+    <Text style={{ fontSize: 10, fontFamily: 'Oswald', fontWeight: 600, color: WARM_WHITE }}>
+      {String(number)}
+    </Text>
+  </View>
+);
+```
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/bbq.tsx` — StepBadge color + flex + step row layout
+
+**Verification:**
+- TypeScript: 0 errors
+- Deployed to RPi5: HTTP 200 on chefsbk.app
+- PM2: online, Ready in 763ms
+
+---
+
 ## 2026-04-30 (session PDF-STEP-BADGE-FIX) TYPE: CODE FIX
 
 ### BBQ Template Step Icon Rendering Bug
