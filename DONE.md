@@ -1,6 +1,43 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session MEAL-PLAN-FIX) TYPE: CODE FIX
+
+### AI Meal Planner Phantom Recipe Bug Fix
+
+**Problem:** AI meal planner was suggesting recipe names that don't exist in the database. When these phantom recipes were added to the shopping cart, no ingredients were imported.
+
+**Root Causes:**
+1. AI prompt allowed "suggestions" — said "For meals without a matching recipe: suggest a title only"
+2. API route only fetched user's own recipes, ignoring 'mix' and 'community' source options
+3. No validation of AI response — phantom recipe IDs returned directly
+
+**Fixes Applied:**
+1. **Prompt rewrite** (`packages/ai/src/mealPlanWizard.ts`):
+   - Explicit instruction: "You MUST ONLY select recipes from the AVAILABLE RECIPES list above"
+   - "Do NOT invent, suggest, or reference ANY recipe not in the list"
+   - "If you cannot fill a meal slot with a recipe from the list, LEAVE IT EMPTY"
+   - Removed the `.slice(0, 50)` limit — pass all available recipes
+
+2. **API route fix** (`apps/web/app/api/meal-plan/generate/route.ts`):
+   - Now fetches recipes based on `source` parameter:
+     - 'my_recipes': user's recipes only (100 limit)
+     - 'community': public recipes from other users (150 limit)
+     - 'mix': both user's + community recipes
+   - Builds `validRecipeIds` set before AI call
+
+3. **Post-generation validation**:
+   - Filters AI response to remove any entries with recipe IDs not in validRecipeIds
+   - Logs warning when phantom recipes detected
+
+**Files Modified:**
+- `packages/ai/src/mealPlanWizard.ts` — prompt rewrite + removed slice limit
+- `apps/web/app/api/meal-plan/generate/route.ts` — source-based fetch + validation
+
+**Deployed:** RPi5 via deploy-staging.sh
+
+---
+
 ## 2026-04-30 (session CANVAS-FIXES-2) TYPE: CODE FIX
 
 ### Shopping List Print + Production CSS Fix
