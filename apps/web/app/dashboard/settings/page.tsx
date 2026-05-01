@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMessage, setPwMessage] = useState('');
   const [onboardingEnabled, setOnboardingEnabled] = useState(true);
+  const [defaultVisibility, setDefaultVisibility] = useState<'public' | 'private'>('public');
 
   useEffect(() => {
     (async () => {
@@ -43,6 +44,7 @@ export default function SettingsPage() {
         setPlanTier(profile.plan_tier ?? 'free');
         setAvatarUrl(profile.avatar_url);
         setOnboardingEnabled(profile.onboarding_enabled ?? true);
+        setDefaultVisibility(profile.default_visibility ?? 'public');
       }
     })();
   }, []);
@@ -289,6 +291,51 @@ export default function SettingsPage() {
       {/* Privacy */}
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-4 pb-2 border-b border-cb-border">Privacy</h2>
+
+        {/* Default visibility toggle */}
+        <div className="flex items-center justify-between mb-6 pb-6 border-b border-cb-border">
+          <div>
+            <p className="text-sm font-medium">Default recipe visibility</p>
+            <p className="text-xs text-cb-muted">New recipes and imports will be set to this visibility when complete</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                await supabase.from('user_profiles').update({ default_visibility: 'public' }).eq('id', user.id);
+                setDefaultVisibility('public');
+                setMessage('Default visibility set to Public');
+                setTimeout(() => setMessage(''), 2000);
+              }}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-input transition-colors ${
+                defaultVisibility === 'public'
+                  ? 'bg-cb-green text-white'
+                  : 'bg-cb-bg border border-cb-border text-cb-secondary hover:border-cb-primary'
+              }`}
+            >
+              Public
+            </button>
+            <button
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                await supabase.from('user_profiles').update({ default_visibility: 'private' }).eq('id', user.id);
+                setDefaultVisibility('private');
+                setMessage('Default visibility set to Private');
+                setTimeout(() => setMessage(''), 2000);
+              }}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-input transition-colors ${
+                defaultVisibility === 'private'
+                  ? 'bg-cb-secondary text-white'
+                  : 'bg-cb-bg border border-cb-border text-cb-secondary hover:border-cb-primary'
+              }`}
+            >
+              Private
+            </button>
+          </div>
+        </div>
+
         <div>
           <p className="text-sm text-cb-secondary mb-3">Make all your public recipes private. They won't be visible to other members until you change them back to Public.</p>
           <button

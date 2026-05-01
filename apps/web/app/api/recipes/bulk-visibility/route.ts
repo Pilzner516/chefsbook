@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@chefsbook/db';
+import { supabaseAdmin } from '@chefsbook/db';
 import { isRecipeComplete } from '@/lib/recipeCompleteness';
 
 export async function POST(req: NextRequest) {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    // Get auth token from header (supabase.auth.getSession() doesn't work in API routes)
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!session) {
+    const token = authHeader.slice(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,7 +29,7 @@ export async function POST(req: NextRequest) {
       const { error, count } = await supabaseAdmin
         .from('recipes')
         .update({ visibility })
-        .eq('user_id', session.user.id);
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Bulk visibility update error:', error);
@@ -51,7 +56,7 @@ export async function POST(req: NextRequest) {
           recipe_ingredients:recipe_ingredients(quantity, ingredient),
           recipe_steps:recipe_steps(id)
         `)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .in('id', ids);
 
       if (!ownedRecipes || ownedRecipes.length !== ids.length) {
@@ -90,7 +95,7 @@ export async function POST(req: NextRequest) {
         const { error } = await supabaseAdmin
           .from('recipes')
           .update({ visibility })
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .in('id', validIds);
 
         if (error) {
