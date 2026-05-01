@@ -110,19 +110,26 @@ export async function POST(request: NextRequest) {
 
         const { data: recipeData } = result;
 
-        // Insert ingredients
+        // Insert ingredients with error handling
         const ingredientRows = recipeData.ingredients.map((ing, idx) => ({
           recipe_id: job.recipe_id,
           user_id: recipe.user_id,
           ingredient: ing.name,
-          quantity: ing.amount || '',
-          unit: ing.unit || '',
+          quantity: ing.amount ? parseFloat(ing.amount) || null : null,
+          unit: ing.unit || null,
           sort_order: idx,
         }));
 
-        await supabaseAdmin.from('recipe_ingredients').insert(ingredientRows);
+        const { error: ingredientError } = await supabaseAdmin
+          .from('recipe_ingredients')
+          .insert(ingredientRows);
+        if (ingredientError) {
+          await markJobFailed(job.id, `Ingredient insert failed: ${ingredientError.message}`);
+          failed++;
+          continue;
+        }
 
-        // Insert steps
+        // Insert steps with error handling
         const stepRows = recipeData.steps.map((step, idx) => ({
           recipe_id: job.recipe_id,
           user_id: recipe.user_id,
@@ -130,9 +137,16 @@ export async function POST(request: NextRequest) {
           instruction: step.instruction,
         }));
 
-        await supabaseAdmin.from('recipe_steps').insert(stepRows);
+        const { error: stepError } = await supabaseAdmin
+          .from('recipe_steps')
+          .insert(stepRows);
+        if (stepError) {
+          await markJobFailed(job.id, `Step insert failed: ${stepError.message}`);
+          failed++;
+          continue;
+        }
 
-        // Update recipe
+        // Update recipe description/cuisine/tags (NOT is_complete - let finalize handle that)
         const updatedTags = (recipe.tags || []).filter((t: string) => t !== '_incomplete');
 
         await supabaseAdmin
@@ -140,23 +154,21 @@ export async function POST(request: NextRequest) {
           .update({
             description: recipeData.description,
             cuisine: recipeData.cuisine || null,
-            is_complete: true,
             tags: updatedTags,
           })
           .eq('id', job.recipe_id);
 
-        // Call finalize
-        try {
-          await fetch('http://localhost:3000/api/recipes/finalize', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ recipeId: job.recipe_id }),
-          });
-        } catch (finalizeError) {
-          console.error('[process-jobs] Finalize error:', finalizeError);
+        // Call finalize to set is_complete and missing_fields correctly
+        const finalizeRes = await fetch('http://localhost:3000/api/recipes/finalize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ recipeId: job.recipe_id }),
+        });
+        if (!finalizeRes.ok) {
+          console.error('[process-jobs] Finalize returned non-OK:', finalizeRes.status);
         }
 
         // Mark complete
