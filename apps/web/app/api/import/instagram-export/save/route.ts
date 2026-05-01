@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PLAN_LIMITS, checkRecipeLimit, logAiCall, addRecipePhoto } from '@chefsbook/db';
+import { PLAN_LIMITS, checkRecipeLimit, logAiCall } from '@chefsbook/db';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -117,13 +117,18 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        await addRecipePhoto(recipe.id, user.id, fileName, internalUrl, undefined);
-
+        // Insert photo record directly with supabaseAdmin (bypasses RLS)
+        // addRecipePhoto() uses anon client which has no JWT context in server routes
         await supabaseAdmin
           .from('recipe_user_photos')
-          .update({ is_primary: true })
-          .eq('recipe_id', recipe.id)
-          .eq('user_id', user.id);
+          .insert({
+            recipe_id: recipe.id,
+            user_id: user.id,
+            storage_path: fileName,
+            url: internalUrl,
+            is_primary: true,
+            sort_order: 0,
+          });
       } catch (photoError) {
         console.error('[instagram-export/save] Photo error:', photoError);
       }
