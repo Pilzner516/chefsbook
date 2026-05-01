@@ -1,6 +1,45 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session P-210) TYPE: CODE (new feature)
+
+### Instagram Export Import (Web only, Pro plan)
+
+**Feature:** Pro plan users can upload their Instagram data export ZIP file on the Import & Scan page. The system parses the ZIP client-side, classifies food photos using Claude Haiku Vision, extracts recipe metadata from captions, and batch-creates recipe stubs using the user's own Instagram photos as recipe images.
+
+**New Files:**
+- `packages/ai/src/instagramExport.ts` — classifyFoodImage() + extractInstagramExportCaption()
+- `apps/web/app/api/import/instagram-export/classify/route.ts` — batch classification (20 posts/batch)
+- `apps/web/app/api/import/instagram-export/save/route.ts` — batch save with dedup check
+- `apps/web/components/InstagramExportImporter.tsx` — full UI component (upload → process → review → save)
+- `supabase/migrations/20260430_067_instagram_export.sql` — source_instagram_uri column + index
+
+**Modified Files:**
+- `packages/ai/src/index.ts` — export new functions
+- `packages/db/src/types.ts` — add 'instagram_export' to SourceType
+- `apps/web/app/dashboard/scan/page.tsx` — import and render InstagramExportImporter
+- `.claude/agents/ai-cost.md` — add two new Haiku action rows
+- `.claude/agents/feature-registry.md` — add feature row
+
+**AI Cost:**
+- instagram_food_classify: HAIKU ~$0.001/image (vision YES/NO)
+- instagram_caption_extract: HAIKU ~$0.0002/call (text only)
+- No Replicate costs — user's own photos used directly
+
+**Key Behaviors:**
+- ZIP parsed client-side (jszip) — never sent to server
+- 20 posts per batch to API
+- 500 food post cap
+- Recipe limit check per plan
+- Dedup via source_instagram_uri column
+- Recipes created with _incomplete tag + private visibility
+- Photos uploaded to recipe-user-photos storage bucket
+
+**TypeScript:** npx tsc --noEmit passes (0 errors)
+**Migration:** Applied (ALTER TABLE + CREATE INDEX + docker restart supabase-rest)
+**Deployed:** Commit 09f69ae, HTTP 200, PM2 online
+**Verified:** curl chefsbk.app/dashboard/scan returns 200, API routes return 401 without auth
+
 ## 2026-04-30 (session TEMPLATE-STEPS-LABEL-FIX) TYPE: CODE FIX
 
 ### PDF Template STEPS Label Position Fix
