@@ -698,6 +698,15 @@ function RecipeContentPage({ recipe, strings, pageSize, layout }: { recipe: Cook
       </View>
 
       <View style={styles.stepsSection}>
+        <Text style={{
+          fontSize: layout.fontCaption,
+          fontFamily: 'Inter',
+          fontWeight: 300,
+          letterSpacing: 3,
+          color: RED,
+          textTransform: 'uppercase',
+          marginBottom: layout.sectionGap,
+        }}>{strings.steps.toUpperCase()}</Text>
         {recipe.steps.map((step) => {
           const instruction = fixTimerCharacter(step.instruction);
           return (
