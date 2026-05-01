@@ -14,7 +14,6 @@ import FeedbackCard from '@/components/FeedbackCard';
 import NotificationBell from '@/components/NotificationBell';
 import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
 import VisibilityHintBanner from '@/components/VisibilityHintBanner';
-import NutritionBanner from '@/components/NutritionBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import ThemePickerModal from '@/components/ThemePickerModal';
 import { IMAGE_THEMES } from '@chefsbook/ai';
@@ -150,9 +149,12 @@ export default function DashboardPage() {
     });
   };
 
-  const selectAll = () => {
+  const selectAll = async () => {
+    // Get current user ID fresh from auth (userInfo state may be stale)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
     // Only select recipes owned by the current user
-    const ownedRecipes = filtered.filter((r) => r.user_id === userInfo?.id);
+    const ownedRecipes = filtered.filter((r) => r.user_id === user.id);
     setSelected(new Set(ownedRecipes.map((r) => r.id)));
   };
 
@@ -207,9 +209,17 @@ export default function DashboardPage() {
 
   const handleMakePrivate = async () => {
     if (selected.size === 0) return;
+
+    // Get current user ID fresh from auth (userInfo state may be stale)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     // Only include recipes that are public AND owned by the current user
-    const publicRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'public' && r.user_id === userInfo?.id);
-    if (publicRecipes.length === 0) return;
+    const publicRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'public' && r.user_id === user.id);
+    if (publicRecipes.length === 0) {
+      showAlert({ title: 'No recipes to update', body: 'None of the selected recipes are public recipes that you own.' });
+      return;
+    }
 
     const ok = await confirm({
       title: 'Make recipes private?',
@@ -243,9 +253,17 @@ export default function DashboardPage() {
 
   const handleMakePublic = async () => {
     if (selected.size === 0) return;
+
+    // Get current user ID fresh from auth (userInfo state may be stale)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     // Only include recipes that are private AND owned by the current user
-    const privateRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'private' && r.user_id === userInfo?.id);
-    if (privateRecipes.length === 0) return;
+    const privateRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'private' && r.user_id === user.id);
+    if (privateRecipes.length === 0) {
+      showAlert({ title: 'No recipes to update', body: 'None of the selected recipes are private recipes that you own.' });
+      return;
+    }
 
     const ok = await confirm({
       title: 'Make recipes public?',
@@ -398,7 +416,6 @@ export default function DashboardPage() {
     <div className="p-8">
       <IncompleteRecipesBanner />
       <VisibilityHintBanner />
-      <NutritionBanner />
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Recipes</h1>
