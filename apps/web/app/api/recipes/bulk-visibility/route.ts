@@ -14,11 +14,8 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
-      console.log('[bulk-visibility] Auth error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    console.log('[bulk-visibility] User ID from token:', user.id);
 
     const body = await req.json();
     const { ids, visibility, all } = body as { ids?: string[]; visibility: 'public' | 'private'; all?: boolean };
@@ -46,8 +43,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'No recipe IDs provided' }, { status: 400 });
       }
 
-      console.log('[bulk-visibility] Looking for recipes with IDs:', ids, 'owned by user:', user.id);
-
       // Fetch full recipes with ownership check + ingredients + steps (for enforcement)
       // Use explicit FK name to avoid PGRST201 (recipe_ingredients has both recipe_id and sub_recipe_id FKs)
       const { data: ownedRecipes, error: queryError } = await supabaseAdmin
@@ -65,15 +60,8 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .in('id', ids);
 
-      console.log('[bulk-visibility] Query result:', { found: ownedRecipes?.length ?? 0, error: queryError });
-
-      // Debug: check what user_id these recipes actually have
-      if (!ownedRecipes || ownedRecipes.length === 0) {
-        const { data: debugRecipes } = await supabaseAdmin
-          .from('recipes')
-          .select('id, user_id, title')
-          .in('id', ids);
-        console.log('[bulk-visibility] DEBUG - Actual recipe owners:', debugRecipes?.map(r => ({ id: r.id, user_id: r.user_id, title: r.title })));
+      if (queryError) {
+        console.error('[bulk-visibility] Query error:', queryError);
       }
 
       // Count how many weren't owned (for reporting)
