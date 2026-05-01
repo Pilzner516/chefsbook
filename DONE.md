@@ -31,8 +31,10 @@
 - Progress UI shows completed/failed per recipe
 
 **TypeScript:** npx tsc --noEmit passes (0 errors)
-**Deployed:** Commit 0b7ac9a, HTTP 200, PM2 online
+**Deployed:** Commit 0b7ac9a (feature), 475ae2e (hotfix), HTTP 200, PM2 online
 **Verified:** curl chefsbk.app/dashboard/scan returns 200
+
+**Hotfix:** RLS policy violation for recipe_user_photos — addRecipePhoto() uses anon client with no JWT context in server routes. Fixed by inserting directly with supabaseAdmin.
 
 ---
 
