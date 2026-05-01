@@ -430,6 +430,25 @@
     "accountFrozenMessage": "Votre compte est en cours de vérification. Vos recettes publiques ont été temporairement masquées.",
     "contactSupport": "Contacter le support"
   },
+  "menuBooks": {
+    "addAllToCookbook": "Ajouter tout au livre",
+    "addAllConfirm": "Ajouter les {{count}} recettes à {{cookbook}} ? Les doublons seront ignorés.",
+    "addAllSuccess": "{{added}} recettes ajoutées à {{cookbook}}",
+    "addAllPartial": "{{added}} ajoutées, {{skipped}} déjà dans le livre",
+    "noCookbooksYet": "Vous n'avez pas encore de livre. Créez-en un d'abord dans Imprimer Mon ChefsBook.",
+    "organiseBy": "Organiser par",
+    "manualOrder": "Ordre manuel",
+    "manualOrderDesc": "Glisser-déposer pour organiser",
+    "byMenu": "Par menu",
+    "byMenuDesc": "Un chapitre par menu",
+    "noMenusForOrg": "Créez des menus avec des recettes pour utiliser ce mode.",
+    "chapter": "Chapitre",
+    "otherRecipes": "Autres recettes",
+    "recipesInChapter": "{{count}} recettes de ce menu sont dans ce livre",
+    "noRecipesInChapter": "Aucune recette de ce menu n'est dans ce livre",
+    "selectCookbook": "Choisir un livre",
+    "addRecipes": "Ajouter {{count}} recettes"
+  },
   "web": {
     "dashboard": "Tableau de bord",
     "recipes": "Mes Recettes",

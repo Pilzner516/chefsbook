@@ -18,7 +18,8 @@ import {
   PageSizeKey,
 } from './types';
 import type { BookStrings } from './book-strings';
-import type { ComputedLayout, TemplateContext } from './engine/types';
+import type { ComputedLayout, TemplateContext, MenuChapterData } from './engine/types';
+import { MenuChapterPage } from './MenuChapterPage';
 
 // Register fonts via jsDelivr CDN (reliable TTF files)
 Font.register({
@@ -810,10 +811,102 @@ function BackPage({ chefsHatBase64, strings, layout }: { chefsHatBase64?: string
 }
 
 export function TrattoriaDocument(ctx: TemplateContext) {
-  const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
+  const { cookbook, recipes, chefsHatBase64, layout, strings, organisation, menuChapters } = ctx;
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 3 + tocPages + (hasForeword ? 1 : 0);
+
+  const templateSettings = {
+    palette: {
+      accent: RED,
+      background: CREAM,
+      text: DARK,
+      muted: MUTED,
+      surface: CREAM_DARK,
+    },
+    fonts: {
+      heading: 'Playfair Display',
+      body: 'Inter',
+    },
+  };
+
+  const renderRecipe = (recipe: CookbookRecipe, pageNumber: number) => (
+    <React.Fragment key={recipe.id}>
+      <RecipeImagePage recipe={recipe} strings={strings} layout={layout} />
+      {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
+        <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} layout={layout} />
+      ))}
+      <RecipeContentPage recipe={recipe} pageNumber={pageNumber} strings={strings} pageSize={cookbook.pageSize ?? 'letter'} layout={layout} />
+      {recipe.custom_pages?.map((cp) => (
+        <CustomPageComponent key={cp.id} customPage={cp} layout={layout} />
+      ))}
+    </React.Fragment>
+  );
+
+  const renderByMenu = () => {
+    if (!menuChapters || menuChapters.length === 0) {
+      return recipes.map((recipe, idx) => renderRecipe(recipe, startPage + idx * 2 + 1));
+    }
+
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+    const renderedRecipeIds = new Set<string>();
+    let currentPage = startPage;
+    const elements: React.ReactNode[] = [];
+
+    for (const chapter of menuChapters) {
+      const chapterRecipes = chapter.recipe_ids
+        .map((id) => recipeMap.get(id))
+        .filter((r): r is CookbookRecipe => !!r && !renderedRecipeIds.has(r.id));
+
+      if (chapterRecipes.length === 0) continue;
+
+      elements.push(
+        <MenuChapterPage
+          key={`chapter-${chapter.menu_id}`}
+          menuTitle={chapter.menu_title}
+          occasion={chapter.occasion}
+          menuNotes={chapter.notes}
+          recipeCount={chapterRecipes.length}
+          chapterNumber={chapter.chapter_number}
+          layout={layout}
+          settings={templateSettings}
+          strings={strings}
+          chefsHatBase64={chefsHatBase64}
+        />
+      );
+      currentPage += 1;
+
+      for (const recipe of chapterRecipes) {
+        elements.push(renderRecipe(recipe, currentPage));
+        renderedRecipeIds.add(recipe.id);
+        currentPage += 2 + (recipe.image_urls.length > 1 ? recipe.image_urls.length - 1 : 0) + (recipe.custom_pages?.length || 0);
+      }
+    }
+
+    const unassignedRecipes = recipes.filter((r) => !renderedRecipeIds.has(r.id));
+    if (unassignedRecipes.length > 0) {
+      elements.push(
+        <MenuChapterPage
+          key="chapter-other"
+          menuTitle={strings.otherRecipes || 'Other Recipes'}
+          recipeCount={unassignedRecipes.length}
+          chapterNumber={menuChapters.length + 1}
+          layout={layout}
+          settings={templateSettings}
+          strings={strings}
+          chefsHatBase64={chefsHatBase64}
+        />
+      );
+      currentPage += 1;
+
+      for (const recipe of unassignedRecipes) {
+        elements.push(renderRecipe(recipe, currentPage));
+        currentPage += 2 + (recipe.image_urls.length > 1 ? recipe.image_urls.length - 1 : 0) + (recipe.custom_pages?.length || 0);
+      }
+    }
+
+    return elements;
+  };
 
   return (
     <Document>
@@ -829,20 +922,9 @@ export function TrattoriaDocument(ctx: TemplateContext) {
         <ForewordPage foreword={cookbook.foreword!} authorName={cookbook.author_name} strings={strings} layout={layout} />
       )}
 
-      {recipes.map((recipe, idx) => (
-        <React.Fragment key={recipe.id}>
-          <RecipeImagePage recipe={recipe} strings={strings} layout={layout} />
-          {/* Render additional image pages (images beyond the first one) */}
-          {recipe.image_urls.slice(1).map((imageUrl, imgIdx) => (
-            <AdditionalImagePage key={`${recipe.id}-img-${imgIdx}`} imageUrl={imageUrl} recipeTitle={recipe.title} layout={layout} />
-          ))}
-          <RecipeContentPage recipe={recipe} pageNumber={startPage + idx * 2 + 1} strings={strings} pageSize={cookbook.pageSize ?? 'letter'} layout={layout} />
-          {/* Render custom pages after content page */}
-          {recipe.custom_pages?.map((cp) => (
-            <CustomPageComponent key={cp.id} customPage={cp} layout={layout} />
-          ))}
-        </React.Fragment>
-      ))}
+      {organisation === 'by_menu'
+        ? renderByMenu()
+        : recipes.map((recipe, idx) => renderRecipe(recipe, startPage + idx * 2 + 1))}
 
       <BackPage chefsHatBase64={chefsHatBase64} strings={strings} layout={layout} />
     </Document>

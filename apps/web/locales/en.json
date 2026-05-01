@@ -651,6 +651,25 @@
     "listName": "List name (optional)",
     "createList": "Create List"
   },
+  "menuBooks": {
+    "addAllToCookbook": "Add all to cookbook",
+    "addAllConfirm": "Add all {{count}} recipes to {{cookbook}}? Duplicates will be skipped.",
+    "addAllSuccess": "{{added}} recipes added to {{cookbook}}",
+    "addAllPartial": "{{added}} added, {{skipped}} already in book",
+    "noCookbooksYet": "You don't have a cookbook yet. Create one first in Print Cookbook.",
+    "organiseBy": "Organise by",
+    "manualOrder": "Manual order",
+    "manualOrderDesc": "Drag and drop to arrange",
+    "byMenu": "By Menu",
+    "byMenuDesc": "Chapter per menu",
+    "noMenusForOrg": "Create menus with recipes to use this mode.",
+    "chapter": "Chapter",
+    "otherRecipes": "Other Recipes",
+    "recipesInChapter": "{{count}} recipes from this menu are in this book",
+    "noRecipesInChapter": "No recipes from this menu are in this book yet",
+    "selectCookbook": "Select Cookbook",
+    "addRecipes": "Add {{count}} Recipes"
+  },
   "web": {
     "dashboard": "Dashboard",
     "recipes": "My Recipes",

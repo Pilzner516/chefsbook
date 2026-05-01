@@ -430,6 +430,25 @@
     "accountFrozenMessage": "Il tuo account è in revisione. Le tue ricette pubbliche sono state temporaneamente nascoste.",
     "contactSupport": "Contatta il supporto"
   },
+  "menuBooks": {
+    "addAllToCookbook": "Aggiungi tutto al libro",
+    "addAllConfirm": "Aggiungere tutte le {{count}} ricette a {{cookbook}}? I duplicati saranno saltati.",
+    "addAllSuccess": "{{added}} ricette aggiunte a {{cookbook}}",
+    "addAllPartial": "{{added}} aggiunte, {{skipped}} già nel libro",
+    "noCookbooksYet": "Non hai ancora un libro. Creane uno prima in Stampa il Mio ChefsBook.",
+    "organiseBy": "Organizza per",
+    "manualOrder": "Ordine manuale",
+    "manualOrderDesc": "Trascina per organizzare",
+    "byMenu": "Per menù",
+    "byMenuDesc": "Un capitolo per menù",
+    "noMenusForOrg": "Crea menù con ricette per usare questa modalità.",
+    "chapter": "Capitolo",
+    "otherRecipes": "Altre ricette",
+    "recipesInChapter": "{{count}} ricette di questo menù sono in questo libro",
+    "noRecipesInChapter": "Nessuna ricetta di questo menù è in questo libro",
+    "selectCookbook": "Seleziona libro",
+    "addRecipes": "Aggiungi {{count}} ricette"
+  },
   "web": {
     "dashboard": "Pannello",
     "recipes": "Le Mie Ricette",

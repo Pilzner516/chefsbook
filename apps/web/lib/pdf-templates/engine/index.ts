@@ -284,6 +284,15 @@ export class TemplateEngine {
       recipes: CookbookRecipe[];
       chefsHatBase64?: string | null;
       language?: string;
+      organisation?: 'manual' | 'by_menu';
+      menuChapters?: Array<{
+        menu_id: string;
+        menu_title: string;
+        occasion?: string;
+        notes?: string;
+        chapter_number: number;
+        recipe_ids: string[];
+      }>;
     },
     pageSize: PageSizeKey | PageDimensions,
     templateId: string,
@@ -310,6 +319,9 @@ export class TemplateEngine {
       strings,
       fillZone: options?.fillZone,
       isPreview: options?.isPreview ?? false,
+      // Menu chapter organisation
+      organisation: data.organisation,
+      menuChapters: data.menuChapters,
     };
   }
 

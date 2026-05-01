@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useReducer, useCallback, use, useMemo, useRef, Component, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { supabase, PLAN_LIMITS, getPrimaryPhotos, listRecipePhotos } from '@chefsbook/db';
 import type { PlanTier } from '@chefsbook/db';
@@ -23,11 +24,13 @@ import {
   TocCard,
   IndexCard,
   BackCard,
+  MenuChapterCard,
   RecipePage,
   ContentPage,
   FillType,
   FillContent,
   PageSizeKey,
+  BookOrganisation,
   computePageMap,
   createRecipeCard,
   insertRecipeCard,
@@ -35,6 +38,7 @@ import {
   getRecipeCards,
   moveCard,
   getTotalPageCount,
+  setOrganisation,
 } from '@/lib/book-layout';
 import { useDebouncedCallback } from 'use-debounce';
 import dynamic from 'next/dynamic';
@@ -102,6 +106,7 @@ type LayoutAction =
   | { type: 'UPDATE_COVER'; payload: Partial<CoverCard> }
   | { type: 'UPDATE_FOREWORD'; text: string }
   | { type: 'UPDATE_PAGE_SIZE'; pageSize: PageSizeKey }
+  | { type: 'UPDATE_ORGANISATION'; organisation: BookOrganisation; menuData?: Array<{ menu_id: string; menu_title: string; occasion?: string; notes?: string; recipe_ids: string[] }> }
   | { type: 'ADD_RECIPE'; recipe: RecipePreview; imageUrls: string[] }
   | { type: 'REMOVE_RECIPE'; cardId: string }
   | { type: 'UPDATE_RECIPE_DISPLAY_NAME'; cardId: string; displayName: string }
@@ -142,6 +147,9 @@ function layoutReducer(state: BookLayout, action: LayoutAction): BookLayout {
 
     case 'UPDATE_PAGE_SIZE':
       return { ...state, pageSize: action.pageSize };
+
+    case 'UPDATE_ORGANISATION':
+      return setOrganisation(state, action.organisation, action.menuData);
 
     case 'UPDATE_FILL_ZONE': {
       const cards = state.cards.map((card) => {
@@ -275,6 +283,7 @@ function PrintCookbookCanvasPageInner({
 }) {
   const { id: cookbookId } = use(params);
   const router = useRouter();
+  const { t } = useTranslation();
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [session, setSession] = useState<{ access_token: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -291,6 +300,16 @@ function PrintCookbookCanvasPageInner({
 
   // Book settings panel state
   const [showSettings, setShowSettings] = useState(false);
+
+  // User menus for "by_menu" organisation
+  const [userMenus, setUserMenus] = useState<Array<{
+    menu_id: string;
+    menu_title: string;
+    occasion?: string;
+    notes?: string;
+    recipe_ids: string[];
+  }>>([]);
+  const [menusLoading, setMenusLoading] = useState(false);
 
   // Expanded recipe cards
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -477,6 +496,41 @@ function PrintCookbookCanvasPageInner({
     }
 
     setRecipesLoading(false);
+  };
+
+  const fetchUserMenus = async () => {
+    if (!user) return;
+    setMenusLoading(true);
+    try {
+      const { data: menus } = await supabase
+        .from('menus')
+        .select('id, title, occasion, notes')
+        .eq('user_id', user.id)
+        .order('title');
+
+      if (menus && menus.length > 0) {
+        const menuIds = menus.map((m) => m.id);
+        const { data: menuItems } = await supabase
+          .from('menu_items')
+          .select('menu_id, recipe_id')
+          .in('menu_id', menuIds);
+
+        const menuData = menus.map((m) => ({
+          menu_id: m.id,
+          menu_title: m.title,
+          occasion: m.occasion || undefined,
+          notes: m.notes || undefined,
+          recipe_ids: (menuItems || []).filter((i) => i.menu_id === m.id).map((i) => i.recipe_id),
+        }));
+        setUserMenus(menuData);
+      } else {
+        setUserMenus([]);
+      }
+    } catch (err) {
+      console.error('Error fetching menus:', err);
+    } finally {
+      setMenusLoading(false);
+    }
   };
 
   const handleAddRecipe = async (recipe: RecipePreview) => {
@@ -961,6 +1015,55 @@ function PrintCookbookCanvasPageInner({
                   ))}
                 </div>
               </div>
+
+              {/* Organisation Mode Selector */}
+              <div className="border-t border-cb-border pt-4">
+                <label className="text-sm font-medium text-cb-text mb-2 block">
+                  {t('menuBooks.organiseBy', 'Organise By')}
+                </label>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      dispatch({ type: 'UPDATE_ORGANISATION', organisation: 'manual' });
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-input border transition-colors ${
+                      (layout.organisation || 'manual') === 'manual'
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    }`}
+                  >
+                    <span className="font-medium text-sm">{t('menuBooks.manualOrder', 'Manual Order')}</span>
+                    <span className="text-xs text-cb-muted ml-2">{t('menuBooks.manualOrderDesc', 'Drag and drop to arrange')}</span>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (userMenus.length === 0) {
+                        await fetchUserMenus();
+                      }
+                      dispatch({
+                        type: 'UPDATE_ORGANISATION',
+                        organisation: 'by_menu',
+                        menuData: userMenus,
+                      });
+                    }}
+                    disabled={menusLoading}
+                    className={`w-full text-left px-3 py-2 rounded-input border transition-colors ${
+                      layout.organisation === 'by_menu'
+                        ? 'border-cb-primary bg-cb-primary/5'
+                        : 'border-cb-border hover:border-cb-primary/50'
+                    } ${menusLoading ? 'opacity-50' : ''}`}
+                  >
+                    <span className="font-medium text-sm">{t('menuBooks.byMenu', 'By Menu')}</span>
+                    <span className="text-xs text-cb-muted ml-2">{t('menuBooks.byMenuDesc', 'Chapter per menu')}</span>
+                  </button>
+                </div>
+                {layout.organisation === 'by_menu' && userMenus.length === 0 && !menusLoading && (
+                  <p className="text-xs text-cb-muted mt-2">
+                    {t('menuBooks.noMenusForOrg', 'Create menus with recipes to use this mode.')}
+                  </p>
+                )}
+              </div>
+
               <div className="border-t border-cb-border pt-4">
                 <CoverSettingsPanel layout={layout} dispatch={dispatch} />
               </div>

@@ -16,7 +16,8 @@ import {
   fixTimerCharacter,
 } from './types';
 import type { BookStrings } from './book-strings';
-import type { ComputedLayout, TemplateContext } from './engine/types';
+import type { ComputedLayout, TemplateContext, MenuChapterData } from './engine/types';
+import { MenuChapterPage } from './MenuChapterPage';
 
 // Register fonts via jsDelivr CDN
 Font.register({
@@ -915,30 +916,104 @@ function BackPage({ chefsHatBase64, strings, layout }: { chefsHatBase64?: string
 }
 
 export function BBQDocument(ctx: TemplateContext) {
-  const { cookbook, recipes, chefsHatBase64, layout, strings } = ctx;
+  const { cookbook, recipes, chefsHatBase64, layout, strings, organisation, menuChapters } = ctx;
   const tocPages = Math.ceil(recipes.length / 25);
   const hasForeword = cookbook.foreword && cookbook.foreword.trim().length > 0;
   const startPage = 2 + tocPages + (hasForeword ? 1 : 0) + 1;
+
+  const templateSettings = {
+    palette: {
+      accent: AMBER,
+      background: WARM_WHITE,
+      text: CHARCOAL,
+      muted: SMOKE,
+      surface: CREAM,
+    },
+    fonts: {
+      heading: 'Oswald',
+      body: 'Source Sans Pro',
+    },
+  };
+
+  const renderRecipe = (recipe: CookbookRecipe) => (
+    <React.Fragment key={recipe.id}>
+      <RecipeImagePage recipe={recipe} strings={strings} layout={layout} />
+      <RecipePage recipe={recipe} strings={strings} layout={layout} />
+      {recipe.image_urls.slice(1).map((imageUrl, idx) => (
+        <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} layout={layout} />
+      ))}
+      {recipe.custom_pages?.map((cp) => (
+        <CustomPageComponent key={cp.id} customPage={cp} layout={layout} />
+      ))}
+    </React.Fragment>
+  );
+
+  const renderByMenu = () => {
+    if (!menuChapters || menuChapters.length === 0) {
+      return recipes.map((recipe) => renderRecipe(recipe));
+    }
+
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+    const renderedRecipeIds = new Set<string>();
+    const elements: React.ReactNode[] = [];
+
+    for (const chapter of menuChapters) {
+      const chapterRecipes = chapter.recipe_ids
+        .map((id) => recipeMap.get(id))
+        .filter((r): r is CookbookRecipe => !!r && !renderedRecipeIds.has(r.id));
+
+      if (chapterRecipes.length === 0) continue;
+
+      elements.push(
+        <MenuChapterPage
+          key={`chapter-${chapter.menu_id}`}
+          menuTitle={chapter.menu_title}
+          occasion={chapter.occasion}
+          menuNotes={chapter.notes}
+          recipeCount={chapterRecipes.length}
+          chapterNumber={chapter.chapter_number}
+          layout={layout}
+          settings={templateSettings}
+          strings={strings}
+          chefsHatBase64={chefsHatBase64}
+        />
+      );
+
+      for (const recipe of chapterRecipes) {
+        elements.push(renderRecipe(recipe));
+        renderedRecipeIds.add(recipe.id);
+      }
+    }
+
+    const unassignedRecipes = recipes.filter((r) => !renderedRecipeIds.has(r.id));
+    if (unassignedRecipes.length > 0) {
+      elements.push(
+        <MenuChapterPage
+          key="chapter-other"
+          menuTitle={strings.otherRecipes || 'Other Recipes'}
+          recipeCount={unassignedRecipes.length}
+          chapterNumber={menuChapters.length + 1}
+          layout={layout}
+          settings={templateSettings}
+          strings={strings}
+          chefsHatBase64={chefsHatBase64}
+        />
+      );
+
+      for (const recipe of unassignedRecipes) {
+        elements.push(renderRecipe(recipe));
+      }
+    }
+
+    return elements;
+  };
 
   return (
     <Document>
       <CoverPage cookbook={cookbook} chefsHatBase64={chefsHatBase64} strings={strings} layout={layout} />
       {hasForeword && <ForewordPage foreword={cookbook.foreword!} strings={strings} layout={layout} />}
       <TOCPage recipes={recipes} startPage={startPage} strings={strings} layout={layout} />
-      {recipes.map((recipe) => (
-        <React.Fragment key={recipe.id}>
-          <RecipeImagePage recipe={recipe} strings={strings} layout={layout} />
-          <RecipePage recipe={recipe} strings={strings} layout={layout} />
-          {/* Render additional image pages if they exist */}
-          {recipe.image_urls.slice(1).map((imageUrl, idx) => (
-            <AdditionalImagePage key={`${recipe.id}-img-${idx}`} imageUrl={imageUrl} recipeName={recipe.title} layout={layout} />
-          ))}
-          {/* Render custom pages added by user */}
-          {recipe.custom_pages?.map((cp) => (
-            <CustomPageComponent key={cp.id} customPage={cp} layout={layout} />
-          ))}
-        </React.Fragment>
-      ))}
+      {organisation === 'by_menu' ? renderByMenu() : recipes.map((recipe) => renderRecipe(recipe))}
       <BackPage chefsHatBase64={chefsHatBase64} strings={strings} layout={layout} />
     </Document>
   );

@@ -10,6 +10,7 @@ import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
+import { CookbookPickerModal } from '@/components/CookbookPickerModal';
 
 const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread'];
 const SOURCES = [
@@ -99,6 +100,12 @@ export default function SearchPage() {
   const [proteinFilter, setProteinFilter] = useState('any');
   const [nutritionPresets, setNutritionPresets] = useState<string[]>([]);
 
+  // Batch add to cookbook
+  const [showCookbookPicker, setShowCookbookPicker] = useState(false);
+  const [printedCookbooks, setPrintedCookbooks] = useState<Array<{ id: string; title: string; recipe_ids: string[] }>>([]);
+  const [batchAddLoading, setBatchAddLoading] = useState(false);
+  const [session, setSession] = useState<{ access_token: string } | null>(null);
+
   // Load section order from localStorage
   useEffect(() => {
     try {
@@ -120,12 +127,23 @@ export default function SearchPage() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
+    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+      if (sess?.user) {
+        setUserId(sess.user.id);
+        setSession(sess);
         // Check if user is admin
-        supabase.from('admin_users').select('role').eq('user_id', user.id).maybeSingle()
+        supabase.from('admin_users').select('role').eq('user_id', sess.user.id).maybeSingle()
           .then(({ data }) => { if (data) setIsAdmin(true); });
+        // Fetch user's printed cookbooks for batch-add feature
+        supabase
+          .from('printed_cookbooks')
+          .select('id, title, recipe_ids')
+          .eq('user_id', sess.user.id)
+          .not('book_layout', 'is', null)
+          .order('updated_at', { ascending: false })
+          .then(({ data }) => {
+            if (data) setPrintedCookbooks(data);
+          });
       }
     });
     // Fetch expelled user IDs for content filtering
@@ -363,6 +381,50 @@ export default function SearchPage() {
     if (sort === 'popular') list.sort((a, b) => ((b.like_count ?? 0) + (b.save_count ?? 0)) - ((a.like_count ?? 0) + (a.save_count ?? 0)));
     return list;
   }, [recipes, sort, timeFilter]);
+
+  // Handler for batch adding filtered recipes to a cookbook
+  const handleBatchAddToCookbook = async (cookbookId: string) => {
+    if (!session || sorted.length === 0) return;
+    setBatchAddLoading(true);
+    try {
+      const recipeIds = sorted.map((r) => r.id);
+      const res = await fetch(`/api/print-cookbooks/${cookbookId}/batch-add-recipes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ recipe_ids: recipeIds }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Failed to add recipes');
+        return;
+      }
+      const result = await res.json();
+      const cookbook = printedCookbooks.find((c) => c.id === cookbookId);
+      const cookbookTitle = cookbook?.title || 'Cookbook';
+      if (result.skipped > 0) {
+        alert(`${result.added} recipes added to ${cookbookTitle}. ${result.skipped} already in book.`);
+      } else {
+        alert(`${result.added} recipes added to ${cookbookTitle}!`);
+      }
+      // Refresh the printed cookbooks list
+      const { data } = await supabase
+        .from('printed_cookbooks')
+        .select('id, title, recipe_ids')
+        .eq('user_id', userId!)
+        .not('book_layout', 'is', null)
+        .order('updated_at', { ascending: false });
+      if (data) setPrintedCookbooks(data);
+      setShowCookbookPicker(false);
+    } catch (error) {
+      console.error('Batch add error:', error);
+      alert('Failed to add recipes');
+    } finally {
+      setBatchAddLoading(false);
+    }
+  };
 
   const hasNutritionFilter = calorieFilter !== 'any' || proteinFilter !== 'any' || nutritionPresets.length > 0;
 
@@ -757,9 +819,23 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Result count + sort */}
+        {/* Result count + sort + batch add */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-cb-secondary">{sorted.length} recipe{sorted.length !== 1 ? 's' : ''}{techniques.length > 0 ? ` + ${techniques.length} technique${techniques.length !== 1 ? 's' : ''}` : ''}</p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-cb-secondary">{sorted.length} recipe{sorted.length !== 1 ? 's' : ''}{techniques.length > 0 ? ` + ${techniques.length} technique${techniques.length !== 1 ? 's' : ''}` : ''}</p>
+            {/* Show "Add all to cookbook" when filters are active and there are results */}
+            {activeFilters.length > 0 && sorted.length > 0 && (
+              <button
+                onClick={() => setShowCookbookPicker(true)}
+                className="text-xs font-medium px-3 py-1.5 rounded-full bg-cb-primary/10 text-cb-primary hover:bg-cb-primary/20 transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
+                Add all to cookbook
+              </button>
+            )}
+          </div>
           <select value={sort} onChange={(e) => setSort(e.target.value as any)} className="bg-cb-card border border-cb-border rounded-input px-2 py-1.5 text-xs text-cb-secondary outline-none">
             <option value="relevance">Relevance</option>
             <option value="newest">Newest</option>
@@ -830,6 +906,16 @@ export default function SearchPage() {
           </div>
         )}
       </div>
+
+      {/* Cookbook picker modal for batch add */}
+      <CookbookPickerModal
+        isOpen={showCookbookPicker}
+        onClose={() => setShowCookbookPicker(false)}
+        cookbooks={printedCookbooks}
+        recipeCount={sorted.length}
+        onSelect={handleBatchAddToCookbook}
+        loading={batchAddLoading}
+      />
     </div>
   );
 }

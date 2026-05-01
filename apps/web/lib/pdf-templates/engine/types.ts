@@ -100,6 +100,18 @@ export interface TemplateSettings {
 }
 
 /**
+ * Menu chapter data for "By Menu" organisation
+ */
+export interface MenuChapterData {
+  menu_id: string;
+  menu_title: string;
+  occasion?: string;
+  notes?: string;
+  chapter_number: number;
+  recipe_ids: string[];
+}
+
+/**
  * Full context passed to every template component
  */
 export interface TemplateContext {
@@ -125,6 +137,9 @@ export interface TemplateContext {
   strings: import('../book-strings').BookStrings;
   fillZone?: import('../types').FillContent;
   isPreview?: boolean;      // true = FlipbookPreview, false = actual PDF generation
+  // Menu chapter organisation (optional)
+  organisation?: 'manual' | 'by_menu';
+  menuChapters?: MenuChapterData[];
 }
 
 /**

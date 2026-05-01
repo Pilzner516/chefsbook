@@ -22,6 +22,10 @@ export interface BookStrings {
   cookTime: string;
   totalTime: string;
   serves: string;
+  chapter: string;
+  recipe: string;
+  recipes: string;
+  otherRecipes: string;
 }
 
 export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
@@ -41,6 +45,10 @@ export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
     cookTime: 'Cook',
     totalTime: 'Total',
     serves: 'Serves',
+    chapter: 'Chapter',
+    recipe: 'Recipe',
+    recipes: 'Recipes',
+    otherRecipes: 'Other Recipes',
   },
   fr: {
     foreword: 'Avant-propos',
@@ -58,6 +66,10 @@ export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
     cookTime: 'Cuisson',
     totalTime: 'Total',
     serves: 'Pour',
+    chapter: 'Chapitre',
+    recipe: 'Recette',
+    recipes: 'Recettes',
+    otherRecipes: 'Autres recettes',
   },
   es: {
     foreword: 'Prólogo',
@@ -75,6 +87,10 @@ export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
     cookTime: 'Cocción',
     totalTime: 'Total',
     serves: 'Porciones',
+    chapter: 'Capítulo',
+    recipe: 'Receta',
+    recipes: 'Recetas',
+    otherRecipes: 'Otras recetas',
   },
   it: {
     foreword: 'Prefazione',
@@ -92,6 +108,10 @@ export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
     cookTime: 'Cottura',
     totalTime: 'Totale',
     serves: 'Porzioni',
+    chapter: 'Capitolo',
+    recipe: 'Ricetta',
+    recipes: 'Ricette',
+    otherRecipes: 'Altre ricette',
   },
   de: {
     foreword: 'Vorwort',
@@ -109,6 +129,10 @@ export const BOOK_STRINGS: Record<BookLocale, BookStrings> = {
     cookTime: 'Kochen',
     totalTime: 'Gesamt',
     serves: 'Portionen',
+    chapter: 'Kapitel',
+    recipe: 'Rezept',
+    recipes: 'Rezepte',
+    otherRecipes: 'Weitere Rezepte',
   },
 };
 

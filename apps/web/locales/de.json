@@ -430,6 +430,25 @@
     "accountFrozenMessage": "Dein Konto wird überprüft. Deine öffentlichen Rezepte wurden vorübergehend ausgeblendet.",
     "contactSupport": "Support kontaktieren"
   },
+  "menuBooks": {
+    "addAllToCookbook": "Alle zum Buch hinzufügen",
+    "addAllConfirm": "Alle {{count}} Rezepte zu {{cookbook}} hinzufügen? Duplikate werden übersprungen.",
+    "addAllSuccess": "{{added}} Rezepte zu {{cookbook}} hinzugefügt",
+    "addAllPartial": "{{added}} hinzugefügt, {{skipped}} bereits im Buch",
+    "noCookbooksYet": "Du hast noch kein Buch. Erstelle zuerst eines in Mein ChefsBook drucken.",
+    "organiseBy": "Ordnen nach",
+    "manualOrder": "Manuelle Reihenfolge",
+    "manualOrderDesc": "Ziehen und ablegen zum Anordnen",
+    "byMenu": "Nach Menü",
+    "byMenuDesc": "Ein Kapitel pro Menü",
+    "noMenusForOrg": "Erstelle Menüs mit Rezepten, um diesen Modus zu nutzen.",
+    "chapter": "Kapitel",
+    "otherRecipes": "Andere Rezepte",
+    "recipesInChapter": "{{count}} Rezepte aus diesem Menü sind in diesem Buch",
+    "noRecipesInChapter": "Keine Rezepte aus diesem Menü sind in diesem Buch",
+    "selectCookbook": "Buch auswählen",
+    "addRecipes": "{{count}} Rezepte hinzufügen"
+  },
   "web": {
     "dashboard": "Übersicht",
     "recipes": "Meine Rezepte",

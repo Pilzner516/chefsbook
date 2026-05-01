@@ -581,6 +581,45 @@ export async function POST(
       }
     }
 
+    // Fetch menu chapter data if organisation is 'by_menu'
+    let menuChapters: Array<{
+      menu_id: string;
+      menu_title: string;
+      occasion?: string;
+      notes?: string;
+      chapter_number: number;
+      recipe_ids: string[];
+    }> | undefined;
+
+    if (bookLayout?.organisation === 'by_menu' && bookLayout.menu_chapter_ids?.length) {
+      const { data: menus } = await supabaseAdmin
+        .from('menus')
+        .select('id, title, occasion, notes')
+        .in('id', bookLayout.menu_chapter_ids);
+
+      if (menus && menus.length > 0) {
+        const { data: menuItems } = await supabaseAdmin
+          .from('menu_items')
+          .select('menu_id, recipe_id')
+          .in('menu_id', bookLayout.menu_chapter_ids);
+
+        menuChapters = bookLayout.menu_chapter_ids
+          .map((menuId, idx) => {
+            const menu = menus.find((m) => m.id === menuId);
+            if (!menu) return null;
+            return {
+              menu_id: menu.id,
+              menu_title: menu.title,
+              occasion: menu.occasion || undefined,
+              notes: menu.notes || undefined,
+              chapter_number: idx + 1,
+              recipe_ids: (menuItems || []).filter((i) => i.menu_id === menuId).map((i) => i.recipe_id),
+            };
+          })
+          .filter((m): m is NonNullable<typeof m> => m !== null);
+      }
+    }
+
     // Use coverInfo from book_layout or legacy columns
     const pdfOptions: CookbookPdfOptions = {
       cookbook: {
@@ -609,6 +648,8 @@ export async function POST(
         recipes: pdfOptions.recipes,
         chefsHatBase64: pdfOptions.chefsHatBase64,
         language: pdfOptions.language,
+        organisation: bookLayout?.organisation,
+        menuChapters,
       },
       pdfOptions.cookbook.pageSize ?? 'letter',
       coverInfo.cover_style,

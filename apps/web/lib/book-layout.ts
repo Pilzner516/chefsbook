@@ -14,11 +14,14 @@
 
 export type BookLocale = 'en' | 'fr' | 'es' | 'it' | 'de';
 export type PageSizeKey = 'letter' | 'trade' | 'large-trade' | 'digest' | 'square';
+export type BookOrganisation = 'manual' | 'by_menu';
 
 export interface BookLayout {
   version: 1;
   language: BookLocale;
   pageSize?: PageSizeKey;
+  organisation?: BookOrganisation; // default: 'manual'
+  menu_chapter_ids?: string[]; // ordered menu IDs when organisation = 'by_menu'
   cards: BookCard[];
 }
 
@@ -31,6 +34,7 @@ export type BookCard =
   | CoverCard
   | ForewordCard
   | TocCard
+  | MenuChapterCard
   | RecipeCard
   | IndexCard
   | BackCard;
@@ -58,6 +62,23 @@ export interface TocCard {
   type: 'toc';
   locked: false;
   auto: true;
+}
+
+/**
+ * MenuChapterCard — a chapter divider page for menu-based organisation.
+ * Inserted automatically when organisation = 'by_menu'.
+ * Each chapter groups recipes from one menu.
+ */
+export interface MenuChapterCard {
+  id: string;
+  type: 'menu_chapter';
+  locked: false;
+  menu_id: string;
+  menu_title: string;
+  occasion?: string;
+  notes?: string;
+  chapter_number: number;
+  recipe_count: number;
 }
 
 export interface RecipeCard {
@@ -203,6 +224,9 @@ export function computePageMap(layout: BookLayout): PageMap {
       case 'toc':
         currentPage += 1;
         break;
+      case 'menu_chapter':
+        currentPage += 1;
+        break;
       case 'recipe':
         currentPage += Array.isArray(card.pages) ? card.pages.length : 0;
         break;
@@ -344,4 +368,131 @@ export function moveCard(
   cards.splice(destIndex, 0, card);
 
   return { ...layout, cards };
+}
+
+/**
+ * Create a MenuChapterCard for a given menu.
+ */
+export function createMenuChapterCard(params: {
+  menu_id: string;
+  menu_title: string;
+  occasion?: string;
+  notes?: string;
+  chapter_number: number;
+  recipe_count: number;
+}): MenuChapterCard {
+  return {
+    id: crypto.randomUUID(),
+    type: 'menu_chapter',
+    locked: false,
+    menu_id: params.menu_id,
+    menu_title: params.menu_title,
+    occasion: params.occasion,
+    notes: params.notes,
+    chapter_number: params.chapter_number,
+    recipe_count: params.recipe_count,
+  };
+}
+
+/**
+ * Get all menu chapter cards from a layout
+ */
+export function getMenuChapterCards(layout: BookLayout): MenuChapterCard[] {
+  return layout.cards.filter((c): c is MenuChapterCard => c.type === 'menu_chapter');
+}
+
+/**
+ * Set book organisation mode.
+ * When switching to 'by_menu', pass menu data to generate chapter cards.
+ */
+export function setOrganisation(
+  layout: BookLayout,
+  organisation: BookOrganisation,
+  menuData?: Array<{
+    menu_id: string;
+    menu_title: string;
+    occasion?: string;
+    notes?: string;
+    recipe_ids: string[];
+  }>
+): BookLayout {
+  if (organisation === 'manual') {
+    // Remove all menu_chapter cards and clear menu_chapter_ids
+    return {
+      ...layout,
+      organisation: 'manual',
+      menu_chapter_ids: undefined,
+      cards: layout.cards.filter((c) => c.type !== 'menu_chapter'),
+    };
+  }
+
+  // organisation === 'by_menu'
+  if (!menuData || menuData.length === 0) {
+    return { ...layout, organisation: 'by_menu', menu_chapter_ids: [] };
+  }
+
+  // Get all recipe IDs currently in the book
+  const bookRecipeIds = new Set(getRecipeCards(layout).map((c) => c.recipe_id));
+
+  // Filter menus to only those with recipes in the book
+  const relevantMenus = menuData.filter((m) =>
+    m.recipe_ids.some((rid) => bookRecipeIds.has(rid))
+  );
+
+  // Calculate recipe counts per menu (only counting recipes in the book)
+  const menuRecipeCounts = new Map<string, number>();
+  for (const menu of relevantMenus) {
+    const count = menu.recipe_ids.filter((rid) => bookRecipeIds.has(rid)).length;
+    menuRecipeCounts.set(menu.menu_id, count);
+  }
+
+  // Create chapter cards for relevant menus
+  const chapterCards: MenuChapterCard[] = relevantMenus.map((menu, idx) =>
+    createMenuChapterCard({
+      menu_id: menu.menu_id,
+      menu_title: menu.menu_title,
+      occasion: menu.occasion,
+      notes: menu.notes,
+      chapter_number: idx + 1,
+      recipe_count: menuRecipeCounts.get(menu.menu_id) ?? 0,
+    })
+  );
+
+  const filteredCards: BookCard[] = layout.cards.filter((c) => c.type !== 'menu_chapter');
+  const newCards: BookCard[] = [...filteredCards, ...chapterCards];
+
+  return {
+    ...layout,
+    organisation: 'by_menu',
+    menu_chapter_ids: relevantMenus.map((m) => m.menu_id),
+    cards: newCards,
+  };
+}
+
+/**
+ * Reorder menu chapters by moving a chapter from one position to another.
+ */
+export function reorderMenuChapters(
+  layout: BookLayout,
+  sourceIndex: number,
+  destIndex: number
+): BookLayout {
+  if (!layout.menu_chapter_ids) return layout;
+
+  const ids = [...layout.menu_chapter_ids];
+  const [removed] = ids.splice(sourceIndex, 1);
+  ids.splice(destIndex, 0, removed);
+
+  // Update chapter numbers in cards
+  const cards = layout.cards.map((card) => {
+    if (card.type === 'menu_chapter') {
+      const newIdx = ids.indexOf(card.menu_id);
+      if (newIdx !== -1) {
+        return { ...card, chapter_number: newIdx + 1 };
+      }
+    }
+    return card;
+  });
+
+  return { ...layout, menu_chapter_ids: ids, cards };
 }
