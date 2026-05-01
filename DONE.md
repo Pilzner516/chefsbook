@@ -1,6 +1,24 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-217) TYPE: CODE FIX + FEATURE
+
+### Fixes
+- **Admin Users page error**: Page crashed due to missing `account_status`, `last_seen_at`, `login_count` columns in committed migration. Columns already existed in DB from previous uncommitted migration. Committed migration 073, restarted PostgREST schema cache.
+- **Bulk visibility PGRST201 error**: "None of the selected recipes belong to you" error when making recipes public. Root cause: `recipe_ingredients` table has two FKs to `recipes` (`recipe_id` and `sub_recipe_id`), PostgREST couldn't determine which to use for join. Fixed by using explicit FK name `recipe_ingredients!recipe_ingredients_recipe_id_fkey`.
+
+### Feature
+- **Load More pagination on dashboard**: Recipes now load 50 at a time with a "Load More Recipes" button at the bottom. Shows "Showing all X recipes" when complete. Search resets pagination.
+
+**Verification:**
+- Admin Users page loads without error
+- Bulk visibility works (user ID from token matches recipe user_id, query returns recipes)
+- Load More button appears after 50 recipes, loads next batch on click
+- TypeScript: 0 errors
+- Deployed to RPi5
+
+---
+
 ## 2026-05-01 (session P-216) TYPE: DATA FIX (follow-up to P-215)
 
 ### Instagram Import: Reset Stuck Jobs for Reprocessing
