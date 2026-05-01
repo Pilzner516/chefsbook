@@ -1,6 +1,40 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-214) TYPE: CODE (feature implementation)
+
+### My Menus — User-Facing Feature (Web + Mobile)
+
+**Purpose:** Full user-facing Menus feature. Users can create/manage menus for occasions (dinner party, holiday, date night) and organize recipes by course (starter, soup, salad, main, side, cheese, dessert, drink, other).
+
+**Web Implementation:**
+- `apps/web/components/Sidebar.tsx` — Added "My Menus" nav item (between Meal Plan and Import & Scan)
+- `apps/web/app/dashboard/menus/page.tsx` — Menus list page with create modal, delete with confirmation, occasion badges, relative timestamps
+- `apps/web/app/dashboard/menus/[id]/page.tsx` — Menu detail page with course sections, recipe picker modal, servings override, shopping list integration, share toggle, edit modal
+- `apps/web/app/menu/[id]/page.tsx` — Public menu view (when is_public=true)
+- `apps/web/components/ChefsDialog.tsx` — Updated to support children prop for complex modal forms
+
+**Mobile Implementation:**
+- `apps/mobile/components/FloatingTabBar.tsx` — Added "Menus" tab (restaurant icon, between plan and shop)
+- `apps/mobile/app/(tabs)/_layout.tsx` — Added menus tab screen
+- `apps/mobile/app/(tabs)/menus.tsx` — Menus list tab with create modal, delete confirmation, empty state
+- `apps/mobile/app/menu/[id].tsx` — Menu detail screen with course sections, recipe picker, share, add to shopping list
+- `apps/mobile/lib/zustand/menuStore.ts` — Zustand store for menus (fetchMenus, fetchMenu, addMenu, editMenu, removeMenu, addRecipeToMenu, removeRecipeFromMenu)
+
+**i18n Updates:**
+- Added `nav.menus` key to all 10 locale files (5 mobile + 5 web)
+- Added `menus` namespace with 25 keys to all 5 mobile locale files (en/fr/es/it/de)
+
+**Type Fixes:**
+- `packages/db/src/types/menus.ts` — Fixed `prep_time`/`cook_time` to `prep_minutes`/`cook_minutes` in MenuWithItems
+
+**Verification:**
+- TypeScript: `npx tsc --noEmit` passes on web and mobile (0 errors)
+- Smoke tests: HTTP 200 on `/`, `/dashboard`, `/dashboard/menus`
+- Deployed: Commit 26f5c1c, PM2 online
+
+---
+
 ## 2026-05-01 (session P-213) TYPE: CODE (feature foundation)
 
 ### Menus Foundation — Database, Types & Admin Controls

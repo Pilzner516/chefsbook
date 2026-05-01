@@ -307,6 +307,8 @@
 |---------|--------|-------------|---------|-------|
 | Menus foundation (schema) | LIVE | migrations 069-071, packages/db/src/types/menus.ts, packages/db/src/queries/menus.ts | P-213 | menus + menu_items tables; MenuCourse type; CRUD queries; RLS policies |
 | Admin secret features toggle | LIVE | /admin/users/[id], /api/admin/users/[id]/secret-features | P-213 | User detail page with Secret Features card; menu_scan_enabled toggle (Pro only) |
+| My Menus (web) | LIVE | apps/web/app/dashboard/menus/, apps/web/app/menu/[id]/, Sidebar.tsx | P-214 | List page, detail page with course sections, recipe picker, shopping list integration, share toggle, public view |
+| My Menus (mobile) | LIVE | apps/mobile/app/(tabs)/menus.tsx, apps/mobile/app/menu/[id].tsx, menuStore.ts, FloatingTabBar.tsx | P-214 | Tab screen, detail screen, Zustand store; 25 i18n keys in 5 locales |
 
 ---
 
