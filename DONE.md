@@ -1,6 +1,38 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-04-30 (session TEMPLATE-STEPS-LABEL-FIX) TYPE: CODE FIX
+
+### PDF Template STEPS Label Position Fix
+
+**Problem:** Studio template was missing STEPS label entirely - steps section had no header.
+All other templates already had STEPS label correctly positioned inside steps container.
+
+**Pre-flight Audit Results:**
+- trattoria: STEPS label inside container ✅
+- bbq: STEPS label inside styles.stepsSection ✅
+- garden: STEPS label inside container ✅
+- nordic: STEPS label inside styles.stepsSection ✅
+- heritage: STEPS label inside styles.stepsSection ✅
+- studio: STEPS label missing ❌ FIXED
+
+**Fix Applied:**
+- Added STEPS label as first child inside styles.stepsSection in studio.tsx
+- Label matches template design: RED accent, Inter font, uppercase, letterSpacing 3
+- marginBottom: layout.sectionGap for proper spacing
+
+**Files Modified:**
+- `apps/web/lib/pdf-templates/studio.tsx` — added STEPS label (9 lines)
+
+**TypeScript:** Pre-existing errors from untracked Instagram import files (not caused by this change)
+**Deployed:** Commit 617dafc, HTTP 200, PM2 online
+
+**Note:** The original prompt described orphaned STEPS labels when ingredients overflow,
+but this issue didn't exist in any template - all had labels correctly inside containers.
+Studio simply lacked the label entirely.
+
+---
+
 ## 2026-04-30 (session TEMPLATE-STEP-ROW-WRAP) TYPE: CODE FIX
 
 ### BBQ Template Step Flex Row wrap={false} Fix
