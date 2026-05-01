@@ -22,6 +22,8 @@ import type { ImageTheme } from '@chefsbook/ai';
 type ViewMode = 'grid' | 'list' | 'table';
 type SortKey = 'date' | 'title-asc' | 'title-desc' | 'time' | 'cuisine';
 
+const PAGE_SIZE = 50;
+
 /**
  * Format missing_fields from DB into user-friendly pill text.
  * The DB missing_fields is the authoritative source (not client-side checks).
@@ -89,6 +91,8 @@ export default function DashboardPage() {
   const [tableSortAsc, setTableSortAsc] = useState(false);
   const [imageTheme, setImageTheme] = useState<ImageTheme>('bright_fresh');
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     setViewMode(getStoredView());
@@ -111,24 +115,48 @@ export default function DashboardPage() {
   const changeSort = (s: SortKey) => { setSortKey(s); localStorage.setItem('cb_sort', s); };
 
   useEffect(() => {
-    const timer = setTimeout(() => loadRecipes(), 300);
+    const timer = setTimeout(() => {
+      setHasMore(true);
+      loadRecipes();
+    }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  const loadRecipes = async () => {
-    setLoading(true);
+  const loadRecipes = async (append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      const data = await listRecipes({ userId: user.id, search: search || undefined });
-      setRecipes(data);
+      const offset = append ? recipes.length : 0;
+      const data = await listRecipes({
+        userId: user.id,
+        search: search || undefined,
+        limit: PAGE_SIZE,
+        offset,
+      });
+
+      if (append) {
+        setRecipes(prev => [...prev, ...data]);
+      } else {
+        setRecipes(data);
+      }
+
+      setHasMore(data.length === PAGE_SIZE);
+
       if (data.length > 0) {
-        getPrimaryPhotos(data.map((r) => r.id)).then(setPrimaryPhotos);
-        // Fetch translated titles if language is not English
+        getPrimaryPhotos(data.map((r) => r.id)).then(newPhotos => {
+          setPrimaryPhotos(prev => ({ ...prev, ...newPhotos }));
+        });
         const lang = i18n.language;
         if (lang && lang !== 'en') {
-          getBatchTranslatedTitles(data.map((r) => r.id), lang).then(setTranslatedTitles);
+          getBatchTranslatedTitles(data.map((r) => r.id), lang).then(newTitles => {
+            setTranslatedTitles(prev => ({ ...prev, ...newTitles }));
+          });
         }
       }
       if (!userInfo) {
@@ -138,6 +166,7 @@ export default function DashboardPage() {
       }
     }
     setLoading(false);
+    setLoadingMore(false);
   };
 
   const toggleSelect = (id: string) => {
@@ -752,6 +781,41 @@ export default function DashboardPage() {
             </tbody>
           </table>
         </div>
+        )}
+
+        {/* Load More button */}
+        {hasMore && !loading && (
+          <div className="flex justify-center mt-8 mb-4">
+            <button
+              onClick={() => loadRecipes(true)}
+              disabled={loadingMore}
+              className="bg-cb-card border border-cb-border px-8 py-3 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text hover:border-cb-primary transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {loadingMore ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  Load More Recipes
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* End of recipes indicator */}
+        {!hasMore && recipes.length > PAGE_SIZE && (
+          <p className="text-center text-cb-secondary text-sm mt-8 mb-4">
+            Showing all {recipes.length} recipes
+          </p>
         )}
         </>
       )}
