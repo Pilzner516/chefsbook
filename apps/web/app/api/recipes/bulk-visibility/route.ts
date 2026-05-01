@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       console.log('[bulk-visibility] Looking for recipes with IDs:', ids, 'owned by user:', user.id);
 
       // Fetch full recipes with ownership check + ingredients + steps (for enforcement)
+      // Use explicit FK name to avoid PGRST201 (recipe_ingredients has both recipe_id and sub_recipe_id FKs)
       const { data: ownedRecipes, error: queryError } = await supabaseAdmin
         .from('recipes')
         .select(`
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
           moderation_status,
           copyright_review_pending,
           ai_recipe_verdict,
-          recipe_ingredients:recipe_ingredients(quantity, ingredient),
+          recipe_ingredients:recipe_ingredients!recipe_ingredients_recipe_id_fkey(quantity, ingredient),
           recipe_steps:recipe_steps(id)
         `)
         .eq('user_id', user.id)
