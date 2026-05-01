@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase, createRecipe, createTechnique, checkRecipeLimit, saveRecipe } from '@chefsbook/db';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
+import InstagramExportImporter from '@/components/InstagramExportImporter';
 import {
   Mic,
   Camera,
@@ -75,6 +76,9 @@ export default function ScanPage() {
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
+  // Plan tier for gated features
+  const [planTier, setPlanTier] = useState('free');
+
   // Bookmark import state
   const [bmPhase, setBmPhase] = useState<BookmarkPhase>('idle');
   const [bmDragOver, setBmDragOver] = useState(false);
@@ -88,6 +92,22 @@ export default function ScanPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Fetch user plan tier ──
+  useEffect(() => {
+    async function fetchPlan() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('plan_tier')
+          .eq('id', user.id)
+          .single();
+        if (profile?.plan_tier) setPlanTier(profile.plan_tier);
+      }
+    }
+    fetchPlan();
+  }, []);
 
   // ── Check pro + resume import ──
   useEffect(() => {
@@ -1228,6 +1248,11 @@ export default function ScanPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Instagram Export Import */}
+      <div className="mt-6">
+        <InstagramExportImporter planTier={planTier} />
       </div>
 
       <ConfirmDialog />
