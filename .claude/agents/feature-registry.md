@@ -302,6 +302,14 @@
 
 ---
 
+## MENUS
+| Feature | Status | Owner Files | Session | Notes |
+|---------|--------|-------------|---------|-------|
+| Menus foundation (schema) | LIVE | migrations 069-071, packages/db/src/types/menus.ts, packages/db/src/queries/menus.ts | P-213 | menus + menu_items tables; MenuCourse type; CRUD queries; RLS policies |
+| Admin secret features toggle | LIVE | /admin/users/[id], /api/admin/users/[id]/secret-features | P-213 | User detail page with Secret Features card; menu_scan_enabled toggle (Pro only) |
+
+---
+
 ## INFRASTRUCTURE
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|

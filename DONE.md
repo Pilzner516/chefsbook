@@ -1,6 +1,50 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-213) TYPE: CODE (feature foundation)
+
+### Menus Foundation — Database, Types & Admin Controls
+
+**Purpose:** Foundational infrastructure for the ChefsBook Menus feature set. No user-facing UI — only schema, types, queries, and admin controls.
+
+**Two Menu Concepts:**
+1. **My Menus** — User-curated occasion menus (Thanksgiving, dinner party, date night). Structured by course, pulls from existing ChefsBook recipes.
+2. **Restaurant Menu Scan** — Secret capability to scan restaurant menus and extract dishes as recipes. Pro-only, admin-controlled, default OFF.
+
+**New Migrations:**
+- `069_menus.sql` — menus table (user occasions)
+- `070_menu_items.sql` — menu items (recipe-to-course assignments)
+- `071_menu_scan_enabled.sql` — flag on user_profiles (admin toggle)
+
+**New Files:**
+- `packages/db/src/types/menus.ts` — MenuCourse type, COURSE_ORDER/LABELS, Menu/MenuItem/MenuWithItems interfaces
+- `packages/db/src/queries/menus.ts` — getUserMenus, getMenu, createMenu, updateMenu, deleteMenu, addMenuItem, updateMenuItem, removeMenuItem, reorderMenuItems, getMenuScanEnabled, setMenuScanEnabled
+- `apps/web/app/admin/users/[id]/page.tsx` — Admin user detail page with Secret Features section
+- `apps/web/app/api/admin/users/[id]/secret-features/route.ts` — GET/POST for menu_scan_enabled toggle
+
+**Modified Files:**
+- `packages/db/src/index.ts` — export menus queries
+- `packages/db/src/types.ts` — re-export menu types
+- `apps/web/app/admin/users/page.tsx` — Link to user detail page from user name
+
+**Admin UI:**
+- User list: click name → user detail page
+- User detail: Account info card + Secret Features card
+- Secret Features toggle: "Restaurant Menu Scan (Pro only)" — disabled for non-Pro users with explanation
+
+**Verification:**
+- psql: `\d menus` — 9 columns, RLS enabled, 2 policies
+- psql: `\d menu_items` — 8 columns, RLS enabled, 2 policies  
+- psql: menu_scan_enabled column exists on user_profiles with default false
+- curl: admin/users returns HTTP 200
+- curl: admin/users/[id] returns HTTP 200
+
+**TypeScript:** npx tsc --noEmit passes (0 errors)
+**Deployed:** Commit f33d787, HTTP 200, PM2 online
+**Migrations:** 069, 070, 071 applied, PostgREST restarted
+
+---
+
 ## 2026-05-01 (session P-212) TYPE: CODE (reliability refactor)
 
 ### Instagram Completion Background Queue
