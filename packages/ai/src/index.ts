@@ -88,5 +88,5 @@ export type {
 export { generateNutrition } from './generateNutrition';
 export type { NutritionEstimate, NutritionInput } from './generateNutrition';
 export { getModelForTask, clearModelCache, MODEL_FALLBACKS } from './modelConfig';
-export { classifyFoodImage, extractInstagramExportCaption } from './instagramExport';
-export type { ExtractedCaption, ClassifyFoodResult, ExtractCaptionResult } from './instagramExport';
+export { classifyFoodImage, extractInstagramExportCaption, completeInstagramRecipe } from './instagramExport';
+export type { ExtractedCaption, ClassifyFoodResult, ExtractCaptionResult, CompletedRecipeData, CompleteInstagramRecipeResult } from './instagramExport';
