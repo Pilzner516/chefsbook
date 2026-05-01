@@ -17,15 +17,22 @@ export async function POST(req: NextRequest) {
 
     const { data: recipe } = await supabaseAdmin
       .from('recipes')
-      .select('title, description, visibility, tags')
+      .select('title, description, visibility, tags, user_id')
       .eq('id', recipeId)
       .single();
     if (!recipe) return Response.json({ error: 'recipe not found' }, { status: 404 });
 
     const completeness = await fetchRecipeCompleteness(recipeId);
-    const intendedVisibility = recipe.visibility;
 
-    await applyCompletenessGate(recipeId, completeness, intendedVisibility);
+    // Get user's default visibility preference (defaults to 'public' if not set)
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('default_visibility')
+      .eq('id', recipe.user_id)
+      .maybeSingle();
+    const userDefaultVisibility = profile?.default_visibility ?? 'public';
+
+    await applyCompletenessGate(recipeId, completeness, userDefaultVisibility);
 
     let aiVerdict: 'approved' | 'flagged' | 'not_a_recipe' = 'approved';
     let aiReason = '';
@@ -51,7 +58,7 @@ export async function POST(req: NextRequest) {
       });
       aiVerdict = result.verdict;
       aiReason = result.reason;
-      await applyAiVerdict(recipeId, aiVerdict, aiReason, intendedVisibility);
+      await applyAiVerdict(recipeId, aiVerdict, aiReason, userDefaultVisibility);
 
       const u = consumeLastUsage();
       logAiCall({ userId, action: 'moderate_recipe', model: 'haiku', recipeId, durationMs: Date.now() - t0, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, success: true }).catch(() => {});
