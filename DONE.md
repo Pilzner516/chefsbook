@@ -1,6 +1,54 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session MENU-05) TYPE: CODE (feature implementation)
+
+### Menus to Books — Batch Add + Menu Chapter Organisation
+
+**Purpose:** Connect menus feature to print cookbook workflow with two new capabilities.
+
+**PART 1: Add all filtered results to cookbook**
+- New `/api/print-cookbooks/[id]/batch-add-recipes` API route
+- CookbookPickerModal component for selecting target cookbook
+- "Add all to cookbook" button on search page when filters are active
+- Deduplicates existing recipes, reports added/skipped counts
+
+**PART 2: Menu chapter organisation in Print Cookbook**
+- BookOrganisation type: 'manual' | 'by_menu'
+- MenuChapterCard type in book-layout.ts with helper functions
+- MenuChapterPage shared component for all 6 PDF templates
+- Organisation selector in print-cookbook settings panel (Manual/By Menu)
+- TemplateEngine.buildContext now accepts organisation + menuChapters
+- PDF generate route fetches menu data and passes to templates
+- All 6 templates (trattoria, nordic, garden, heritage, bbq, studio) updated to render chapter pages
+- "Other Recipes" chapter auto-created for recipes not in any menu
+
+**i18n:**
+- 19 new keys in menuBooks namespace across all 5 locales (en/fr/es/it/de)
+- Added manualOrderDesc, byMenuDesc, noMenusForOrg keys
+
+**Files created:**
+- `apps/web/app/api/print-cookbooks/[id]/batch-add-recipes/route.ts`
+- `apps/web/components/CookbookPickerModal.tsx`
+- `apps/web/lib/pdf-templates/MenuChapterPage.tsx`
+
+**Files changed:**
+- `apps/web/app/dashboard/search/page.tsx` (batch add button + modal)
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx` (organisation selector)
+- `apps/web/app/api/print-cookbooks/[id]/generate/route.ts` (menu data fetch)
+- `apps/web/lib/book-layout.ts` (BookOrganisation, MenuChapterCard, helpers)
+- `apps/web/lib/pdf-templates/engine/types.ts` (MenuChapterData)
+- `apps/web/lib/pdf-templates/engine/index.ts` (buildContext params)
+- `apps/web/lib/pdf-templates/book-strings.ts` (chapter/recipe/recipes/otherRecipes)
+- `apps/web/lib/pdf-templates/*.tsx` (all 6 templates)
+- `apps/web/locales/*.json` (5 files)
+
+**Verification:**
+- TypeScript: 0 errors
+- Deployed to RPi5: build successful, PM2 restarted
+
+---
+
 ## 2026-05-01 (session MENU-04) TYPE: CODE (feature implementation)
 
 ### Menu Mode — Cook a Menu (Mobile + Web)
