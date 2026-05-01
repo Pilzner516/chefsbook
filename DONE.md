@@ -1,6 +1,41 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-212) TYPE: CODE (reliability refactor)
+
+### Instagram Completion Background Queue
+
+**Problem:** P-211's client-side completion was fragile — if user navigated away mid-generation, remaining recipes stayed incomplete forever.
+
+**Solution:** Server-side job queue with persistent global progress banner.
+
+**New Files:**
+- `supabase/migrations/20260501_068_instagram_completion_jobs.sql` — job queue table
+- `apps/web/app/api/import/instagram-export/completion-status/route.ts` — GET job status counts
+- `apps/web/app/api/import/instagram-export/process-jobs/route.ts` — process batch of 5 pending jobs
+- `apps/web/app/api/import/instagram-export/retry-failed/route.ts` — reset failed jobs to pending
+- `apps/web/components/InstagramCompletionBanner.tsx` — global progress banner in dashboard layout
+
+**Modified Files:**
+- `apps/web/app/api/import/instagram-export/save/route.ts` — queue jobs after saving
+- `apps/web/app/dashboard/layout.tsx` — add InstagramCompletionBanner
+- `apps/web/components/InstagramExportImporter.tsx` — remove client-side completion loop
+
+**Key Behaviors:**
+- Jobs persist in `import_completion_jobs` table (pending → processing → complete/failed)
+- Banner shows at top of all dashboard pages when jobs exist
+- Polls every 5s when active, triggers process-jobs on each poll
+- Client-driven processing (no dedicated job runner needed on RPi5)
+- Failed jobs retry up to 3 times before permanent failure
+- User can retry failed jobs manually via "Retry failed" button
+- 58 stuck recipes from P-210/P-211 backfilled as pending
+
+**TypeScript:** npx tsc --noEmit passes (0 errors)
+**Deployed:** Commit 3c7fc8f, HTTP 200, PM2 online
+**Migration:** 068 applied via docker exec, PostgREST restarted
+
+---
+
 ## 2026-05-01 (session P-211) TYPE: CODE (feature extension)
 
 ### Instagram Export Auto-Completion via Sous Chef (Web only)
