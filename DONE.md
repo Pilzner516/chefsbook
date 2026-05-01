@@ -1,6 +1,28 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-216) TYPE: DATA FIX (follow-up to P-215)
+
+### Instagram Import: Reset Stuck Jobs for Reprocessing
+
+**Context:** P-215 fixed the code in `process-jobs` to properly handle errors and call finalize after inserts. However, 58 jobs were already marked "complete" before the fix, even though their ingredient inserts had failed silently.
+
+**Data Fix:**
+- Reset 58 jobs from `status = 'complete'` to `status = 'pending', attempts = 0`
+- These jobs are for instagram_export recipes that have 0 ingredients in `recipe_ingredients`
+
+**Verification:**
+- psql: 58 pending jobs, 13 complete jobs (was 71 complete before reset)
+- psql: 58 recipes without ingredients match the 58 pending jobs
+- TypeScript: `npx tsc --noEmit` passes (0 errors)
+- Smoke test: HTTP 200 on `/`, `/dashboard`
+
+**Next Step:** When user "Chef" visits the dashboard, InstagramCompletionBanner will trigger `process-jobs` and reprocess the 58 pending jobs with P-215's fixed code. Ingredients will be inserted and `missing_fields` will be cleared.
+
+**TYPE: DATA FIX ONLY** — Code fix was already deployed in P-215. This session only reset the stuck jobs.
+
+---
+
 ## 2026-05-01 (session P-215) TYPE: CODE FIX (bug fix)
 
 ### Instagram Import: Missing Ingredients Badge Display Fix
