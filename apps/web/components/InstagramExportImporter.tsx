@@ -38,7 +38,7 @@ const MAX_FOOD_POSTS = 500;
 
 export default function InstagramExportImporter({ planTier }: InstagramExportImporterProps) {
   const router = useRouter();
-  const [phase, setPhase] = useState<'upload' | 'processing' | 'review' | 'saving' | 'generating' | 'done'>('upload');
+  const [phase, setPhase] = useState<'upload' | 'processing' | 'review' | 'saving' | 'done'>('upload');
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
   const [zipFile, setZipFile] = useState<File | null>(null);
@@ -61,13 +61,7 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
   const [saveTotal, setSaveTotal] = useState(0);
   const [saved, setSaved] = useState(0);
   const [skipped, setSkipped] = useState(0);
-  const [savedRecipeIds, setSavedRecipeIds] = useState<string[]>([]);
-
-  // Generation state
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationTotal, setGenerationTotal] = useState(0);
-  const [generationCompleted, setGenerationCompleted] = useState<Array<{ recipeId: string; title: string; ingredientCount: number; stepCount: number }>>([]);
-  const [generationFailed, setGenerationFailed] = useState<Array<{ recipeId: string; error: string }>>([]);
+  const [jobsQueued, setJobsQueued] = useState(0);
 
   // Check plan limits on mount
   useEffect(() => {
@@ -262,7 +256,7 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
     setSaveTotal(toSave.length);
     setSaved(0);
     setSkipped(0);
-    setSavedRecipeIds([]);
+    setJobsQueued(0);
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
@@ -300,63 +294,13 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
       setSaveProgress(toSave.length);
       setSaved(data.saved);
       setSkipped(data.skipped);
-      const recipeIds = data.recipeIds || [];
-      setSavedRecipeIds(recipeIds);
-
-      if (recipeIds.length > 0) {
-        setPhase('generating');
-        await completeRecipes(recipeIds, session.access_token);
-      } else {
-        setPhase('done');
-      }
+      setJobsQueued(data.jobsQueued || 0);
+      setPhase('done');
     } catch (e: any) {
       setError(e.message);
       setPhase('review');
     }
   }, [foodPosts, selected, editedTitles]);
-
-  const completeRecipes = useCallback(async (recipeIds: string[], accessToken: string) => {
-    setGenerationProgress(0);
-    setGenerationTotal(recipeIds.length);
-    setGenerationCompleted([]);
-    setGenerationFailed([]);
-
-    const BATCH_SIZE = 5;
-    const allCompleted: Array<{ recipeId: string; title: string; ingredientCount: number; stepCount: number }> = [];
-    const allFailed: Array<{ recipeId: string; error: string }> = [];
-
-    for (let i = 0; i < recipeIds.length; i += BATCH_SIZE) {
-      const batch = recipeIds.slice(i, i + BATCH_SIZE);
-
-      try {
-        const res = await fetch('/api/import/instagram-export/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ recipeIds: batch }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          if (data.completed) allCompleted.push(...data.completed);
-          if (data.failed) allFailed.push(...data.failed);
-        } else {
-          batch.forEach((id) => allFailed.push({ recipeId: id, error: data.error || 'Request failed' }));
-        }
-      } catch (batchError: any) {
-        batch.forEach((id) => allFailed.push({ recipeId: id, error: batchError.message || 'Network error' }));
-      }
-
-      setGenerationProgress(Math.min(i + batch.length, recipeIds.length));
-      setGenerationCompleted([...allCompleted]);
-      setGenerationFailed([...allFailed]);
-    }
-
-    setPhase('done');
-  }, []);
 
   // Plan gate: Pro only
   if (planTier !== 'pro') {
@@ -623,64 +567,8 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
     );
   }
 
-  // Phase: Generating
-  if (phase === 'generating') {
-    return (
-      <div className="bg-cb-card border border-cb-border rounded-card p-5">
-        <div className="text-center mb-4">
-          <Spinner className="mx-auto mb-4" />
-          <h3 className="font-semibold text-cb-text mb-2">Generating ingredients & steps...</h3>
-          <p className="text-cb-secondary text-sm mb-3">Step 2 of 2</p>
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <p className="text-sm font-medium">
-              {generationProgress} / {generationTotal} recipes
-            </p>
-            <p className="text-xs text-cb-secondary">
-              {generationTotal > 0 ? Math.round((generationProgress / generationTotal) * 100) : 0}%
-            </p>
-          </div>
-          <div className="w-full h-2 bg-cb-bg rounded-full overflow-hidden">
-            <div
-              className="h-full bg-cb-green rounded-full transition-all duration-300"
-              style={{ width: `${generationTotal > 0 ? (generationProgress / generationTotal) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
-
-        {generationCompleted.length > 0 && (
-          <div className="mt-4 max-h-[200px] overflow-y-auto">
-            {generationCompleted.map((item) => (
-              <div key={item.recipeId} className="flex items-center gap-2 py-1.5 text-sm">
-                <Check className="w-4 h-4 text-cb-green shrink-0" />
-                <span className="truncate text-cb-text">{item.title}</span>
-                <span className="text-cb-secondary text-xs shrink-0">
-                  {item.ingredientCount} ingredients, {item.stepCount} steps
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {generationFailed.length > 0 && (
-          <div className="mt-4 max-h-[100px] overflow-y-auto">
-            {generationFailed.map((item) => (
-              <div key={item.recipeId} className="flex items-center gap-2 py-1.5 text-sm">
-                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="text-cb-secondary text-xs truncate">{item.error}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   // Phase: Done
   if (phase === 'done') {
-    const completedCount = generationCompleted.length;
-    const failedCount = generationFailed.length;
-    const allGenerated = completedCount === saved && failedCount === 0;
-
     return (
       <div className="bg-cb-card border border-cb-border rounded-card p-5 text-center">
         <div className="w-16 h-16 rounded-full bg-cb-green/10 flex items-center justify-center mx-auto mb-4">
@@ -694,23 +582,10 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
           )}
         </p>
 
-        {completedCount > 0 && (
-          <p className="text-sm text-cb-green mb-2">
-            <Check className="w-4 h-4 inline mr-1" />
-            {completedCount} recipe{completedCount !== 1 ? 's' : ''} generated with ingredients & steps
-          </p>
-        )}
-
-        {failedCount > 0 && (
-          <p className="text-sm text-amber-600 mb-4">
-            <AlertTriangle className="w-4 h-4 inline mr-1" />
-            {failedCount} recipe{failedCount !== 1 ? 's' : ''} need manual completion with Sous Chef
-          </p>
-        )}
-
-        {!allGenerated && failedCount > 0 && (
-          <p className="text-sm text-cb-secondary mb-6">
-            Some recipes couldn't be auto-completed. Open them and use the Sous Chef to fill in the details.
+        {jobsQueued > 0 && (
+          <p className="text-sm text-purple-600 mb-4">
+            Sous Chef is generating ingredients & steps for {jobsQueued} recipe{jobsQueued !== 1 ? 's' : ''} in the background.
+            You can track progress in the banner above.
           </p>
         )}
 
@@ -728,8 +603,6 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
               setFoodPosts([]);
               setSelected(new Set());
               setEditedTitles({});
-              setGenerationCompleted([]);
-              setGenerationFailed([]);
             }}
             className="border border-cb-border px-6 py-2.5 rounded-input text-sm font-medium text-cb-secondary hover:text-cb-text transition-colors"
           >

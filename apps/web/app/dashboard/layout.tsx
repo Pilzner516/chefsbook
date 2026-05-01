@@ -6,6 +6,7 @@ import { supabase } from '@chefsbook/db';
 import type { User } from '@supabase/supabase-js';
 import Sidebar from '@/components/Sidebar';
 import OnboardingOverlay from '@/components/OnboardingOverlay';
+import InstagramCompletionBanner from '@/components/InstagramCompletionBanner';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -123,6 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         )}
+        <InstagramCompletionBanner />
         {children}
         {(() => {
           const pageMap: Record<string, string> = {

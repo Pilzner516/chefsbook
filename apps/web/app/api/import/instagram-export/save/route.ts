@@ -161,7 +161,20 @@ export async function POST(request: NextRequest) {
       recipeIds.push(recipe.id);
     }
 
-    return NextResponse.json({ saved, skipped, limitReached, recipeIds });
+    // Queue completion jobs for all saved recipes
+    if (recipeIds.length > 0) {
+      await supabaseAdmin
+        .from('import_completion_jobs')
+        .insert(
+          recipeIds.map(recipeId => ({
+            user_id: user.id,
+            recipe_id: recipeId,
+            status: 'pending',
+          }))
+        );
+    }
+
+    return NextResponse.json({ saved, skipped, limitReached, recipeIds, jobsQueued: recipeIds.length });
   } catch (error) {
     console.error('[instagram-export/save] Error:', error);
     return NextResponse.json(
