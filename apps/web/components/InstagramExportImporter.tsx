@@ -15,6 +15,11 @@ interface InstagramPost {
   timestamp: number;
 }
 
+interface ParsedExport {
+  posts: InstagramPost[];
+  username: string | null;
+}
+
 interface ClassifiedPost {
   uri: string;
   isFood: boolean;
@@ -46,6 +51,7 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
   // Processing state
   const [allPosts, setAllPosts] = useState<InstagramPost[]>([]);
   const [foodPosts, setFoodPosts] = useState<ClassifiedPost[]>([]);
+  const [instagramUsername, setInstagramUsername] = useState<string | null>(null);
   const [scannedCount, setScannedCount] = useState(0);
   const [cancelled, setCancelled] = useState(false);
   const cancelledRef = useRef(false);
@@ -79,9 +85,34 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
   }, []);
 
   // Parse ZIP file
-  const parseZip = useCallback(async (file: File): Promise<InstagramPost[]> => {
+  const parseZip = useCallback(async (file: File): Promise<ParsedExport> => {
     const zip = await JSZip.loadAsync(file);
     const posts: InstagramPost[] = [];
+    let username: string | null = null;
+
+    // Try to extract username from profile/account info
+    const profilePaths = [
+      'personal_information/personal_information.json',
+      'account_information.json',
+      'profile.json',
+    ];
+    for (const path of profilePaths) {
+      const profileFile = zip.files[path];
+      if (profileFile) {
+        try {
+          const content = await profileFile.async('string');
+          const data = JSON.parse(content);
+          // Instagram export format varies; try common paths
+          username = data?.profile_user?.[0]?.string_map_data?.Username?.value
+            || data?.username
+            || data?.profile?.username
+            || null;
+          if (username) break;
+        } catch {
+          // Continue trying other paths
+        }
+      }
+    }
 
     // Find all posts_*.json files
     const postFiles = Object.keys(zip.files).filter(
@@ -121,7 +152,7 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
 
     // Sort by timestamp descending (most recent first)
     posts.sort((a, b) => b.timestamp - a.timestamp);
-    return posts;
+    return { posts, username };
   }, []);
 
   // Start classification
@@ -135,8 +166,9 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
     setScannedCount(0);
 
     try {
-      const posts = await parseZip(zipFile);
+      const { posts, username } = await parseZip(zipFile);
       setAllPosts(posts);
+      setInstagramUsername(username);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
@@ -273,6 +305,7 @@ export default function InstagramExportImporter({ planTier }: InstagramExportImp
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
+          instagramUsername,
           posts: toSave.map((p) => ({
             uri: p.uri,
             imageBase64: p.imageBase64,

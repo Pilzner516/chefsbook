@@ -45,10 +45,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { posts } = (await request.json()) as { posts: SavePost[] };
+    const { posts, instagramUsername } = (await request.json()) as { posts: SavePost[]; instagramUsername?: string | null };
     if (!Array.isArray(posts) || posts.length === 0) {
       return NextResponse.json({ error: 'No posts provided' }, { status: 400 });
     }
+
+    // Build Instagram profile URL from username
+    const instagramProfileUrl = instagramUsername
+      ? `https://www.instagram.com/${instagramUsername}/`
+      : 'https://www.instagram.com';
 
     let saved = 0;
     let skipped = 0;
@@ -100,7 +105,7 @@ export async function POST(request: NextRequest) {
           title: post.extracted.title || 'Untitled Instagram Recipe',
           description: null,
           source_type: 'instagram_export',
-          source_url: 'https://www.instagram.com',
+          source_url: instagramProfileUrl,
           source_instagram_uri: post.uri,
           notes: post.extracted.notes,
           cuisine: post.extracted.cuisine,
