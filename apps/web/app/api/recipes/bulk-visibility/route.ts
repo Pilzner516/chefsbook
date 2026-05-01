@@ -59,8 +59,11 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .in('id', ids);
 
-      if (!ownedRecipes || ownedRecipes.length !== ids.length) {
-        return NextResponse.json({ error: 'You do not own all selected recipes' }, { status: 403 });
+      // Count how many weren't owned (for reporting)
+      const notOwnedCount = ids.length - (ownedRecipes?.length ?? 0);
+
+      if (!ownedRecipes || ownedRecipes.length === 0) {
+        return NextResponse.json({ error: 'None of the selected recipes belong to you' }, { status: 403 });
       }
 
       // If making public, filter out incomplete and flagged recipes
@@ -107,7 +110,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         updated: validIds.length,
-        skipped: skippedCount
+        skipped: skippedCount,
+        notOwned: notOwnedCount
       });
     }
   } catch (error: any) {

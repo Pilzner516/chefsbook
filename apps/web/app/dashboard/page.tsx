@@ -207,7 +207,8 @@ export default function DashboardPage() {
 
   const handleMakePrivate = async () => {
     if (selected.size === 0) return;
-    const publicRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'public');
+    // Only include recipes that are public AND owned by the current user
+    const publicRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'public' && r.user_id === userInfo?.id);
     if (publicRecipes.length === 0) return;
 
     const ok = await confirm({
@@ -242,7 +243,8 @@ export default function DashboardPage() {
 
   const handleMakePublic = async () => {
     if (selected.size === 0) return;
-    const privateRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'private');
+    // Only include recipes that are private AND owned by the current user
+    const privateRecipes = recipes.filter(r => selected.has(r.id) && r.visibility === 'private' && r.user_id === userInfo?.id);
     if (privateRecipes.length === 0) return;
 
     const ok = await confirm({
