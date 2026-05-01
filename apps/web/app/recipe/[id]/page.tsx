@@ -68,6 +68,8 @@ export default function RecipePage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
+  const [editingServings, setEditingServings] = useState(false);
+  const [regeneratingNutrition, setRegeneratingNutrition] = useState(false);
   const [editingIngredients, setEditingIngredients] = useState(false);
   const [editingSteps, setEditingSteps] = useState(false);
   const [draftIngredients, setDraftIngredients] = useState<{ quantity: string; unit: string; ingredient: string; preparation: string; group_label: string }[]>([]);
@@ -689,6 +691,34 @@ export default function RecipePage() {
     setRecipe(updated);
     setEditingNotes(false);
     reModerateIfPublic(updated);
+  };
+
+  const saveServings = async (newServings: number) => {
+    if (!recipe || newServings < 1) return;
+    await updateRecipe(id, { servings: newServings });
+    const updated = { ...recipe, servings: newServings };
+    setRecipe(updated);
+    setServings(newServings);
+    setEditingServings(false);
+
+    // If nutrition exists, regenerate it for the new servings count
+    if ((recipe as any).nutrition) {
+      setRegeneratingNutrition(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (token) {
+          await fetch(`/api/recipes/${id}/generate-nutrition`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        }
+      } catch {
+        // Nutrition regeneration is best-effort
+      } finally {
+        setRegeneratingNutrition(false);
+      }
+    }
   };
 
   const startEditIngredients = () => {
@@ -2149,40 +2179,101 @@ export default function RecipePage() {
         )}
 
         {/* Servings scaler + shopping list — hide for video_only */}
-        {!recipe.video_only && <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-10 flex items-center gap-4 flex-wrap">
-          <span className="text-sm font-medium text-cb-secondary">Servings</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setServings((s) => Math.max(1, s - 1))}
-              className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors"
-            >
-              -
-            </button>
-            <span className="w-8 text-center font-semibold">{servings}</span>
-            <button
-              onClick={() => setServings((s) => s + 1)}
-              className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors"
-            >
-              +
-            </button>
+        {!recipe.video_only && <div className="bg-cb-card border border-cb-border rounded-card p-4 mb-10">
+          {/* Base servings (editable by owner) */}
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-cb-border/50">
+            <span className="text-sm text-cb-secondary">Recipe serves:</span>
+            {editingServings ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const val = parseInt((e.currentTarget.elements.namedItem('servings') as HTMLInputElement).value);
+                  if (val >= 1) saveServings(val);
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  name="servings"
+                  type="number"
+                  min={1}
+                  defaultValue={recipe.servings}
+                  autoFocus
+                  className="w-16 text-sm font-semibold bg-cb-bg border border-cb-primary rounded-input px-2 py-1 outline-none text-center"
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (val >= 1) saveServings(val);
+                    else setEditingServings(false);
+                  }}
+                />
+                <span className="text-sm text-cb-muted">servings</span>
+              </form>
+            ) : (
+              <>
+                <span className="text-sm font-semibold">{recipe.servings}</span>
+                {isOwner && (
+                  <button
+                    onClick={() => setEditingServings(true)}
+                    className="text-xs text-cb-primary hover:underline ml-1"
+                  >
+                    Edit
+                  </button>
+                )}
+                {regeneratingNutrition && (
+                  <span className="text-xs text-cb-muted ml-2 flex items-center gap-1">
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Updating nutrition...
+                  </span>
+                )}
+              </>
+            )}
           </div>
-          {isOwner && recipe.ingredients.length > 0 && (
-            <button
-              onClick={async () => {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-                const lists = await listShoppingLists(user.id);
-                setShoppingLists(lists);
-                setShowShoppingModal(true);
-              }}
-              className="ml-auto flex items-center gap-1.5 border border-cb-green text-cb-green px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-green hover:text-white transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-              </svg>
-              Add to shopping list
-            </button>
-          )}
+          {/* Servings scaler for shopping */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-medium text-cb-secondary">Scale for shopping</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setServings((s) => Math.max(1, s - 1))}
+                className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors"
+              >
+                -
+              </button>
+              <span className="w-8 text-center font-semibold">{servings}</span>
+              <button
+                onClick={() => setServings((s) => s + 1)}
+                className="w-8 h-8 rounded-full border border-cb-border flex items-center justify-center text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition-colors"
+              >
+                +
+              </button>
+            </div>
+            {servings !== recipe.servings && (
+              <button
+                onClick={() => setServings(recipe.servings)}
+                className="text-xs text-cb-muted hover:text-cb-primary"
+              >
+                Reset
+              </button>
+            )}
+            {isOwner && recipe.ingredients.length > 0 && (
+              <button
+                onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  const lists = await listShoppingLists(user.id);
+                  setShoppingLists(lists);
+                  setShowShoppingModal(true);
+                }}
+                className="ml-auto flex items-center gap-1.5 border border-cb-green text-cb-green px-4 py-2 rounded-input text-sm font-medium hover:bg-cb-green hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                </svg>
+                Add to shopping list
+              </button>
+            )}
+          </div>
         </div>}
 
         {!recipe.video_only && <>
