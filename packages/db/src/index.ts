@@ -23,3 +23,4 @@ export * from './subscriptions';
 export * from './shopping/deduplication';
 export * from './queries/aiUsage';
 export * from './queries/duplicates';
+export * from './queries/menus';

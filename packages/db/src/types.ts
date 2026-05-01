@@ -289,6 +289,8 @@ export interface ScannedTechnique {
   difficulty: Difficulty | null;
 }
 
+export * from './types/menus';
+
 export interface ScannedRecipe {
   title: string;
   description: string | null;

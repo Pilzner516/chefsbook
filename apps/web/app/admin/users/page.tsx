@@ -5,6 +5,7 @@ import type { PlanTier } from '@chefsbook/db';
 import { supabase } from '@chefsbook/db';
 import { adminFetch, adminPost } from '@/lib/adminFetch';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
+import Link from 'next/link';
 
 interface UserRow {
   id: string;
@@ -555,9 +556,9 @@ export default function UsersPage() {
                         {!u.last_seen_at && <span className="inline-block w-2 h-2 rounded-full bg-gray-300" title="Never seen" />}
                         {/* Display name with fallback: display_name → username → email prefix → "User" */}
                         {/* Skip generic role labels like "Chef" that were auto-populated */}
-                        <span className="font-medium text-gray-900">
+                        <Link href={`/admin/users/${u.id}`} className="font-medium text-gray-900 hover:text-cb-primary hover:underline">
                           {(u.display_name && u.display_name !== 'Chef') ? u.display_name : (u.username || (u.email ? u.email.split('@')[0] : 'User'))}
-                        </span>
+                        </Link>
                         {u.account_status === 'suspended' && (
                           <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">Suspended</span>
                         )}
