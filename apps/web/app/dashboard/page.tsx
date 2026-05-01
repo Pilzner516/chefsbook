@@ -151,7 +151,9 @@ export default function DashboardPage() {
   };
 
   const selectAll = () => {
-    setSelected(new Set(filtered.map((r) => r.id)));
+    // Only select recipes owned by the current user
+    const ownedRecipes = filtered.filter((r) => r.user_id === userInfo?.id);
+    setSelected(new Set(ownedRecipes.map((r) => r.id)));
   };
 
   const handleBulkReimport = async () => {
@@ -405,7 +407,7 @@ export default function DashboardPage() {
             <>
               <span className="text-sm text-cb-secondary">{selected.size} selected</span>
               <button onClick={selectAll} className="text-sm text-cb-primary hover:underline">
-                Select all
+                Select my recipes
               </button>
               <button
                 onClick={handleBulkReimport}
