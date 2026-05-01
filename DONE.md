@@ -1,6 +1,38 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-215) TYPE: CODE FIX (bug fix)
+
+### Instagram Import: Missing Ingredients Badge Display Fix
+
+**Bug:** Instagram imported recipes showed `is_complete = true` but `missing_fields` was not empty, causing inconsistent state. The badge was actually working correctly based on `missing_fields`, but `is_complete` was being set prematurely by `process-jobs` before ingredients were confirmed inserted.
+
+**Root Cause Investigation:**
+- 72 instagram_export recipes total
+- 14 recipes: have ingredients (5-15 each), `missing_fields = {}` ✓
+- 58 recipes: have 0 ingredients, `missing_fields = '{"ingredients (minimum 2)"}'` but `is_complete = true` ✗
+- The AI completion ran but ingredients insert failed silently (no error handling)
+- `process-jobs` set `is_complete: true` before calling `finalize`
+- Jobs marked `complete` even when ingredients weren't inserted
+
+**Data Fix:**
+- Ran SQL update to sync `is_complete = false` for 58 recipes where `missing_fields` was non-empty
+- Verified: 14 recipes now have `is_complete = true` + `missing_fields = {}`, 58 have `is_complete = false` + `missing_fields = {"ingredients (minimum 2)"}`
+
+**Code Fix (apps/web/app/api/import/instagram-export/process-jobs/route.ts):**
+- Added error handling for ingredient and step inserts (mark job failed on error)
+- Fixed quantity field: `parseFloat(ing.amount)` instead of empty string (prevents numeric type cast errors)
+- Removed premature `is_complete: true` setting — let `finalize` determine completeness
+- Improved finalize error logging (non-OK response logged)
+
+**Verification:**
+- TypeScript: `npx tsc --noEmit` passes (0 errors)
+- Smoke test: HTTP 200 on `/`, `/dashboard`
+- psql: ingredient count = 110 (unchanged, data not modified beyond is_complete field)
+- Deployed: Commit 90aef86, PM2 online
+
+---
+
 ## 2026-05-01 (session P-214) TYPE: CODE (feature implementation)
 
 ### My Menus — User-Facing Feature (Web + Mobile)
