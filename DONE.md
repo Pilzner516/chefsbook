@@ -1,6 +1,49 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session MENU-04) TYPE: CODE (feature implementation)
+
+### Menu Mode — Cook a Menu (Mobile + Web)
+
+**Purpose:** Full-screen guided cooking experience for cooking through an entire menu course by course.
+
+**Mobile (apps/mobile/app/cook-menu/[id].tsx):**
+- Timeline view: recipes sorted by total_time descending, prep/cook time bars (red=prep, amber=cook), optional serve-time picker with start-time offsets, expandable recipe details (ingredients, first steps), "Go to recipe" links
+- Step by Step view: card-based flow through ALL steps organized by COURSE_ORDER, swipe navigation between steps, course divider cards ("Now starting: Main"), step progress indicator ("Step 3 of 24")
+- expo-keep-awake prevents screen sleep during cooking
+- All-prepped checklist with completion message ("You're ready to plate!")
+- Exit confirmation dialog via ChefsDialog
+- "Start Cooking" button added to menu detail screen (apps/mobile/app/menu/[id].tsx)
+
+**Web (apps/web/app/dashboard/menus/[id]/page.tsx):**
+- CookModeTimeline component slides in from right as overlay panel
+- Timeline shows recipes with prep/cook time bars
+- Expandable recipe details fetched from recipe_ingredients and recipe_steps
+- Serve time picker (HTML time input)
+- All-prepped checklist with checkboxes
+- "Start Cooking" button in action buttons row
+
+**i18n:**
+- 23 new keys in menus namespace across all 5 locales (en/fr/es/it/de)
+
+**Web Step by Step deferred** — added to AGENDA.md for future session.
+
+**Files changed:**
+- `apps/mobile/app/cook-menu/[id].tsx` (new)
+- `apps/mobile/app/menu/[id].tsx` (Start Cooking button)
+- `apps/mobile/locales/*.json` (5 files, 23 keys each)
+- `apps/mobile/package.json` (expo-keep-awake)
+- `apps/web/app/dashboard/menus/[id]/page.tsx` (CookModeTimeline, Start Cooking button)
+- `apps/web/app/globals.css` (slide-in animation)
+
+**Verification:**
+- TypeScript: 0 errors (mobile + web)
+- Deployed to RPi5: HTTP 200 on /, /dashboard, /dashboard/menus
+- psql: menus table has 1 menu, menu_items empty (no recipes added to menus yet)
+- feature-registry.md updated with 3 new entries
+
+---
+
 ## 2026-05-01 (session P-217) TYPE: CODE FIX + FEATURE
 
 ### Fixes

@@ -41,6 +41,12 @@ Feature built (session LULU-PRINT). Before announcing:
 
 ---
 
+## MENU-04 DEFERRED ITEMS
+
+- [ ] **Menu Mode Step by Step (web)** — Web version only has Timeline view. Step by Step view (card-based step navigation like mobile) deferred for future session.
+
+---
+
 ## UI CLEANUP FOLLOW-UPS
 
 - Raw `window.alert()` sweep (apps/web): ~40 remaining call sites across dashboard/*, components/*, app/share, app/technique, app/recipe/[id] (PDF + flag paths). Session 199 cleaned the two sites inside the recipe detail Re-import/Delete handlers; ui-guardian.md forbids native alerts. Follow-up session should replace remaining with `useAlertDialog` from `@/components/useConfirmDialog`.

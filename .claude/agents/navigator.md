@@ -178,6 +178,16 @@ Elements: 3-step flow: Step 1 — Record (mic button, transcript preview, manual
 Actions: Start/stop recording (Voice API), Edit transcript manually, Generate recipe from transcript (AI), Review and edit generated recipe, Save → creates recipe via addRecipe → navigates to /recipe/[id]
 Note: @react-native-voice/voice loaded via lazy require() in try/catch — may not be available on all devices
 
+### Menu Mode (Cook a Menu)
+Route: /cook-menu/[id]
+File: apps/mobile/app/cook-menu/[id].tsx
+Reach: Menu detail screen → "Start Cooking" button
+Params: id (menu UUID)
+Elements: Two-view segmented control (Timeline | Step by Step), screen stays awake via expo-keep-awake
+Timeline view: Recipes sorted by total_time descending, time bars (red=prep, amber=cook), optional serve-time picker, expandable recipe details (ingredients, first 3 steps), "All prepped?" checklist, completion message
+Step by Step view: Card-based flow through all steps organized by course (COURSE_ORDER), swipe navigation, course divider cards, timer badges on steps with time references, step progress indicator
+Actions: Toggle Timeline/Step by Step, Set serve time, Expand recipe details, Go to recipe, Check recipes as prepped, Navigate steps (swipe/buttons), Exit cooking mode (with confirmation dialog)
+
 ## Mobile Components
 # Base path: apps/mobile/components/
 
@@ -364,3 +374,4 @@ React Native views don't align with Android's uiautomator — UI hierarchy dumps
 2026-04-17 — Cold launch: 3-second branded splash overlay (cream #faf7f0 bg, chefs-hat asset, "ChefsBook" serif wordmark, "Welcome to ChefsBook" tagline). expo-splash-screen preventAutoHideAsync at module scope + SPLASH_MIN_MS-gated hideAsync. Warm resume never re-shows splash.
 2026-04-20 — Cook Mode: TTS toggle pill added to header (speaker icon, red when on/grey outline when off). "Read this step" small outline pill added below each step instruction. Both use expo-speech, zero AI calls. Cook Mode screen now has safe-area padding on header (insets.top) and exit link (insets.bottom).
 2026-04-20 — Camera scan recovery: _layout.tsx useProtectedRoute now checks getPendingCameraResult() before landing on tabs after Android Activity Recreation. If pending result found, routes to /(tabs)/scan instead of default My Recipes. Scan tab's useFocusEffect consumes the stored URI via consumePendingRecoveryUri().
+2026-05-01 — Menu Mode: New /cook-menu/[id] screen for cooking through a menu. Timeline view shows recipes sorted by prep+cook time with time bars. Step by Step view cycles through all steps organized by course. Start Cooking button added to menu detail screen. expo-keep-awake prevents screen sleep.
