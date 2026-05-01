@@ -255,6 +255,23 @@ export default function MenuDetailScreen() {
         </TouchableOpacity>
       )}
 
+      {/* Start Cooking button */}
+      {currentMenu.menu_items.length > 0 && (
+        <TouchableOpacity
+          onPress={() => router.push(`/cook-menu/${currentMenu.id}` as any)}
+          style={{
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+            marginHorizontal: 16, marginTop: 8, paddingVertical: 14,
+            backgroundColor: colors.accent, borderRadius: 10,
+          }}
+        >
+          <Ionicons name="flame" size={20} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>
+            {t('menus.startCooking')}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <ScrollView style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
         {currentMenu.description && (
           <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 16 }}>

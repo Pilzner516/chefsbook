@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -71,6 +71,9 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
   const [shopLists, setShopLists] = useState<ShoppingList[]>([]);
   const [shopLoading, setShopLoading] = useState(false);
   const [addingToShop, setAddingToShop] = useState(false);
+
+  // Cook mode
+  const [showCookMode, setShowCookMode] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -346,6 +349,18 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
           >
             Delete
           </button>
+          {menu.menu_items.length > 0 && (
+            <button
+              onClick={() => setShowCookMode(true)}
+              className="px-4 py-2 bg-cb-primary text-white rounded-input text-sm font-semibold hover:opacity-90 transition flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+              </svg>
+              Start Cooking
+            </button>
+          )}
         </div>
       </div>
 
@@ -558,6 +573,278 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
 
       <ConfirmDialog />
       <AlertDialog />
+
+      {/* Cook Mode Timeline Panel */}
+      {showCookMode && (
+        <CookModeTimeline
+          menu={menu}
+          primaryPhotos={primaryPhotos}
+          onClose={() => setShowCookMode(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+interface CookModeTimelineProps {
+  menu: MenuWithItems;
+  primaryPhotos: Record<string, string>;
+  onClose: () => void;
+}
+
+function CookModeTimeline({ menu, primaryPhotos, onClose }: CookModeTimelineProps) {
+  const [serveTime, setServeTime] = useState<string>('');
+  const [checkedRecipes, setCheckedRecipes] = useState<Set<string>>(new Set());
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
+  const [recipeDetails, setRecipeDetails] = useState<Record<string, { ingredients: any[]; steps: any[] }>>({});
+
+  const timelineRecipes = useMemo(() => {
+    return menu.menu_items
+      .map((item) => ({
+        id: item.recipe_id,
+        title: item.recipe?.title ?? 'Recipe',
+        course: item.course,
+        prepMinutes: item.recipe?.prep_minutes ?? 0,
+        cookMinutes: item.recipe?.cook_minutes ?? 0,
+        totalMinutes: (item.recipe?.prep_minutes ?? 0) + (item.recipe?.cook_minutes ?? 0),
+        imageUrl: getRecipeImageUrl(primaryPhotos[item.recipe_id], item.recipe?.image_url, null),
+        servingsOverride: item.servings_override,
+      }))
+      .sort((a, b) => b.totalMinutes - a.totalMinutes);
+  }, [menu.menu_items, primaryPhotos]);
+
+  const maxTotalMinutes = Math.max(...timelineRecipes.map((r) => r.totalMinutes), 1);
+
+  useEffect(() => {
+    const loadRecipeDetails = async () => {
+      const recipeIds = timelineRecipes.map((r) => r.id);
+      if (recipeIds.length === 0) return;
+
+      const { data: ingredients } = await supabase
+        .from('recipe_ingredients')
+        .select('recipe_id, ingredient, quantity, unit')
+        .in('recipe_id', recipeIds);
+
+      const { data: steps } = await supabase
+        .from('recipe_steps')
+        .select('recipe_id, step_number, instruction')
+        .in('recipe_id', recipeIds)
+        .order('step_number');
+
+      const details: Record<string, { ingredients: any[]; steps: any[] }> = {};
+      for (const id of recipeIds) {
+        details[id] = {
+          ingredients: (ingredients ?? []).filter((i) => i.recipe_id === id),
+          steps: (steps ?? []).filter((s) => s.recipe_id === id),
+        };
+      }
+      setRecipeDetails(details);
+    };
+    loadRecipeDetails();
+  }, [timelineRecipes]);
+
+  const toggleCheck = (recipeId: string) => {
+    setCheckedRecipes((prev) => {
+      const next = new Set(prev);
+      if (next.has(recipeId)) {
+        next.delete(recipeId);
+      } else {
+        next.add(recipeId);
+      }
+      return next;
+    });
+  };
+
+  const getStartOffset = (recipe: typeof timelineRecipes[0]): number => {
+    return maxTotalMinutes - recipe.totalMinutes;
+  };
+
+  const formatStartLabel = (recipe: typeof timelineRecipes[0]): string | null => {
+    if (!serveTime) return null;
+    const offset = getStartOffset(recipe);
+    if (offset === 0) return 'Start now';
+    return `Start ${offset} min before`;
+  };
+
+  const allChecked = timelineRecipes.length > 0 && checkedRecipes.size === timelineRecipes.length;
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+
+      {/* Panel */}
+      <div className="relative ml-auto w-full max-w-2xl bg-cb-bg shadow-xl flex flex-col h-full animate-slide-in-right">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-cb-border bg-cb-card">
+          <div>
+            <h2 className="text-lg font-bold text-cb-text">{menu.title}</h2>
+            <p className="text-sm text-cb-secondary">Cooking Timeline</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-cb-muted hover:text-cb-text transition">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Serve time picker */}
+        <div className="p-4 border-b border-cb-border bg-cb-card">
+          <label className="block text-sm font-medium text-cb-text mb-2">Serve at (optional)</label>
+          <input
+            type="time"
+            value={serveTime}
+            onChange={(e) => setServeTime(e.target.value)}
+            className="border border-cb-border rounded-input px-3 py-2 text-sm w-40"
+          />
+          {serveTime && (
+            <button onClick={() => setServeTime('')} className="ml-2 text-cb-secondary hover:text-cb-primary text-sm">
+              Clear
+            </button>
+          )}
+        </div>
+
+        {/* Recipe timeline */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {timelineRecipes.map((recipe) => {
+            const isExpanded = expandedRecipeId === recipe.id;
+            const isChecked = checkedRecipes.has(recipe.id);
+            const startLabel = formatStartLabel(recipe);
+            const barWidth = recipe.totalMinutes > 0 ? (recipe.totalMinutes / maxTotalMinutes) * 100 : 0;
+            const prepWidth = recipe.totalMinutes > 0 ? (recipe.prepMinutes / recipe.totalMinutes) * 100 : 0;
+            const details = recipeDetails[recipe.id];
+
+            return (
+              <div key={recipe.id} className="bg-cb-card border border-cb-border rounded-card overflow-hidden">
+                <button
+                  onClick={() => setExpandedRecipeId(isExpanded ? null : recipe.id)}
+                  className="w-full p-4 flex items-start gap-4 text-left hover:bg-cb-bg/50 transition"
+                >
+                  {/* Recipe image */}
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-cb-bg flex-shrink-0">
+                    {recipe.imageUrl ? (
+                      <img src={recipe.imageUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <img src={CHEFS_HAT_URL} alt="" className="w-6 h-6 opacity-30" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recipe info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-medium text-cb-text truncate">{recipe.title}</span>
+                      {startLabel && (
+                        <span className="text-xs font-medium text-cb-primary whitespace-nowrap">{startLabel}</span>
+                      )}
+                    </div>
+
+                    {recipe.totalMinutes > 0 ? (
+                      <>
+                        <p className="text-xs text-cb-secondary mt-1">
+                          Prep: {recipe.prepMinutes}m · Cook: {recipe.cookMinutes}m
+                        </p>
+                        {/* Time bar */}
+                        <div className="h-2 bg-cb-bg rounded-full mt-2 overflow-hidden" style={{ width: `${barWidth}%` }}>
+                          <div className="h-full flex">
+                            <div className="bg-cb-primary" style={{ width: `${prepWidth}%` }} />
+                            <div className="bg-amber-400 flex-1" />
+                          </div>
+                        </div>
+                        <div className="flex gap-4 mt-1">
+                          <span className="text-[10px] text-cb-muted flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-cb-primary inline-block" /> Prep
+                          </span>
+                          <span className="text-[10px] text-cb-muted flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Cook
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-cb-muted mt-1 italic">No time estimate</p>
+                    )}
+                  </div>
+
+                  <svg
+                    className={`w-5 h-5 text-cb-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                {/* Expanded details */}
+                {isExpanded && details && (
+                  <div className="px-4 pb-4 pt-2 border-t border-cb-border">
+                    {details.ingredients.length > 0 && (
+                      <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-cb-text mb-2">Ingredients</h4>
+                        <ul className="text-xs text-cb-secondary space-y-1">
+                          {details.ingredients.slice(0, 5).map((ing, i) => (
+                            <li key={i}>• {ing.quantity ?? ''} {ing.unit ?? ''} {ing.ingredient}</li>
+                          ))}
+                          {details.ingredients.length > 5 && (
+                            <li className="italic text-cb-muted">+{details.ingredients.length - 5} more</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {details.steps.length > 0 && (
+                      <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-cb-text mb-2">Steps</h4>
+                        <ol className="text-xs text-cb-secondary space-y-1">
+                          {details.steps.slice(0, 3).map((step) => (
+                            <li key={step.step_number}>{step.step_number}. {step.instruction}</li>
+                          ))}
+                          {details.steps.length > 3 && (
+                            <li className="italic text-cb-muted">+{details.steps.length - 3} more steps</li>
+                          )}
+                        </ol>
+                      </div>
+                    )}
+
+                    <Link
+                      href={`/recipe/${recipe.id}`}
+                      className="text-xs font-medium text-cb-primary hover:underline"
+                    >
+                      Go to recipe →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* All prepped checklist */}
+        <div className="p-4 border-t border-cb-border bg-cb-card">
+          <h3 className="font-semibold text-cb-text mb-3">All prepped?</h3>
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {timelineRecipes.map((recipe) => (
+              <label key={recipe.id} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={checkedRecipes.has(recipe.id)}
+                  onChange={() => toggleCheck(recipe.id)}
+                  className="w-4 h-4 rounded border-cb-border text-cb-primary focus:ring-cb-primary"
+                />
+                <span className="text-sm text-cb-text">{recipe.title} — ready</span>
+              </label>
+            ))}
+          </div>
+
+          {allChecked && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-input text-center">
+              <span className="text-green-700 font-medium">You're ready to plate! 🍽</span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
