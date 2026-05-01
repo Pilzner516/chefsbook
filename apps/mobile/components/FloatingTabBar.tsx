@@ -46,6 +46,13 @@ const TABS: TabDef[] = [
     iconActive: 'calendar',
   },
   {
+    name: 'menus',
+    route: '/(tabs)/menus',
+    labelKey: 'nav.menus',
+    icon: 'restaurant-outline',
+    iconActive: 'restaurant',
+  },
+  {
     name: 'shop',
     route: '/(tabs)/shop',
     labelKey: 'nav.cart',

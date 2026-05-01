@@ -54,8 +54,8 @@ export interface MenuWithItems extends Menu {
       id: string;
       title: string;
       description: string | null;
-      prep_time: number | null;
-      cook_time: number | null;
+      prep_minutes: number | null;
+      cook_minutes: number | null;
       servings: number | null;
       image_url: string | null;
     };

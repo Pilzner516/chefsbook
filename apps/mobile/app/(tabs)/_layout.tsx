@@ -21,6 +21,7 @@ export default function TabLayout() {
       <Tabs.Screen name="search" />
       <Tabs.Screen name="scan" />
       <Tabs.Screen name="plan" />
+      <Tabs.Screen name="menus" />
       <Tabs.Screen name="shop" />
     </Tabs>
   );
