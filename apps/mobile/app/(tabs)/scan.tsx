@@ -17,9 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../lib/zustand/authStore';
 import { useRecipeStore } from '../../lib/zustand/recipeStore';
-import { scanRecipe, scanRecipeMultiPage, analyseScannedImage } from '@chefsbook/ai';
+import { scanRecipe, scanRecipeMultiPage, analyseScannedImage, extractMenuDishes } from '@chefsbook/ai';
 import type { ScanImageAnalysis, PexelsPhoto } from '@chefsbook/ai';
 import { searchPexels } from '@chefsbook/ai';
+import { getMenuScanEnabled } from '@chefsbook/db';
 import { pickImage, takePhoto, processImage, getPendingCameraResult, consumePendingRecoveryUri } from '../../lib/image';
 import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
@@ -41,6 +42,7 @@ export default function ScanTab() {
   const router = useRouter();
   const { importUrl, instagramTip } = useLocalSearchParams<{ importUrl?: string; instagramTip?: string }>();
   const session = useAuthStore((s) => s.session);
+  const planTier = useAuthStore((s) => s.planTier);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
 
   const [urlInput, setUrlInput] = useState('');
@@ -239,22 +241,54 @@ export default function ScanTab() {
     try {
       const pages = scanPages.map((p) => ({ base64: p.base64, mimeType: p.mimeType }));
 
-      // For single-page scans, classify the image first (dish vs recipe document)
-      if (pages.length === 1) {
-        const classification = await analyseScannedImage(pages[0].base64, pages[0].mimeType);
+      // Classify the image first
+      const classification = await analyseScannedImage(pages[0].base64, pages[0].mimeType);
 
-        if (classification.type !== 'recipe_document') {
-          // Dish photo or unclear → show dish identification flow
-          setImportStatus('idle');
-          setPexelsLoading(false);
-          setDishFlowImageUri(scanPages[0].uri);
-          setDishFlowBase64(scanPages[0].base64);
-          setDishFlowMime(scanPages[0].mimeType);
-          setDishFlowAnalysis(classification);
-          setShowDishFlow(true);
-          setScanPages([]);
-          return;
+      // Restaurant menu detection (secret feature)
+      if (classification.type === 'restaurant_menu') {
+        const isPro = ['pro', 'family'].includes(planTier);
+        const isScanEnabled = session?.user?.id ? await getMenuScanEnabled(session.user.id).catch(() => false) : false;
+
+        if (isPro && isScanEnabled) {
+          // Gate passed — extract dishes and navigate to selection screen
+          try {
+            const menuData = await extractMenuDishes(pages);
+            setImportStatus('idle');
+            setPexelsLoading(false);
+            setScanPages([]);
+            router.push({
+              pathname: '/menu/scan-dishes' as any,
+              params: { menuData: JSON.stringify(menuData) },
+            });
+            return;
+          } catch {
+            // Fall through to unclear flow on extraction failure
+          }
         }
+        // Gate failed — fall through silently to unclear/dish flow (no hint)
+        setImportStatus('idle');
+        setPexelsLoading(false);
+        setDishFlowImageUri(scanPages[0].uri);
+        setDishFlowBase64(scanPages[0].base64);
+        setDishFlowMime(scanPages[0].mimeType);
+        setDishFlowAnalysis({ type: 'unclear', dish_confidence: 'low' });
+        setShowDishFlow(true);
+        setScanPages([]);
+        return;
+      }
+
+      // For single-page scans, check if dish photo or unclear
+      if (pages.length === 1 && classification.type !== 'recipe_document') {
+        // Dish photo or unclear → show dish identification flow
+        setImportStatus('idle');
+        setPexelsLoading(false);
+        setDishFlowImageUri(scanPages[0].uri);
+        setDishFlowBase64(scanPages[0].base64);
+        setDishFlowMime(scanPages[0].mimeType);
+        setDishFlowAnalysis(classification);
+        setShowDishFlow(true);
+        setScanPages([]);
+        return;
       }
 
       // Recipe document path (existing flow unchanged)

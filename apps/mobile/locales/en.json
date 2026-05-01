@@ -24,7 +24,8 @@
     "errorTitle": "Error",
     "success": "Success",
     "sending": "Sending...",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "goBack": "Go Back"
   },
   "header": {
     "settings": "Settings",
@@ -70,6 +71,37 @@
     "noRecipesInMenu": "This menu has no recipes yet.",
     "noIngredients": "No Ingredients",
     "noIngredientsInMenu": "These recipes have no ingredients."
+  },
+  "menuScan": {
+    "selectDishes": "Select Dishes",
+    "tapToSelect": "Tap dishes to select, add photos as you go",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "dishesSelected": "{{count}} dishes selected",
+    "generateRecipes": "Generate Recipes",
+    "noDishesFound": "No dishes could be extracted from this menu.",
+    "creatingRecipes": "Creating your recipes...",
+    "progress": "{{done}} of {{total}} dishes complete",
+    "complete": "Complete!",
+    "allSuccess": "{{count}} recipes created from your menu",
+    "partialSuccess": "{{success}} of {{fail}} recipes created ({{fail}} couldn't be generated)",
+    "allFailed": "No recipes could be generated. Please try again.",
+    "scannedMenu": "Scanned Menu",
+    "preGenTitle": "Menu Details",
+    "restaurantLabel": "Restaurant or menu name",
+    "restaurantPlaceholder": "e.g., Café Flora, Tuesday Specials",
+    "customTagLabel": "Add a special tag",
+    "customTagPlaceholder": "e.g., John's Birthday, Paris 2024",
+    "customTagHelp": "Tag all dishes from this menu with something memorable",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Add a memory, occasion, date, or location",
+    "generate": "Generate",
+    "pickFromGallery": "Pick from Gallery",
+    "takePhoto": "Take Photo",
+    "removePhoto": "Remove Photo",
+    "discardTitle": "Discard changes?",
+    "discardBody": "Your selections and photos will be lost.",
+    "discardConfirm": "Discard"
   },
   "landing": {
     "tagline": "Your recipes, beautifully organized",

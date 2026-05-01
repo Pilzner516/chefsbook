@@ -9,38 +9,54 @@ export type ClarifyingQuestion = {
 };
 
 export type ScanImageAnalysis = {
-  type: 'recipe_document' | 'dish_photo' | 'unclear';
+  type: 'recipe_document' | 'dish_photo' | 'restaurant_menu' | 'unclear';
   dish_name?: string | null;
   dish_confidence: 'high' | 'medium' | 'low';
   clarifying_questions?: ClarifyingQuestion[];
   dish_options?: string[];
   cuisine_guess?: string | null;
+  restaurant_name?: string | null;
 };
 
 // ── Analyse image: document vs dish vs unclear ──
 
 const ANALYSE_PROMPT = `Analyse this image carefully.
 
-First determine: is this a recipe document (printed or handwritten text with ingredients and steps) or a photograph of a prepared dish/food?
+Determine the content type:
+1. RECIPE_DOCUMENT: Printed or handwritten text with a single recipe (ingredients and steps)
+2. RESTAURANT_MENU: A restaurant menu, specials board, prix fixe card, or set menu showing multiple dish listings organised by section (starters, mains, desserts, etc.)
+3. DISH_PHOTO: A photograph of a prepared dish/food
+4. UNCLEAR: Cannot determine (blurry, unrelated content)
 
-If it is a recipe document, return: { "type": "recipe_document", "dish_confidence": "high" }
+For RECIPE_DOCUMENT: { "type": "recipe_document", "dish_confidence": "high" }
 
-If it is a dish photo:
+For RESTAURANT_MENU:
+- Return { "type": "restaurant_menu", "dish_confidence": "high" }
+- Extract the restaurant name if visible in header/footer/logo
+- Recognise these as restaurant menus:
+  - Multi-dish listings with prices
+  - Specials boards (daily/weekly specials)
+  - Printed menus with section headers (Starters, Mains, Desserts, etc.)
+  - Handwritten menu boards
+  - Prix fixe / set menu cards
+  - Tasting menus
+
+For DISH_PHOTO:
 - Identify the dish as specifically as possible
-- Rate your confidence: high (very certain), medium (fairly sure), low (unsure)
-- If confidence is medium or low, provide up to 3 simple clarifying questions with 2-4 pill answer options each. Example: "Is the protein lamb, pork, or beef?"
-- If after questions you would still offer multiple possibilities, list up to 3 dish name options
-- Always include a cuisine guess if visible from the dish
+- Rate confidence: high (very certain), medium (fairly sure), low (unsure)
+- If confidence is medium/low, provide up to 3 clarifying questions with 2-4 options each
+- List up to 3 dish name options if still unsure
+- Include a cuisine guess if visible
 
-If the image is unclear (cannot determine if recipe or dish, e.g. blurry, unrelated content):
-Return: { "type": "unclear", "dish_confidence": "low" }
+For UNCLEAR: { "type": "unclear", "dish_confidence": "low" }
 
 Return ONLY a JSON object, no markdown:
 {
-  "type": "recipe_document" | "dish_photo" | "unclear",
+  "type": "recipe_document" | "dish_photo" | "restaurant_menu" | "unclear",
   "dish_name": "string or null",
   "dish_confidence": "high" | "medium" | "low",
   "cuisine_guess": "string or null",
+  "restaurant_name": "string or null",
   "clarifying_questions": [{ "question": "string", "options": ["string"] }],
   "dish_options": ["string"]
 }`;

@@ -23,7 +23,8 @@
     "remove": "Quitar",
     "success": "Éxito",
     "sending": "Enviando...",
-    "saving": "Guardando..."
+    "saving": "Guardando...",
+    "goBack": "Volver"
   },
   "header": {
     "settings": "Ajustes",
@@ -69,6 +70,37 @@
     "noRecipesInMenu": "Este menú no tiene recetas aún.",
     "noIngredients": "Sin Ingredientes",
     "noIngredientsInMenu": "Estas recetas no tienen ingredientes."
+  },
+  "menuScan": {
+    "selectDishes": "Seleccionar Platos",
+    "tapToSelect": "Toca para seleccionar, añade fotos",
+    "selectAll": "Seleccionar Todo",
+    "deselectAll": "Deseleccionar Todo",
+    "dishesSelected": "{{count}} platos seleccionados",
+    "generateRecipes": "Generar Recetas",
+    "noDishesFound": "No se pudieron extraer platos de este menú.",
+    "creatingRecipes": "Creando tus recetas...",
+    "progress": "{{done}} de {{total}} platos completados",
+    "complete": "¡Completado!",
+    "allSuccess": "{{count}} recetas creadas desde tu menú",
+    "partialSuccess": "{{success}} recetas creadas ({{fail}} no pudieron generarse)",
+    "allFailed": "No se pudieron generar recetas. Por favor, inténtalo de nuevo.",
+    "scannedMenu": "Menú Escaneado",
+    "preGenTitle": "Detalles del Menú",
+    "restaurantLabel": "Nombre del restaurante o menú",
+    "restaurantPlaceholder": "ej: Café Flora, Especiales del Martes",
+    "customTagLabel": "Añadir una etiqueta especial",
+    "customTagPlaceholder": "ej: Cumpleaños de Juan, París 2024",
+    "customTagHelp": "Etiquetar todos los platos de este menú con algo memorable",
+    "notesLabel": "Notas",
+    "notesPlaceholder": "Añade un recuerdo, ocasión, fecha o lugar",
+    "generate": "Generar",
+    "pickFromGallery": "Elegir de Galería",
+    "takePhoto": "Tomar Foto",
+    "removePhoto": "Eliminar Foto",
+    "discardTitle": "¿Descartar cambios?",
+    "discardBody": "Tus selecciones y fotos se perderán.",
+    "discardConfirm": "Descartar"
   },
   "landing": {
     "tagline": "Tus recetas, organizadas a la perfección",

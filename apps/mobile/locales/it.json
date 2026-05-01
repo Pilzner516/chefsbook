@@ -23,7 +23,8 @@
     "remove": "Rimuovi",
     "success": "Successo",
     "sending": "Invio...",
-    "saving": "Salvataggio..."
+    "saving": "Salvataggio...",
+    "goBack": "Torna Indietro"
   },
   "header": {
     "settings": "Impostazioni",
@@ -69,6 +70,37 @@
     "noRecipesInMenu": "Questo menu non ha ancora ricette.",
     "noIngredients": "Nessun Ingrediente",
     "noIngredientsInMenu": "Queste ricette non hanno ingredienti."
+  },
+  "menuScan": {
+    "selectDishes": "Seleziona Piatti",
+    "tapToSelect": "Tocca per selezionare, aggiungi foto",
+    "selectAll": "Seleziona Tutti",
+    "deselectAll": "Deseleziona Tutti",
+    "dishesSelected": "{{count}} piatti selezionati",
+    "generateRecipes": "Genera Ricette",
+    "noDishesFound": "Non è stato possibile estrarre piatti da questo menu.",
+    "creatingRecipes": "Creazione delle tue ricette...",
+    "progress": "{{done}} di {{total}} piatti completati",
+    "complete": "Completato!",
+    "allSuccess": "{{count}} ricette create dal tuo menu",
+    "partialSuccess": "{{success}} ricette create ({{fail}} non sono state generate)",
+    "allFailed": "Nessuna ricetta è stata generata. Riprova.",
+    "scannedMenu": "Menu Scansionato",
+    "preGenTitle": "Dettagli del Menu",
+    "restaurantLabel": "Nome del ristorante o del menu",
+    "restaurantPlaceholder": "es: Café Flora, Speciali del Martedì",
+    "customTagLabel": "Aggiungi un tag speciale",
+    "customTagPlaceholder": "es: Compleanno di Giovanni, Parigi 2024",
+    "customTagHelp": "Etichetta tutti i piatti di questo menu con qualcosa di memorabile",
+    "notesLabel": "Note",
+    "notesPlaceholder": "Aggiungi un ricordo, occasione, data o luogo",
+    "generate": "Genera",
+    "pickFromGallery": "Scegli dalla Galleria",
+    "takePhoto": "Scatta Foto",
+    "removePhoto": "Rimuovi Foto",
+    "discardTitle": "Annullare le modifiche?",
+    "discardBody": "Le tue selezioni e foto andranno perse.",
+    "discardConfirm": "Annulla"
   },
   "landing": {
     "tagline": "Le tue ricette, organizzate alla perfezione",

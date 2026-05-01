@@ -90,3 +90,7 @@ export type { NutritionEstimate, NutritionInput } from './generateNutrition';
 export { getModelForTask, clearModelCache, MODEL_FALLBACKS } from './modelConfig';
 export { classifyFoodImage, extractInstagramExportCaption, completeInstagramRecipe } from './instagramExport';
 export type { ExtractedCaption, ClassifyFoodResult, ExtractCaptionResult, CompletedRecipeData, CompleteInstagramRecipeResult } from './instagramExport';
+export { extractMenuDishes } from './extractMenuDishes';
+export type { ExtractedDish, ExtractMenuDishesResult } from './extractMenuDishes';
+export { generateMenuRecipe, generateMenuRecipes } from './generateMenuRecipes';
+export type { MenuRecipeInput, GeneratedMenuRecipe } from './generateMenuRecipes';

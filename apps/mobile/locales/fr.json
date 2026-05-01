@@ -23,7 +23,8 @@
     "remove": "Retirer",
     "success": "Succès",
     "sending": "Envoi...",
-    "saving": "Enregistrement..."
+    "saving": "Enregistrement...",
+    "goBack": "Retour"
   },
   "header": {
     "settings": "Paramètres",
@@ -69,6 +70,37 @@
     "noRecipesInMenu": "Ce menu n'a pas encore de recettes.",
     "noIngredients": "Pas d'Ingrédients",
     "noIngredientsInMenu": "Ces recettes n'ont pas d'ingrédients."
+  },
+  "menuScan": {
+    "selectDishes": "Sélectionner les Plats",
+    "tapToSelect": "Appuyez pour sélectionner, ajoutez des photos",
+    "selectAll": "Tout Sélectionner",
+    "deselectAll": "Tout Désélectionner",
+    "dishesSelected": "{{count}} plats sélectionnés",
+    "generateRecipes": "Générer les Recettes",
+    "noDishesFound": "Aucun plat n'a pu être extrait de ce menu.",
+    "creatingRecipes": "Création de vos recettes...",
+    "progress": "{{done}} sur {{total}} plats terminés",
+    "complete": "Terminé!",
+    "allSuccess": "{{count}} recettes créées depuis votre menu",
+    "partialSuccess": "{{success}} recettes créées ({{fail}} n'ont pas pu être générées)",
+    "allFailed": "Aucune recette n'a pu être générée. Veuillez réessayer.",
+    "scannedMenu": "Menu Scanné",
+    "preGenTitle": "Détails du Menu",
+    "restaurantLabel": "Nom du restaurant ou du menu",
+    "restaurantPlaceholder": "ex: Café Flora, Spécialités du Mardi",
+    "customTagLabel": "Ajouter une étiquette spéciale",
+    "customTagPlaceholder": "ex: Anniversaire de Jean, Paris 2024",
+    "customTagHelp": "Étiqueter tous les plats de ce menu avec quelque chose de mémorable",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Ajoutez un souvenir, une occasion, une date ou un lieu",
+    "generate": "Générer",
+    "pickFromGallery": "Choisir dans la Galerie",
+    "takePhoto": "Prendre une Photo",
+    "removePhoto": "Supprimer la Photo",
+    "discardTitle": "Annuler les modifications?",
+    "discardBody": "Vos sélections et photos seront perdues.",
+    "discardConfirm": "Annuler"
   },
   "landing": {
     "tagline": "Vos recettes, parfaitement organisées",

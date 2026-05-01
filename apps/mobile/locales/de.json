@@ -23,7 +23,8 @@
     "remove": "Entfernen",
     "success": "Erfolg",
     "sending": "Wird gesendet...",
-    "saving": "Speichern..."
+    "saving": "Speichern...",
+    "goBack": "Zurück"
   },
   "header": {
     "settings": "Einstellungen",
@@ -69,6 +70,37 @@
     "noRecipesInMenu": "Dieses Menü hat noch keine Rezepte.",
     "noIngredients": "Keine Zutaten",
     "noIngredientsInMenu": "Diese Rezepte haben keine Zutaten."
+  },
+  "menuScan": {
+    "selectDishes": "Gerichte Auswählen",
+    "tapToSelect": "Tippen zum Auswählen, Fotos hinzufügen",
+    "selectAll": "Alle Auswählen",
+    "deselectAll": "Alle Abwählen",
+    "dishesSelected": "{{count}} Gerichte ausgewählt",
+    "generateRecipes": "Rezepte Generieren",
+    "noDishesFound": "Keine Gerichte konnten aus diesem Menü extrahiert werden.",
+    "creatingRecipes": "Deine Rezepte werden erstellt...",
+    "progress": "{{done}} von {{total}} Gerichten fertig",
+    "complete": "Fertig!",
+    "allSuccess": "{{count}} Rezepte aus deinem Menü erstellt",
+    "partialSuccess": "{{success}} Rezepte erstellt ({{fail}} konnten nicht generiert werden)",
+    "allFailed": "Keine Rezepte konnten generiert werden. Bitte erneut versuchen.",
+    "scannedMenu": "Gescanntes Menü",
+    "preGenTitle": "Menü-Details",
+    "restaurantLabel": "Restaurant- oder Menüname",
+    "restaurantPlaceholder": "z.B. Café Flora, Dienstags-Spezial",
+    "customTagLabel": "Speziellen Tag hinzufügen",
+    "customTagPlaceholder": "z.B. Johns Geburtstag, Paris 2024",
+    "customTagHelp": "Alle Gerichte dieses Menüs mit etwas Besonderem markieren",
+    "notesLabel": "Notizen",
+    "notesPlaceholder": "Füge eine Erinnerung, Anlass, Datum oder Ort hinzu",
+    "generate": "Generieren",
+    "pickFromGallery": "Aus Galerie wählen",
+    "takePhoto": "Foto aufnehmen",
+    "removePhoto": "Foto entfernen",
+    "discardTitle": "Änderungen verwerfen?",
+    "discardBody": "Deine Auswahl und Fotos gehen verloren.",
+    "discardConfirm": "Verwerfen"
   },
   "landing": {
     "tagline": "Deine Rezepte, wunderschön organisiert",

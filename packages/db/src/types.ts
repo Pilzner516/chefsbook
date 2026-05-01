@@ -136,6 +136,7 @@ export interface Recipe {
   is_complete: boolean;
   missing_fields: string[];
   completeness_checked_at: string | null;
+  is_inspired_by_menu: boolean;
   ai_recipe_verdict: 'approved' | 'flagged' | 'not_a_recipe' | 'pending' | null;
   ai_verdict_reason: string | null;
   ai_verdict_at: string | null;
