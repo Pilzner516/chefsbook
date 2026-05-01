@@ -48,6 +48,7 @@ export async function createMenu(data: {
   occasion?: string | null;
   notes?: string | null;
   is_public?: boolean;
+  cover_image_url?: string | null;
 }): Promise<Menu> {
   const { data: menu, error } = await supabase
     .from('menus')
@@ -58,6 +59,7 @@ export async function createMenu(data: {
       occasion: data.occasion ?? null,
       notes: data.notes ?? null,
       is_public: data.is_public ?? false,
+      cover_image_url: data.cover_image_url ?? null,
     })
     .select()
     .single();
@@ -74,6 +76,7 @@ export async function updateMenu(
     occasion?: string | null;
     notes?: string | null;
     is_public?: boolean;
+    cover_image_url?: string | null;
   }
 ): Promise<Menu> {
   const { data: menu, error } = await supabase
@@ -195,4 +198,78 @@ export async function setMenuScanEnabled(
     .eq('id', userId);
 
   if (error) throw error;
+}
+
+export async function getMenuRecipeImages(
+  menuId: string
+): Promise<{ recipe_id: string; recipe_title: string; photos: { url: string; is_primary: boolean }[] }[]> {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select(`
+      recipe_id,
+      recipe:recipes!menu_items_recipe_id_fkey (
+        id,
+        title
+      )
+    `)
+    .eq('menu_id', menuId);
+
+  if (error) throw error;
+  if (!data || data.length === 0) return [];
+
+  const recipeIds = data.map((d) => d.recipe_id);
+
+  const { data: photos, error: photosError } = await supabase
+    .from('recipe_user_photos')
+    .select('recipe_id, url, is_primary, sort_order')
+    .in('recipe_id', recipeIds)
+    .order('is_primary', { ascending: false })
+    .order('sort_order', { ascending: true });
+
+  if (photosError) throw photosError;
+
+  const photosByRecipe: Record<string, { url: string; is_primary: boolean }[]> = {};
+  for (const photo of photos ?? []) {
+    if (!photosByRecipe[photo.recipe_id]) photosByRecipe[photo.recipe_id] = [];
+    photosByRecipe[photo.recipe_id].push({ url: photo.url, is_primary: photo.is_primary });
+  }
+
+  return data
+    .filter((d) => photosByRecipe[d.recipe_id]?.length > 0)
+    .map((d) => ({
+      recipe_id: d.recipe_id,
+      recipe_title: (d.recipe as any)?.title ?? 'Untitled',
+      photos: photosByRecipe[d.recipe_id] ?? [],
+    }));
+}
+
+export async function isRecipeInMenu(
+  menuId: string,
+  recipeId: string,
+  course: MenuCourse
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('id')
+    .eq('menu_id', menuId)
+    .eq('recipe_id', recipeId)
+    .eq('course', course)
+    .maybeSingle();
+
+  if (error) throw error;
+  return !!data;
+}
+
+export async function getMaxSortOrder(menuId: string, course: MenuCourse): Promise<number> {
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('sort_order')
+    .eq('menu_id', menuId)
+    .eq('course', course)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.sort_order ?? -1;
 }

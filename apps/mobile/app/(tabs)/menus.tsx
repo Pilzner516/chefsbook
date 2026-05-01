@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, FlatList, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, FlatList, Alert, Modal, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -160,43 +161,60 @@ export default function MenusTab() {
               delayLongPress={500}
               style={{ marginBottom: 12 }}
             >
-              <Card>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: colors.textPrimary }} numberOfLines={1}>
-                      {menu.title}
-                    </Text>
-                    {menu.occasion && (
-                      <View style={{
-                        marginTop: 6,
-                        backgroundColor: colors.accentSoft,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 12,
-                        alignSelf: 'flex-start',
-                      }}>
-                        <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '500' }}>
-                          {getOccasionLabel(menu.occasion)}
-                        </Text>
-                      </View>
-                    )}
-                    {menu.description && (
-                      <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 6 }} numberOfLines={2}>
-                        {menu.description}
-                      </Text>
-                    )}
-                    <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 8 }}>
-                      {relativeTime(menu.updated_at)}
-                    </Text>
+              <View style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: colors.bgBase, borderWidth: 1, borderColor: colors.borderDefault }}>
+                {/* Cover image */}
+                {menu.cover_image_url ? (
+                  <Image
+                    source={{
+                      uri: menu.cover_image_url,
+                      headers: { apikey: Constants.expoConfig?.extra?.supabaseAnonKey ?? '' },
+                    }}
+                    style={{ width: '100%', height: 100 }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={{ width: '100%', height: 80, backgroundColor: colors.bgBase, justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
                   </View>
-                  <TouchableOpacity
-                    onPress={() => confirmDelete(menu.id)}
-                    style={{ padding: 8, marginTop: -4, marginRight: -4 }}
-                  >
-                    <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
-                  </TouchableOpacity>
+                )}
+                <View style={{ padding: 12 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: colors.textPrimary }} numberOfLines={1}>
+                        {menu.title}
+                      </Text>
+                      {menu.occasion && (
+                        <View style={{
+                          marginTop: 6,
+                          backgroundColor: colors.accentSoft,
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 12,
+                          alignSelf: 'flex-start',
+                        }}>
+                          <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '500' }}>
+                            {getOccasionLabel(menu.occasion)}
+                          </Text>
+                        </View>
+                      )}
+                      {menu.description && (
+                        <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 6 }} numberOfLines={2}>
+                          {menu.description}
+                        </Text>
+                      )}
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 8 }}>
+                        {relativeTime(menu.updated_at)}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => confirmDelete(menu.id)}
+                      style={{ padding: 8, marginTop: -4, marginRight: -4 }}
+                    >
+                      <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </Card>
+              </View>
             </TouchableOpacity>
           ))}
         </ScrollView>

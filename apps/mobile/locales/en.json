@@ -25,6 +25,8 @@
     "success": "Success",
     "sending": "Sending...",
     "saving": "Saving...",
+    "creating": "Creating...",
+    "adding": "Adding...",
     "goBack": "Go Back"
   },
   "header": {
@@ -91,7 +93,24 @@
     "goToRecipe": "Go to recipe",
     "noSteps": "This menu has no recipe steps yet.",
     "minutes": "min",
-    "getPrepTips": "Get Prep Tips"
+    "getPrepTips": "Get Prep Tips",
+    "cover_image": "Cover Image",
+    "choose_from_recipes": "Choose from recipes",
+    "upload_image": "Upload image",
+    "take_or_choose": "Take or choose photo",
+    "add_to_menu": "Add to Menu",
+    "add_to_menu_success": "Added to {{menu}} — {{course}}",
+    "already_in_menu": "Already in {{menu}} as a {{course}}",
+    "pick_a_menu": "Pick a menu",
+    "create_new_menu": "+ Create new menu",
+    "pick_a_course": "Pick a course",
+    "course_applies_to_all": "All {{count}} recipes will be added to this course. You can reassign individual courses from the menu.",
+    "select": "Select",
+    "select_all": "Select All",
+    "n_selected": "{{count}} selected",
+    "no_recipe_images": "Add recipes to your menu first to choose from their photos.",
+    "batch_add_success": "{{count}} recipes added to {{menu}} — {{course}}",
+    "adding_to": "Adding to"
   },
   "menuScan": {
     "selectDishes": "Select Dishes",

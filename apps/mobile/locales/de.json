@@ -24,6 +24,8 @@
     "success": "Erfolg",
     "sending": "Wird gesendet...",
     "saving": "Speichern...",
+    "creating": "Erstellen...",
+    "adding": "Hinzufügen...",
     "goBack": "Zurück"
   },
   "header": {
@@ -90,7 +92,27 @@
     "goToRecipe": "Zum Rezept",
     "noSteps": "Dieses Menü hat noch keine Rezeptschritte.",
     "minutes": "Min.",
-    "getPrepTips": "Zubereitungstipps"
+    "getPrepTips": "Zubereitungstipps",
+    "cover_image": "Titelbild",
+    "choose_from_recipes": "Aus Rezepten wählen",
+    "upload_image": "Bild hochladen",
+    "take_or_choose": "Foto aufnehmen oder wählen",
+    "add_to_menu": "Zum Menü hinzufügen",
+    "add_to_menu_success": "{{count}} Rezept zu {{menu}} ({{course}}) hinzugefügt",
+    "add_to_menu_success_plural": "{{count}} Rezepte zu {{menu}} ({{course}}) hinzugefügt",
+    "already_in_menu": "{{count}} war bereits im Menü",
+    "already_in_menu_plural": "{{count}} waren bereits im Menü",
+    "pick_a_menu": "Menü wählen",
+    "create_new_menu": "Neues Menü erstellen",
+    "pick_a_course": "Gang wählen",
+    "course_applies_to_all": "Gilt für alle {{count}} ausgewählten Rezepte",
+    "select": "Auswählen",
+    "select_all": "Alle auswählen",
+    "n_selected": "{{count}} ausgewählt",
+    "n_selected_plural": "{{count}} ausgewählt",
+    "no_recipe_images": "Keine Rezepte in diesem Menü haben noch Fotos",
+    "batch_add_success": "{{added}} Rezepte zu {{menu}} hinzugefügt",
+    "adding_to": "Hinzufügen zu"
   },
   "menuScan": {
     "selectDishes": "Gerichte Auswählen",

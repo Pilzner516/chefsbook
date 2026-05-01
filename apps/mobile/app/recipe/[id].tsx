@@ -33,6 +33,7 @@ import { RecipeImage } from '../../components/RecipeImage';
 import { LikeButton } from '../../components/LikeButton';
 import { RecipeComments } from '../../components/RecipeComments';
 import { MealPlanPicker } from '../../components/MealPlanPicker';
+import { AddToMenuSheet } from '../../components/AddToMenuSheet';
 import { HeroGallery } from '../../components/HeroGallery';
 import { useConfirmDialog } from '../../components/useDialog';
 import ChefsDialog from '../../components/ChefsDialog';
@@ -692,6 +693,8 @@ function RecipeDetailInner() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [visibilityUpdating, setVisibilityUpdating] = useState(false);
   const [showMealPicker, setShowMealPicker] = useState(false);
+  const [showAddToMenu, setShowAddToMenu] = useState(false);
+  const [menuAddSuccess, setMenuAddSuccess] = useState<string | null>(null);
   const language = usePreferencesStore((s) => s.language);
   const [translation, setTranslation] = useState<RecipeTranslation | null>(null);
   const [translating, setTranslating] = useState(false);
@@ -1763,6 +1766,12 @@ function RecipeDetailInner() {
           >
             <Ionicons name="calendar-outline" size={24} color={colors.textMuted} />
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowAddToMenu(true)}
+            style={{ padding: 6 }}
+          >
+            <Ionicons name="restaurant-outline" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
 
         <MealPlanPicker
@@ -1771,6 +1780,38 @@ function RecipeDetailInner() {
           recipeServings={recipe.servings ?? 4}
           onClose={() => setShowMealPicker(false)}
         />
+
+        <AddToMenuSheet
+          recipeIds={[recipe.id]}
+          visible={showAddToMenu}
+          onClose={() => setShowAddToMenu(false)}
+          onSuccess={(menu, course) => {
+            setMenuAddSuccess(`${t('menus.add_to_menu_success', { menu, course })}`);
+            setTimeout(() => setMenuAddSuccess(null), 3000);
+          }}
+        />
+
+        {/* Success toast */}
+        {menuAddSuccess && (
+          <View style={{
+            position: 'absolute',
+            bottom: insets.bottom + 80,
+            left: 16,
+            right: 16,
+            backgroundColor: '#009246',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            <Ionicons name="checkmark-circle" size={20} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '500', flex: 1 }}>
+              {menuAddSuccess}
+            </Text>
+          </View>
+        )}
 
         {/* Add to shopping list */}
         {ingredients.length > 0 && (

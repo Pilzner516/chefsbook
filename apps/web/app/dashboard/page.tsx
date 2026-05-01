@@ -16,6 +16,7 @@ import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
 import VisibilityHintBanner from '@/components/VisibilityHintBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import ThemePickerModal from '@/components/ThemePickerModal';
+import AddToMenuModal from '@/components/AddToMenuModal';
 import { IMAGE_THEMES } from '@chefsbook/ai';
 import type { ImageTheme } from '@chefsbook/ai';
 
@@ -91,6 +92,8 @@ export default function DashboardPage() {
   const [tableSortAsc, setTableSortAsc] = useState(false);
   const [imageTheme, setImageTheme] = useState<ImageTheme>('bright_fresh');
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showAddToMenu, setShowAddToMenu] = useState(false);
+  const [menuAddSuccess, setMenuAddSuccess] = useState<{ menu: string; course: string; added: number; skipped: number } | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -486,6 +489,16 @@ export default function DashboardPage() {
                 </button>
               )}
               <button
+                onClick={() => setShowAddToMenu(true)}
+                disabled={selected.size === 0 || !!bulkAction}
+                className="border border-cb-border text-cb-secondary px-4 py-2 rounded-input text-sm font-semibold hover:bg-cb-bg hover:text-cb-text disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                </svg>
+                Add to Menu
+              </button>
+              <button
                 onClick={handleBulkDelete}
                 disabled={selected.size === 0 || !!bulkAction}
                 className="border border-red-200 text-cb-primary px-4 py-2 rounded-input text-sm font-semibold hover:bg-red-50 disabled:opacity-50"
@@ -879,6 +892,28 @@ export default function DashboardPage() {
             } catch { /* silent */ }
           }}
         />
+      )}
+      <AddToMenuModal
+        recipeIds={Array.from(selected)}
+        open={showAddToMenu}
+        onClose={() => setShowAddToMenu(false)}
+        onSuccess={(menu, course, added, skipped) => {
+          setMenuAddSuccess({ menu, course, added, skipped });
+          setSelectMode(false);
+          setSelected(new Set());
+          setTimeout(() => setMenuAddSuccess(null), 4000);
+        }}
+      />
+      {menuAddSuccess && (
+        <div className="fixed bottom-4 right-4 bg-cb-green text-white px-4 py-3 rounded-input shadow-lg z-50 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          <span>
+            {menuAddSuccess.added} recipe{menuAddSuccess.added !== 1 ? 's' : ''} added to {menuAddSuccess.menu} — {menuAddSuccess.course}
+            {menuAddSuccess.skipped > 0 && ` (${menuAddSuccess.skipped} already in menu)`}
+          </span>
+        </div>
       )}
     </div>
   );

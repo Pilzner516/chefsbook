@@ -33,6 +33,7 @@ export interface Menu {
   occasion: string | null;
   notes: string | null;
   is_public: boolean;
+  cover_image_url: string | null;
   created_at: string;
   updated_at: string;
 }
