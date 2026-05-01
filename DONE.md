@@ -1,6 +1,41 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session P-211) TYPE: CODE (feature extension)
+
+### Instagram Export Auto-Completion via Sous Chef (Web only)
+
+**Feature:** After importing recipes from Instagram export ZIP, recipes now automatically get ingredients and steps generated via Claude Sonnet Vision. The hero image + caption notes are sent to Sonnet to generate a complete recipe with ingredients, steps, and description.
+
+**New Files:**
+- `apps/web/app/api/import/instagram-export/complete/route.ts` — batch completion (5 recipes/batch)
+
+**Modified Files:**
+- `packages/ai/src/instagramExport.ts` — add completeInstagramRecipe() Sonnet vision function
+- `packages/ai/src/index.ts` — export completeInstagramRecipe
+- `apps/web/components/InstagramExportImporter.tsx` — add Phase 4 (Generating) after save
+- `.claude/agents/ai-cost.md` — add instagram_recipe_complete Sonnet row
+- `.claude/agents/feature-registry.md` — update P-210 row with P-211 completion
+
+**AI Cost:**
+- instagram_recipe_complete: SONNET ~$0.015/recipe (vision + structured JSON)
+
+**Key Behaviors:**
+- Phase 4 (Generating) runs after save, before done
+- Batches of 5 recipes to avoid overload
+- Fetches hero image from Supabase storage with apikey header
+- Generates description, cuisine, ingredients (min 3), steps (min 2)
+- Removes _incomplete tag on success, sets is_complete=true
+- Calls /api/recipes/finalize for completeness gate
+- Failed recipes flagged for manual Sous Chef completion
+- Progress UI shows completed/failed per recipe
+
+**TypeScript:** npx tsc --noEmit passes (0 errors)
+**Deployed:** Commit 0b7ac9a, HTTP 200, PM2 online
+**Verified:** curl chefsbk.app/dashboard/scan returns 200
+
+---
+
 ## 2026-04-30 (session P-210) TYPE: CODE (new feature)
 
 ### Instagram Export Import (Web only, Pro plan)
