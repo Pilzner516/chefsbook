@@ -440,7 +440,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Web AI calls (moderateComment, moderateRecipe) fail due to CORS — wrap in try/catch, allow action to proceed without moderation
 - Web API routes using `addItemsWithPipeline` must pass the service role client (db singleton has no JWT context → RLS fails)
 - Instagram URLs must never enter standard URL import path — `handleImport()` checks `isInstagramUrl()` first and redirects
-- GoTrue NULL token crash: users created with GOTRUE_MAILER_AUTOCONFIRM=true get NULL token columns → Go scanner crashes. Fix: `UPDATE auth.users SET confirmation_token=COALESCE(confirmation_token,''), recovery_token=COALESCE(recovery_token,''), ...` for affected users
+- GoTrue NULL token crash: users created with GOTRUE_MAILER_AUTOCONFIRM=true get NULL token columns → Go scanner crashes. **Admin-created accounts are auto-patched via `fix_gotrue_null_tokens()` RPC (session GOTRUE-FIX).** For any self-signup users with this issue, run: `UPDATE auth.users SET confirmation_token=COALESCE(confirmation_token,''), recovery_token=COALESCE(recovery_token,''), ...`
 - Server component auth: `supabase.auth.getSession()` returns null in Next.js server components (no cookie context). Use `'use client'` for auth-gated layouts, or use `@supabase/ssr` with `cookies()`. The `supabaseAdmin` service role client works for data queries that don't need user context.
 - RLS self-referencing policies: NEVER write `EXISTS(SELECT FROM same_table WHERE ...)` in an RLS policy — it triggers infinite recursion (PostgreSQL 42P17). Use direct column checks like `user_id = auth.uid()` instead.
 

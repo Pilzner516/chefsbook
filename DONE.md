@@ -1,6 +1,39 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-02 (session GOTRUE-FIX) TYPE: BUG FIX (code fix)
+
+### Fix Admin Account Creation + Welcome Email
+
+**Purpose:** Fix two related issues blocking admin account creation.
+
+**Fix 1: GoTrue NULL Token Crash — TYPE: CODE FIX**
+- Root cause: `GOTRUE_MAILER_AUTOCONFIRM=true` leaves token columns (confirmation_token, recovery_token, etc.) as NULL, causing GoTrue scanner crash on sign-in
+- Migration 079: Created `fix_gotrue_null_tokens(target_user_id UUID)` RPC function
+- Updated `/api/admin/users/create` route to call the RPC immediately after `createUser()`
+- Wrapped in try/catch — account creation continues even if patch fails (non-fatal)
+- **Prevention:** All future admin-created accounts will have tokens patched automatically
+
+**Fix 2: Welcome Emails Not Sending — TYPE: CODE FIX**
+- Root cause: `RESEND_API_KEY` was not set in `/mnt/chefsbook/repo/apps/web/.env.local` on RPi5
+- Found existing key in `/mnt/chefsbook/supabase/.env` (SMTP_PASS)
+- Added `RESEND_API_KEY` to web app .env.local
+- Restarted PM2 with `--update-env` to pick up new env var
+- **Prevention:** Key is now in place, welcome emails will send when "Send welcome email" is checked
+
+**Files modified:**
+- `supabase/migrations/20260502_079_fix_gotrue_null_tokens.sql` (new)
+- `apps/web/app/api/admin/users/create/route.ts`
+- `/mnt/chefsbook/repo/apps/web/.env.local` on RPi5 (added RESEND_API_KEY)
+
+**Verification:**
+- Migration 079 applied to RPi5
+- PostgREST restarted to pick up new RPC function
+- Deployed to RPi5 via deploy-staging.sh
+- Smoke tests pass: /, /auth, /admin all return HTTP 200
+
+---
+
 ## 2026-05-01 (session PERSONAL-VERSIONS) TYPE: CODE (feature implementation)
 
 ### Personal Recipe Versions + Ask Sous Chef API
