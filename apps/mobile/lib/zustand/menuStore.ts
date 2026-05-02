@@ -8,8 +8,8 @@ interface MenuState {
   loading: boolean;
   fetchMenus: (userId: string) => Promise<void>;
   fetchMenu: (menuId: string) => Promise<void>;
-  addMenu: (userId: string, data: { title: string; description?: string | null; occasion?: string | null; notes?: string | null }) => Promise<Menu>;
-  editMenu: (menuId: string, data: { title?: string; description?: string | null; occasion?: string | null; notes?: string | null; is_public?: boolean; cover_image_url?: string | null }) => Promise<void>;
+  addMenu: (userId: string, data: { title: string; description?: string | null; occasion?: string | null; public_notes?: string | null; private_notes?: string | null }) => Promise<Menu>;
+  editMenu: (menuId: string, data: { title?: string; description?: string | null; occasion?: string | null; public_notes?: string | null; private_notes?: string | null; is_public?: boolean; cover_image_url?: string | null }) => Promise<void>;
   removeMenu: (menuId: string) => Promise<void>;
   addRecipeToMenu: (menuId: string, recipeId: string, course: MenuCourse, sortOrder: number) => Promise<void>;
   removeRecipeFromMenu: (itemId: string) => Promise<void>;
@@ -48,7 +48,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
       title: data.title,
       description: data.description ?? null,
       occasion: data.occasion ?? null,
-      notes: data.notes ?? null,
+      public_notes: data.public_notes ?? null,
+      private_notes: data.private_notes ?? null,
     });
     set((s) => ({ menus: [menu, ...s.menus] }));
     return menu;

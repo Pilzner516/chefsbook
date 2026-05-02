@@ -115,7 +115,20 @@
     "adding_to": "Aggiunta a",
     "editMenu": "Modifica menu",
     "notes": "Note (private)",
-    "notesPlaceholder": "es.: preparare prima il risotto..."
+    "notesPlaceholder": "es.: preparare prima il risotto...",
+    "publicNotes": "Note (pubbliche)",
+    "publicNotesPlaceholder": "Visibili quando condividi il menu",
+    "privateNotes": "Note (private)",
+    "privateNotesPlaceholder": "Solo tu puoi vederle",
+    "deleteMenuTitle": "Eliminare \"{{title}}\"?",
+    "deleteMenuBodySafe": "Il menu verrà rimosso dalla tua lista. Le ricette contenute rimarranno in Le Mie Ricette.",
+    "addToCookbook": "Aggiungi al libro",
+    "addToList": "Aggiungi a lista",
+    "selectCookbook": "Seleziona libro di cucina",
+    "noCookbookDrafts": "Nessuna bozza di libro",
+    "createCookbookOnWeb": "Crea un libro di cucina su chefsbk.app per aggiungervi i menu.",
+    "menuAlreadyInCookbook": "Questo menu è già nel libro",
+    "addedToCookbook": "Aggiunto a {{title}}"
   },
   "menuScan": {
     "selectDishes": "Seleziona Piatti",

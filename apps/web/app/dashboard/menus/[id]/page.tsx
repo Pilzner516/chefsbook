@@ -48,7 +48,8 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
   const [editTitle, setEditTitle] = useState('');
   const [editOccasion, setEditOccasion] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editNotes, setEditNotes] = useState('');
+  const [editPublicNotes, setEditPublicNotes] = useState('');
+  const [editPrivateNotes, setEditPrivateNotes] = useState('');
   const [editSaving, setEditSaving] = useState(false);
 
   // Add recipe modal
@@ -71,6 +72,13 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
   const [shopLists, setShopLists] = useState<ShoppingList[]>([]);
   const [shopLoading, setShopLoading] = useState(false);
   const [addingToShop, setAddingToShop] = useState(false);
+
+  // Cookbook picker modal
+  const [showCookbookPicker, setShowCookbookPicker] = useState(false);
+  const [printCookbooks, setPrintCookbooks] = useState<{ id: string; title: string; recipe_ids: string[] }[]>([]);
+  const [cookbooksLoading, setCookbooksLoading] = useState(false);
+  const [addingToCookbook, setAddingToCookbook] = useState(false);
+  const [cookbookToast, setCookbookToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
   // Cook mode
   const [showCookMode, setShowCookMode] = useState(false);
@@ -120,7 +128,8 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
     setEditTitle(menu.title);
     setEditOccasion(menu.occasion ?? '');
     setEditDescription(menu.description ?? '');
-    setEditNotes(menu.notes ?? '');
+    setEditPublicNotes(menu.public_notes ?? '');
+    setEditPrivateNotes(menu.private_notes ?? '');
     setShowEdit(true);
   };
 
@@ -132,7 +141,8 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
         title: editTitle.trim(),
         occasion: editOccasion || null,
         description: editDescription.trim() || null,
-        notes: editNotes.trim() || null,
+        public_notes: editPublicNotes.trim() || null,
+        private_notes: editPrivateNotes.trim() || null,
       });
       setShowEdit(false);
       loadMenu();
@@ -144,9 +154,9 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
 
   const handleDelete = async () => {
     const ok = await confirm({
-      title: 'Delete menu?',
-      body: 'This cannot be undone.',
-      confirmLabel: 'Delete',
+      title: `Delete "${menu?.title}"?`,
+      body: 'Your recipes will not be deleted — they stay in My Recipes. Only this menu grouping will be removed.',
+      confirmLabel: 'Delete Menu',
       cancelLabel: 'Cancel',
     });
     if (!ok) return;
@@ -255,6 +265,53 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
     setAddingToShop(false);
   };
 
+  const openCookbookPicker = async () => {
+    setCookbooksLoading(true);
+    setShowCookbookPicker(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const res = await fetch('/api/print-cookbooks', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const { cookbooks } = await res.json();
+        setPrintCookbooks(cookbooks ?? []);
+      }
+    } catch (err) {
+      console.error('Failed to load cookbooks:', err);
+    }
+    setCookbooksLoading(false);
+  };
+
+  const handleAddToCookbook = async (cookbookId: string, cookbookTitle: string) => {
+    if (!menu) return;
+    setAddingToCookbook(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const res = await fetch(`/api/print-cookbooks/${cookbookId}/add-menu`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ menu_id: menu.id }),
+      });
+      const data = await res.json();
+      setShowCookbookPicker(false);
+      if (data.already_exists) {
+        setCookbookToast({ message: `Already in ${cookbookTitle}`, type: 'info' });
+      } else if (data.success) {
+        setCookbookToast({ message: `${menu.title} added to ${cookbookTitle}`, type: 'success' });
+      }
+      setTimeout(() => setCookbookToast(null), 3000);
+    } catch (err) {
+      console.error('Failed to add to cookbook:', err);
+    }
+    setAddingToCookbook(false);
+  };
+
   const getOccasionLabel = (value: string | null) => {
     if (!value) return null;
     return OCCASIONS.find((o) => o.value === value)?.label ?? value;
@@ -302,6 +359,22 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
             {menu.description && (
               <p className="text-cb-secondary mt-2">{menu.description}</p>
             )}
+            {(menu.public_notes || menu.private_notes) && (
+              <div className="mt-4 space-y-3">
+                {menu.public_notes && (
+                  <div className="p-3 bg-cb-base border border-cb-border rounded-input">
+                    <p className="text-xs font-medium text-cb-muted mb-1">Notes</p>
+                    <p className="text-sm text-cb-text">{menu.public_notes}</p>
+                  </div>
+                )}
+                {menu.private_notes && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-input">
+                    <p className="text-xs font-medium text-amber-700 mb-1">Private Notes 🔒</p>
+                    <p className="text-sm text-cb-text">{menu.private_notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
             onClick={openEditModal}
@@ -342,6 +415,15 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
             </svg>
             Add to Shopping
+          </button>
+          <button
+            onClick={openCookbookPicker}
+            className="px-4 py-2 border border-cb-border rounded-input text-sm font-medium text-cb-secondary hover:border-cb-primary hover:text-cb-primary transition flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            Add to Cookbook
           </button>
           <button
             onClick={handleDelete}
@@ -479,11 +561,24 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
           </div>
           <div>
             <label className="block text-sm font-medium text-cb-text mb-1">Notes</label>
+            <p className="text-xs text-cb-muted mb-1">Visible to anyone you share this menu with</p>
             <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
+              value={editPublicNotes}
+              onChange={(e) => setEditPublicNotes(e.target.value)}
               rows={2}
+              placeholder="e.g. This menu works beautifully for a dinner party of 6"
               className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-cb-text mb-1">Private Notes 🔒</label>
+            <p className="text-xs text-cb-muted mb-1">Only visible to you — never shared</p>
+            <textarea
+              value={editPrivateNotes}
+              onChange={(e) => setEditPrivateNotes(e.target.value)}
+              rows={2}
+              placeholder="e.g. Start the risotto 30 min before guests arrive"
+              className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none bg-amber-50"
             />
           </div>
         </div>
@@ -570,6 +665,52 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
       </ChefsDialog>
+
+      {/* Cookbook Picker */}
+      <ChefsDialog open={showCookbookPicker} onClose={() => setShowCookbookPicker(false)} title="Add to Cookbook">
+        <div className="max-h-64 overflow-y-auto">
+          {cookbooksLoading ? (
+            <p className="p-4 text-cb-secondary text-sm">Loading...</p>
+          ) : printCookbooks.length === 0 ? (
+            <div className="p-4 text-center">
+              <p className="text-cb-secondary text-sm mb-4">No print cookbooks yet.</p>
+              <a
+                href="/dashboard/print-cookbook/new"
+                className="text-cb-primary hover:underline text-sm font-medium"
+              >
+                + Create new cookbook
+              </a>
+            </div>
+          ) : (
+            <>
+              {printCookbooks.map((cb) => (
+                <button
+                  key={cb.id}
+                  onClick={() => handleAddToCookbook(cb.id, cb.title)}
+                  disabled={addingToCookbook}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-cb-bg transition border-b border-cb-border last:border-0 flex justify-between items-center"
+                >
+                  <span>{cb.title}</span>
+                  <span className="text-xs text-cb-muted">{cb.recipe_ids?.length ?? 0} recipes</span>
+                </button>
+              ))}
+              <a
+                href="/dashboard/print-cookbook/new"
+                className="block px-4 py-3 text-sm text-cb-primary hover:bg-cb-bg transition"
+              >
+                + Create new cookbook
+              </a>
+            </>
+          )}
+        </div>
+      </ChefsDialog>
+
+      {/* Cookbook Toast */}
+      {cookbookToast && (
+        <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-card shadow-lg z-50 ${cookbookToast.type === 'success' ? 'bg-cb-green text-white' : 'bg-cb-base border border-cb-border text-cb-text'}`}>
+          {cookbookToast.message}
+        </div>
+      )}
 
       <ConfirmDialog />
       <AlertDialog />

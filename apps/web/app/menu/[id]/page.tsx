@@ -3,29 +3,52 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getMenu, getPrimaryPhotos } from '@chefsbook/db';
+import { supabase, getPublicMenu, getPrimaryPhotos, getUserSavedMenuFromSource } from '@chefsbook/db';
 import { getRecipeImageUrl } from '@/lib/recipeImage';
-import type { MenuWithItems } from '@chefsbook/db';
-import { COURSE_ORDER, COURSE_LABELS, type MenuCourse } from '@chefsbook/db';
+import type { PublicMenuData, MenuCourse } from '@chefsbook/db';
+import { COURSE_ORDER, COURSE_LABELS } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
 
 export default function PublicMenuPage() {
   const { id } = useParams<{ id: string }>();
-  const [menu, setMenu] = useState<MenuWithItems | null>(null);
+  const [menu, setMenu] = useState<PublicMenuData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
+
+  const [userId, setUserId] = useState<string | null>(null);
+  const [savedMenuId, setSavedMenuId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState<{ menuId: string; recipeCount: number } | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUserId(session.user.id);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!id) return;
     loadMenu(id);
   }, [id]);
 
+  useEffect(() => {
+    if (userId && id && menu && menu.user_id !== userId) {
+      getUserSavedMenuFromSource(userId, id).then((saved) => {
+        if (saved) {
+          setSavedMenuId(saved.id);
+        }
+      });
+    }
+  }, [userId, id, menu]);
+
   const loadMenu = async (menuId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getMenu(menuId);
+      const data = await getPublicMenu(menuId);
       if (!data) {
         setError('Menu not found');
         setLoading(false);
@@ -50,6 +73,40 @@ export default function PublicMenuPage() {
     setLoading(false);
   };
 
+  const handleSave = async () => {
+    if (!menu || !userId) return;
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError('Please sign in to save this menu');
+        setSaving(false);
+        return;
+      }
+
+      const res = await fetch(`/api/menus/${menu.id}/save`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.already_saved) {
+        setSavedMenuId(data.menu_id);
+      } else if (data.menu_id) {
+        setSaveSuccess({ menuId: data.menu_id, recipeCount: data.recipe_count });
+        setSavedMenuId(data.menu_id);
+      } else {
+        console.error('Save failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Failed to save menu:', err);
+    }
+    setSaving(false);
+  };
+
   const getItemsByCourse = (course: MenuCourse) => {
     if (!menu) return [];
     return menu.menu_items
@@ -57,12 +114,14 @@ export default function PublicMenuPage() {
       .sort((a, b) => a.sort_order - b.sort_order);
   };
 
-  const getTotalTime = (item: MenuWithItems['menu_items'][0]) => {
+  const getTotalTime = (item: PublicMenuData['menu_items'][0]) => {
     const recipe = item.recipe;
     if (!recipe) return null;
     const total = (recipe.prep_minutes || 0) + (recipe.cook_minutes || 0);
     return total > 0 ? formatDuration(total) : null;
   };
+
+  const isOwnMenu = userId && menu && menu.user_id === userId;
 
   if (loading) {
     return (
@@ -102,6 +161,55 @@ export default function PublicMenuPage() {
           )}
           {menu.description && (
             <p className="text-cb-secondary mt-4">{menu.description}</p>
+          )}
+          {menu.public_notes && (
+            <div className="mt-4 p-4 bg-cb-base border border-cb-border rounded-card">
+              <p className="text-sm font-medium text-cb-text mb-1">Notes</p>
+              <p className="text-sm text-cb-secondary">{menu.public_notes}</p>
+            </div>
+          )}
+
+          {!isOwnMenu && (
+            <div className="mt-6">
+              {saveSuccess ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-cb-green-soft border border-cb-green/20 rounded-card">
+                  <span className="text-cb-green font-medium">
+                    Saved! {saveSuccess.recipeCount} recipes added to your ChefsBook.
+                  </span>
+                  <Link
+                    href="/dashboard/menus"
+                    className="text-cb-green hover:underline font-medium"
+                  >
+                    View in My Menus →
+                  </Link>
+                </div>
+              ) : savedMenuId ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-cb-base border border-cb-border rounded-card">
+                  <span className="text-cb-secondary">Already saved</span>
+                  <Link
+                    href={`/dashboard/menus/${savedMenuId}`}
+                    className="text-cb-primary hover:underline font-medium"
+                  >
+                    View your copy →
+                  </Link>
+                </div>
+              ) : userId ? (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-cb-primary text-white px-6 py-3 rounded-input font-semibold hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save to My Menus'}
+                </button>
+              ) : (
+                <Link
+                  href={`/auth?redirect=/menu/${menu.id}`}
+                  className="inline-block bg-cb-primary text-white px-6 py-3 rounded-input font-semibold hover:opacity-90 transition"
+                >
+                  Sign in to save this menu
+                </Link>
+              )}
+            </div>
           )}
         </div>
       </header>
@@ -173,15 +281,17 @@ export default function PublicMenuPage() {
           </div>
         )}
 
-        <div className="mt-12 text-center">
-          <p className="text-cb-secondary mb-4">Want to create your own menus?</p>
-          <Link
-            href="/"
-            className="inline-block bg-cb-primary text-white px-6 py-3 rounded-input font-semibold hover:opacity-90 transition"
-          >
-            Try ChefsBook Free
-          </Link>
-        </div>
+        {!userId && (
+          <div className="mt-12 text-center">
+            <p className="text-cb-secondary mb-4">Want to create your own menus?</p>
+            <Link
+              href="/"
+              className="inline-block bg-cb-primary text-white px-6 py-3 rounded-input font-semibold hover:opacity-90 transition"
+            >
+              Try ChefsBook Free
+            </Link>
+          </div>
+        )}
       </main>
     </div>
   );

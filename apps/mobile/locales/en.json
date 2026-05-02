@@ -113,7 +113,20 @@
     "adding_to": "Adding to",
     "editMenu": "Edit Menu",
     "notes": "Notes (private)",
-    "notesPlaceholder": "e.g., make the risotto first..."
+    "notesPlaceholder": "e.g., make the risotto first...",
+    "publicNotes": "Notes (public)",
+    "publicNotesPlaceholder": "Visible when sharing the menu",
+    "privateNotes": "Notes (private)",
+    "privateNotesPlaceholder": "Only you can see these",
+    "deleteMenuTitle": "Delete \"{{title}}\"?",
+    "deleteMenuBodySafe": "This removes the menu from your list. The recipes it contains will remain safe in My Recipes.",
+    "addToCookbook": "Add to Cookbook",
+    "addToList": "Add to List",
+    "selectCookbook": "Select Cookbook",
+    "noCookbookDrafts": "No cookbook drafts",
+    "createCookbookOnWeb": "Create a print cookbook on chefsbk.app to add menus to it.",
+    "menuAlreadyInCookbook": "This menu is already in the cookbook",
+    "addedToCookbook": "Added to {{title}}"
   },
   "menuScan": {
     "selectDishes": "Select Dishes",

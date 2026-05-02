@@ -1,6 +1,72 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session MENU-07b) TYPE: CODE (feature implementation)
+
+### Menu Notes Split, Share Transfer, Delete Safeguard, Add to Cookbook
+
+**Purpose:** Five enhancements to the menus system - public/private notes, share with recipe cloning, safer delete confirmation, and Add to Cookbook actions.
+
+**Database:**
+- Migration 076: `notes` → `private_notes` rename + `public_notes` column
+- Migration 076: `source_menu_id` UUID for share provenance tracking
+- PostgREST cache restarted
+
+**Part 4: Public and Private Notes**
+- Menu type updated with `public_notes` and `private_notes` fields
+- createMenu/updateMenu accept new fields
+- Web edit modal: two separate notes fields with amber styling for private
+- Mobile edit modal: same treatment
+- Public menu view excludes private_notes at query level (getPublicMenu)
+
+**Part 5: Share Transfer — Recipes Clone to Receiver**
+- Created /api/menus/[id]/save route
+- Clones menu + all recipes via cloneRecipe() function
+- Sets source_menu_id for provenance tracking
+- "Save to My Menus" button on public menu view
+- Shows "Already saved" if source_menu_id match found
+
+**Part 6: Delete Safeguard**
+- Delete confirmation now shows: `Delete "[Menu Title]"?`
+- Body explains recipes stay safe in My Recipes
+- Updated on web menus list, mobile menus tab
+
+**Part 7: Add to Cookbook on Menu Detail**
+- Web: "Add to Cookbook" button opens cookbook picker modal
+- Mobile: "Add to Cookbook" button calls /api/print-cookbooks/[id]/add-menu
+- Both use existing MenuChapterCard system in book_layout
+
+**Part 8: Book Builder — Add Menu Button**
+- "Add Menu" button added beside "Add Recipe" in print cookbook builder
+- Menu picker panel shows user's menus with recipe counts
+- Adding menu creates MenuChapterCard in book_layout.cards
+
+**i18n:**
+- 16 new keys in menus namespace across all 5 mobile locales
+- Keys: publicNotes, privateNotes, deleteMenuTitle, deleteMenuBodySafe, addToCookbook, selectCookbook, etc.
+
+**Files modified:**
+- `supabase/migrations/20260501_076_menu_notes_share.sql`
+- `packages/db/src/types/menus.ts`
+- `packages/db/src/queries/menus.ts`
+- `apps/web/app/api/menus/[id]/save/route.ts` (new)
+- `apps/web/app/api/print-cookbooks/[id]/add-menu/route.ts` (new)
+- `apps/web/app/menu/[id]/page.tsx`
+- `apps/web/app/dashboard/menus/page.tsx`
+- `apps/web/app/dashboard/menus/[id]/page.tsx`
+- `apps/web/app/dashboard/print-cookbook/[id]/page.tsx`
+- `apps/mobile/lib/zustand/menuStore.ts`
+- `apps/mobile/app/(tabs)/menus.tsx`
+- `apps/mobile/app/menu/[id].tsx`
+- `apps/mobile/app/menu/scan-dishes.tsx`
+- `apps/mobile/locales/*.json` (5 files)
+
+**Verification:**
+- TypeScript: 0 new errors (pre-existing UIKit error unrelated)
+- Deployed to RPi5
+
+---
+
 ## 2026-05-01 (session MENU-07) TYPE: CODE (feature implementation)
 
 ### Mobile Menu Parity — Multi-Select + Edit Modal

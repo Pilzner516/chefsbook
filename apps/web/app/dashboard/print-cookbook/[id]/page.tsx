@@ -301,6 +301,10 @@ function PrintCookbookCanvasPageInner({
   // Book settings panel state
   const [showSettings, setShowSettings] = useState(false);
 
+  // Menu picker state
+  const [showMenuPicker, setShowMenuPicker] = useState(false);
+  const [addingMenuId, setAddingMenuId] = useState<string | null>(null);
+
   // User menus for "by_menu" organisation
   const [userMenus, setUserMenus] = useState<Array<{
     menu_id: string;
@@ -545,6 +549,32 @@ function PrintCookbookCanvasPageInner({
     dispatch({ type: 'ADD_RECIPE', recipe, imageUrls });
   };
 
+  const handleAddMenu = async (menuId: string) => {
+    if (!session?.access_token || !cookbookId || addingMenuId) return;
+    setAddingMenuId(menuId);
+    try {
+      const res = await fetch(`/api/print-cookbooks/${cookbookId}/add-menu`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ menu_id: menuId }),
+      });
+      const data = await res.json();
+      if (data.success || data.already_exists) {
+        // Reload the cookbook to get the updated layout
+        await checkAuthAndLoad();
+        setShowMenuPicker(false);
+      } else {
+        console.error('Failed to add menu:', data.error);
+      }
+    } catch (err) {
+      console.error('Error adding menu:', err);
+    }
+    setAddingMenuId(null);
+  };
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -693,6 +723,18 @@ function PrintCookbookCanvasPageInner({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
               Add Recipes
+            </button>
+            <button
+              onClick={() => {
+                fetchUserMenus();
+                setShowMenuPicker(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-cb-text bg-cb-bg border border-cb-border rounded-input hover:border-cb-primary/50 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              Add Menu
             </button>
             <button
               onClick={() => setShowSettings(true)}
@@ -965,6 +1007,78 @@ function PrintCookbookCanvasPageInner({
                         {isAdded && (
                           <span className="text-xs text-cb-green font-medium">Added</span>
                         )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Picker Panel */}
+      {showMenuPicker && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setShowMenuPicker(false)} />
+          <div className="relative w-full max-w-lg bg-cb-card border-l border-cb-border h-full overflow-y-auto">
+            <div className="sticky top-0 bg-cb-card border-b border-cb-border p-4 flex items-center justify-between">
+              <h2 className="font-semibold">Add Menu as Chapter</h2>
+              <button onClick={() => setShowMenuPicker(false)} className="text-cb-muted hover:text-cb-text">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-cb-secondary mb-4">
+                Select a menu to add as a chapter. All recipes from the menu will be added to your cookbook.
+              </p>
+              {menusLoading ? (
+                <div className="text-center text-cb-secondary py-8">Loading menus...</div>
+              ) : userMenus.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-cb-secondary mb-2">No menus found</p>
+                  <Link href="/dashboard/menus" className="text-cb-primary hover:underline text-sm">
+                    Create a menu first
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {userMenus.map((menu) => {
+                    const isAdded = layout.cards.some(
+                      (c) => c.type === 'menu_chapter' && (c as MenuChapterCard).menu_id === menu.menu_id
+                    );
+                    return (
+                      <button
+                        key={menu.menu_id}
+                        onClick={() => handleAddMenu(menu.menu_id)}
+                        disabled={isAdded || addingMenuId === menu.menu_id}
+                        className={`w-full flex items-center gap-3 p-4 rounded-input border text-left transition-all ${
+                          isAdded
+                            ? 'bg-cb-bg border-cb-border opacity-60'
+                            : addingMenuId === menu.menu_id
+                            ? 'bg-cb-bg border-cb-primary opacity-80'
+                            : 'bg-cb-card border-cb-border hover:border-cb-primary'
+                        }`}
+                      >
+                        <div className="w-10 h-10 bg-cb-primary-soft rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-cb-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{menu.menu_title}</p>
+                          <p className="text-xs text-cb-secondary">
+                            {menu.recipe_ids.length} recipe{menu.recipe_ids.length !== 1 ? 's' : ''}
+                            {menu.occasion && ` · ${menu.occasion.replace(/_/g, ' ')}`}
+                          </p>
+                        </div>
+                        {isAdded ? (
+                          <span className="text-xs text-cb-green font-medium">Added</span>
+                        ) : addingMenuId === menu.menu_id ? (
+                          <span className="text-xs text-cb-primary font-medium">Adding...</span>
+                        ) : null}
                       </button>
                     );
                   })}

@@ -31,9 +31,11 @@ export interface Menu {
   title: string;
   description: string | null;
   occasion: string | null;
-  notes: string | null;
+  public_notes: string | null;
+  private_notes: string | null;
   is_public: boolean;
   cover_image_url: string | null;
+  source_menu_id: string | null;
   created_at: string;
   updated_at: string;
 }

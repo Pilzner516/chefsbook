@@ -58,7 +58,7 @@ export default function MenusTab() {
   const [createOccasion, setCreateOccasion] = useState('');
   const [createDescription, setCreateDescription] = useState('');
   const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Edit modal state
@@ -66,7 +66,8 @@ export default function MenusTab() {
   const [editTitle, setEditTitle] = useState('');
   const [editOccasion, setEditOccasion] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editNotes, setEditNotes] = useState('');
+  const [editPublicNotes, setEditPublicNotes] = useState('');
+  const [editPrivateNotes, setEditPrivateNotes] = useState('');
   const [editCoverUrl, setEditCoverUrl] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [recipeImages, setRecipeImages] = useState<{ recipe_id: string; recipe_title: string; photos: { url: string; is_primary: boolean }[] }[]>([]);
@@ -99,8 +100,8 @@ export default function MenusTab() {
     setSaving(false);
   };
 
-  const confirmDelete = (menuId: string) => {
-    setDeleteTarget(menuId);
+  const confirmDelete = (menuId: string, menuTitle: string) => {
+    setDeleteTarget({ id: menuId, title: menuTitle });
     setShowDeleteDialog(true);
   };
 
@@ -108,7 +109,7 @@ export default function MenusTab() {
     if (!deleteTarget) return;
     setShowDeleteDialog(false);
     try {
-      await removeMenu(deleteTarget);
+      await removeMenu(deleteTarget.id);
     } catch (err: any) {
       Alert.alert(t('common.errorTitle'), err.message);
     }
@@ -120,7 +121,8 @@ export default function MenusTab() {
     setEditTitle(menu.title);
     setEditOccasion(menu.occasion ?? '');
     setEditDescription(menu.description ?? '');
-    setEditNotes(menu.notes ?? '');
+    setEditPublicNotes(menu.public_notes ?? '');
+    setEditPrivateNotes(menu.private_notes ?? '');
     setEditCoverUrl(menu.cover_image_url);
     setShowImagePicker(false);
     setRecipeImages([]);
@@ -134,7 +136,8 @@ export default function MenusTab() {
         title: editTitle.trim(),
         occasion: editOccasion || null,
         description: editDescription.trim() || null,
-        notes: editNotes.trim() || null,
+        public_notes: editPublicNotes.trim() || null,
+        private_notes: editPrivateNotes.trim() || null,
         cover_image_url: editCoverUrl,
       });
       setEditMenu(null);
@@ -259,7 +262,7 @@ export default function MenusTab() {
             <TouchableOpacity
               key={menu.id}
               onPress={() => router.push(`/menu/${menu.id}` as any)}
-              onLongPress={() => confirmDelete(menu.id)}
+              onLongPress={() => confirmDelete(menu.id, menu.title)}
               delayLongPress={500}
               style={{ marginBottom: 12 }}
             >
@@ -316,7 +319,7 @@ export default function MenusTab() {
                         <Ionicons name="pencil-outline" size={18} color={colors.textMuted} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() => confirmDelete(menu.id)}
+                        onPress={() => confirmDelete(menu.id, menu.title)}
                         style={{ padding: 8, marginTop: -4, marginRight: -4 }}
                       >
                         <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
@@ -543,11 +546,11 @@ export default function MenusTab() {
                 />
                 <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 16 }}>{editDescription.length}/200</Text>
 
-                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 }}>{t('menus.notes')}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 }}>{t('menus.publicNotes')}</Text>
                 <TextInput
-                  value={editNotes}
-                  onChangeText={setEditNotes}
-                  placeholder={t('menus.notesPlaceholder')}
+                  value={editPublicNotes}
+                  onChangeText={setEditPublicNotes}
+                  placeholder={t('menus.publicNotesPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   multiline
                   numberOfLines={2}
@@ -560,6 +563,29 @@ export default function MenusTab() {
                     color: colors.textPrimary,
                     borderWidth: 1,
                     borderColor: colors.borderDefault,
+                    height: 60,
+                    textAlignVertical: 'top',
+                    marginBottom: 16,
+                  }}
+                />
+
+                <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 }}>{t('menus.privateNotes')}</Text>
+                <TextInput
+                  value={editPrivateNotes}
+                  onChangeText={setEditPrivateNotes}
+                  placeholder={t('menus.privateNotesPlaceholder')}
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  numberOfLines={2}
+                  style={{
+                    backgroundColor: '#fffbeb',
+                    borderRadius: 10,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    fontSize: 15,
+                    color: colors.textPrimary,
+                    borderWidth: 1,
+                    borderColor: '#fcd34d',
                     height: 60,
                     textAlignVertical: 'top',
                     marginBottom: 16,
@@ -706,8 +732,8 @@ export default function MenusTab() {
       {/* Delete Confirmation Dialog */}
       <ChefsDialog
         visible={showDeleteDialog}
-        title={t('menus.deleteMenu')}
-        body={t('menus.deleteMenuBody')}
+        title={deleteTarget ? t('menus.deleteMenuTitle', { title: deleteTarget.title }) : t('menus.deleteMenu')}
+        body={t('menus.deleteMenuBodySafe')}
         onClose={() => setShowDeleteDialog(false)}
         buttons={[
           { label: t('common.cancel'), variant: 'cancel', onPress: () => setShowDeleteDialog(false) },

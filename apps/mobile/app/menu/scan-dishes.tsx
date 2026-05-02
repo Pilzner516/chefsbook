@@ -184,7 +184,7 @@ export default function ScanDishesScreen() {
       const menu = await createMenu({
         user_id: session.user.id,
         title: restaurantName.trim() || t('menuScan.scannedMenu'),
-        notes: userNotes.trim() || null,
+        private_notes: userNotes.trim() || null,
         is_public: false,
       });
 

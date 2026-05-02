@@ -46,9 +46,11 @@ export async function createMenu(data: {
   title: string;
   description?: string | null;
   occasion?: string | null;
-  notes?: string | null;
+  public_notes?: string | null;
+  private_notes?: string | null;
   is_public?: boolean;
   cover_image_url?: string | null;
+  source_menu_id?: string | null;
 }): Promise<Menu> {
   const { data: menu, error } = await supabase
     .from('menus')
@@ -57,9 +59,11 @@ export async function createMenu(data: {
       title: data.title,
       description: data.description ?? null,
       occasion: data.occasion ?? null,
-      notes: data.notes ?? null,
+      public_notes: data.public_notes ?? null,
+      private_notes: data.private_notes ?? null,
       is_public: data.is_public ?? false,
       cover_image_url: data.cover_image_url ?? null,
+      source_menu_id: data.source_menu_id ?? null,
     })
     .select()
     .single();
@@ -74,7 +78,8 @@ export async function updateMenu(
     title?: string;
     description?: string | null;
     occasion?: string | null;
-    notes?: string | null;
+    public_notes?: string | null;
+    private_notes?: string | null;
     is_public?: boolean;
     cover_image_url?: string | null;
   }
@@ -272,4 +277,77 @@ export async function getMaxSortOrder(menuId: string, course: MenuCourse): Promi
 
   if (error) throw error;
   return data?.sort_order ?? -1;
+}
+
+export interface PublicMenuData {
+  id: string;
+  title: string;
+  description: string | null;
+  occasion: string | null;
+  public_notes: string | null;
+  cover_image_url: string | null;
+  is_public: boolean;
+  user_id: string;
+  menu_items: (MenuItem & {
+    recipe: {
+      id: string;
+      title: string;
+      description: string | null;
+      prep_minutes: number | null;
+      cook_minutes: number | null;
+      servings: number | null;
+      image_url: string | null;
+    };
+  })[];
+}
+
+export async function getPublicMenu(menuId: string): Promise<PublicMenuData | null> {
+  const { data, error } = await supabase
+    .from('menus')
+    .select(`
+      id,
+      title,
+      description,
+      occasion,
+      public_notes,
+      cover_image_url,
+      is_public,
+      user_id,
+      menu_items (
+        *,
+        recipe:recipes (
+          id,
+          title,
+          description,
+          prep_minutes,
+          cook_minutes,
+          servings,
+          image_url
+        )
+      )
+    `)
+    .eq('id', menuId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+
+  return data as PublicMenuData;
+}
+
+export async function getUserSavedMenuFromSource(
+  userId: string,
+  sourceMenuId: string
+): Promise<{ id: string } | null> {
+  const { data, error } = await supabase
+    .from('menus')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('source_menu_id', sourceMenuId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
 }

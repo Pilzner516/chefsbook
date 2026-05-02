@@ -40,7 +40,7 @@ export default function MenusPage() {
   const [createTitle, setCreateTitle] = useState('');
   const [createOccasion, setCreateOccasion] = useState('');
   const [createDescription, setCreateDescription] = useState('');
-  const [createNotes, setCreateNotes] = useState('');
+  const [createPublicNotes, setCreatePublicNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirm, ConfirmDialog] = useConfirmDialog();
 
@@ -48,7 +48,8 @@ export default function MenusPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editOccasion, setEditOccasion] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editNotes, setEditNotes] = useState('');
+  const [editPublicNotes, setEditPublicNotes] = useState('');
+  const [editPrivateNotes, setEditPrivateNotes] = useState('');
   const [editCoverUrl, setEditCoverUrl] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [recipeImages, setRecipeImages] = useState<{ recipe_id: string; recipe_title: string; photos: { url: string; is_primary: boolean }[] }[]>([]);
@@ -85,13 +86,13 @@ export default function MenusPage() {
         title: createTitle.trim(),
         occasion: createOccasion || null,
         description: createDescription.trim() || null,
-        notes: createNotes.trim() || null,
+        public_notes: createPublicNotes.trim() || null,
       });
       setShowCreate(false);
       setCreateTitle('');
       setCreateOccasion('');
       setCreateDescription('');
-      setCreateNotes('');
+      setCreatePublicNotes('');
       loadMenus(userId);
     } catch (err) {
       console.error('Failed to create menu:', err);
@@ -99,11 +100,11 @@ export default function MenusPage() {
     setSaving(false);
   };
 
-  const handleDelete = async (menuId: string) => {
+  const handleDelete = async (menuId: string, menuTitle: string) => {
     const ok = await confirm({
-      title: 'Delete menu?',
-      body: 'This cannot be undone.',
-      confirmLabel: 'Delete',
+      title: `Delete "${menuTitle}"?`,
+      body: 'Your recipes will not be deleted — they stay in My Recipes. Only this menu grouping will be removed.',
+      confirmLabel: 'Delete Menu',
       cancelLabel: 'Cancel',
     });
     if (!ok) return;
@@ -122,7 +123,8 @@ export default function MenusPage() {
     setEditTitle(menu.title);
     setEditOccasion(menu.occasion ?? '');
     setEditDescription(menu.description ?? '');
-    setEditNotes(menu.notes ?? '');
+    setEditPublicNotes(menu.public_notes ?? '');
+    setEditPrivateNotes(menu.private_notes ?? '');
     setEditCoverUrl(menu.cover_image_url);
     setShowImagePicker(false);
     setRecipeImages([]);
@@ -136,7 +138,8 @@ export default function MenusPage() {
         title: editTitle.trim(),
         occasion: editOccasion || null,
         description: editDescription.trim() || null,
-        notes: editNotes.trim() || null,
+        public_notes: editPublicNotes.trim() || null,
+        private_notes: editPrivateNotes.trim() || null,
         cover_image_url: editCoverUrl,
       });
       setEditMenu(null);
@@ -289,7 +292,7 @@ export default function MenusPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        handleDelete(menu.id);
+                        handleDelete(menu.id, menu.title);
                       }}
                       className="text-cb-muted hover:text-red-500 transition p-1"
                       title="Delete menu"
@@ -354,11 +357,12 @@ export default function MenusPage() {
             <p className="text-xs text-cb-muted mt-1">{createDescription.length}/200</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-cb-text mb-1">Notes (private)</label>
+            <label className="block text-sm font-medium text-cb-text mb-1">Notes</label>
+            <p className="text-xs text-cb-muted mb-1">Visible to anyone you share this menu with</p>
             <textarea
-              value={createNotes}
-              onChange={(e) => setCreateNotes(e.target.value)}
-              placeholder="e.g., make the risotto first..."
+              value={createPublicNotes}
+              onChange={(e) => setCreatePublicNotes(e.target.value)}
+              placeholder="e.g. This menu works beautifully for a dinner party of 6"
               rows={2}
               className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none"
             />
@@ -425,13 +429,25 @@ export default function MenusPage() {
             <p className="text-xs text-cb-muted mt-1">{editDescription.length}/200</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-cb-text mb-1">Notes (private)</label>
+            <label className="block text-sm font-medium text-cb-text mb-1">Notes</label>
+            <p className="text-xs text-cb-muted mb-1">Visible to anyone you share this menu with</p>
             <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              placeholder="e.g., make the risotto first..."
+              value={editPublicNotes}
+              onChange={(e) => setEditPublicNotes(e.target.value)}
+              placeholder="e.g. This menu works beautifully for a dinner party of 6"
               rows={2}
               className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-cb-text mb-1">Private Notes 🔒</label>
+            <p className="text-xs text-cb-muted mb-1">Only visible to you — never shared</p>
+            <textarea
+              value={editPrivateNotes}
+              onChange={(e) => setEditPrivateNotes(e.target.value)}
+              placeholder="e.g. Start the risotto 30 min before guests arrive"
+              rows={2}
+              className="w-full border border-cb-border rounded-input px-3 py-2 text-sm resize-none bg-amber-50"
             />
           </div>
 

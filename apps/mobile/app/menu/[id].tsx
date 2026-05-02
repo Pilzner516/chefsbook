@@ -49,6 +49,12 @@ export default function MenuDetailScreen() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
+  // Add to Cookbook state
+  const [showCookbookPicker, setShowCookbookPicker] = useState(false);
+  const [cookbooks, setCookbooks] = useState<{ id: string; title: string; status: string }[]>([]);
+  const [loadingCookbooks, setLoadingCookbooks] = useState(false);
+  const [addingToCookbook, setAddingToCookbook] = useState(false);
+
   useEffect(() => {
     if (id) {
       fetchMenu(id);
@@ -198,6 +204,50 @@ export default function MenuDetailScreen() {
     setTimeout(() => setToastMessage(null), 2500);
   };
 
+  const openCookbookPicker = async () => {
+    if (!session?.access_token) return;
+    setShowCookbookPicker(true);
+    setLoadingCookbooks(true);
+    try {
+      const res = await fetch('https://chefsbk.app/api/print-cookbooks', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      const drafts = (data.cookbooks ?? []).filter((c: any) => c.status === 'draft');
+      setCookbooks(drafts);
+    } catch (err) {
+      console.error('Failed to load cookbooks:', err);
+    }
+    setLoadingCookbooks(false);
+  };
+
+  const handleAddToCookbook = async (cookbookId: string, cookbookTitle: string) => {
+    if (!currentMenu || !session?.access_token) return;
+    setShowCookbookPicker(false);
+    setAddingToCookbook(true);
+    try {
+      const res = await fetch(`https://chefsbk.app/api/print-cookbooks/${cookbookId}/add-menu`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ menu_id: currentMenu.id }),
+      });
+      const data = await res.json();
+      if (data.already_exists) {
+        showToast(t('menus.menuAlreadyInCookbook'));
+      } else if (data.success) {
+        showToast(t('menus.addedToCookbook', { title: cookbookTitle }));
+      } else {
+        Alert.alert(t('common.errorTitle'), data.error || 'Failed to add menu');
+      }
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    }
+    setAddingToCookbook(false);
+  };
+
   if (loading || !currentMenu) {
     return <Loading message={t('menus.loading')} />;
   }
@@ -236,23 +286,42 @@ export default function MenuDetailScreen() {
         </View>
       )}
 
-      {/* Add to shopping list button */}
+      {/* Action buttons */}
       {currentMenu.menu_items.length > 0 && (
-        <TouchableOpacity
-          onPress={openListPicker}
-          disabled={addingToList}
-          style={{
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-            marginHorizontal: 16, marginTop: 12, paddingVertical: 12,
-            backgroundColor: colors.accentGreenSoft, borderRadius: 10,
-            opacity: addingToList ? 0.6 : 1,
-          }}
-        >
-          <Ionicons name="cart" size={18} color={colors.accentGreen} />
-          <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600' }}>
-            {addingToList ? t('menus.addingToList') : t('menus.addToShoppingList')}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 12 }}>
+          <TouchableOpacity
+            onPress={openListPicker}
+            disabled={addingToList}
+            style={{
+              flex: 1,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+              paddingVertical: 12,
+              backgroundColor: colors.accentGreenSoft, borderRadius: 10,
+              opacity: addingToList ? 0.6 : 1,
+            }}
+          >
+            <Ionicons name="cart" size={18} color={colors.accentGreen} />
+            <Text style={{ color: colors.accentGreen, fontSize: 14, fontWeight: '600' }}>
+              {addingToList ? t('menus.addingToList') : t('menus.addToList')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={openCookbookPicker}
+            disabled={addingToCookbook}
+            style={{
+              flex: 1,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+              paddingVertical: 12,
+              backgroundColor: colors.accentSoft, borderRadius: 10,
+              opacity: addingToCookbook ? 0.6 : 1,
+            }}
+          >
+            <Ionicons name="book" size={18} color={colors.accent} />
+            <Text style={{ color: colors.accent, fontSize: 14, fontWeight: '600' }}>
+              {addingToCookbook ? t('common.adding') : t('menus.addToCookbook')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Start Cooking button */}
@@ -277,6 +346,48 @@ export default function MenuDetailScreen() {
           <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 16 }}>
             {currentMenu.description}
           </Text>
+        )}
+
+        {/* Notes display */}
+        {(currentMenu.public_notes || currentMenu.private_notes) && (
+          <View style={{ marginBottom: 16 }}>
+            {currentMenu.public_notes && (
+              <View style={{
+                backgroundColor: colors.bgBase,
+                borderRadius: 10,
+                padding: 12,
+                marginBottom: currentMenu.private_notes ? 8 : 0,
+                borderWidth: 1,
+                borderColor: colors.borderDefault,
+              }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 4 }}>
+                  {t('menus.publicNotes')}
+                </Text>
+                <Text style={{ fontSize: 14, color: colors.textPrimary }}>
+                  {currentMenu.public_notes}
+                </Text>
+              </View>
+            )}
+            {currentMenu.private_notes && (
+              <View style={{
+                backgroundColor: '#fffbeb',
+                borderRadius: 10,
+                padding: 12,
+                borderWidth: 1,
+                borderColor: '#fcd34d',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <Ionicons name="lock-closed" size={12} color="#d97706" />
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#d97706' }}>
+                    {t('menus.privateNotes')}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 14, color: colors.textPrimary }}>
+                  {currentMenu.private_notes}
+                </Text>
+              </View>
+            )}
+          </View>
         )}
 
         {/* Course sections */}
@@ -473,6 +584,57 @@ export default function MenuDetailScreen() {
         }}
         onCancel={() => setShowStorePicker(false)}
       />
+
+      {/* Cookbook Picker Modal */}
+      <Modal visible={showCookbookPicker} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <View style={{
+            backgroundColor: colors.bgScreen, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+            padding: 16, paddingBottom: insets.bottom + 16, maxHeight: '60%',
+          }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary }}>
+                {t('menus.selectCookbook')}
+              </Text>
+              <TouchableOpacity onPress={() => setShowCookbookPicker(false)}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            {loadingCookbooks ? (
+              <Text style={{ textAlign: 'center', color: colors.textSecondary, paddingVertical: 24 }}>
+                {t('common.loading')}
+              </Text>
+            ) : cookbooks.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+                  {t('menus.noCookbookDrafts')}
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>
+                  {t('menus.createCookbookOnWeb')}
+                </Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 300 }}>
+                {cookbooks.map((cb) => (
+                  <TouchableOpacity
+                    key={cb.id}
+                    onPress={() => handleAddToCookbook(cb.id, cb.title)}
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', paddingVertical: 14,
+                      borderBottomWidth: 1, borderBottomColor: colors.borderDefault,
+                    }}
+                  >
+                    <Ionicons name="book" size={20} color={colors.accent} style={{ marginRight: 12 }} />
+                    <Text style={{ color: colors.textPrimary, fontSize: 15, flex: 1 }}>{cb.title}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Delete Item Dialog */}
       <ChefsDialog
