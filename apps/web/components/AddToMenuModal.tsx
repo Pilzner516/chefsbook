@@ -18,7 +18,7 @@ export default function AddToMenuModal({ recipeIds, open, onClose, onSuccess }: 
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMenu, setSelectedMenu] = useState<Menu | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<MenuCourse>('main');
+  const [selectedCourse, setSelectedCourse] = useState<MenuCourse>('other');
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [newMenuTitle, setNewMenuTitle] = useState('');
   const [newMenuOccasion, setNewMenuOccasion] = useState('');
@@ -30,7 +30,7 @@ export default function AddToMenuModal({ recipeIds, open, onClose, onSuccess }: 
     if (open) {
       setStep('menu');
       setSelectedMenu(null);
-      setSelectedCourse('main');
+      setSelectedCourse('other');
       setShowNewMenu(false);
       setNewMenuTitle('');
       setNewMenuOccasion('');
