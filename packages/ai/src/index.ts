@@ -94,3 +94,5 @@ export { extractMenuDishes } from './extractMenuDishes';
 export type { ExtractedDish, ExtractMenuDishesResult } from './extractMenuDishes';
 export { generateMenuRecipe, generateMenuRecipes } from './generateMenuRecipes';
 export type { MenuRecipeInput, GeneratedMenuRecipe } from './generateMenuRecipes';
+export { askSousChef } from './askSousChef';
+export type { SousChefFeedbackResult } from './askSousChef';

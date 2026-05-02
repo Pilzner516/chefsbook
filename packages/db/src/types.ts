@@ -1,6 +1,6 @@
 export type VisibilityLevel = 'private' | 'shared_link' | 'friends' | 'public';
 export type PlanTier = 'free' | 'chef' | 'family' | 'pro';
-export type SourceType = 'url' | 'scan' | 'manual' | 'ai' | 'social' | 'cookbook' | 'youtube' | 'instagram_export';
+export type SourceType = 'url' | 'scan' | 'manual' | 'ai' | 'social' | 'cookbook' | 'youtube' | 'instagram_export' | 'personal_version';
 export type Course = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'starter' | 'main' | 'side' | 'dessert' | 'snack' | 'drink' | 'bread' | 'other';
 export type MealSlot = 'breakfast' | 'brunch' | 'lunch' | 'dinner' | 'snack' | 'other';
 
@@ -141,6 +141,9 @@ export interface Recipe {
   ai_verdict_reason: string | null;
   ai_verdict_at: string | null;
   nutrition: Record<string, unknown> | null;
+  is_personal_version: boolean;
+  personal_version_of: string | null;
+  personal_version_slot: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -474,5 +474,23 @@
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "loading": "Laden..."
+  },
+  "personalVersions": {
+    "askSousChef": "Sous Chef fragen",
+    "askSousChefPlaceholder": "Was hat der Sous Chef übersehen? Füge Korrekturen oder zusätzliche Details hinzu.",
+    "generating": "Dein Sous Chef überprüft dieses Rezept…",
+    "saveVersion": "Version speichern",
+    "myVersion": "Meine Version {{number}}",
+    "original": "Original",
+    "rename": "Umbenennen",
+    "promote": "Als Mein Rezept speichern",
+    "delete": "Version löschen",
+    "deleteConfirm": "Diese Version löschen? Dies kann nicht rückgängig gemacht werden.",
+    "promoteConfirm": "Dies erstellt ein eigenständiges Rezept in deiner Sammlung. Der Platz wird freigegeben.",
+    "slotsFull": "Beide Plätze sind belegt. Bearbeite V1 oder V2, oder lösche/befördere eine Version.",
+    "promoted": "Rezept zu deiner Sammlung hinzugefügt",
+    "planRequired": "Sous Chef fragen erfordert den Chef-Plan oder höher",
+    "versionSaved": "Version gespeichert",
+    "renamed": "Version umbenannt"
   }
 }

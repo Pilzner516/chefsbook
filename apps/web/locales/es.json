@@ -474,5 +474,23 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "loading": "Cargando..."
+  },
+  "personalVersions": {
+    "askSousChef": "Preguntar al Sous Chef",
+    "askSousChefPlaceholder": "¿Qué faltó el Sous Chef? Añade correcciones o detalles adicionales.",
+    "generating": "Tu Sous Chef está revisando esta receta…",
+    "saveVersion": "Guardar Versión",
+    "myVersion": "Mi Versión {{number}}",
+    "original": "Original",
+    "rename": "Renombrar",
+    "promote": "Guardar como Mi Receta",
+    "delete": "Eliminar Versión",
+    "deleteConfirm": "¿Eliminar esta versión? Esta acción no se puede deshacer.",
+    "promoteConfirm": "Esto creará una receta independiente en tu colección. El espacio quedará libre.",
+    "slotsFull": "Ambos espacios están en uso. Modifica V1 o V2, o elimina/promueve una para liberar espacio.",
+    "promoted": "Receta añadida a tu colección",
+    "planRequired": "Preguntar al Sous Chef requiere el plan Chef o superior",
+    "versionSaved": "Versión guardada",
+    "renamed": "Versión renombrada"
   }
 }

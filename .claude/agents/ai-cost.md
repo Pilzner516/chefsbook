@@ -56,6 +56,7 @@ Use the cheapest model that produces acceptable quality:
 | Instagram food classify | claude-haiku-4-5 | Vision, binary YES/NO classification (~$0.001/image). Safe default false on error. |
 | Instagram caption extract | claude-haiku-4-5 | Text only, structured JSON (~$0.0002/call). Always stores full caption in notes. |
 | Instagram recipe complete | claude-sonnet-4-6 | Vision + structured JSON (~$0.015/recipe). Generates ingredients, steps, description from image + caption. Runs after Instagram export save. |
+| Ask Sous Chef (personal versions) | claude-sonnet-4-6 | Structured recipe regeneration (~$0.003–$0.008/call). Takes user feedback + base recipe, returns corrected version. Chef+ plan required. |
 
 **Never use Opus** for any automated background task. Opus is for one-off complex
 reasoning that a human initiates and waits for.

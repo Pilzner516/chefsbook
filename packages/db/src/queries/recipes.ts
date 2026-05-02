@@ -166,12 +166,13 @@ export async function listPublicRecipes(params?: {
   limit?: number;
   offset?: number;
 }): Promise<Recipe[]> {
-  // Filter out expelled users' recipes
+  // Filter out expelled users' recipes and personal versions
   let query = supabase
     .from('recipes')
     .select('*, user_profiles!inner(account_status)')
     .in('visibility', ['public', 'shared_link'])
     .is('duplicate_of', null)
+    .eq('is_personal_version', false)
     .neq('user_profiles.account_status', 'expelled');
 
   if (params?.search) query = query.ilike('title', `%${params.search}%`);
@@ -494,6 +495,7 @@ export async function getPublicProfile(
     .eq('user_id', profile.id)
     .in('visibility', ['public', 'shared_link'])
     .is('duplicate_of', null)
+    .eq('is_personal_version', false)
     .order('created_at', { ascending: false });
 
   return { profile, recipes: (recipes ?? []) as Recipe[] };
@@ -611,4 +613,95 @@ export async function rejectRecipeModeration(recipeId: string, reviewerId: strin
       moderation_reviewed_at: new Date().toISOString(),
     })
     .eq('id', recipeId);
+}
+
+// ── Personal versions ──
+
+export async function getPersonalVersions(
+  originalRecipeId: string,
+  userId: string
+): Promise<RecipeWithDetails[]> {
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('personal_version_of', originalRecipeId)
+    .eq('user_id', userId)
+    .eq('is_personal_version', true)
+    .order('personal_version_slot', { ascending: true });
+  if (error) throw error;
+  if (!data || data.length === 0) return [];
+
+  const versions = data as Recipe[];
+  const versionIds = versions.map(v => v.id);
+
+  const [{ data: allIngredients }, { data: allSteps }] = await Promise.all([
+    supabase
+      .from('recipe_ingredients')
+      .select('*')
+      .in('recipe_id', versionIds)
+      .order('sort_order'),
+    supabase
+      .from('recipe_steps')
+      .select('*')
+      .in('recipe_id', versionIds)
+      .order('step_number'),
+  ]);
+
+  return versions.map(v => ({
+    ...v,
+    ingredients: (allIngredients ?? []).filter((i: any) => i.recipe_id === v.id) as RecipeIngredient[],
+    steps: (allSteps ?? []).filter((s: any) => s.recipe_id === v.id) as RecipeStep[],
+  }));
+}
+
+export async function getPersonalVersionCount(
+  originalRecipeId: string,
+  userId: string
+): Promise<number> {
+  const { count, error } = await supabase
+    .from('recipes')
+    .select('*', { count: 'exact', head: true })
+    .eq('personal_version_of', originalRecipeId)
+    .eq('user_id', userId)
+    .eq('is_personal_version', true);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function getRecipeModifiers(
+  recipeId: string
+): Promise<{ modifier_user_id: string; modifier_username: string; created_at: string }[]> {
+  const { data, error } = await supabase
+    .from('recipe_modifiers')
+    .select('modifier_user_id, modifier_username, created_at')
+    .eq('recipe_id', recipeId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function upsertRecipeModifier(
+  recipeId: string,
+  modifierUserId: string,
+  modifierUsername: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('recipe_modifiers')
+    .upsert(
+      { recipe_id: recipeId, modifier_user_id: modifierUserId, modifier_username: modifierUsername },
+      { onConflict: 'recipe_id,modifier_user_id' }
+    );
+  if (error) throw error;
+}
+
+export async function removeRecipeModifier(
+  recipeId: string,
+  modifierUserId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('recipe_modifiers')
+    .delete()
+    .eq('recipe_id', recipeId)
+    .eq('modifier_user_id', modifierUserId);
+  if (error) throw error;
 }

@@ -967,5 +967,23 @@
     "fiber_g": "Fiber",
     "sugar_g": "Sugar",
     "sodium_mg": "Sodium"
+  },
+  "personalVersions": {
+    "askSousChef": "Ask Sous Chef",
+    "askSousChefPlaceholder": "What did the Sous Chef miss? Add any corrections or extra details.",
+    "generating": "Your Sous Chef is reviewing this recipe…",
+    "saveVersion": "Save Version",
+    "myVersion": "My Version {{number}}",
+    "original": "Original",
+    "rename": "Rename",
+    "promote": "Save as My Recipe",
+    "delete": "Delete Version",
+    "deleteConfirm": "Delete this version? This can't be undone.",
+    "promoteConfirm": "This will create a standalone recipe in your collection. The version slot will be freed.",
+    "slotsFull": "Both version slots are in use. Refine V1 or V2, or delete/promote one to free a slot.",
+    "promoted": "Recipe added to your collection",
+    "planRequired": "Ask Sous Chef requires Chef plan or above",
+    "versionSaved": "Version saved",
+    "renamed": "Version renamed"
   }
 }

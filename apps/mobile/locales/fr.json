@@ -740,5 +740,23 @@
     "signInRequired": "Veuillez vous connecter pour envoyer un commentaire",
     "thankYou": "Commentaire envoyé — merci !",
     "submitError": "Échec de l'envoi. Veuillez réessayer."
+  },
+  "personalVersions": {
+    "askSousChef": "Demander au Sous Chef",
+    "askSousChefPlaceholder": "Qu'est-ce que le Sous Chef a manqué ? Ajoutez vos corrections ou détails.",
+    "generating": "Votre Sous Chef révise cette recette…",
+    "saveVersion": "Enregistrer la Version",
+    "myVersion": "Ma Version {{number}}",
+    "original": "Originale",
+    "rename": "Renommer",
+    "promote": "Enregistrer comme Ma Recette",
+    "delete": "Supprimer la Version",
+    "deleteConfirm": "Supprimer cette version ? Cette action est irréversible.",
+    "promoteConfirm": "Cela créera une recette autonome dans votre collection. L'emplacement sera libéré.",
+    "slotsFull": "Les deux emplacements sont utilisés. Modifiez V1 ou V2, ou supprimez/promouvez-en une.",
+    "promoted": "Recette ajoutée à votre collection",
+    "planRequired": "Demander au Sous Chef nécessite l'abonnement Chef ou supérieur",
+    "versionSaved": "Version enregistrée",
+    "renamed": "Version renommée"
   }
 }

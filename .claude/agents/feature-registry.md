@@ -319,6 +319,18 @@
 
 ---
 
+## PERSONAL VERSIONS
+| Feature | Status | Owner Files | Session | Notes |
+|---------|--------|-------------|---------|-------|
+| Personal versions (2 slots per saved recipe) | LIVE | migration 077, packages/db/queries/recipes.ts, /api/recipes/[id]/personal-versions, /api/personal-versions/[versionId] | PERSONAL-VERSIONS | Users can create up to 2 personal versions of saved recipes; private to creator; version switcher on recipe detail |
+| Ask Sous Chef on saved recipe | LIVE | packages/ai/askSousChef.ts, /api/recipes/[id]/ask-sous-chef | PERSONAL-VERSIONS | Sonnet ~$0.003-0.008/call; takes feedback + base version, returns regenerated recipe; Chef+ plan required |
+| Modifier pills on original recipe | LIVE | packages/db/queries/recipes.ts (getRecipeModifiers), recipe_modifiers table | PERSONAL-VERSIONS | Purple pills showing last 3 users who created personal versions |
+| Promote version to standalone | LIVE | /api/personal-versions/[versionId]?action=promote | PERSONAL-VERSIONS | Converts personal version to standalone recipe; frees slot; adds attribution note |
+| Orphan cascade on original deletion | PENDING | DELETE /api/recipes/[id] | PERSONAL-VERSIONS | When original recipe deleted, personal versions auto-promote to standalone |
+| Public query guard | LIVE | listPublicRecipes, getPublicProfile, search_recipes RPC, get_public_feed RPC | PERSONAL-VERSIONS | All queries exclude is_personal_version=true |
+
+---
+
 ## INFRASTRUCTURE
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|

@@ -743,5 +743,23 @@
     "signInRequired": "Accedi per inviare un commento",
     "thankYou": "Commento inviato — grazie!",
     "submitError": "Invio fallito. Riprova."
+  },
+  "personalVersions": {
+    "askSousChef": "Chiedi al Sous Chef",
+    "askSousChefPlaceholder": "Cosa ha dimenticato il Sous Chef? Aggiungi correzioni o dettagli extra.",
+    "generating": "Il tuo Sous Chef sta rivedendo questa ricetta…",
+    "saveVersion": "Salva Versione",
+    "myVersion": "La Mia Versione {{number}}",
+    "original": "Originale",
+    "rename": "Rinomina",
+    "promote": "Salva come Mia Ricetta",
+    "delete": "Elimina Versione",
+    "deleteConfirm": "Eliminare questa versione? Questa azione non può essere annullata.",
+    "promoteConfirm": "Questo creerà una ricetta autonoma nella tua collezione. Lo slot verrà liberato.",
+    "slotsFull": "Entrambi gli slot sono in uso. Modifica V1 o V2, o elimina/promuovi per liberare uno slot.",
+    "promoted": "Ricetta aggiunta alla tua collezione",
+    "planRequired": "Chiedi al Sous Chef richiede il piano Chef o superiore",
+    "versionSaved": "Versione salvata",
+    "renamed": "Versione rinominata"
   }
 }
