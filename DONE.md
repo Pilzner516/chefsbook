@@ -1,6 +1,43 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session MENU-07) TYPE: CODE (feature implementation)
+
+### Mobile Menu Parity — Multi-Select + Edit Modal
+
+**Purpose:** Bring mobile My Menus feature to parity with web.
+
+**PART 1: Mobile multi-select batch Add to Menu (skipped from MENU-06)**
+- RecipeCard component extended with `selectMode`, `selected`, `onSelect` props
+- Checkbox overlay on recipe cards when in select mode
+- My Recipes tab: "Select" button in header, sticky bottom bar with Add to Menu
+- Integration with existing AddToMenuSheet for batch adding
+- Toast feedback showing count added and skipped
+
+**PART 2: Mobile edit menu modal**
+- Edit button (pencil icon) added to each menu card
+- Full edit modal with all fields: title, occasion, description, notes, cover image
+- Cover image picker: "Choose from recipes" or "Upload image"
+- Uses expo-image-picker for gallery selection
+- Image preview with remove button
+
+**i18n:**
+- 3 new keys in menus namespace across all 5 locales (en/fr/es/it/de)
+- editMenu, notes, notesPlaceholder
+
+**Files modified:**
+- `apps/mobile/components/UIKit.tsx` (RecipeCard select mode)
+- `apps/mobile/app/(tabs)/index.tsx` (multi-select UI + AddToMenuSheet)
+- `apps/mobile/app/(tabs)/menus.tsx` (edit modal + image picker)
+- `apps/mobile/lib/zustand/menuStore.ts` (cover_image_url support)
+- `apps/mobile/locales/*.json` (5 files, 3 keys each)
+
+**Verification:**
+- TypeScript: 0 errors in modified files
+- Committed and pushed
+
+---
+
 ## 2026-05-01 (session MENU-06) TYPE: CODE (feature implementation)
 
 ### Menu Enhancements — Cover Images, Add to Menu, Multi-Select

@@ -314,7 +314,8 @@
 | Menu Mode Step by Step (web) | DEFERRED | - | - | Web step-by-step view deferred; see AGENDA.md |
 | Menu card images | LIVE | migration 075, apps/web/app/dashboard/menus/, apps/mobile/app/(tabs)/menus.tsx | MENU-06 | cover_image_url column; menu-covers storage bucket; image picker (choose from recipe photos or upload) |
 | Add to Menu (recipe detail) | LIVE | apps/web/components/AddToMenuModal.tsx, apps/mobile/components/AddToMenuSheet.tsx, recipe/[id] pages | MENU-06 | Two-step flow (pick menu → pick course); inline new menu creation; default course 'other' |
-| Multi-select batch Add to Menu | LIVE | apps/web/app/dashboard/page.tsx | MENU-06 | Select mode on recipe list; batch add to single course; web only |
+| Multi-select batch Add to Menu | LIVE | apps/web/app/dashboard/page.tsx, apps/mobile/app/(tabs)/index.tsx | MENU-06, MENU-07 | Select mode on recipe list; batch add to single course; web + mobile |
+| Mobile edit menu modal | LIVE | apps/mobile/app/(tabs)/menus.tsx | MENU-07 | Edit button on cards; full modal (title, occasion, description, notes, cover image); image picker (recipes or upload) |
 
 ---
 
