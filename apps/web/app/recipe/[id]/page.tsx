@@ -11,15 +11,17 @@ import VerifiedChefBadge from '@/components/VerifiedChefBadge';
 import RecipeComments from '@/components/RecipeComments';
 import MealPlanPicker from '@/components/MealPlanPicker';
 import AddToMenuModal from '@/components/AddToMenuModal';
+import { VersionTabSwitcher } from '@/components/VersionTabSwitcher';
+import { AskSousChefModal } from '@/components/AskSousChefModal';
 import StorePickerDialog from '@/components/StorePickerDialog';
 import { RecipeStatusBanner } from '@/components/RecipeStatusBanner';
 import { useConfirmDialog, useAlertDialog } from '@/components/useConfirmDialog';
 import { RecipeLightbox } from '@/components/RecipeLightbox';
 import NutritionCard from '@/components/NutritionCard';
 import { proxyIfNeeded, CHEFS_HAT_URL } from '@/lib/recipeImage';
-import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, isTagBlocked, logTagRemoval } from '@chefsbook/db';
+import { supabase, getRecipe, deleteRecipe, updateRecipe, replaceIngredients, replaceSteps, toggleFavourite, listCookingNotes, addCookingNote, deleteCookingNote, listShoppingLists, createShoppingList, listRecipePhotos, addRecipePhoto, deleteRecipePhoto, setPhotoPrimary, isPro, getCookbook, getRecipeTranslation, saveRecipeTranslation, saveRecipe, isTagBlocked, logTagRemoval, getPersonalVersions, getRecipeModifiers, upsertRecipeModifier, removeRecipeModifier, getPersonalVersionCount } from '@chefsbook/db';
 import type { Cookbook, RecipeTranslation } from '@chefsbook/db';
-import type { TranslatedRecipe } from '@chefsbook/ai';
+import type { TranslatedRecipe, SousChefFeedbackResult } from '@chefsbook/ai';
 import { REGEN_PILLS, moderateTag, moderateRecipe } from '@chefsbook/ai';
 import { logAiCallFromClient } from '@chefsbook/db';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
@@ -135,6 +137,13 @@ export default function RecipePage() {
   const reimportMenuRef = useRef<HTMLDivElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Personal versions state
+  const [personalVersions, setPersonalVersions] = useState<RecipeWithDetails[]>([]);
+  const [currentVersionId, setCurrentVersionId] = useState<string | null>(null);
+  const [recipeModifiers, setRecipeModifiers] = useState<{ modifier_user_id: string; modifier_username: string }[]>([]);
+  const [showAskSousChef, setShowAskSousChef] = useState(false);
+  const [canCreateMoreVersions, setCanCreateMoreVersions] = useState(true);
+
   const seekYouTube = useCallback((seconds: number) => {
     ytIframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func: 'seekTo', args: [seconds, true] }),
@@ -231,6 +240,38 @@ export default function RecipePage() {
       setLoading(false);
     })();
   }, [id]);
+
+  // Fetch personal versions and modifiers
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !recipe) return;
+
+      // Only fetch if user has saved this recipe (non-owners only)
+      if (recipe.user_id !== user.id) {
+        const { data: saveRow } = await supabase
+          .from('recipe_saves')
+          .select('id')
+          .eq('recipe_id', recipe.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (saveRow) {
+          // Fetch personal versions
+          const versions = await getPersonalVersions(recipe.id, user.id);
+          setPersonalVersions(versions);
+
+          // Check if user can create more versions
+          const count = await getPersonalVersionCount(recipe.id, user.id);
+          setCanCreateMoreVersions(count < 2);
+        }
+      }
+
+      // Fetch modifiers (visible to everyone)
+      const modifiers = await getRecipeModifiers(recipe.id);
+      setRecipeModifiers(modifiers);
+    })();
+  }, [recipe]);
 
   // Translation: check cache or translate via server-side API route (CORS blocks direct Claude calls from browser)
   useEffect(() => {
@@ -497,6 +538,115 @@ export default function RecipePage() {
   }, [showReimportMenu]);
 
   const COURSES = ['breakfast', 'brunch', 'lunch', 'dinner', 'starter', 'main', 'side', 'dessert', 'snack', 'drink', 'bread', 'other'] as const;
+
+  // Personal version handlers
+  const handleVersionChange = async (versionId: string | null) => {
+    setCurrentVersionId(versionId);
+    if (versionId === null) {
+      // Switch to original
+      const data = await getRecipe(id);
+      setRecipe(data);
+      if (data) setServings(data.servings);
+    } else {
+      // Switch to version
+      const version = personalVersions.find(v => v.id === versionId);
+      if (version) {
+        setRecipe(version);
+        setServings(version.servings);
+      }
+    }
+  };
+
+  const handleSaveVersion = async (regenerated: SousChefFeedbackResult, baseVersionId: string | null) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (baseVersionId === null) {
+      // Create new version
+      const res = await fetch(`/api/recipes/${id}/personal-versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(regenerated),
+      });
+      if (!res.ok) throw new Error('Failed to create version');
+      const { version } = await res.json();
+      setPersonalVersions(prev => [...prev, version]);
+      setCurrentVersionId(version.id);
+      setRecipe(version);
+      setServings(version.servings);
+    } else {
+      // Update existing version
+      const res = await fetch(`/api/personal-versions/${baseVersionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(regenerated),
+      });
+      if (!res.ok) throw new Error('Failed to update version');
+      const { version } = await res.json();
+      setPersonalVersions(prev => prev.map(v => v.id === baseVersionId ? version : v));
+      if (currentVersionId === baseVersionId) {
+        setRecipe(version);
+        setServings(version.servings);
+      }
+    }
+  };
+
+  const handleRenameVersion = async (versionId: string, newTitle: string) => {
+    const res = await fetch(`/api/personal-versions/${versionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: newTitle }),
+    });
+    if (!res.ok) throw new Error('Failed to rename');
+    const { version } = await res.json();
+    setPersonalVersions(prev => prev.map(v => v.id === versionId ? { ...v, title: newTitle } : v));
+    if (currentVersionId === versionId) {
+      setRecipe(prev => prev ? { ...prev, title: newTitle } : null);
+    }
+  };
+
+  const handleDeleteVersion = async (versionId: string) => {
+    if (!confirm('Delete this version? This can\'t be undone.')) return;
+
+    const res = await fetch(`/api/personal-versions/${versionId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete');
+
+    setPersonalVersions(prev => prev.filter(v => v.id !== versionId));
+    if (currentVersionId === versionId) {
+      // Switch back to original
+      setCurrentVersionId(null);
+      const data = await getRecipe(id);
+      setRecipe(data);
+      if (data) setServings(data.servings);
+    }
+
+    // Refresh modifiers
+    const modifiers = await getRecipeModifiers(id);
+    setRecipeModifiers(modifiers);
+  };
+
+  const handlePromoteVersion = async (versionId: string) => {
+    if (!confirm('This will create a standalone recipe in your collection. The version slot will be freed.')) return;
+
+    const res = await fetch(`/api/personal-versions/${versionId}/promote`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to promote');
+
+    const { promotedRecipe } = await res.json();
+    setPersonalVersions(prev => prev.filter(v => v.id !== versionId));
+    if (currentVersionId === versionId) {
+      setCurrentVersionId(null);
+      const data = await getRecipe(id);
+      setRecipe(data);
+      if (data) setServings(data.servings);
+    }
+
+    // Refresh modifiers
+    const modifiers = await getRecipeModifiers(id);
+    setRecipeModifiers(modifiers);
+
+    alert('Recipe added to your collection');
+    router.push(`/recipe/${promotedRecipe.id}`);
+  };
 
   // Helper: Re-moderate public recipe after text edit (non-blocking)
   const reModerateIfPublic = (updatedRecipe: RecipeWithDetails) => {
@@ -2108,6 +2258,17 @@ export default function RecipePage() {
               </Link>
             </span>
           )}
+
+          {/* Modifier pills - show last 3 users who created personal versions */}
+          {recipeModifiers.slice(-3).map((modifier) => (
+            <Link
+              key={modifier.modifier_user_id}
+              href={`/dashboard/chef/${modifier.modifier_username}`}
+              className="bg-purple-100 text-purple-800 border border-purple-300 text-sm px-3 py-1 rounded-input font-medium hover:ring-2 hover:ring-purple-400/30"
+            >
+              @{modifier.modifier_username}
+            </Link>
+          ))}
         </div>
 
         {/* Channel name only (YouTube recipes) */}
@@ -2290,6 +2451,32 @@ export default function RecipePage() {
         </div>}
 
         {!recipe.video_only && <>
+        {/* Version tab switcher - only for users who have saved this recipe */}
+        {personalVersions.length > 0 && recipe && (
+          <VersionTabSwitcher
+            original={recipe}
+            versions={personalVersions}
+            currentVersionId={currentVersionId}
+            onVersionChange={handleVersionChange}
+            onRename={handleRenameVersion}
+            onDelete={handleDeleteVersion}
+            onPromote={handlePromoteVersion}
+            canCreateMore={canCreateMoreVersions}
+          />
+        )}
+
+        {/* Ask Sous Chef button */}
+        {userHasSaved && !isOwner && (
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setShowAskSousChef(true)}
+              className="bg-cb-primary text-white px-4 py-2 rounded-lg hover:bg-red-700 font-medium text-sm"
+            >
+              + Ask Sous Chef
+            </button>
+          </div>
+        )}
+
         {/* Ingredients */}
         <section className="mb-10">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-cb-border">
@@ -2993,6 +3180,17 @@ export default function RecipePage() {
         isOpen={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
       />
+
+      {/* Ask Sous Chef Modal */}
+      {recipe && (
+        <AskSousChefModal
+          isOpen={showAskSousChef}
+          onClose={() => setShowAskSousChef(false)}
+          original={recipe}
+          versions={personalVersions}
+          onSave={handleSaveVersion}
+        />
+      )}
     </main>
   );
 }

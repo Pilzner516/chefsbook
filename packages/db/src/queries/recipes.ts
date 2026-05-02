@@ -374,6 +374,59 @@ export async function replaceSteps(
 }
 
 export async function deleteRecipe(id: string): Promise<void> {
+  // Handle orphaned personal versions before deletion
+  const { data: orphanedVersions } = await supabaseAdmin
+    .from('recipes')
+    .select('id, user_id, personal_version_slot, description')
+    .eq('personal_version_of', id)
+    .eq('is_personal_version', true)
+    .order('personal_version_slot', { ascending: true });
+
+  if (orphanedVersions && orphanedVersions.length > 0) {
+    // Group by user
+    const byUser: Record<string, typeof orphanedVersions> = {};
+    for (const v of orphanedVersions) {
+      if (!byUser[v.user_id]) byUser[v.user_id] = [];
+      byUser[v.user_id].push(v);
+    }
+
+    // Get original recipe details for attribution
+    const { data: originalRecipe } = await supabaseAdmin
+      .from('recipes')
+      .select('title, original_submitter_username')
+      .eq('id', id)
+      .single();
+
+    for (const userId in byUser) {
+      const userVersions = byUser[userId].sort((a, b) => a.personal_version_slot - b.personal_version_slot);
+      const v1 = userVersions[0];
+      const v2 = userVersions[1] ?? null;
+
+      // Promote V1 to standalone
+      const attribution = originalRecipe
+        ? `\n\nOriginally a version of "${originalRecipe.title}" by @${originalRecipe.original_submitter_username}.`
+        : '';
+
+      await supabaseAdmin.from('recipes').update({
+        is_personal_version: false,
+        personal_version_of: null,
+        personal_version_slot: null,
+        description: (v1.description || '') + attribution,
+      }).eq('id', v1.id);
+
+      // If V2 exists: promote it to standalone as well
+      if (v2) {
+        await supabaseAdmin.from('recipes').update({
+          is_personal_version: false,
+          personal_version_of: null,
+          personal_version_slot: null,
+          description: (v2.description || '') + attribution,
+        }).eq('id', v2.id);
+      }
+    }
+  }
+
+  // Delete the original recipe (cascade will handle child rows)
   const { error } = await supabase.from('recipes').delete().eq('id', id);
   if (error) throw error;
 }

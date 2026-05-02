@@ -1130,54 +1130,6 @@ function PrintCookbookCanvasPageInner({
                 </div>
               </div>
 
-              {/* Organisation Mode Selector */}
-              <div className="border-t border-cb-border pt-4">
-                <label className="text-sm font-medium text-cb-text mb-2 block">
-                  {t('menuBooks.organiseBy', 'Organise By')}
-                </label>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      dispatch({ type: 'UPDATE_ORGANISATION', organisation: 'manual' });
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-input border transition-colors ${
-                      (layout.organisation || 'manual') === 'manual'
-                        ? 'border-cb-primary bg-cb-primary/5'
-                        : 'border-cb-border hover:border-cb-primary/50'
-                    }`}
-                  >
-                    <span className="font-medium text-sm">{t('menuBooks.manualOrder', 'Manual Order')}</span>
-                    <span className="text-xs text-cb-muted ml-2">{t('menuBooks.manualOrderDesc', 'Drag and drop to arrange')}</span>
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (userMenus.length === 0) {
-                        await fetchUserMenus();
-                      }
-                      dispatch({
-                        type: 'UPDATE_ORGANISATION',
-                        organisation: 'by_menu',
-                        menuData: userMenus,
-                      });
-                    }}
-                    disabled={menusLoading}
-                    className={`w-full text-left px-3 py-2 rounded-input border transition-colors ${
-                      layout.organisation === 'by_menu'
-                        ? 'border-cb-primary bg-cb-primary/5'
-                        : 'border-cb-border hover:border-cb-primary/50'
-                    } ${menusLoading ? 'opacity-50' : ''}`}
-                  >
-                    <span className="font-medium text-sm">{t('menuBooks.byMenu', 'By Menu')}</span>
-                    <span className="text-xs text-cb-muted ml-2">{t('menuBooks.byMenuDesc', 'Chapter per menu')}</span>
-                  </button>
-                </div>
-                {layout.organisation === 'by_menu' && userMenus.length === 0 && !menusLoading && (
-                  <p className="text-xs text-cb-muted mt-2">
-                    {t('menuBooks.noMenusForOrg', 'Create menus with recipes to use this mode.')}
-                  </p>
-                )}
-              </div>
-
               <div className="border-t border-cb-border pt-4">
                 <CoverSettingsPanel layout={layout} dispatch={dispatch} />
               </div>

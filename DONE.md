@@ -1,6 +1,69 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-02 (session PERSONAL-VERSIONS-UI) TYPE: CODE (feature implementation)
+
+### Personal Versions UI — Web + Orphan Cascade
+
+**Purpose:** Complete the personal versions feature by implementing the web UI components and orphan cascade logic.
+
+**Web UI Implemented:**
+- VersionTabSwitcher component (apps/web/components/VersionTabSwitcher.tsx)
+  - Tabs for Original + My Version 1 + My Version 2
+  - Inline rename on tab click
+  - Dropdown menu (···) with Rename / Save as My Recipe / Delete Version options
+  - Auto-hides Original pill when both slots are full
+- AskSousChefModal component (apps/web/components/AskSousChefModal.tsx)
+  - Base version selector (Original / V1 / V2 pills)
+  - Feedback textarea
+  - Two-step flow: Generate → Review → Save
+  - Plan gate (Chef+ required)
+  - Error handling for PLAN_REQUIRED response
+- Recipe detail page integration (apps/web/app/recipe/[id]/page.tsx)
+  - Added imports: getPersonalVersions, getRecipeModifiers, upsertRecipeModifier, removeRecipeModifier, getPersonalVersionCount
+  - State variables for personalVersions, currentVersionId, recipeModifiers, showAskSousChef, canCreateMoreVersions
+  - useEffect to fetch personal versions and modifiers when recipe loads
+  - Handler functions: handleVersionChange, handleSaveVersion, handleRenameVersion, handleDeleteVersion, handlePromoteVersion
+  - Version tab switcher rendered before ingredients section (visible only to users who have saved the recipe)
+  - Ask Sous Chef button (visible only to non-owners who have saved the recipe)
+  - AskSousChefModal rendered at end of component
+  - Modifier pills added to attribution row (purple background, last 3 modifiers shown)
+
+**Orphan Cascade:**
+- Added to deleteRecipe() function in packages/db/src/queries/recipes.ts
+- Before deleting original recipe: fetches all orphaned personal versions
+- Groups versions by user
+- Promotes each user's V1 to standalone recipe with attribution note
+- Promotes V2 to standalone as well (simplified vs prompt spec which suggested parent_recipe_id wiring)
+- Attribution appended to description: "Originally a version of \"{title}\" by @{username}."
+
+**Files Created:**
+- apps/web/components/VersionTabSwitcher.tsx
+- apps/web/components/AskSousChefModal.tsx
+
+**Files Modified:**
+- apps/web/app/recipe/[id]/page.tsx — integrated version switcher, Ask Sous Chef modal, modifier pills
+- packages/db/src/queries/recipes.ts — added orphan cascade to deleteRecipe()
+
+**Pending (deferred to next session):**
+- Mobile UI: version tab switcher on apps/mobile/app/recipe/[id].tsx
+- Mobile UI: Ask Sous Chef modal/sheet
+- Mobile UI: modifier pills on attribution row
+- Feature registry update
+- AI cost entry (already exists from session PERSONAL-VERSIONS)
+
+**Deployment:**
+- Web deployed to RPi5
+- Build: NODE_OPTIONS=--max-old-space-size=2048 npx next build --no-lint
+- PM2 restarted successfully
+- Smoke tests: / and /dashboard both return HTTP 200
+
+**Testing:**
+- TypeScript: 0 errors (web)
+- Manual verification pending (requires user login + saved recipes)
+
+---
+
 ## 2026-05-02 (session SPEAK-FLOATINGBAR-FIX) TYPE: CODE FIX
 
 ### Hide FloatingTabBar on Wizard Screens
