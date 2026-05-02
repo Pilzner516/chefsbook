@@ -17,7 +17,7 @@ import { parseTimers, ParsedTimer } from '../../lib/timers';
 import { formatDuration, formatServings, scaleQuantity, formatQuantity, DIETARY_FLAGS, CUISINE_LIST, COURSE_LIST, convertIngredient, convertTemperatureInText } from '@chefsbook/ui';
 import { usePreferencesStore } from '../../lib/zustand/preferencesStore';
 import { suggestPurchaseUnits, callClaude, extractJSON } from '@chefsbook/ai';
-import { supabase, updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe, getVerifiedUserIds } from '@chefsbook/db';
+import { supabase, updateRecipe, updateRecipeMetadata, replaceIngredients, replaceSteps, getRecipeVersions, getRecipeTranslation, saveRecipeTranslation, removeSharedBy, cloneRecipe, getVerifiedUserIds, getPersonalVersions, getRecipeModifiers } from '@chefsbook/db';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RecipeTranslation } from '@chefsbook/db';
 import { translateRecipe } from '@chefsbook/ai';
@@ -41,6 +41,10 @@ import { StorePicker } from '../../components/StorePicker';
 import VerifiedBadge from '../../components/VerifiedBadge';
 import { NutritionCard } from '../../components/NutritionCard';
 import type { NutritionEstimate } from '@chefsbook/ai';
+import { VersionTabStrip } from '../../components/VersionTabStrip';
+import { AskSousChefSheet } from '../../components/AskSousChefSheet';
+import type { SousChefFeedbackResult } from '@chefsbook/ai';
+import type { RecipeWithDetails } from '@chefsbook/db';
 
 // --- Error boundary to catch render crashes ---
 class RecipeErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -714,6 +718,12 @@ function RecipeDetailInner() {
   const addToListRef = React.useRef<(listId: string, listName: string) => void>(() => {});
   // Verified user IDs for attribution badges
   const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
+  // Personal versions state
+  const [personalVersions, setPersonalVersions] = useState<RecipeWithDetails[]>([]);
+  const [activeVersionId, setActiveVersionId] = useState<string | null>(null);
+  const [modifiers, setModifiers] = useState<{ modifier_user_id: string; modifier_username: string }[]>([]);
+  const [showAskSousChef, setShowAskSousChef] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
     if (id) fetchRecipe(id);
@@ -734,6 +744,38 @@ function RecipeDetailInner() {
       getVerifiedUserIds(userIds).then(setVerifiedUserIds);
     }
   }, [currentRecipe?.id, currentRecipe?.user_id, currentRecipe?.original_submitter_id, currentRecipe?.shared_by_id]);
+
+  // Check if user has saved this recipe
+  useEffect(() => {
+    if (!currentRecipe || !session?.user?.id) {
+      setHasSaved(false);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from('recipe_saves')
+        .select('id')
+        .eq('recipe_id', currentRecipe.id)
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      setHasSaved(!!data);
+    })();
+  }, [currentRecipe?.id, session?.user?.id]);
+
+  // Fetch personal versions and modifiers when user has saved the recipe
+  useEffect(() => {
+    if (!currentRecipe || !session?.user?.id || !hasSaved) {
+      setPersonalVersions([]);
+      setModifiers([]);
+      return;
+    }
+    (async () => {
+      const versions = await getPersonalVersions(currentRecipe.id, session.user.id);
+      setPersonalVersions(versions);
+      const mods = await getRecipeModifiers(currentRecipe.id);
+      setModifiers(mods);
+    })();
+  }, [currentRecipe?.id, session?.user?.id, hasSaved]);
 
   // Translation: check cache or translate in background
   useEffect(() => {
@@ -785,6 +827,192 @@ function RecipeDetailInner() {
     })();
     return () => { cancelled = true; };
   }, [currentRecipe?.id, language]);
+
+  // Personal version handlers
+  const handleRenameVersion = async (versionId: string) => {
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        t('personalVersions.rename'),
+        'Enter a new name for this version',
+        async (newTitle) => {
+          if (!newTitle?.trim()) return;
+          try {
+            const { data: { session: sess } } = await supabase.auth.getSession();
+            if (!sess?.access_token) return;
+            await fetch(`https://chefsbk.app/api/personal-versions/${versionId}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sess.access_token}`,
+              },
+              body: JSON.stringify({ title: newTitle.trim() }),
+            });
+            const versions = await getPersonalVersions(currentRecipe!.id, session!.user.id);
+            setPersonalVersions(versions);
+          } catch (err: any) {
+            Alert.alert(t('common.errorTitle'), err.message);
+          }
+        },
+        'plain-text',
+        personalVersions.find((v) => v.id === versionId)?.title ?? ''
+      );
+    } else {
+      // Android doesn't have Alert.prompt, use a simple input dialog
+      const currentTitle = personalVersions.find((v) => v.id === versionId)?.title ?? '';
+      const ok = await confirmAction({
+        title: t('personalVersions.rename'),
+        body: `Current: ${currentTitle}\n\nEnter new name:`,
+        confirmLabel: t('common.save'),
+      });
+      if (ok) {
+        // For Android, we'd need a custom modal with TextInput
+        // For now, just show a message
+        Alert.alert(t('common.errorTitle'), 'Rename on Android requires a custom modal (not implemented yet)');
+      }
+    }
+  };
+
+  const handleDeleteVersion = async (versionId: string) => {
+    const ok = await confirmAction({
+      title: t('personalVersions.deleteTitle'),
+      body: t('personalVersions.deleteMessage'),
+      confirmLabel: t('personalVersions.delete'),
+    });
+    if (!ok) return;
+
+    try {
+      const { data: { session: sess } } = await supabase.auth.getSession();
+      if (!sess?.access_token) return;
+      await fetch(`https://chefsbk.app/api/personal-versions/${versionId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${sess.access_token}` },
+      });
+      if (activeVersionId === versionId) setActiveVersionId(null);
+      const versions = await getPersonalVersions(currentRecipe!.id, session!.user.id);
+      setPersonalVersions(versions);
+      const mods = await getRecipeModifiers(currentRecipe!.id);
+      setModifiers(mods);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    }
+  };
+
+  const handlePromoteVersion = async (versionId: string) => {
+    const ok = await confirmAction({
+      title: t('personalVersions.promoteTitle'),
+      body: t('personalVersions.promoteMessage'),
+      confirmLabel: t('personalVersions.promote'),
+    });
+    if (!ok) return;
+
+    try {
+      const { data: { session: sess } } = await supabase.auth.getSession();
+      if (!sess?.access_token) return;
+      const res = await fetch(`https://chefsbk.app/api/personal-versions/${versionId}/promote`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${sess.access_token}` },
+      });
+      const { promotedRecipe } = await res.json();
+      setActiveVersionId(null);
+      const versions = await getPersonalVersions(currentRecipe!.id, session!.user.id);
+      setPersonalVersions(versions);
+      const mods = await getRecipeModifiers(currentRecipe!.id);
+      setModifiers(mods);
+      Alert.alert(t('personalVersions.promoted'), '', [
+        { text: t('common.ok'), onPress: () => router.push(`/recipe/${promotedRecipe.id}`) },
+      ]);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message);
+    }
+  };
+
+  const handleVersionAction = (versionId: string, action: 'rename' | 'promote' | 'delete') => {
+    if (action === 'rename') handleRenameVersion(versionId);
+    else if (action === 'promote') handlePromoteVersion(versionId);
+    else if (action === 'delete') handleDeleteVersion(versionId);
+  };
+
+  const handleSavePersonalVersion = async (regenerated: SousChefFeedbackResult, baseVersionId: string | null) => {
+    if (!session?.user?.id || !currentRecipe) return;
+
+    // Check if both slots are full
+    const v1 = personalVersions.find((v) => v.personal_version_slot === 1);
+    const v2 = personalVersions.find((v) => v.personal_version_slot === 2);
+
+    if (v1 && v2 && !baseVersionId) {
+      Alert.alert(t('personalVersions.slotsFull'), t('personalVersions.slotsFull'));
+      return;
+    }
+
+    // Determine which slot to use
+    let slot: 1 | 2;
+    if (baseVersionId) {
+      const existingVersion = personalVersions.find((v) => v.id === baseVersionId);
+      slot = (existingVersion?.personal_version_slot ?? 1) as 1 | 2;
+    } else {
+      slot = v1 ? 2 : 1;
+    }
+
+    // Insert the version directly with all required fields
+    const { data: versionRecipe, error: insertError } = await supabase
+      .from('recipes')
+      .insert({
+        user_id: session.user.id,
+        title: regenerated.title,
+        description: regenerated.description || null,
+        servings: currentRecipe.servings || 4,
+        prep_minutes: currentRecipe.prep_minutes || null,
+        cook_minutes: currentRecipe.cook_minutes || null,
+        cuisine: currentRecipe.cuisine || null,
+        course: currentRecipe.course || null,
+        notes: regenerated.notes || null,
+        visibility: 'private',
+        source_type: 'ai',
+        is_personal_version: true,
+        personal_version_of: currentRecipe.id,
+        personal_version_slot: slot,
+        tags: currentRecipe.tags || [],
+      })
+      .select()
+      .single();
+
+    if (insertError || !versionRecipe) throw insertError || new Error('Failed to create version');
+
+    // Save ingredients and steps
+    await replaceIngredients(
+      versionRecipe.id,
+      session.user.id,
+      regenerated.ingredients.map((ing) => ({
+        quantity: ing.quantity ? parseFloat(String(ing.quantity)) : null,
+        unit: ing.unit || null,
+        ingredient: ing.name,
+        preparation: null,
+        optional: false,
+        group_label: ing.group || null,
+      }))
+    );
+
+    await replaceSteps(
+      versionRecipe.id,
+      session.user.id,
+      regenerated.steps.map((step, i) => ({
+        step_number: i + 1,
+        instruction: step.instruction,
+        timer_minutes: step.duration_minutes || null,
+        group_label: null,
+      }))
+    );
+
+    // Refresh versions and modifiers
+    const versions = await getPersonalVersions(currentRecipe.id, session.user.id);
+    setPersonalVersions(versions);
+    const mods = await getRecipeModifiers(currentRecipe.id);
+    setModifiers(mods);
+
+    // Switch to the new version
+    setActiveVersionId(versionRecipe.id);
+    await fetchRecipe(currentRecipe.id); // Refresh main recipe
+  };
 
   const handleAddToShoppingList = async () => {
     const userId = session?.user?.id;
@@ -1112,12 +1340,17 @@ function RecipeDetailInner() {
 
   if (loading || !currentRecipe) return <Loading message="Loading recipe..." />;
 
-  const recipe = currentRecipe;
+  // Determine which recipe to display (original or personal version)
+  const displayedRecipe = activeVersionId
+    ? personalVersions.find((v) => v.id === activeVersionId) ?? currentRecipe
+    : currentRecipe;
+
+  const recipe = displayedRecipe;
   const ingredients = recipe.ingredients ?? [];
   const steps = recipe.steps ?? [];
   const tags = recipe.tags ?? [];
   const originalServings = recipe.servings || 4;
-  const pinned = pinnedList.some((r) => r.id === recipe.id);
+  const pinned = pinnedList.some((r) => r.id === currentRecipe.id);
 
   const displayTitle = translation?.translated_title ?? recipe.title;
   const displayDescription = translation?.translated_description ?? recipe.description;
@@ -1490,10 +1723,51 @@ function RecipeDetailInner() {
         )}
       </View>
 
+      {/* Version tab strip — only show when there are personal versions */}
+      {hasSaved && personalVersions.length > 0 && (
+        <VersionTabStrip
+          versions={personalVersions}
+          activeVersionId={activeVersionId}
+          onSelectOriginal={() => setActiveVersionId(null)}
+          onSelectVersion={(versionId) => setActiveVersionId(versionId)}
+          onVersionAction={handleVersionAction}
+        />
+      )}
+
       <View style={{ padding: 16 }}>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <Text style={{ color: colors.textPrimary, fontSize: 26, fontWeight: '700', flex: 1 }}>{displayTitle}</Text>
+          {/* Ask Sous Chef button */}
+          {hasSaved && (
+            <TouchableOpacity
+              onPress={() => {
+                if (planTier === 'free') {
+                  Alert.alert(t('personalVersions.planRequired'), t('share.planRequiredMessage'));
+                  return;
+                }
+                setShowAskSousChef(true);
+              }}
+              style={{
+                backgroundColor: planTier === 'free' ? colors.borderDefault : colors.accentSoft,
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>✦</Text>
+              <Text style={{
+                fontSize: 12,
+                fontWeight: '600',
+                color: planTier === 'free' ? colors.textMuted : colors.accent,
+              }}>
+                Sous Chef
+              </Text>
+            </TouchableOpacity>
+          )}
           {translating && (
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accentSoft, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, gap: 6 }}>
               <ActivityIndicator size="small" color={colors.accent} />
@@ -1554,6 +1828,24 @@ function RecipeDetailInner() {
               <Text style={{ color: colors.textMuted, fontSize: 11 }}>↗</Text>
             </TouchableOpacity>
           ) : null}
+          {/* Modifier pills — last 3 shown, oldest-to-newest left-to-right */}
+          {modifiers.slice(-3).map((mod) => (
+            <View
+              key={mod.modifier_user_id}
+              style={{
+                backgroundColor: '#EDE9FE',
+                borderWidth: 1,
+                borderColor: '#C4B5FD',
+                borderRadius: 24,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+              }}
+            >
+              <Text style={{ color: '#5B21B6', fontSize: 13, fontWeight: '500' }}>
+                @{mod.modifier_username}
+              </Text>
+            </View>
+          ))}
         </View>
 
         {displayDescription && (
@@ -2132,6 +2424,15 @@ function RecipeDetailInner() {
         recipeId={currentRecipe.id}
         onClose={() => setShowAiGenerationModal(false)}
         onImageGenerated={handleImageGenerated}
+      />
+    )}
+    {currentRecipe && (
+      <AskSousChefSheet
+        isOpen={showAskSousChef}
+        onClose={() => setShowAskSousChef(false)}
+        original={currentRecipe}
+        versions={personalVersions}
+        onSave={handleSavePersonalVersion}
       />
     )}
     </KeyboardAvoidingView>

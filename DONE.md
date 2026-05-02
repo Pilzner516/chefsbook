@@ -1,6 +1,42 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-02 (session PERSONAL-VERSIONS-MOBILE) TYPE: CODE (feature implementation)
+
+### Personal Versions + Ask Sous Chef (Mobile)
+
+**Purpose:** Implement mobile UI for personal versions feature (backend and web already complete).
+
+**Components Created:**
+- `apps/mobile/components/VersionTabStrip.tsx` - Horizontal scroll tab strip with Original + V1/V2 versions, action menu per version tab
+- `apps/mobile/components/AskSousChefSheet.tsx` - Bottom sheet modal with base version selector, feedback input, generate/review flow
+
+**Integration** (`apps/mobile/app/recipe/[id].tsx`):
+- State: `personalVersions`, `activeVersionId`, `modifiers`, `showAskSousChef`, `hasSaved`
+- Fetches personal versions and modifiers when `hasSaved` (checks `recipe_saves` table)
+- Version switcher: `displayedRecipe` switches content between original and active version
+- VersionTabStrip shown below hero when `hasSaved && personalVersions.length > 0`
+- Ask Sous Chef button in title row (Chef+ plan gated)
+- Purple modifier pills in attribution row (last 3 users, oldest-to-newest)
+- Handlers: rename (iOS Alert.prompt / Android dialog), delete (ChefsDialog), promote (navigate to standalone), save version (direct Supabase insert + replaceIngredients/Steps)
+
+**i18n:**
+- Added `personalVersions` namespace to all 5 locale files (en/fr/es/it/de)
+- Keys: askSousChef, askSousChefPlaceholder, generating, saveVersion, myVersion, original, rename, promote, delete, deleteTitle, deleteMessage, promoteTitle, promoteMessage, slotsFull, promoted, planRequired
+
+**Feature Registry:**
+- Updated `.claude/agents/feature-registry.md` PERSONAL VERSIONS section
+- All features marked LIVE on Web + Mobile (Platform column added)
+
+**TypeScript:**
+- All personal versions code passes `tsc --noEmit` (only pre-existing UIKit.tsx error)
+
+**Notes:**
+- Rename on Android needs custom modal (Alert.prompt is iOS only)
+- Modifier pills: #EDE9FE bg, #C4B5FD border, #5B21B6 text
+- 2 version slots max per saved recipe (V1/V2)
+- Original pill hidden in Ask Sous Chef when both slots full
+
 ## 2026-05-02 (session PERSONAL-VERSIONS-UI) TYPE: CODE (feature implementation)
 
 ### Personal Versions UI — Web + Orphan Cascade
