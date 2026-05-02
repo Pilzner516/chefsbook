@@ -1,6 +1,39 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-02 (session SPEAK-FLOATINGBAR-FIX) TYPE: CODE FIX
+
+### Hide FloatingTabBar on Wizard Screens
+
+**Root cause:** FloatingTabBar was rendering on wizard/flow screens that have their own bottom-pinned navigation controls (Continue buttons, step navigation). On `/speak`, the tab bar visually overlapped the "Extract Recipe" button, making it difficult to advance through the flow.
+
+**Fix:**
+- Added `/speak` and `/cook-menu` to the FloatingTabBar exclusion list in `apps/mobile/app/_layout.tsx`
+- Wizard screens with their own back + Continue navigation do not need the tab bar and should hide it entirely (not use paddingBottom workarounds)
+
+**Audit of all root Stack screens:**
+| Screen | Has bottom elements | Current handling | Action |
+|--------|---------------------|------------------|--------|
+| `/speak` | Yes - Continue button pinned | Had `insets.bottom` padding | **Added to exclusion list** |
+| `/cook-menu/[id]` | Yes - Prev/Next/Done buttons | Had `insets.bottom` padding | **Added to exclusion list** |
+| `/recipe/[id]` | Yes - Cook mode footer, edit save bar | Proper `insets.bottom + 80/100` | No change needed |
+| `/recipe/new` | No - Save inside scroll | Static spacer | No change needed |
+| `/plans` | No - Buttons inside tier cards | Proper `insets.bottom + 24` | No change needed |
+| `/chef/[id]` | No - Follow/Message inside scroll | Proper `insets.bottom + 16` | No change needed |
+| `/cookbook/[id]` | No | No bottom elements | No change needed |
+| `/share/[token]` | No - Save button inside scroll | Static spacer | No change needed |
+
+**Files modified:**
+- `apps/mobile/app/_layout.tsx` — Added `isWizard` check to FloatingTabBar conditional
+- `.claude/agents/navigator.md` — Added changelog entry
+- `.claude/agents/feature-registry.md` — Updated FloatingTabBar entry with exclusion list details
+
+**Testing:**
+- TypeScript passes (only pre-existing UIKit.tsx:142 error)
+- No emulator connected — ADB screenshots not captured
+
+---
+
 ## 2026-05-02 (session GOTRUE-FIX) TYPE: BUG FIX (code fix)
 
 ### Fix Admin Account Creation + Welcome Email

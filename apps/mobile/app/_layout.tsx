@@ -261,14 +261,16 @@ function RootNav() {
         <Stack.Screen name="messages" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Settings' }} />
       </Stack>
-      {/* FloatingTabBar: show when authenticated and not on landing/auth/modal screens */}
+      {/* FloatingTabBar: show when authenticated and not on landing/auth/modal/wizard screens */}
       {(() => {
         const isAuthenticated = session && session.user?.is_anonymous !== true;
         const firstSegment = segments[0] as string | undefined;
         const isLanding = !firstSegment || firstSegment === 'index';
         const isAuth = firstSegment === 'auth';
         const isModal = firstSegment === 'modal' || firstSegment === 'messages';
-        const showTabBar = isAuthenticated && !isLanding && !isAuth && !isModal;
+        // Wizard/flow screens with their own bottom navigation — hide tab bar
+        const isWizard = firstSegment === 'speak' || firstSegment === 'cook-menu';
+        const showTabBar = isAuthenticated && !isLanding && !isAuth && !isModal && !isWizard;
         return showTabBar ? <FloatingTabBar /> : null;
       })()}
       <PinnedBar />
