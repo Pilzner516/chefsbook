@@ -312,6 +312,9 @@
 | Menu Mode (mobile) | LIVE | apps/mobile/app/cook-menu/[id].tsx | MENU-04 | Timeline + Step by Step views; expo-keep-awake; swipe navigation; serve time picker; all-prepped checklist; 23 i18n keys in 5 locales |
 | Menu Mode Timeline (web) | LIVE | apps/web/app/dashboard/menus/[id]/page.tsx (CookModeTimeline component) | MENU-04 | Slide-in panel; time bars; expandable recipes; serve time; all-prepped checklist |
 | Menu Mode Step by Step (web) | DEFERRED | - | - | Web step-by-step view deferred; see AGENDA.md |
+| Menu card images | LIVE | migration 075, apps/web/app/dashboard/menus/, apps/mobile/app/(tabs)/menus.tsx | MENU-06 | cover_image_url column; menu-covers storage bucket; image picker (choose from recipe photos or upload) |
+| Add to Menu (recipe detail) | LIVE | apps/web/components/AddToMenuModal.tsx, apps/mobile/components/AddToMenuSheet.tsx, recipe/[id] pages | MENU-06 | Two-step flow (pick menu → pick course); inline new menu creation; default course 'other' |
+| Multi-select batch Add to Menu | LIVE | apps/web/app/dashboard/page.tsx | MENU-06 | Select mode on recipe list; batch add to single course; web only |
 
 ---
 

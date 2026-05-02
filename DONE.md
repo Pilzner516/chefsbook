@@ -1,6 +1,68 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session MENU-06) TYPE: CODE (feature implementation)
+
+### Menu Enhancements — Cover Images, Add to Menu, Multi-Select
+
+**Purpose:** Three enhancements to the My Menus feature.
+
+**PART 1: Menu card cover images**
+- Migration 075: `cover_image_url` column on menus table
+- `menu-covers` storage bucket created with public read access
+- Menu cards display cover image or placeholder
+- Image picker in edit modal: "Choose from recipes" or "Upload image"
+- `getMenuRecipeImages()` query for fetching recipe photos in a menu
+- Mobile apikey headers for Supabase storage image display
+
+**PART 2: Add to Menu on recipe detail**
+- `AddToMenuModal.tsx` (web) with ChefsDialog two-step flow
+- `AddToMenuSheet.tsx` (mobile) with bottom sheet two-step flow
+- Step 1: Pick existing menu or create new (inline form)
+- Step 2: Pick course from 9 options (pills grid)
+- Default course: 'other' (allows easier repositioning in menu detail)
+- Duplicate guard: skips if recipe already in same menu+course
+- Success toast with menu title and course name
+
+**PART 3: Multi-select batch Add to Menu (web)**
+- "Select" button in recipe list header (secondary pill)
+- Checkbox overlays on recipe cards when in select mode
+- Header shows "[N] selected" + "Add to Menu" + "Cancel"
+- Same two-step dialog flow as Part 2
+- Note: "All N recipes will be added to this course"
+- Skip duplicates, report added/skipped counts in toast
+
+**i18n:**
+- 18 new keys in menus namespace across all 5 locales (en/fr/es/it/de)
+- common.creating and common.adding keys for mobile
+
+**Bug fix:**
+- Metro blockList removed — npm workspaces hoists react/react-native to root only, blocking root was breaking resolution
+
+**Files created:**
+- `apps/web/components/AddToMenuModal.tsx`
+- `apps/mobile/components/AddToMenuSheet.tsx`
+- `supabase/migrations/20260501_075_menu_cover_images.sql`
+
+**Files changed:**
+- `apps/web/app/dashboard/menus/page.tsx` (cover image display + picker)
+- `apps/web/app/dashboard/page.tsx` (select mode + batch add)
+- `apps/web/app/recipe/[id]/page.tsx` (Add to Menu button)
+- `apps/mobile/app/(tabs)/menus.tsx` (cover image display)
+- `apps/mobile/app/recipe/[id].tsx` (Add to Menu button)
+- `apps/mobile/metro.config.js` (remove blockList)
+- `apps/mobile/locales/*.json` (5 files)
+- `packages/db/src/queries/menus.ts` (getMenuRecipeImages, updateMenu)
+- `packages/db/src/types/menus.ts` (cover_image_url field)
+
+**Verification:**
+- TypeScript: 0 errors (mobile + web)
+- Migration 075: cover_image_url column + menu-covers bucket verified on RPi5
+- Web deployed: PM2 restarted, HTTP 200
+- Mobile APK: built and installed on device
+
+---
+
 ## 2026-05-01 (session MENU-05) TYPE: CODE (feature implementation)
 
 ### Menus to Books — Batch Add + Menu Chapter Organisation
