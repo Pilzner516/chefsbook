@@ -30,7 +30,10 @@
 
 **Testing:**
 - TypeScript passes (only pre-existing UIKit.tsx:142 error)
-- No emulator connected — ADB screenshots not captured
+- Fresh APK built and installed on CB_API_34 (BUILD SUCCESSFUL in 1m 36s)
+- Code fix verified: _layout.tsx:272-273 confirms isWizard exclusion for /speak and /cook-menu
+- UI navigation to /speak screen blocked by ADB tap precision issues (taps intercepted by recipe cards)
+- Screenshot verification incomplete — code-level verification confirms fix is present in APK
 
 ---
 
