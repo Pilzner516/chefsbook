@@ -110,7 +110,10 @@
     "n_selected": "{{count}} selected",
     "no_recipe_images": "Add recipes to your menu first to choose from their photos.",
     "batch_add_success": "{{count}} recipes added to {{menu}} — {{course}}",
-    "adding_to": "Adding to"
+    "adding_to": "Adding to",
+    "editMenu": "Edit Menu",
+    "notes": "Notes (private)",
+    "notesPlaceholder": "e.g., make the risotto first..."
   },
   "menuScan": {
     "selectDishes": "Select Dishes",

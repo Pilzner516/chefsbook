@@ -295,14 +295,21 @@ interface RecipeCardProps {
   attributedTo?: string | null;
   isAttributedVerified?: boolean;
   onPress: () => void;
+  selectMode?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
 }
 
-export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, likeCount, saveCount, sourceUrl, sourceType, versionCount, attributedTo, isAttributedVerified, onPress }: RecipeCardProps) {
+export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite, likeCount, saveCount, sourceUrl, sourceType, versionCount, attributedTo, isAttributedVerified, onPress, selectMode, selected, onSelect }: RecipeCardProps) {
   const { colors } = useTheme();
   const hasLikes = (likeCount ?? 0) > 0;
   const hasSaves = (saveCount ?? 0) > 0;
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ marginBottom: 12 }}>
+    <TouchableOpacity
+      onPress={selectMode ? onSelect : onPress}
+      activeOpacity={0.7}
+      style={{ marginBottom: 12 }}
+    >
       <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, borderWidth: 1, borderColor: colors.borderDefault, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
         <View>
           <RecipeImage uri={imageUrl} style={{ width: '100%', height: 160 }} />
@@ -325,6 +332,18 @@ export function RecipeCard({ title, imageUrl, cuisine, totalMinutes, isFavourite
                   <Text style={{ color: imageUrl ? '#ffffff' : colors.textSecondary, fontSize: 11, fontWeight: '600' }}>{saveCount}</Text>
                 </View>
               )}
+            </View>
+          )}
+          {selectMode && (
+            <View style={{
+              position: 'absolute', top: 8, left: 8,
+              width: 26, height: 26, borderRadius: 13,
+              backgroundColor: selected ? colors.accent : 'rgba(255,255,255,0.9)',
+              borderWidth: 2,
+              borderColor: selected ? colors.accent : colors.borderDefault,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              {selected && <Ionicons name="checkmark" size={16} color="#fff" />}
             </View>
           )}
         </View>

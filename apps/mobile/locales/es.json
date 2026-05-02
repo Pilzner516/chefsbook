@@ -112,7 +112,10 @@
     "n_selected_plural": "{{count}} seleccionadas",
     "no_recipe_images": "Ninguna receta en este menú tiene fotos aún",
     "batch_add_success": "{{added}} recetas añadidas a {{menu}}",
-    "adding_to": "Añadiendo a"
+    "adding_to": "Añadiendo a",
+    "editMenu": "Editar menú",
+    "notes": "Notas (privadas)",
+    "notesPlaceholder": "ej.: preparar el risotto primero..."
   },
   "menuScan": {
     "selectDishes": "Seleccionar Platos",

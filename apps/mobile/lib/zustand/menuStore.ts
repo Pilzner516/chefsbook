@@ -9,7 +9,7 @@ interface MenuState {
   fetchMenus: (userId: string) => Promise<void>;
   fetchMenu: (menuId: string) => Promise<void>;
   addMenu: (userId: string, data: { title: string; description?: string | null; occasion?: string | null; notes?: string | null }) => Promise<Menu>;
-  editMenu: (menuId: string, data: { title?: string; description?: string | null; occasion?: string | null; notes?: string | null; is_public?: boolean }) => Promise<void>;
+  editMenu: (menuId: string, data: { title?: string; description?: string | null; occasion?: string | null; notes?: string | null; is_public?: boolean; cover_image_url?: string | null }) => Promise<void>;
   removeMenu: (menuId: string) => Promise<void>;
   addRecipeToMenu: (menuId: string, recipeId: string, course: MenuCourse, sortOrder: number) => Promise<void>;
   removeRecipeFromMenu: (itemId: string) => Promise<void>;

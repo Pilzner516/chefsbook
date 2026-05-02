@@ -109,7 +109,10 @@
     "n_selected": "{{count}} sélectionné(s)",
     "no_recipe_images": "Ajoutez des recettes à votre menu pour choisir parmi leurs photos.",
     "batch_add_success": "{{count}} recettes ajoutées à {{menu}} — {{course}}",
-    "adding_to": "Ajout à"
+    "adding_to": "Ajout à",
+    "editMenu": "Modifier le menu",
+    "notes": "Notes (privées)",
+    "notesPlaceholder": "ex. : préparer le risotto en premier..."
   },
   "menuScan": {
     "selectDishes": "Sélectionner les Plats",

@@ -12,6 +12,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, EmptyState, Loading, Card } from '../../components/UIKit';
 import { FeedbackCard } from '../../components/FeedbackCard';
+import { AddToMenuSheet } from '../../components/AddToMenuSheet';
 import { getRecipeVersions, getPrimaryPhotos, getBatchTranslatedTitles, getVerifiedUserIds } from '@chefsbook/db';
 
 type SortMode = 'recent' | 'alpha' | 'cuisine' | 'course';
@@ -33,6 +34,10 @@ export default function RecipesTab() {
   const [primaryPhotos, setPrimaryPhotos] = useState<Record<string, string>>({});
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showAddToMenu, setShowAddToMenu] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const i18n = useTranslation().i18n;
 
   // Refresh recipes + primary photos every time the tab gains focus
@@ -101,32 +106,104 @@ export default function RecipesTab() {
     }
   };
 
+  const toggleSelection = (recipeId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(recipeId)) {
+        next.delete(recipeId);
+      } else {
+        next.add(recipeId);
+      }
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelected(new Set());
+  };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleMenuAddSuccess = (menu: string, course: string, added: number, skipped: number) => {
+    if (added > 0) {
+      showToast(t('menus.batch_add_success', { count: added, menu, course }));
+    } else if (skipped > 0) {
+      showToast(t('menus.already_in_menu', { menu, course }));
+    }
+    exitSelectMode();
+  };
+
   if (loading && recipes.length === 0) return <Loading message={t('common.loading')} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
       <ChefsBookHeader />
 
-      {/* Subheader: count + search link + sort */}
+      {/* Toast */}
+      {toastMessage && (
+        <View style={{
+          position: 'absolute', top: insets.top + 60, left: 40, right: 40, zIndex: 100,
+          backgroundColor: colors.accentGreen, borderRadius: 10, padding: 12, alignItems: 'center',
+        }}>
+          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{toastMessage}</Text>
+        </View>
+      )}
+
+      {/* Subheader: count + search link + sort + select */}
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-        {/* Tappable search bar (navigates to Search tab) */}
-        <TouchableOpacity
-          onPress={() => router.push('/(tabs)/search')}
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: colors.bgBase,
-            borderWidth: 1,
-            borderColor: colors.borderDefault,
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-          }}
-        >
-          <Ionicons name="search" size={18} color={colors.textMuted} />
-          <Text style={{ color: colors.textMuted, fontSize: 15, marginLeft: 8 }}>{t('recipes.searchPlaceholder')}</Text>
-        </TouchableOpacity>
+        {selectMode ? (
+          <>
+            <TouchableOpacity onPress={exitSelectMode} style={{ marginRight: 12 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 15 }}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.textPrimary }}>
+              {t('menus.n_selected', { count: selected.size })}
+            </Text>
+          </>
+        ) : (
+          <>
+            {/* Tappable search bar (navigates to Search tab) */}
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/search')}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.bgBase,
+                borderWidth: 1,
+                borderColor: colors.borderDefault,
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+              }}
+            >
+              <Ionicons name="search" size={18} color={colors.textMuted} />
+              <Text style={{ color: colors.textMuted, fontSize: 15, marginLeft: 8 }}>{t('recipes.searchPlaceholder')}</Text>
+            </TouchableOpacity>
+
+            {/* Select button */}
+            {topLevelRecipes.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setSelectMode(true)}
+                style={{
+                  marginLeft: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  backgroundColor: colors.bgBase,
+                  borderWidth: 1,
+                  borderColor: colors.borderDefault,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500' }}>{t('menus.select')}</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
 
         {/* Sort button */}
         <View style={{ position: 'relative' }}>
@@ -195,7 +272,8 @@ export default function RecipesTab() {
 
       <FlashList
         data={sorted}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBarHeight }}
+        extraData={{ selectMode, selected }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: selectMode ? tabBarHeight + 70 : tabBarHeight }}
         ListHeaderComponent={<FeedbackCard />}
         renderItem={({ item }) => {
           const vc = item.is_parent ? (versionCounts[item.id] ?? 1) : undefined;
@@ -211,6 +289,9 @@ export default function RecipesTab() {
               versionCount={vc}
               attributedTo={item.original_submitter_username && item.original_submitter_id !== item.user_id ? item.original_submitter_username : undefined}
               isAttributedVerified={item.original_submitter_id ? verifiedUserIds.has(item.original_submitter_id) : false}
+              selectMode={selectMode}
+              selected={selected.has(item.id)}
+              onSelect={() => toggleSelection(item.id)}
               onPress={() => {
                 if (item.is_parent) {
                   openVersionPicker(item.id);
@@ -229,6 +310,44 @@ export default function RecipesTab() {
             action={{ label: t('recipes.importRecipe'), onPress: () => router.push('/(tabs)/scan') }}
           />
         }
+      />
+
+      {/* Select mode bottom bar */}
+      {selectMode && (
+        <View style={{
+          position: 'absolute',
+          bottom: tabBarHeight,
+          left: 0,
+          right: 0,
+          backgroundColor: colors.bgCard,
+          borderTopWidth: 1,
+          borderTopColor: colors.borderDefault,
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: insets.bottom + 12,
+        }}>
+          <TouchableOpacity
+            onPress={() => setShowAddToMenu(true)}
+            disabled={selected.size === 0}
+            style={{
+              backgroundColor: colors.accent,
+              borderRadius: 12,
+              paddingVertical: 14,
+              alignItems: 'center',
+              opacity: selected.size === 0 ? 0.5 : 1,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>{t('menus.add_to_menu')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Add to Menu Sheet */}
+      <AddToMenuSheet
+        recipeIds={[...selected]}
+        visible={showAddToMenu}
+        onClose={() => setShowAddToMenu(false)}
+        onSuccess={handleMenuAddSuccess}
       />
 
       {/* Version picker bottom sheet */}
