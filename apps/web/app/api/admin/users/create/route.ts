@@ -90,6 +90,16 @@ export async function POST(req: NextRequest) {
 
     console.log('[admin/users/create] Auth user created:', authData.user.id);
 
+    // Fix GoTrue NULL token crash (GOTRUE_MAILER_AUTOCONFIRM=true leaves NULL token columns)
+    // This prevents "Database error querying schema" on user sign-in
+    try {
+      await supabaseAdmin.rpc('fix_gotrue_null_tokens', { target_user_id: authData.user.id });
+      console.log('[admin/users/create] GoTrue NULL tokens patched');
+    } catch (tokenErr) {
+      // Log but don't abort — account was created successfully
+      console.error('[admin/users/create] Failed to patch NULL tokens (non-fatal):', tokenErr);
+    }
+
     // Update user_profiles row (auto-created by trigger on auth.users insert)
     // The trigger creates a basic profile, we update it with admin-specified values
     const { error: profileError } = await supabaseAdmin
