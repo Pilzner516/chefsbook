@@ -1,6 +1,57 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-01 (session PERSONAL-VERSIONS) TYPE: CODE (feature implementation)
+
+### Personal Recipe Versions + Ask Sous Chef API
+
+**Purpose:** Users who have saved a public recipe can ask Sous Chef for improvements and save up to 2 personal versions that are private to them.
+
+**Database:**
+- Migration 077: Personal version columns on recipes (is_personal_version, personal_version_of, personal_version_slot)
+- Migration 077: recipe_modifiers table for tracking who has created versions
+- Migration 078: Updated search_recipes and get_public_feed RPCs to exclude personal versions
+- PostgREST cache restarted
+
+**AI Function:**
+- New askSousChef() in @chefsbook/ai
+- Takes recipe + user feedback, returns corrected version
+- Uses Sonnet (~$0.003-0.008/call)
+
+**API Routes:**
+- POST /api/recipes/[id]/ask-sous-chef - Generate corrected recipe
+- GET /api/recipes/[id]/personal-versions - Fetch user's versions
+- POST /api/recipes/[id]/personal-versions - Create new version
+- PUT /api/personal-versions/[versionId] - Update version
+- DELETE /api/personal-versions/[versionId] - Delete version
+- POST /api/personal-versions/[versionId]?action=promote - Promote to standalone
+
+**Plan Gating:**
+- personalVersionsPerRecipe added to PLAN_LIMITS (0 free, 2 chef+)
+- Chef+ required for Ask Sous Chef
+
+**Public Query Guards:**
+- listPublicRecipes excludes is_personal_version=true
+- getPublicProfile excludes is_personal_version=true
+- search_recipes RPC excludes personal versions
+- get_public_feed RPC excludes personal versions
+
+**i18n:**
+- personalVersions namespace added to all 10 locale files (5 web + 5 mobile)
+- 16 keys: askSousChef, generating, saveVersion, myVersion, original, rename, promote, delete, etc.
+
+**Documentation:**
+- feature-registry.md updated with PERSONAL VERSIONS section
+- ai-cost.md updated with Ask Sous Chef entry
+
+**Pending (deferred to next session):**
+- Web UI: version tab switcher on recipe detail
+- Web UI: modifier pills on attribution row
+- Mobile UI: version switcher and modifier pills
+- Orphan cascade on original recipe deletion
+
+---
+
 ## 2026-05-01 (session MENU-07b) TYPE: CODE (feature implementation)
 
 ### Menu Notes Split, Share Transfer, Delete Safeguard, Add to Cookbook

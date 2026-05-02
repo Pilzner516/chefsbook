@@ -395,6 +395,7 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - **Supabase storage image display requires `apikey` header** — Self-hosted Kong gateway returns 401 on public bucket URLs without the `apikey` header. All `<Image>` sources loading from Supabase storage must include `headers: { apikey: SUPABASE_ANON_KEY }`. Applied in EditImageGallery and RecipeImage components.
 - APK rebuild note: always delete cached JS bundle before rebuilding (`rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`) or Gradle uses stale code
 - Jetifier: `android.enableJetifier=true` must be added to `android/gradle.properties` after every `expo prebuild --clean` (it gets wiped)
+- **Personal versions UI pending** — Backend complete (migrations 077-078, API routes, AI function). UI components pending: web version tab switcher on recipe detail, web modifier pills on attribution row, mobile version switcher + modifier pills, orphan cascade on original deletion.
 
 See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 
