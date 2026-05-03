@@ -1,6 +1,180 @@
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 
+## 2026-05-03 (session STORAGE-MIGRATION-FIX) TYPE: INFRA (storage repair)
+
+### Fixed Missing Recipe Images After Pi to slux Migration
+
+**Purpose:** Diagnose and repair broken recipe images following production server migration from rpi5-eth to slux.
+
+**Root Causes Identified:**
+1. Storage files migrated without extended attributes (xattr metadata)
+2. Kong routing incorrectly stripping storage API paths
+3. storage.objects metadata table not initially migrated
+
+**Fixes Applied:**
+1. **Storage file migration:** Re-synced 324MB storage files from Pi to slux with `rsync -aXv` (xattr preservation)
+2. **Metadata migration:** Dumped and imported storage.objects table (562 records) from Pi PostgreSQL to slux
+3. **Extended attributes:** Ran `fix-storage-xattr.js` inside supabase-storage container to rebuild xattrs from database metadata (505 objects processed, 0 errors)
+4. **Kong routing fix:** Updated `/opt/luxlabs/chefsbook/supabase/volumes/api/kong.yml`:
+   - Service URL: `http://storage:5000/` → `http://storage:5000/object/public`
+   - Path match: `/storage/v1/object/public/` with `strip_path: true`
+   - Correct forwarding: `/storage/v1/object/public/bucket/file.jpg` → `http://storage:5000/object/public/bucket/file.jpg`
+5. **Verification:** Images now load correctly via `https://api.chefsbk.app/storage/v1/object/public/...` (200 OK responses, JPEG files downloading)
+
+**Technical Details:**
+- **xattr error:** Supabase storage requires extended attributes on files; missing xattrs caused `ENODATA errno 61` errors
+- **UUID storage structure:** Files stored as `/var/lib/storage/stub/stub/bucket/path/file.jpg/{UUID}` where UUID is actual file
+- **Kong path rewriting:** Original config stripped entire `/storage/v1/object/public/` prefix, leaving only `bucket/file.jpg`; storage API expects `/object/public/bucket/file.jpg`
+
+**Scripts Used:**
+- `scripts/fix-storage-xattr.js` - Node.js script to set xattrs from DB metadata (run inside storage container)
+- `scripts/sync-storage-metadata.sh` - Bash script (requires setfattr, not used)
+
+**Status:** ✅ Storage system fully functional, recipe images displaying correctly
+
+---
+
+## 2026-05-02 (session INFRA-PC-CUTOVER) TYPE: INFRA (production cutover)
+
+### Production Cutover: Raspberry Pi 5 → slux PC Server
+
+**Purpose:** Execute production cutover from rpi5-eth (100.110.47.62) to slux (AMD Ryzen 5 3600, 32GB RAM, Ubuntu Server 24.04 LTS, Tailscale IP 100.83.66.51).
+
+**Cutover Sequence (11 minutes total, ~3 min outage window):**
+1. Maintenance mode: Skipped (no Cloudflare API credentials available)
+2. Stopped PM2 on Pi: `pm2 stop chefsbook-web` (chefsbook-staging did not exist)
+3. Stopped tunnel on Pi: `sudo systemctl stop cloudflared` (inactive/dead confirmed)
+4. Final database migration: pg_dump on Pi → scp to slux → docker exec restore (132 recipes verified on both servers)
+5. Final storage sync: rsync `/mnt/chefsbook/supabase/volumes/storage/` → `/opt/luxlabs/chefsbook/supabase/volumes/storage/` (1,325 files, 324MB)
+6. Started tunnel on slux: cloudflared running via PM2 (PID 400180), 4 registered connections to Cloudflare edge (QUIC protocol)
+7. PM2 autostart: `pm2 save` completed (managing chefsbook-web + cloudflared-tunnel)
+8. cloudflared autostart: Configured via PM2 (systemd install requires sudo, deferred)
+9. Maintenance mode lift: N/A (never enabled)
+10. Smoke tests: All passed (homepage 200, dashboard 200, API responding, 11 Supabase containers healthy)
+
+**Infrastructure Changes:**
+- Production server: rpi5-eth (100.110.47.62) → slux (100.83.66.51)
+- Working directory: `/mnt/chefsbook/` → `/opt/luxlabs/chefsbook/`
+- SSH user: `rasp@rpi5-eth` → `pilzner@slux`
+- Docker: v1 (`docker-compose`) → v2 (`docker compose`)
+- Build memory: 1GB limit → 4GB available
+
+**Final Status:**
+- Site live at https://chefsbk.app serving from slux
+- All 11 Supabase containers healthy
+- PM2 managing chefsbook-web (PID 102255) + cloudflared-tunnel (PID 414689)
+- Cloudflare tunnel: 4 connections registered (ewr05, ewr11, ewr15, ewr16)
+- Database: 132 recipes migrated successfully
+- Storage: 324MB synced (recipe images, cookbook files)
+
+**Rollback Plan:** Stop slux tunnel → restart Pi tunnel + PM2 (estimated <2 min)
+
+---
+
+## 2026-05-02 (session INFRA-PC-FIXUP) TYPE: INFRA (container configuration)
+
+### slux Container Fixes: Auth, REST, Pooler
+
+**Purpose:** Fix container startup issues discovered during initial slux Supabase deployment.
+
+**Issues Resolved:**
+1. **Auth container crash:** GoTrue NULL token columns caused Go scanner panic
+   - Root cause: Users created with GOTRUE_MAILER_AUTOCONFIRM=true get NULL confirmation_token/recovery_token
+   - Fix: Created `fix_gotrue_null_tokens()` RPC function to coalesce NULL → empty string
+   - Migration: `supabase/migrations/080_fix_gotrue_null_tokens.sql`
+   - Applied via: `docker exec supabase-db psql -U postgres -c "SELECT fix_gotrue_null_tokens();"`
+   - Result: Auth container stable, no crashes
+
+2. **REST container schema cache:** PostgREST not finding tables after migrations
+   - Fix: `docker restart supabase-rest` after any new table migration
+   - Documented in CLAUDE.md as mandatory step
+
+3. **Pooler connection errors:** "Tenant or user not found" on direct psql connections
+   - Root cause: Connection string going through Supavisor pooler incorrectly
+   - Fix: Use `docker exec supabase-db psql -U postgres` instead of connection strings
+   - Updated all DB migration commands in CLAUDE.md
+
+**Final Container Status:**
+- All 11 Supabase containers healthy on slux
+- Auth: stable, no NULL token crashes
+- REST: schema cache warm, all tables accessible
+- Pooler: bypassed for admin operations via docker exec
+
+---
+
+## 2026-05-02 (session INFRA-PC-MIGRATION) TYPE: INFRA (data migration)
+
+### Data Migration: Pi → slux
+
+**Purpose:** Migrate all ChefsBook data (PostgreSQL + storage) from rpi5-eth to slux while Pi remains live.
+
+**Database Migration:**
+- Exported from Pi: `pg_dump` with `--no-owner --no-acl` flags
+- Dump size: 2.7MB (132 recipes, ~30 tables)
+- Transferred via scp to slux `/tmp/`
+- Restored via `docker exec supabase-db psql -U postgres`
+- Verification: Recipe count matched (132 on both servers)
+
+**Storage Migration:**
+- Source: `/mnt/chefsbook/supabase/volumes/storage/` on Pi
+- Destination: `/opt/luxlabs/chefsbook/supabase/volumes/storage/` on slux
+- Transfer method: rsync over SSH
+- Size: 324MB (1,325 files - recipe images, cookbook files)
+- SSH key setup: Generated on Pi, added to slux `~/.ssh/authorized_keys`
+- Verification: du -sh matched on both servers
+
+**Infrastructure Setup:**
+- Supabase: 11 containers running on slux (Kong, Auth, REST, Realtime, Storage, DB, Vector, Analytics, Pooler, Meta, Studio)
+- PostgreSQL: Port 5432 (internal only)
+- Kong gateway: Port 8000 (Tailscale accessible)
+- Studio: http://100.83.66.51:8000
+
+**Pi Status:** Remained live and serving production throughout migration
+
+---
+
+## 2026-05-02 (session INFRA-PC-SETUP) TYPE: INFRA (server provisioning)
+
+### slux PC Server Initial Setup
+
+**Purpose:** Provision slux (AMD Ryzen 5 3600, 32GB RAM, Ubuntu Server 24.04 LTS) as ChefsBook production server.
+
+**System Configuration:**
+- Hostname: slux
+- User: pilzner
+- Working directory: `/opt/luxlabs/chefsbook/`
+- Tailscale IP: 100.83.66.51
+- SSH access: `pilzner@slux`
+
+**Software Installed:**
+- Node.js 22.x
+- Docker v2 (docker compose, no hyphen)
+- PM2 (global)
+- Turbo (global)
+- Git
+- postgresql-client (pg_dump/restore)
+- Tailscale
+- cloudflared (Cloudflare Tunnel)
+
+**Directory Structure Created:**
+```
+/opt/luxlabs/chefsbook/
+├── repo/              ← ChefsBook monorepo
+├── supabase/          ← Supabase docker-compose + config
+├── data/              ← Storage (pending migration)
+└── backups/           ← Automated backups (pending setup)
+```
+
+**Services Configured:**
+- Supabase: Copied config from Pi, started with `docker compose up -d`
+- Cloudflare Tunnel: Credentials copied from Pi, config verified
+- PM2: Ready for chefsbook-web + cloudflared-tunnel processes
+
+**Status:** Server provisioned and ready for data migration
+
+---
+
 ## 2026-05-02 (session PERSONAL-VERSIONS-MOBILE) TYPE: CODE (feature implementation)
 
 ### Personal Versions + Ask Sous Chef (Mobile)

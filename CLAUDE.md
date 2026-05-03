@@ -64,7 +64,7 @@ Every Claude Code session MUST begin with these steps in order:
 8. If session touches Lulu orders, cookbook PDF generation, cover builds, canvas editor, or image upscaling: read .claude/agents/publishing.md (MANDATORY)
 9. Read all other applicable agents based on the lookup table above
 10. Run ALL pre-flight checklists from every agent loaded
-11. For any table you will query: run `\d tablename` on RPi5 to verify columns
+11. For any table you will query: run `\d tablename` on slux to verify columns
 12. Only then begin writing code
 
 Do not skip any step. Agents exist because the same bugs have been introduced
@@ -95,59 +95,61 @@ cd apps/mobile && eas build --platform android --profile development --local
 cd apps/mobile && eas build --platform ios --profile development --local
 ```
 
-### DB migrations (apply on RPi5)
+### DB migrations (apply on slux)
 
 ```bash
 # Apply a migration file
-ssh rasp@rpi5-eth "psql postgresql://supabase_admin:<pw>@localhost:5432/postgres -f /mnt/chefsbook/repo/supabase/migrations/<file>.sql"
+ssh pilzner@slux "docker exec supabase-db psql -U postgres -f /opt/luxlabs/chefsbook/repo/supabase/migrations/<file>.sql"
 
 # After any new table: restart PostgREST schema cache (or queries return "not found in schema cache")
-ssh rasp@rpi5-eth "docker restart supabase-rest"
+ssh pilzner@slux "docker restart supabase-rest"
 
 # Inspect a table schema before writing queries
-ssh rasp@rpi5-eth "psql postgresql://supabase_admin:<pw>@localhost:5432/postgres -c '\d tablename'"
+ssh pilzner@slux "docker exec supabase-db psql -U postgres -c '\d tablename'"
 ```
 
 ## Infrastructure
 
-- **Supabase**: Self-hosted on rpi5-eth (Raspberry Pi 5) at http://100.110.47.62:8000
-- **Supabase Studio**: http://100.110.47.62:8000 (login: supabase)
-- **Postgres**: port 5432 on 100.110.47.62 (internal only)
+- **Production server**: slux (AMD Ryzen 5 3600, 32GB RAM, Ubuntu Server 24.04 LTS)
+- **Supabase**: Self-hosted on slux at http://100.83.66.51:8000 (Tailscale)
+- **Supabase Studio**: http://100.83.66.51:8000 (login: supabase)
+- **Postgres**: port 5432 on 100.83.66.51 (internal only)
 - **Network**: Tailscale mesh — accessible from any device on the tailnet
-- **Storage**: 54GB USB drive mounted at /mnt/chefsbook on rpi5-eth
+- **Storage**: /opt/luxlabs/chefsbook/supabase/volumes/storage/ on slux
+- **Docker**: v2 CLI (`docker compose` not `docker-compose`)
 - **Email**: SMTP via Resend (smtp.resend.com, noreply@chefsbk.app). GOTRUE_MAILER_AUTOCONFIRM=true (signup auto-confirm stays on). Password recovery emails working. Welcome emails sent via Resend API on admin account creation (requires RESEND_API_KEY).
 - **Admin accounts**: pilzner (a@aol.com) + seblux (seblux100@gmail.com) — both super_admin in admin_users table
 - **NOT using**: supabase.com cloud — everything is self-hosted
-- **Migrations**: SQL files in `supabase/migrations/` — apply manually via `psql` on rpi5-eth (no Supabase CLI migration runner; self-hosted)
+- **Migrations**: SQL files in `supabase/migrations/` — apply manually via docker exec on slux (no Supabase CLI migration runner; self-hosted)
 
 ## Public URLs
 
-- Web app: https://chefsbk.app (Cloudflare Tunnel → RPi5 port 3000)
-- API: https://api.chefsbk.app (Cloudflare Tunnel → RPi5 port 8000)
+- Web app: https://chefsbk.app (Cloudflare Tunnel → slux port 3000)
+- API: https://api.chefsbk.app (Cloudflare Tunnel → slux port 8000)
 - Tunnel name: chefsbook (ID: 45f6f96f-6507-488a-80fa-e552ab0ce085)
-- PM2 process: chefsbook-web
-- Web repo on Pi: /mnt/chefsbook/repo
-- Restart web: `pm2 restart chefsbook-web`
-- Restart tunnel: `sudo systemctl restart cloudflared`
-- Tunnel logs: `journalctl -u cloudflared -n 50`
-- Web logs: `pm2 logs chefsbook-web`
+- PM2 processes: chefsbook-web, cloudflared-tunnel
+- Web repo on slux: /opt/luxlabs/chefsbook/repo
+- Restart web: `ssh pilzner@slux "pm2 restart chefsbook-web"`
+- Restart tunnel: `ssh pilzner@slux "pm2 restart cloudflared-tunnel"`
+- Tunnel logs: `ssh pilzner@slux "pm2 logs cloudflared-tunnel"`
+- Web logs: `ssh pilzner@slux "pm2 logs chefsbook-web"`
 
 ## Quick Reference: Top Gotchas
 
 These mistakes recur across sessions — check before writing any code:
 
-1. **Web Supabase URL = `https://api.chefsbk.app`** (NOT `http://100.110.47.62:8000`) — mixed content blocks WebSocket on HTTPS pages. Mobile still uses the direct IP.
+1. **Web Supabase URL = `https://api.chefsbk.app`** (NOT `http://100.83.66.51:8000`) — mixed content blocks WebSocket on HTTPS pages. Mobile still uses the direct IP.
 2. **Server-to-server fetches = `http://localhost:3000`** (NOT the `req.url` origin) — tunnel URL returns HTML error pages instead of JSON on timeout.
 3. **Delete stale APK JS bundle before rebuilding**: `rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`
 4. **After `expo prebuild --clean`**: re-add `android.enableJetifier=true` to `gradle.properties` + re-apply signing config to `build.gradle` (both get wiped).
-5. **New table migration**: always `docker restart supabase-rest` on RPi5 after applying, or PostgREST returns "table not found in schema cache".
+5. **New table migration**: always `docker restart supabase-rest` on slux after applying, or PostgREST returns "table not found in schema cache".
 6. **Recipe images**: primary images live in `recipe_user_photos` table, NOT `recipes.image_url`. Any component rendering recipe cards MUST use `getPrimaryPhotos()` + `getRecipeImageUrl(primaryPhoto, fallbackUrl)`. Never render `recipe.image_url` directly — most recipes will show placeholder. This applies to every new page, component, or search result that displays recipe cards.
 
 ## Environment variables (in .env.local at monorepo root)
 
 ```
-EXPO_PUBLIC_SUPABASE_URL=http://100.110.47.62:8000
-NEXT_PUBLIC_SUPABASE_URL=http://100.110.47.62:8000
+EXPO_PUBLIC_SUPABASE_URL=http://100.83.66.51:8000
+NEXT_PUBLIC_SUPABASE_URL=http://100.83.66.51:8000
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=<service role key>    # server-side only
@@ -351,13 +353,13 @@ stores:
   logo_url TEXT
   initials TEXT
 
-Always run `\d [tablename]` on RPi5 before writing any new query.
+Always run `\d [tablename]` on slux before writing any new query.
 
 Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not duplicate here.
 
 ## Known issues
 
-- **GitHub push protection blocking commits** — 5 local commits (437e439, 828257a, 08f12a1, 186cd5c, 2eecfee) cannot be pushed due to API keys in historical commit a3b6835. GitHub provides bypass URLs valid for limited time: visit security/secret-scanning/unblock-secret links, allow secrets, then retry push. After successful push: pull to RPi5, rebuild web, deploy YouTube dialog + extension v1.1.1.
+- **GitHub push protection blocking commits** — 5 local commits (437e439, 828257a, 08f12a1, 186cd5c, 2eecfee) cannot be pushed due to API keys in historical commit a3b6835. GitHub provides bypass URLs valid for limited time: visit security/secret-scanning/unblock-secret links, allow secrets, then retry push. After successful push: pull to slux, rebuild web, deploy YouTube dialog + extension v1.1.1.
 - **callClaude maxTokens follow-up:** other callers (cookbookTOC, scanRecipeMultiPage, generateMealPlan, etc.) may need maxTokens raises beyond their defaults — see AGENDA.md "AI ROBUSTNESS FOLLOW-UPS".
 - **Import completeness gate not wired on 2 paths (session 141):** web bookmark batch loop at apps/web/app/dashboard/scan/page.tsx:444 uses createRecipe() directly; cookbook recipe import at apps/web/app/dashboard/cookbooks/[id]/page.tsx:79 uses createRecipe() directly. Both should route through createRecipeWithModeration (web) or call /api/recipes/finalize to get the gate.
 - **Import visibility lock is backend-only (session 141):** applyCompletenessGate sets visibility=private for incomplete recipes, but the UI visibility toggle on recipe detail can still be flipped to public. A UI-side check against is_complete + ai_recipe_verdict='approved' is not yet implemented; the next save/finalize call would re-flag it private on the backend though.
@@ -375,10 +377,10 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - Stripe env vars not yet configured (subscriptions non-functional, 14-day trial blocked)
 - Follow system built (session 31): `user_follows` table replaces old `follows` table; old table still exists in DB but unused by code
 - Family tier features not built (shared lists, shared plans, family cookbook, member invite)
-- Extension hardcoded to localhost:3000 + Tailscale IP (not production-ready)
+- Extension: production URLs (chefsbk.app); zip at `apps/extension/dist/`; must copy to slux after packaging
 - Multilingual support: fully implemented with react-i18next; 5 locales (en/fr/es/it/de); all UI strings use t() calls; language change triggers immediate UI translation via activateLanguage()
 - Shared with Me system not started (recipe_shares table, accept/decline, notifications)
-- **AI image generation working** — REPLICATE_API_TOKEN set on RPi5. 75 recipes have AI images (0 without). Replicate rate limit: 6 req/min on <$5 accounts, script uses 12s delay. CRITICAL: stored image URLs must use Tailscale IP (100.110.47.62:8000), NOT localhost:8000 — session 157 fixed 75 broken URLs caused by this.
+- **AI image generation working** — REPLICATE_API_TOKEN set on slux. 75 recipes have AI images (0 without). Replicate rate limit: 6 req/min on <$5 accounts, script uses 12s delay. CRITICAL: stored image URLs must use Tailscale IP (100.83.66.51:8000), NOT localhost:8000 — session 157 fixed 75 broken URLs caused by this.
 - **Step rewrite backfill blocked on API credits** — scripts/rewrite-imported-steps.mjs works correctly (schema, queries, logic all verified) but the Anthropic API key has insufficient credit balance. 82 recipes need rewriting. Script now has early-exit on credit/auth errors. Top up credits at console.anthropic.com then re-run.
 - **4 recipes without images (Replicate credits exhausted)** — Best Chocolate Chip Cookies, Slow-Roasted Lamb Shoulder, Sous Vide Pulled Pork, Thai Chicken Satay. Top up Replicate credits at replicate.com/account/billing then run `node scripts/generate-recipe-images.mjs --limit 4`.
 - **External image URLs blocked at code level** — addRecipePhoto() throws on external URLs, createRecipe() filters out non-internal image_url. 52 legacy external URLs already nulled from DB.
@@ -391,8 +393,9 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - assetlinks.json has placeholder fingerprint — needs release APK signing key SHA256 (`keytool -list -v -keystore [keystore.jks]`)
 - Emulator must be launched from CLI (`emulator -avd Medium_Phone_API_36.1 -no-snapshot -gpu host`) — Android Studio Device Manager launches headless/invisible window
 - Metro hostname: set `REACT_NATIVE_PACKAGER_HOSTNAME=localhost` before `npx expo start` when on Tailscale (otherwise Metro advertises Tailscale IP, unreachable from emulator)
-- **Mobile storage uploads**: if uploads break after a full volume reset on RPi5, re-run `ALTER ROLE supabase_storage_admin SUPERUSER;` on PostgreSQL (the fix from session ~140; persists in pg_authid but resets on full DB reinit).
+- **Mobile storage uploads**: if uploads break after a full volume reset on slux, re-run `ALTER ROLE supabase_storage_admin SUPERUSER;` on PostgreSQL (the fix from session ~140; persists in pg_authid but resets on full DB reinit).
 - **Supabase storage image display requires `apikey` header** — Self-hosted Kong gateway returns 401 on public bucket URLs without the `apikey` header. All `<Image>` sources loading from Supabase storage must include `headers: { apikey: SUPABASE_ANON_KEY }`. Applied in EditImageGallery and RecipeImage components.
+- **Storage migration Pi→slux: FIXED (2026-05-03)** — Recipe images broken after production cutover due to missing extended attributes (xattrs) on migrated files and incorrect Kong routing. Fixed by: (1) migrating storage.objects metadata table from Pi, (2) running fix-storage-xattr.js to rebuild xattrs from DB metadata (505 objects), (3) updating Kong config to preserve /object/public/ path prefix (service URL: http://storage:5000/object/public, path: /storage/v1/object/public, strip_path: true). Storage fully functional, images loading correctly via api.chefsbk.app.
 - APK rebuild note: always delete cached JS bundle before rebuilding (`rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`) or Gradle uses stale code
 - Jetifier: `android.enableJetifier=true` must be added to `android/gradle.properties` after every `expo prebuild --clean` (it gets wiped)
 - **Personal versions UI pending** — Backend complete (migrations 077-078, API routes, AI function). UI components pending: web version tab switcher on recipe detail, web modifier pills on attribution row, mobile version switcher + modifier pills, orphan cascade on original deletion.
@@ -423,10 +426,10 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Password recovery: SMTP via Resend; mobile sends user to web reset page (no deep link handler yet)
 
 ### Gotchas (non-obvious, will cause bugs if ignored)
-- RPi5 web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before build; use `NODE_OPTIONS=--max-old-space-size=1024 npx next build --no-lint` (lint phase OOMs at 1024MB); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay. The SWC lockfile warning (`⨯ Failed to patch lockfile [TypeError: Cannot read properties of undefined (reading 'os')]`) is NON-FATAL on arm64 — build still compiles via SWC in ~27s, ignore it. DO NOT run `npm install` in apps/web or repo root on the Pi — blocked by EOVERRIDE conflict (root package.json has both `overrides.react` and `dependencies.react`). Deploy via `/mnt/chefsbook/deploy-staging.sh` which handles the clean correctly.
-- PostgREST schema cache: after any new table migration, run `docker restart supabase-rest` on RPi5 or queries return "table not found in schema cache"
+- slux web build: ALWAYS `rm -rf apps/web/node_modules/react apps/web/node_modules/react-dom .next` before build; use `NODE_OPTIONS=--max-old-space-size=4096 npx next build --no-lint` on slux (4GB RAM available); duplicate React causes 404 SSG crash; corrupted `.next` causes dark overlay. DO NOT run `npm install` in apps/web or repo root on slux — blocked by EOVERRIDE conflict (root package.json has both `overrides.react` and `dependencies.react`). Deploy via `/opt/luxlabs/chefsbook/deploy-staging.sh` which handles the clean correctly.
+- PostgREST schema cache: after any new table migration, run `docker restart supabase-rest` on slux or queries return "table not found in schema cache"
 - Supabase joins with multiple FKs: when a table has 2+ FKs to the same target (e.g. `recipe_comments.user_id` + `reviewed_by` both → `user_profiles`, or `recipe_ingredients.recipe_id` + `sub_recipe_id` both → `recipes`), MUST use explicit FK name: `user_profiles!recipe_comments_user_id_fkey` or `recipe_ingredients!recipe_ingredients_recipe_id_fkey` — `!inner` alone causes PGRST201
-- Web Supabase URL: MUST be `https://api.chefsbk.app` (NOT `http://100.110.47.62:8000`) — mixed content blocks ws:// on HTTPS pages; Cloudflare Tunnel handles WebSocket upgrades automatically; mobile still uses direct IP
+- Web Supabase URL: MUST be `https://api.chefsbk.app` (NOT `http://100.83.66.51:8000`) — mixed content blocks ws:// on HTTPS pages; Cloudflare Tunnel handles WebSocket upgrades automatically; mobile still uses direct IP
 - Server-to-server internal fetches: MUST use `http://localhost:3000` (NOT `req.url` origin which resolves to `https://chefsbk.app` behind Cloudflare Tunnel). Looping through the tunnel causes HTML error pages instead of JSON on timeout/failure. Fixed in /api/admin/refresh-incomplete (session 148).
 - React pinned to 19.1.0 across monorepo (19.1.4 causes frozen object crash with RN 0.81)
 - Metro blockList excludes root node_modules react/react-native to prevent duplicate bundles
@@ -434,7 +437,7 @@ See `AGENDA.md` for the full prioritized backlog with effort estimates and recom
 - Native modules that may not be linked (e.g. `@react-native-voice/voice`) use lazy `require()` in try/catch
 - Unit conversion lives ONLY in `packages/ui/src/unitConversion.ts` — never duplicate in app code
 - Supabase auth persistence: `configureStorage()` in `@chefsbook/db` accepts a storage adapter; mobile wires `expo-secure-store` in `_layout.tsx` at module scope (before any Supabase access)
-- Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.110.47.62 + localhost + 10.0.2.2
+- Release APK cleartext: `network_security_config.xml` allows HTTP only to 100.83.66.51 + localhost + 10.0.2.2
 - American spelling used throughout mobile app (Favorite not Favourite)
 - Scan description: Claude Vision prompt mandates a description — field must never be null
 - Web AI calls (moderateComment, moderateRecipe) fail due to CORS — wrap in try/catch, allow action to proceed without moderation
@@ -481,16 +484,16 @@ EXPO_PUBLIC_APP_VARIANT=staging npx expo run:android --variant release
 ```
 Install: `adb install -r apps/mobile/android/app/build/outputs/apk/release/app-release.apk`
 
-### Web Staging (RPi5)
-URL: http://100.110.47.62:3001
-Prerequisites: Node.js + npm must be installed on rpi5-eth
-Deploy: `ssh rasp@rpi5-eth && /mnt/chefsbook/deploy-staging.sh`
+### Web Staging (slux)
+URL: http://100.83.66.51:3001
+Prerequisites: Node.js + npm must be installed on slux
+Deploy: `ssh pilzner@slux && /opt/luxlabs/chefsbook/deploy-staging.sh`
 
 ### To update staging after code changes:
 1. Stop Metro dev server
 2. `cd apps/mobile && npx expo run:android --variant release`
 3. `adb install -r [apk path]`
-4. `ssh rasp@rpi5-eth && /mnt/chefsbook/deploy-staging.sh`
+4. `ssh pilzner@slux && /opt/luxlabs/chefsbook/deploy-staging.sh`
 
 ## Navigator Agent
 Before doing any UI work, navigation, or screen testing:
