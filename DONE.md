@@ -1,3 +1,64 @@
+## 2026-05-03 (session SEED-COOKING-KNOWLEDGE) TYPE: DATA (cooking timing knowledge graph)
+
+### Cooking Action Timings - Wikipedia Knowledge Graph Seeding
+
+**Purpose:** Populate cooking_action_timings table with timing data from Wikipedia to support Chef Kitchen Conductor's timing predictions.
+
+**Components Delivered:**
+
+1. **Database Schema**
+   - Migration 083: `supabase/migrations/20260503_083_cooking_action_timings.sql` — creates cooking_action_timings table with canonical_key (unique), technique, ingredient_category, duration_min/max, is_passive, uses_oven, oven_temp_celsius, phase, confidence, source, observed learning counters
+
+2. **Seed Script**
+   - `scripts/seed-cooking-knowledge.mjs` — fetches Wikipedia technique articles, extracts timing data via Haiku, upserts to database; includes retry logic with exponential backoff for rate limiting (5s, 10s, 20s), --dry-run flag support
+
+3. **Data Populated**
+   - 40 timing entries from 19 unique cooking techniques
+   - Distribution: 9 high confidence, 13 medium, 18 low
+   - Top techniques: simmer (8 entries), roast (5), blanch (3), cold smoke (3), marinate (2), poach (2), smoke (2)
+   - Sample entries: caramelise:onions (30-45min), simmer:beef (180min), marinate:meat (0-1440min)
+
+**Technical Notes:**
+- Script uses direct SDK calls (fetch() to Anthropic API, createClient() for Supabase) as pragmatic workaround for TypeScript/ESM module resolution issues
+- Functionally equivalent to @chefsbook/ai callClaude() and @chefsbook/db supabaseAdmin
+- 8 techniques (bake, steam, stir-fry, grill, render, deglaze, boil, sauté) processed but yielded no timing data from Wikipedia (correct behavior)
+
+**Status:** ✅ Complete — knowledge graph seeded and ready for Chef scheduler integration
+
+---
+
+## 2026-05-03 (session CHEF-BUILD-BACKEND) TYPE: BACKEND (Chef Kitchen Conductor - Partial)
+
+### Chef Kitchen Conductor Backend Infrastructure
+
+**Purpose:** Build backend infrastructure for Chef Kitchen Conductor feature. UI implementation deferred to future session.
+
+**Components Delivered:**
+
+1. **Database Schema**
+   - Migration 080: `supabase/migrations/20260503_080_recipe_steps_timing.sql` — adds timing columns to recipe_steps (duration_min, duration_max, is_passive, uses_oven, oven_temp_celsius, phase, timing_confidence, timings_inferred_at)
+   - Migration 081: `supabase/migrations/20260503_081_cooking_sessions.sql` — creates cooking_sessions table with JSONB plan storage, version column for optimistic locking, Supabase Realtime enabled
+
+2. **AI Functions**
+   - `packages/ai/src/inferStepTimings.ts` — Haiku-based step timing inference (~$0.0003/step); extracts duration_min/max, is_passive, uses_oven, oven_temp_celsius, phase (prep/cook/rest/plate), timing_confidence
+   - `packages/ai/src/chefBriefing.ts` — Haiku-based briefing generation (~$0.001/session); max 120 words, ends with "Let's go."
+
+3. **Cooking Scheduler**
+   - `packages/ui/src/scheduler.ts` — Pure TypeScript scheduler (zero AI calls); reverse-schedules from serve time with 6 constraints: active step exclusivity, oven conflict resolution (1-2 ovens), rest step slack absorption, course sequencing (plated vs family-style), critical path marking, parallel step detection
+   - `packages/ui/src/scheduler.types.ts` — TypeScript interfaces for CookingPlan, ScheduledStep, ChefSetup, OvenConflict, PlanWarning
+
+4. **Database Queries**
+   - `packages/db/src/queries/cookingSessions.ts` — CRUD operations for cooking_sessions table with optimistic locking via version column
+
+5. **Import Pipeline Integration**
+   - `apps/web/lib/saveWithModeration.ts` — calls `inferStepTimings()` on every recipe import at line 187; timing data cached to recipe_steps table
+
+6. **Backfill Script**
+   - `scripts/backfill-step-timings.mjs` — processes existing recipes to infer timings; CONCURRENT_BATCH=3, 3-second delay between batches (rate limit fix to stay under 50 req/min); retry on JSON parse errors
+
+**Status:** ⚠️ Backend complete, UI and i18n pending
+
+---
 # DONE.md - Completed Features & Changes
 # Updated automatically at every Claude Code session wrap.
 

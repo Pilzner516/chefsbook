@@ -233,6 +233,7 @@ This rule applies to every new screen and every screen touched during a session.
 - `import_jobs`, `import_job_urls` — bookmark batch import tracking
 - `techniques` — cooking methods/skills with JSONB process_steps, difficulty, tips, mistakes, tools
 - `user_follows` — follower/following (replaced old `follows` table)
+- `cooking_action_timings` — knowledge graph of cooking technique timings seeded from Wikipedia; canonical_key (technique:ingredient_category), duration_min/max, is_passive, uses_oven, oven_temp_celsius, phase, confidence, source; 40 entries across 19 techniques; used by Chef scheduler for timing predictions
 
 5 custom Postgres functions: `search_recipes()` (pg_trgm fuzzy), `get_meal_plan_week()`, `generate_shopping_list()`, `clone_recipe()`, `get_public_feed()`.
 
