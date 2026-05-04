@@ -1,3 +1,108 @@
+## 2026-05-04 (session COMMUNITY-KNOWLEDGE) TYPE: FEATURE (community knowledge gap system)
+
+### ChefsBook Community Knowledge Engine — Points, Badges, Gap Contributions
+
+**Purpose:** Turn knowledge gaps in ChefsBook's AI brain into a community engagement loop. When the knowledge graph identifies missing technique+ingredient data, users see request cards and earn double points for contributing recipes that fill those gaps.
+
+**Components Delivered:**
+
+1. **Database Schema**
+   - Migration 085: `supabase/migrations/20260504_085_knowledge_gaps.sql`
+     - `knowledge_gaps` table: tracks detected gaps with status flow (detected → approved → active → filled/dismissed)
+     - `gap_contributions` table: links recipes to gaps, tracks points awarded
+     - RLS policies: public read for active gaps, admin full access
+   - Migration 086: `supabase/migrations/20260504_086_points_badges.sql`
+     - `user_points` table: transaction log of all point awards
+     - `user_points_balance` table: materialized balance view
+     - `badge_definitions` table: badge metadata with thresholds
+     - `user_badges` table: earned badges per user
+     - Seeded 7 badges: first_contribution, gap_filler_5/25/100, first_import, import_10/50
+
+2. **Gap Detection System**
+   - `packages/ai/src/detectKnowledgeGaps.ts`: identifies gaps from cooking_action_timings (low confidence/observations)
+   - Priority scoring: critical (0 obs + >10 freq) → high → medium → low
+   - Marks gaps as filled when observation threshold met
+   - `/api/admin/knowledge-gaps/detect` route: super admin only, returns { detected, updated, filled }
+
+3. **Points & Badges System**
+   - `packages/ai/src/points.ts`: point values (RECIPE_IMPORT=10, GAP_CONTRIBUTION=40, COOKED_IT=5, RECIPE_SHARED=5)
+   - `packages/db/src/queries/points.ts`:
+     - `awardPoints()`: inserts transaction, upserts balance, checks badge thresholds
+     - `checkAndAwardBadges()`: awards new badges when thresholds met
+     - `getUserPointsBalance()`, `getUserPointsHistory()`, `getUserBadges()`
+   - `packages/db/src/queries/gapContributions.ts`:
+     - `createGapContribution()`: creates gap_contributions record
+     - `checkGapFillStatus()`: checks if gap should be marked filled
+     - `getUserGapContributionCount()`: for badge checking
+
+4. **Community Request Cards**
+   - `apps/web/components/GapRequestCard.tsx`: positioned at slot 2 in My Recipes grid
+     - Loads active gaps from knowledge_gaps table (status='active')
+     - Filters out dismissed gaps (localStorage with 7-day expiry)
+     - Random rotation through available gaps
+     - Brain SVG icon, amber/gold gradient styling
+     - "I have one!" → navigates to /dashboard/scan?gapId={gap.id}
+     - "Not now" → dismisses for 7 days
+   - `apps/mobile/components/GapRequestCard.tsx`: positioned in FlashList header after FeedbackCard
+     - Similar logic, AsyncStorage for dismissal
+     - NativeWind styling with amber colors
+     - "I have one!" → navigates to scan tab with gapId param
+
+5. **Import Pipeline Integration**
+   - `apps/web/app/api/recipes/finalize/route.ts` updated (lines 122-169):
+     - Accepts gapId parameter in request body
+     - If gapId present + complete + approved: creates gap_contribution, awards 40 points, checks if gap filled
+     - Otherwise: awards 10 points for normal import
+     - Returns: pointsAwarded, newBadges, gapFilled in response
+
+6. **Internationalization**
+   - Added gapRequest.* keys to all 5 locale files (en/fr/es/it/de):
+     - title: "Our Sous Chef is looking for..."
+     - body: "Help teach ChefsBook something new"
+     - cta: "I have one!"
+     - dismiss: "Not now"
+     - doublePoints: "Earn 40 points"
+     - successToast: "Thanks! You earned {{points}} points"
+
+**Verification:**
+- Database: All 6 tables created (psql \d verified)
+- Badges: 7 badge_definitions seeded with correct thresholds
+- cooking_action_timings: 194 rows (157 observed + 37 wikipedia) — dependency met
+- TypeScript: 0 errors on web + mobile after JSON syntax fixes + AsyncStorage install
+- Web deployment: Build successful (exit 0), pm2 restart successful
+- Commits: 3 commits pushed (5c80af0, 66cf876, 3534abd)
+
+**Files Changed:**
+- A `supabase/migrations/20260504_085_knowledge_gaps.sql`
+- A `supabase/migrations/20260504_086_points_badges.sql`
+- A `packages/ai/src/detectKnowledgeGaps.ts`
+- A `packages/ai/src/points.ts`
+- M `packages/ai/src/index.ts` (exports)
+- A `packages/db/src/queries/points.ts`
+- A `packages/db/src/queries/gapContributions.ts`
+- M `packages/db/src/index.ts` (exports)
+- A `apps/web/app/api/admin/knowledge-gaps/detect/route.ts`
+- A `apps/web/components/GapRequestCard.tsx`
+- M `apps/web/app/dashboard/page.tsx` (injected gap card at position 2)
+- M `apps/web/app/api/recipes/finalize/route.ts` (gap contribution logic)
+- A `apps/mobile/components/GapRequestCard.tsx`
+- M `apps/mobile/app/(tabs)/index.tsx` (gap card in FlashList header)
+- M `apps/mobile/locales/*.json` (gapRequest keys + JSON syntax fixes)
+- M `apps/mobile/package.json` (@react-native-async-storage/async-storage)
+
+**Known Incomplete Items:**
+- gapId parameter handling in scan page — gap card navigates with gapId but scan page doesn't consume it yet
+- Agent URL discovery — findGapRecipes.ts + /api/admin/knowledge-gaps/[id]/find-recipes not started
+- Admin gap queue UI — /admin/knowledge-gaps page not built
+- Points/badges display UI — no user profile sections yet
+- Badge celebration modals — no milestone popup built
+- Daily cron for gap detection — not configured
+
+**Follow-up Session Recommended:**
+Next session should complete the UI surfaces (admin queue, profile displays, celebration modals) and operational tasks (gapId plumbing, cron setup, end-to-end verification).
+
+---
+
 ## 2026-05-04 (session MOBILE-SIGNIN-CRASH) TYPE: BUGFIX (splash hang + route conflict)
 
 ### Mobile App Sign In Crash — Dual Root Cause Fix
