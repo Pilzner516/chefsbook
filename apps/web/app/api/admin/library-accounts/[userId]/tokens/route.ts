@@ -6,8 +6,9 @@ import crypto from 'crypto';
 // Generate a new import token for a library account
 export async function POST(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   try {
     // Verify super admin
     const authHeader = req.headers.get('authorization');
@@ -33,7 +34,6 @@ export async function POST(
       return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
     }
 
-    const { userId } = params;
     const body = await req.json();
     const { description } = body;
 

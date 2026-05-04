@@ -5,8 +5,9 @@ import { supabaseAdmin } from '@chefsbook/db';
 // Revoke a library account import token
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { userId: string; tokenId: string } }
+  { params }: { params: Promise<{ userId: string; tokenId: string }> }
 ) {
+  const { userId, tokenId } = await params;
   try {
     // Verify super admin
     const authHeader = req.headers.get('authorization');
@@ -31,8 +32,6 @@ export async function DELETE(
     if (!adminUser || adminUser.role !== 'super_admin') {
       return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
     }
-
-    const { userId, tokenId } = params;
 
     // Verify token belongs to this library account
     const { data: tokenData } = await supabaseAdmin
