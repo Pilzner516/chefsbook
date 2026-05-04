@@ -1,3 +1,19 @@
+## 2026-05-04 (session AUTOPILOT-KNOWLEDGE-GAPS-DETECT) TYPE: FEATURE
+
+Added POST handler for `knowledge-gaps-detect` action to admin API (`/api/admin`). Handler calls `detectKnowledgeGaps()` from `@chefsbook/ai` and returns `{ detected, updated, filled }`. Implemented via full autopilot workflow: Phase 0 (analyst + architect expansion), Phase 1 (planning), Phase 2 (executor implementation), Phase 3 (QA + deployment), Phase 4 (parallel validation by architect/security/code-reviewer - all approved), Phase 5 (cleanup). Applied code-reviewer suggestion to improve error type safety (any → unknown). Dynamic import pattern matches sibling handlers. Deployed to slux production at commits eaa3ef3 + 7df2838. PM2 restarted clean, unauthorized test returns 401 ✓, TypeScript passes ✓.
+
+**Files modified:**
+- `apps/web/app/api/admin/route.ts` (+10 lines at 1278-1287)
+
+**Usage:**
+```bash
+curl -X POST https://chefsbk.app/api/admin \
+  -H "Authorization: Bearer <admin-token>" \
+  -d '{"action":"knowledge-gaps-detect"}'
+```
+
+---
+
 ## 2026-05-04 (session COMMUNITY-KNOWLEDGE) TYPE: FEATURE (community knowledge gap system)
 
 ### ChefsBook Community Knowledge Engine — Points, Badges, Gap Contributions
