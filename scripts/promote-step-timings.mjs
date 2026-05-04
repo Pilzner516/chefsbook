@@ -16,7 +16,8 @@ const supabase = createClient(
 );
 
 function getConfidenceFromCount(count) {
-  if (count >= 25) return 'very_high';
+  // DB CHECK constraint allows: low, medium, high (not very_high)
+  // Thresholds based on statistical significance for cooking timing observations
   if (count >= 10) return 'high';
   if (count >= 5) return 'medium';
   return 'low';
@@ -87,8 +88,9 @@ async function main() {
       return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
     };
 
-    const is_passive_agg = mode(items.map(s => s.is_passive)) === 'true';
-    const uses_oven_agg = mode(items.map(s => s.uses_oven)) === 'true';
+    // Filter nulls before mode, compare as booleans not strings
+    const is_passive_agg = mode(items.map(s => s.is_passive).filter(v => v !== null)) === true;
+    const uses_oven_agg = mode(items.map(s => s.uses_oven).filter(v => v !== null)) === true;
     const phase_agg = mode(items.map(s => s.phase));
     const oven_temps = items.map(s => s.oven_temp_celsius).filter(t => t !== null);
     const oven_temp_agg = oven_temps.length > 0 ? mode(oven_temps) : null;

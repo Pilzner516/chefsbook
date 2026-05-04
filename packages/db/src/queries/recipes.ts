@@ -394,7 +394,8 @@ export async function updateStepTimings(
     .update({
       ...timings,
       timings_inferred_at: new Date().toISOString(),
-      classified_at: timings.technique ? new Date().toISOString() : undefined,
+      // Always stamp classified_at to match offline classifier semantics (prevents retry waste)
+      classified_at: new Date().toISOString(),
     })
     .eq('id', stepId);
   if (error) throw error;
