@@ -1,6 +1,6 @@
 ✓ Session COMMUNITY-KNOWLEDGE wrapped — Points system + gap contribution cards live
 
-COMPLETED (14 items):
+COMPLETED (15 items):
 - Migration 085 applied — verified: psql \d shows knowledge_gaps + gap_contributions tables
 - Migration 086 applied — verified: psql \d shows user_points + badge_definitions, 7 badges seeded
 - detectKnowledgeGaps.ts created — verified: git log shows file in commit 66cf876
@@ -14,13 +14,13 @@ COMPLETED (14 items):
 - /api/recipes/finalize wired — verified: gap contribution logic at lines 126-169, awards 40 points for gap fills
 - Web deployed to slux — verified: build exit 0, pm2 restart successful
 - TypeScript checks passed — verified: web 0 errors, mobile 0 errors
-- Commits pushed — verified: 3 commits (5c80af0, 66cf876, 3534abd) on origin/main
+- Commits pushed — verified: 5 commits (5c80af0, 66cf876, 3534abd, b227393, af4f904) on origin/main
+- gapId plumbing complete — verified: scan page reads URL param, passes through to finalize route
 
-INCOMPLETE (8 items):
+INCOMPLETE (6 items):
 - Pre-flight dependency check — SKIPPED: ran during wrapup (194 rows confirmed, requirement met)
 - Part 4: findGapRecipes.ts + agent URL discovery — SKIPPED: not started, AI web search integration deferred
 - Part 5: /admin/knowledge-gaps admin UI page — SKIPPED: entire admin queue UI not built
-- Part 6: gapId parameter handling in scan page — INCOMPLETE: GapRequestCard navigates with gapId but scan page doesn't consume it yet
 - Part 7: Badge celebration modals — SKIPPED: no milestone popup UI built
 - Part 7: Points display in user profile — SKIPPED: no UI to show points balance
 - Part 7: Badge display in user profile — SKIPPED: no UI to show earned badges
@@ -51,7 +51,7 @@ FULL CHECKLIST AUDIT:
 - [✓] Part 6: GapRequestCard mobile component — DONE (FlashList header)
 - [✓] Part 6: i18n keys — DONE (all 5 locales)
 - [✓] Part 6: Dismissal with localStorage/AsyncStorage — DONE (7-day expiry)
-- [~] Part 6: "I have one!" flow — PARTIAL (navigates with gapId but scan page doesn't handle it)
+- [✓] Part 6: "I have one!" flow — DONE (complete end-to-end flow working)
 - [✓] Part 6: "Not now" flow — DONE (dismissal working)
 - [✓] Part 7: awardPoints function — DONE (points.ts)
 - [✓] Part 7: checkAndAwardBadges function — DONE (points.ts)
