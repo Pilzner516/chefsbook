@@ -19,7 +19,7 @@ interface Props {
 const CELEBRATION_MESSAGES: Record<string, string> = {
   first_contribution: 'You taught our Sous Chef something new for the first time.',
   gap_filler_5: 'Five gaps filled. The whole community cooks a little better now.',
-  gap_filler_25: 'Twenty-five gaps filled. You are building ChefsBook's intelligence.',
+  gap_filler_25: 'Twenty-five gaps filled. You are building ChefsBook\'s intelligence.',
   gap_filler_100: 'One hundred gaps filled. Your contributions shape how thousands cook.',
   first_import: 'You imported your first recipe into ChefsBook.',
   import_10: 'Ten recipes imported. Your collection is growing.',
