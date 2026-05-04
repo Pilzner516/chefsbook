@@ -1,3 +1,37 @@
+## 2026-05-04 (session MOBILE-SIGNIN-CRASH) TYPE: BUGFIX (splash hang + route conflict)
+
+### Mobile App Sign In Crash — Dual Root Cause Fix
+
+**Symptom:** User reported mobile app "crashes when tapping Sign In button". Splash screen appeared stuck on cold launch with cream background + chef hat + "Welcome to Chefsbook".
+
+**Dual Root Cause Identified:**
+1. **Splash hang** — `supabase.auth.getSession()` in `authStore.init()` retries indefinitely on network failure (emulator can't reach Tailscale IP `100.83.66.51:8000`). Original code only set `loading: false` on the success path, so `loading` stayed `true` forever, freezing `useProtectedRoute` navigation guard at the landing page.
+2. **Route conflict** — `apps/mobile/app/cook-menu/[id].tsx` (recurring file from prior sessions) conflicted with `apps/mobile/app/cook-menu/[id]/index.tsx`. Both resolve to route pattern `cook-menu/:id`, causing Expo Router to throw `JavascriptException: Found conflicting screens` on any navigation. The splash overlay was masking this crash from the user — they saw "stuck splash" but the actual underlying app had already crashed.
+
+**Three-Part Fix:**
+- `apps/mobile/lib/zustand/authStore.ts`: wrapped `init()` body in try/catch/finally — `set({ loading: false })` now runs unconditionally even on network failure
+- `apps/mobile/app/_layout.tsx`: added `SPLASH_MAX_MS=6000` constant + safety-net `useEffect` with empty deps — splash dismisses after 6s regardless of auth state, preventing future hangs
+- `apps/mobile/app/cook-menu/[id].tsx`: DELETED — eliminates Expo Router pattern conflict (recurring file, ungoverned by git history of deletion)
+
+**Verification:**
+- Architect (Sonnet) APPROVED with line-by-line analysis: try/catch/finally preserves success path, safety-net effect has no race or timer leak, deletion was the correct call vs the directory
+- Deslop pass: no slop found in modified files (comments cite non-obvious WHY)
+- TypeScript: 0 errors in modified files (1 pre-existing `expo-file-system` error in node_modules)
+- APK build: SUCCESS in 55s with warm cache; stale JS bundle deleted before rebuild per CLAUDE.md gotcha #3
+- E2E test: app launches → splash dismisses within 6s → Sign In tap → signin screen displayed (Email/Password fields, Sign In button, Sign in with Google) → 0 FATAL/conflicting/JavascriptException errors in logcat
+
+**Files Changed:**
+- M `apps/mobile/lib/zustand/authStore.ts` (try/catch/finally)
+- M `apps/mobile/app/_layout.tsx` (SPLASH_MAX_MS + safety-net effect)
+- D `apps/mobile/app/cook-menu/[id].tsx` (deleted, 29450 bytes)
+
+**Architectural Notes Discovered (out-of-scope, flagged for follow-up):**
+- `onAuthStateChange` subscription handle never stored/unsubscribed — minor leak if `init()` ever called more than once
+- `loadProfile()` inside `onAuthStateChange` listener not wrapped in try/catch — unhandled rejection risk on post-auth network failure
+- `SplashOverlay` has `pointerEvents="none"` — taps always passed through; the original block was `useProtectedRoute` stalling on `loading=true`, not the overlay catching touches
+
+---
+
 ## 2026-05-04 (session LIBRARY-ACCOUNT) TYPE: FEATURE (library accounts + token auth)
 
 ### ChefsBook Library Account — @souschef Official Recipe Library
