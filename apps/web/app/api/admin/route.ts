@@ -1280,9 +1280,10 @@ export async function POST(req: NextRequest) {
       const { detectKnowledgeGaps } = await import('@chefsbook/ai');
       const result = await detectKnowledgeGaps();
       return NextResponse.json(result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[admin] knowledge-gaps-detect failed:', err);
-      return NextResponse.json({ error: err?.message ?? 'Detection failed' }, { status: 500 });
+      const message = err instanceof Error ? err.message : 'Detection failed';
+      return NextResponse.json({ error: message }, { status: 500 });
     }
   }
 

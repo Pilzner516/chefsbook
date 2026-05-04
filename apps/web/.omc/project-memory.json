@@ -42,7 +42,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npm run build",
+    "buildCommand": "cd apps/web && npx tsc --noEmit",
     "testCommand": null,
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",
