@@ -59,7 +59,7 @@ export default function KnowledgeGapsPage() {
 
   const handleDetectGaps = async () => {
     try {
-      const result = await adminFetch({ page: 'knowledge-gaps-detect', method: 'POST' });
+      const result = await adminPost({ action: 'knowledge-gaps-detect' });
       alert(`Gap detection complete:\n${result.detected} detected\n${result.updated} updated\n${result.filled} filled`);
       loadData();
     } catch (e: any) {
