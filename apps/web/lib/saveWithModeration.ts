@@ -21,12 +21,13 @@ async function finalizeRecipe(
   sourceUrl: string | undefined,
   source: string,
   isNewDiscovery?: boolean,
+  gapId?: string,
 ) {
   try {
     const res = await fetch('/api/recipes/finalize', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipeId, userId, url: sourceUrl, source, isNewDiscovery }),
+      body: JSON.stringify({ recipeId, userId, url: sourceUrl, source, isNewDiscovery, gapId }),
     });
     if (!res.ok) return undefined;
     return (await res.json()) as SaveResult['completeness'];
@@ -47,6 +48,7 @@ export async function createRecipeWithModeration(
     is_new_discovery?: boolean;
     source_image_url?: string | null; source_image_description?: string | null;
     source_language?: string | null; translated_from?: string | null;
+    gap_id?: string;
   },
 ): Promise<SaveResult> {
   const created = await createRecipe(userId, recipe);
@@ -204,6 +206,7 @@ export async function createRecipeWithModeration(
     recipe.source_url,
     recipe.source_type ?? 'manual',
     recipe.is_new_discovery,
+    recipe.gap_id,
   );
 
   // Fire-and-forget: auto-generate AI image via server API (can't import imageGeneration.ts

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, createRecipe, createTechnique, checkRecipeLimit, saveRecipe } from '@chefsbook/db';
 import { createRecipeWithModeration } from '@/lib/saveWithModeration';
@@ -65,6 +65,8 @@ export default function ScanPage() {
   const [confirm, ConfirmDialog] = useConfirmDialog();
   const [showAlert, AlertDialog] = useAlertDialog();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const gapId = searchParams.get('gapId');
 
   // Active panel state
   const [activeMethod, setActiveMethod] = useState<ImportMethod | null>(null);
@@ -187,7 +189,7 @@ export default function ScanPage() {
         throw new Error(err.error || 'Scan failed');
       }
       const scanned = await scanRes.json();
-      const { recipe, moderation } = await createRecipeWithModeration(user.id, scanned);
+      const { recipe, moderation } = await createRecipeWithModeration(user.id, { ...scanned, gap_id: gapId || undefined });
       if (moderation.verdict !== 'clean') showAlert({ title: 'Under Review', body: moderation.verdict === 'mild' ? 'Recipe saved but is under review.' : 'Recipe flagged — your account is under review.' });
       router.push(`/recipe/${recipe.id}`);
     } catch (e: any) {
@@ -292,6 +294,7 @@ export default function ScanPage() {
             youtube_video_id: data.videoId,
             channel_name: data.channelName,
             video_only: true,
+            gap_id: gapId || undefined,
           });
           router.push(`/recipe/${recipe.id}`);
           setLoading(null);
@@ -303,6 +306,7 @@ export default function ScanPage() {
             image_url: data.thumbnail ?? undefined,
             youtube_video_id: data.videoId ?? undefined,
             channel_name: data.channelName ?? undefined,
+            gap_id: gapId || undefined,
           };
           const { recipe } = await createRecipeWithModeration(user.id, recipeData);
           router.push(`/recipe/${recipe.id}`);
@@ -393,6 +397,7 @@ export default function ScanPage() {
           youtube_video_id: data.videoId,
           channel_name: data.channelName,
           video_only: true,
+          gap_id: gapId || undefined,
         });
         router.push(`/recipe/${recipe.id}`);
       } else {
@@ -403,6 +408,7 @@ export default function ScanPage() {
           youtube_video_id: data.videoId ?? undefined,
           channel_name: data.channelName ?? undefined,
           is_new_discovery: !!data.discovery?.isNew,
+          gap_id: gapId || undefined,
         };
         if (data.titleGenerated) {
           recipeData.tags = [...(recipeData.tags ?? []), '_unresolved'];
