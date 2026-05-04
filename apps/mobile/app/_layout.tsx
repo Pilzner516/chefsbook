@@ -28,6 +28,11 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // warm resume does not re-run module scope, so the splash never re-appears).
 const SPLASH_MIN_MS = 3000;
 
+// Maximum time to hold the splash regardless of auth loading state. Prevents
+// a hung supabase.auth.getSession() (e.g. network unreachable) from leaving
+// the splash stuck on top forever, which blocks all user interaction.
+const SPLASH_MAX_MS = 6000;
+
 // Wire SecureStore as the Supabase auth storage adapter so sessions persist across launches
 configureStorage({
   getItem: (key: string) => SecureStore.getItemAsync(key),
@@ -169,6 +174,12 @@ function RootNav() {
     const timer = setTimeout(() => setSplashDone(true), remaining);
     return () => clearTimeout(timer);
   }, [loading]);
+
+  // Safety net: dismiss splash after SPLASH_MAX_MS even if auth loading hangs.
+  useEffect(() => {
+    const timer = setTimeout(() => setSplashDone(true), SPLASH_MAX_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   useProtectedRoute();
 

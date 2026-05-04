@@ -92,10 +92,10 @@ them in parallel using ultrawork. Do not run them sequentially.
    seriouseats.com is Cloudflare-blocked and the import will fail without it.
    If missing: halt, tell the user to add it, do not proceed.
 
-5. **BLOCKER — Auth token:** Check `.env.local` for `CHEFSBOOK_LIBRARY_TOKEN`.
-   If missing: add the key to `.env.example` with instructions (browser DevTools
-   → Network tab → any authenticated ChefsBook request → copy
-   `Authorization: Bearer ...`), then halt and ask the user to populate it.
+5. **BLOCKER — Library token:** Check `.env.local` for `CHEFSBOOK_LIBRARY_TOKEN`.
+   Get this from /admin/library-accounts → @souschef → Generate Token.
+   Add description "Food Lab import — [month year]" when generating.
+   If missing: halt and ask the user to generate a library token first.
 
 6. Confirm the web app is running on `http://localhost:3000`, or note that the
    script must run on slux where the app is live.
@@ -170,6 +170,10 @@ Saved to scripts/food-lab-urls.json
 
 ## Phase 2 — Batch Import (sequential, 1 request per 3 seconds)
 
+**All recipes imported in this session will be attributed to @souschef
+(ChefsBook Library). Recipes are created as public visibility so all
+ChefsBook users can discover and save them.**
+
 Read `scripts/food-lab-urls.json`. For each recipe URL:
 
 **Request:**
@@ -181,7 +185,8 @@ Content-Type: application/json
 {
   "url": "https://www.seriouseats.com/...",
   "userLanguage": "en",
-  "tags": ["food-lab", "kenji-lopez-alt"]
+  "tags": ["food-lab", "kenji-lopez-alt"],
+  "visibility": "public"
 }
 ```
 

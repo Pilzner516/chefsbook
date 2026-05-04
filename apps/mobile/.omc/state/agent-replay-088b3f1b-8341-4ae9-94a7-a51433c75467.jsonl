@@ -5,3 +5,9 @@
 {"t":0,"agent":"aaff538","agent_type":"unknown","event":"agent_stop","success":true}
 {"t":0,"agent":"a60053a","agent_type":"unknown","event":"agent_stop","success":true}
 {"t":0,"agent":"system","event":"skill_invoked","skill_name":"ai-slop-cleaner"}
+{"t":0,"agent":"a4e7780","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a394d5f","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"ralph"}
+{"t":0,"agent":"system","event":"mode_change","mode_from":"none","mode_to":"ralph"}
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"ralph"}
+{"t":0,"agent":"system","event":"mode_change","mode_from":"none","mode_to":"ralph"}

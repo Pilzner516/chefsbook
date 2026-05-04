@@ -247,6 +247,44 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  if (page === 'library-accounts') {
+    // Fetch all library accounts
+    const { data: accounts, error: accountsError } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, username, display_name, avatar_url, bio, recipe_count, follower_count, created_at')
+      .eq('account_type', 'library')
+      .order('created_at', { ascending: false });
+
+    if (accountsError) {
+      return NextResponse.json({ error: accountsError.message }, { status: 500 });
+    }
+
+    // Fetch tokens for all library accounts
+    const accountIds = (accounts ?? []).map((a: any) => a.id);
+    const tokensMap: Record<string, any[]> = {};
+
+    if (accountIds.length > 0) {
+      const { data: tokens } = await supabaseAdmin
+        .from('library_account_tokens')
+        .select('id, user_id, description, created_at, last_used_at, is_active, created_by')
+        .in('user_id', accountIds)
+        .order('created_at', { ascending: false });
+
+      // Group tokens by user_id
+      for (const token of tokens ?? []) {
+        if (!tokensMap[token.user_id]) {
+          tokensMap[token.user_id] = [];
+        }
+        tokensMap[token.user_id].push(token);
+      }
+    }
+
+    return NextResponse.json({
+      accounts: accounts ?? [],
+      tokens: tokensMap,
+    });
+  }
+
   if (page === 'incomplete-recipes') {
     const { data, error } = await supabaseAdmin
       .from('recipes')

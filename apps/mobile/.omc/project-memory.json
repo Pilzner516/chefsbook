@@ -247,6 +247,18 @@
       "type": "file"
     },
     {
+      "path": "app\\_layout.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1777909510089,
+      "type": "file"
+    },
+    {
+      "path": "lib\\zustand\\authStore.ts",
+      "accessCount": 4,
+      "lastAccessed": 1777909561680,
+      "type": "file"
+    },
+    {
       "path": "app\\index.tsx",
       "accessCount": 2,
       "lastAccessed": 1777904461495,
@@ -256,12 +268,6 @@
       "path": "app\\auth\\signin.tsx",
       "accessCount": 2,
       "lastAccessed": 1777904684758,
-      "type": "file"
-    },
-    {
-      "path": "lib\\zustand\\authStore.ts",
-      "accessCount": 1,
-      "lastAccessed": 1777897137100,
       "type": "file"
     },
     {

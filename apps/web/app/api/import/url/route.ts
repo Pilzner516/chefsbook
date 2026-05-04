@@ -20,7 +20,55 @@ function resolveUrl(src: string, base: string): string {
   try { return new URL(src, base).href; } catch { return src; }
 }
 
+async function authenticateRequest(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+
+  const token = authHeader.substring(7);
+
+  // Try standard JWT auth first
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (!error && user) return user.id;
+  } catch {
+    // JWT failed, continue to library token check
+  }
+
+  // Try library account token auth
+  try {
+    const crypto = await import('crypto');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const { data: tokenData } = await supabaseAdmin
+      .from('library_account_tokens')
+      .select('user_id, is_active')
+      .eq('token_hash', tokenHash)
+      .eq('is_active', true)
+      .single();
+
+    if (tokenData) {
+      // Update last_used_at
+      await supabaseAdmin
+        .from('library_account_tokens')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('token_hash', tokenHash);
+
+      return tokenData.user_id;
+    }
+  } catch {
+    // Library token check failed
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
+  // Authenticate the request
+  const userId = await authenticateRequest(req);
+  if (!userId) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const { url, forceType, userLanguage: reqLang, skipDuplicateCheck } = await req.json();
 
   if (!url || typeof url !== 'string') {
@@ -157,7 +205,7 @@ export async function POST(req: Request) {
         const desc = await describeSourceImage(imageUrl, recipe.title);
         if (desc) recipe.source_image_description = desc;
         logAiCall({
-          userId: null,
+          userId,
           action: 'describe_source_image',
           model: 'haiku',
           durationMs: Date.now() - tDesc,
@@ -165,7 +213,7 @@ export async function POST(req: Request) {
         }).catch(() => {});
       } catch {
         logAiCall({
-          userId: null,
+          userId,
           action: 'describe_source_image',
           model: 'haiku',
           durationMs: Date.now() - tDesc,
@@ -209,7 +257,7 @@ export async function POST(req: Request) {
     // Track import site stats + recalculate rating (fire and forget)
     try {
       await logImportAttempt({
-        userId: null,
+        userId,
         url,
         domain,
         success: completeness.complete,
@@ -221,11 +269,11 @@ export async function POST(req: Request) {
     const aiModel = completeness.source === 'json-ld' ? null : (completeness.source === 'claude' ? 'sonnet' : 'haiku');
     if (aiModel) {
       const u = consumeLastUsage();
-      logAiCall({ userId: null, action: 'import_url', model: aiModel, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }).catch(() => {});
+      logAiCall({ userId, action: 'import_url', model: aiModel, tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
     if (sourceLanguage !== (reqLang ?? 'en')) {
       const u = consumeLastUsage();
-      logAiCall({ userId: null, action: 'translate_recipe', model: 'sonnet', tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }).catch(() => {});
+      logAiCall({ userId, action: 'translate_recipe', model: 'sonnet', tokensIn: u?.inputTokens, tokensOut: u?.outputTokens, durationMs: Date.now() - t0, success: true }).catch(() => {});
     }
 
     // ── PDF fallback signal for incomplete results ──

@@ -22,19 +22,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: true,
 
   init: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      set({ session: data.session });
-      await get().loadProfile();
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        set({ session: data.session });
+        await get().loadProfile();
+      }
+
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        set({ session });
+        if (session) await get().loadProfile();
+        else set({ profile: null, planTier: 'free' });
+      });
+    } catch (e) {
+      console.warn('Auth init failed (likely network):', e);
+    } finally {
+      set({ loading: false });
     }
-
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      set({ session });
-      if (session) await get().loadProfile();
-      else set({ profile: null, planTier: 'free' });
-    });
-
-    set({ loading: false });
   },
 
   loadProfile: async () => {

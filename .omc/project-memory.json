@@ -174,27 +174,33 @@
     },
     {
       "path": "CLAUDE.md",
-      "accessCount": 40,
-      "lastAccessed": 1777897085729,
+      "accessCount": 42,
+      "lastAccessed": 1777909274888,
       "type": "file"
     },
     {
       "path": "DONE.md",
-      "accessCount": 26,
-      "lastAccessed": 1777897120063,
+      "accessCount": 29,
+      "lastAccessed": 1777916423224,
       "type": "file"
     },
     {
       "path": ".claude\\agents\\feature-registry.md",
-      "accessCount": 18,
-      "lastAccessed": 1777905918611,
+      "accessCount": 19,
+      "lastAccessed": 1777916410444,
       "type": "file"
     },
     {
       "path": "packages\\db\\src\\queries\\recipes.ts",
-      "accessCount": 12,
-      "lastAccessed": 1777906231749,
+      "accessCount": 17,
+      "lastAccessed": 1777909157036,
       "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 9,
+      "lastAccessed": 1777916606994,
+      "type": "directory"
     },
     {
       "path": "apps/web",
@@ -209,15 +215,21 @@
       "type": "file"
     },
     {
-      "path": "",
-      "accessCount": 7,
-      "lastAccessed": 1777829641491,
-      "type": "directory"
-    },
-    {
       "path": "apps\\web\\app\\api\\image\\route.ts",
       "accessCount": 6,
       "lastAccessed": 1777779322391,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\testing.md",
+      "accessCount": 6,
+      "lastAccessed": 1777916410109,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\deployment.md",
+      "accessCount": 6,
+      "lastAccessed": 1777916412466,
       "type": "file"
     },
     {
@@ -231,18 +243,6 @@
       "accessCount": 5,
       "lastAccessed": 1777825670975,
       "type": "directory"
-    },
-    {
-      "path": ".claude\\agents\\testing.md",
-      "accessCount": 5,
-      "lastAccessed": 1777905917855,
-      "type": "file"
-    },
-    {
-      "path": ".claude\\agents\\deployment.md",
-      "accessCount": 5,
-      "lastAccessed": 1777905918966,
-      "type": "file"
     },
     {
       "path": "apps\\web\\app\\auth\\page.tsx",
@@ -377,6 +377,12 @@
       "type": "directory"
     },
     {
+      "path": "apps",
+      "accessCount": 2,
+      "lastAccessed": 1777909007873,
+      "type": "directory"
+    },
+    {
       "path": "apps/web/app/auth",
       "accessCount": 1,
       "lastAccessed": 1777777534138,
@@ -453,12 +459,6 @@
       "accessCount": 1,
       "lastAccessed": 1777779525433,
       "type": "file"
-    },
-    {
-      "path": "apps",
-      "accessCount": 1,
-      "lastAccessed": 1777779533332,
-      "type": "directory"
     },
     {
       "path": "apps\\web\\app",

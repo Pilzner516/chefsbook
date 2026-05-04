@@ -16,6 +16,7 @@ type AdminNavItem = {
 const DEFAULT_REORDERABLE_NAV: AdminNavItem[] = [
   { key: 'overview', href: '/admin', label: 'Overview' },
   { key: 'users', href: '/admin/users', label: 'Users' },
+  { key: 'library-accounts', href: '/admin/library-accounts', label: 'Library Accounts' },
   { key: 'messages-flags', href: '/admin/messages', label: 'Messages & Flags' },
   { key: 'tags', href: '/admin/tags', label: 'Tags' },
   { key: 'audit', href: '/admin/audit', label: 'Content Audit' },

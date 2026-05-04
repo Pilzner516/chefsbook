@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"if (Test-Path \\\"C:/Users/seblu/aiproj/chefsbook/apps/mobile/app/cook-menu/[id].tsx\\\") { \\\"FILE EXISTS - CONFLICT NOT RESOLVED\\\" } else { \\\"FILE DELETED - CONFLICT RESOLVED\\\" }\",\"descriptio...",
-  "error": "Exit code 2\n/usr/bin/bash: eval: line 1: syntax error near unexpected token `{'\n/usr/bin/bash: eval: line 1: `if (Test-Path \"C:/Users/seblu/aiproj/chefsbook/apps/mobile/app/cook-menu/[id].tsx\") { \"FILE EXISTS - CONFLICT NOT RESOLVED\" } else { \"FILE DELETED - CONFLICT RESOLVED\" }'",
-  "timestamp": "2026-05-04T13:20:12.177Z",
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"cd C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook\\\\apps\\\\mobile; npx tsc --noEmit 2>&1 | Select-String -Pattern \\\"(authStore|_layout)\\\" | Select-Object -First 10; Write-Output \\\"---\\\"; npx tsc --noEm...",
+  "error": "Exit code 2\n---\r\n1",
+  "timestamp": "2026-05-04T17:45:47.528Z",
   "retry_count": 1
 }
