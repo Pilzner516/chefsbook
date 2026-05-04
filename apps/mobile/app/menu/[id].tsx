@@ -12,7 +12,7 @@ import { useShoppingStore } from '../../lib/zustand/shoppingStore';
 import { Card, Loading } from '../../components/UIKit';
 import ChefsDialog from '../../components/ChefsDialog';
 import { StorePicker } from '../../components/StorePicker';
-import { getPrimaryPhotos, supabase } from '@chefsbook/db';
+import { getPrimaryPhotos, supabase, updateMenuItem } from '@chefsbook/db';
 import { COURSE_ORDER, COURSE_LABELS, type MenuCourse } from '@chefsbook/db';
 import { formatDuration } from '@chefsbook/ui';
 import { suggestPurchaseUnits } from '@chefsbook/ai';
@@ -54,6 +54,12 @@ export default function MenuDetailScreen() {
   const [cookbooks, setCookbooks] = useState<{ id: string; title: string; status: string }[]>([]);
   const [loadingCookbooks, setLoadingCookbooks] = useState(false);
   const [addingToCookbook, setAddingToCookbook] = useState(false);
+
+  // Move recipe state
+  const [showMoveSheet, setShowMoveSheet] = useState(false);
+  const [moveItemId, setMoveItemId] = useState<string | null>(null);
+  const [moveFromCourse, setMoveFromCourse] = useState<MenuCourse | null>(null);
+  const [movingItem, setMovingItem] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -202,6 +208,28 @@ export default function MenuDetailScreen() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const openMoveSheet = (itemId: string, currentCourse: MenuCourse) => {
+    setMoveItemId(itemId);
+    setMoveFromCourse(currentCourse);
+    setShowMoveSheet(true);
+  };
+
+  const handleMoveToCourse = async (newCourse: MenuCourse) => {
+    if (!moveItemId || !currentMenu) return;
+    setShowMoveSheet(false);
+    setMovingItem(true);
+    try {
+      await updateMenuItem(moveItemId, { course: newCourse });
+      await fetchMenu(currentMenu.id);
+      showToast(`Moved to ${COURSE_LABELS[newCourse]}`);
+    } catch (err: any) {
+      Alert.alert(t('common.errorTitle'), err.message || 'Failed to move recipe');
+    }
+    setMovingItem(false);
+    setMoveItemId(null);
+    setMoveFromCourse(null);
   };
 
   const openCookbookPicker = async () => {
@@ -456,6 +484,12 @@ export default function MenuDetailScreen() {
                         )}
                       </View>
                       <TouchableOpacity
+                        onPress={() => openMoveSheet(item.id, course)}
+                        style={{ justifyContent: 'center', paddingHorizontal: 8 }}
+                      >
+                        <Ionicons name="swap-horizontal-outline" size={20} color={colors.accent} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         onPress={() => confirmRemoveItem(item.id)}
                         style={{ justifyContent: 'center', paddingHorizontal: 12 }}
                       >
@@ -647,6 +681,66 @@ export default function MenuDetailScreen() {
           { label: t('common.remove'), variant: 'secondary', onPress: handleRemoveItem },
         ]}
       />
+
+      {/* Move Recipe Course Selector */}
+      <Modal visible={showMoveSheet} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <View style={{
+            backgroundColor: colors.bgScreen,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 16,
+            paddingBottom: insets.bottom + 16,
+            maxHeight: '70%',
+          }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.borderDefault, alignSelf: 'center', marginBottom: 12 }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary }}>
+                {t('menus.selectCourse')}
+              </Text>
+              <TouchableOpacity onPress={() => setShowMoveSheet(false)}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }}>
+              {COURSE_ORDER.map((course) => {
+                const isCurrent = course === moveFromCourse;
+                return (
+                  <TouchableOpacity
+                    key={course}
+                    onPress={() => !isCurrent && handleMoveToCourse(course)}
+                    disabled={isCurrent || movingItem}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                      borderRadius: 10,
+                      marginBottom: 8,
+                      backgroundColor: isCurrent ? colors.bgBase : colors.bgCard,
+                      borderWidth: 1,
+                      borderColor: isCurrent ? colors.borderDefault : colors.borderDefault,
+                      opacity: isCurrent ? 0.6 : 1,
+                    }}
+                  >
+                    <Text style={{
+                      flex: 1,
+                      fontSize: 15,
+                      fontWeight: isCurrent ? '600' : '500',
+                      color: isCurrent ? colors.textMuted : colors.textPrimary,
+                    }}>
+                      {COURSE_LABELS[course]}
+                    </Text>
+                    {isCurrent && (
+                      <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

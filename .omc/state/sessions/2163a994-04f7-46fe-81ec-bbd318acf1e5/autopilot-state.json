@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-05-04T14:44:57.840Z",
+  "original_prompt": "/autopilot \"Read and execute docs/prompts/knowledge-graph-promotion.md fully and autonomously from pre-flight through deployment and wrapup. Do not stop for questions unless you hit a genuine blocker.\"",
+  "session_id": "2163a994-04f7-46fe-81ec-bbd318acf1e5",
+  "project_path": "C:\\Users\\seblu\\aiproj\\chefsbook",
+  "reinforcement_count": 0,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-05-04T14:44:57.840Z",
+  "last_checked_at": "2026-05-04T14:44:57.840Z"
+}

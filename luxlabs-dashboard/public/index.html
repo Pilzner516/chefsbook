@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LuxLabs System Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: #080b0f;
+      color: #e0e6ed;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    #app-container {
+      transition: transform 8s ease-in-out;
+    }
+
+    header {
+      background: #0d1117;
+      border-bottom: 1px solid #1a2332;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #00ff88;
+      letter-spacing: 2px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      align-items: center;
+    }
+
+    .status-bar span {
+      opacity: 0.8;
+    }
+
+    .heartbeat {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #00ff88;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      margin-left: 4px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    .clock {
+      font-size: 16px;
+      color: #4da6ff;
+      font-weight: 700;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 16px;
+      padding: 16px;
+      height: calc(100vh - 60px);
+    }
+
+    .panel {
+      background: #0d1117;
+      border: 1px solid #1a2332;
+      border-radius: 8px;
+      padding: 16px;
+      overflow: auto;
+      transition: background 0.5s ease;
+    }
+
+    .panel.spotlight {
+      background: #111820;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .accent-green { color: #00ff88; }
+    .accent-amber { color: #ffb830; }
+    .accent-red { color: #ff3b5c; }
+    .accent-blue { color: #4da6ff; }
+    .accent-purple { color: #b06fff; }
+    .accent-cyan { color: #00d4ff; }
+
+    /* System Vitals */
+    .progress-bar {
+      background: #1a2332;
+      height: 24px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      transition: width 0.5s ease, background 0.3s;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+      font-size: 12px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .progress-fill.green { background: #00ff88; }
+    .progress-fill.amber { background: #ffb830; }
+    .progress-fill.red { background: #ff3b5c; }
+
+    .load-avg {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0;
+    }
+
+    .load-avg-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .load-avg-value {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: 'Share Tech Mono', monospace;
+      color: #4da6ff;
+    }
+
+    .load-avg-label {
+      font-size: 11px;
+      opacity: 0.5;
+      text-transform: uppercase;
+    }
+
+    .process-table {
+      font-size: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .process-table td {
+      padding: 4px 8px;
+    }
+
+    /* Network */
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #1a2332;
+      font-size: 13px;
+    }
+
+    .kv-label {
+      opacity: 0.6;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .kv-value {
+      font-family: 'Share Tech Mono', monospace;
+      color: #00ff88;
+    }
+
+    /* ChefsBook Health */
+    .pm2-list {
+      font-size: 12px;
+    }
+
+    .pm2-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #1a2332;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.online { background: #00ff88; }
+    .status-dot.offline { background: #ff3b5c; animation: none; }
+
+    .port-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .port-chip {
+      padding: 8px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .port-chip.active {
+      background: rgba(0, 255, 136, 0.2);
+      border: 1px solid #00ff88;
+      color: #00ff88;
+    }
+
+    .port-chip.inactive {
+      background: rgba(255, 59, 92, 0.2);
+      border: 1px solid #ff3b5c;
+      color: #ff3b5c;
+    }
+
+    /* Live Connections */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-card {
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #1a2332;
+    }
+
+    .kpi-value {
+      font-size: 36px;
+      font-weight: 700;
+      font-family: 'Share Tech Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      opacity: 0.6;
+      text-transform: uppercase;
+    }
+
+    .today-stats {
+      font-size: 12px;
+    }
+
+    .today-stats .kv-row {
+      font-size: 12px;
+    }
+
+    /* Supabase */
+    .connection-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .conn-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .conn-dot.active { background: #00ff88; }
+    .conn-dot.idle { background: #4a5568; }
+
+    .table-list {
+      font-size: 11px;
+      margin-top: 12px;
+    }
+
+    .table-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #1a2332;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-bar {
+      height: 4px;
+      background: #00ff88;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+
+    /* Activity Feed */
+    .activity-list {
+      font-size: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #1a2332;
+      opacity: 0.8;
+    }
+
+    /* Alerts */
+    .alert-badge {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .alert-badge.ok {
+      background: rgba(0, 255, 136, 0.2);
+      border: 1px solid #00ff88;
+      color: #00ff88;
+    }
+
+    .alert-badge.warning {
+      background: rgba(255, 184, 48, 0.2);
+      border: 1px solid #ffb830;
+      color: #ffb830;
+    }
+
+    .alert-badge.critical {
+      background: rgba(255, 59, 92, 0.2);
+      border: 1px solid #ff3b5c;
+      color: #ff3b5c;
+    }
+
+    /* System Log */
+    .log-list {
+      font-size: 11px;
+      font-family: 'Share Tech Mono', monospace;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .log-item {
+      padding: 4px 0;
+      opacity: 0.7;
+      word-break: break-word;
+    }
+
+    /* Setup message */
+    .setup-msg {
+      padding: 16px;
+      background: rgba(255, 184, 48, 0.1);
+      border: 1px solid #ffb830;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #ffb830;
+    }
+
+    /* Screensaver */
+    #screensaver {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 2s;
+    }
+
+    #screensaver.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    #screensaver.dismissing {
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .screensaver-content {
+      text-align: center;
+      animation: float 23s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(100px, 50px); }
+      50% { transform: translate(-80px, -40px); }
+      75% { transform: translate(60px, -60px); }
+    }
+
+    .screensaver-clock {
+      font-size: clamp(48px, 10vw, 100px);
+      font-family: 'Share Tech Mono', monospace;
+      color: rgba(0, 255, 136, 0.2);
+      font-weight: 700;
+    }
+
+    .screensaver-date {
+      font-size: 18px;
+      text-transform: uppercase;
+      margin-top: 12px;
+      opacity: 0.3;
+    }
+
+    .screensaver-stats {
+      margin-top: 24px;
+      font-size: 14px;
+      opacity: 0.3;
+    }
+
+    .screensaver-hint {
+      position: absolute;
+      bottom: 40px;
+      font-size: 12px;
+      opacity: 0.2;
+      animation: fadeInOut 3s infinite;
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <header>
+      <div class="logo">LUXLABS // <span id="hostname-label">LOADING</span></div>
+      <div class="status-bar">
+        <span>LAN <span id="header-lan">—</span></span>
+        <span>TS <span id="header-ts">—</span></span>
+        <span>PING <span id="header-ping">—</span></span>
+        <span>SSH <span id="header-ssh">—</span></span>
+        <span>UP <span id="header-uptime">—</span></span>
+        <span>●ALIVE<span class="heartbeat"></span></span>
+      </div>
+      <div class="clock" id="header-clock">--:--:--</div>
+    </header>
+
+    <main>
+      <!-- Row 1 -->
+      <div class="panel" id="panel-system">
+        <div class="panel-title accent-green">System Vitals</div>
+        <div>
+          <div style="font-size: 11px; opacity: 0.5; margin-bottom: 4px;">CPU</div>
+          <div class="progress-bar">
+            <div class="progress-fill green" id="cpu-bar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; opacity: 0.5; margin-bottom: 4px;">RAM</div>
+          <div class="progress-bar">
+            <div class="progress-fill green" id="ram-bar" style="width: 0%">0 / 0 MB (0%)</div>
+          </div>
+        </div>
+        <div class="load-avg">
+          <div class="load-avg-item">
+            <div class="load-avg-value" id="load-1m">0.0</div>
+            <div class="load-avg-label">1min</div>
+          </div>
+          <div class="load-avg-item">
+            <div class="load-avg-value" id="load-5m">0.0</div>
+            <div class="load-avg-label">5min</div>
+          </div>
+          <div class="load-avg-item">
+            <div class="load-avg-value" id="load-15m">0.0</div>
+            <div class="load-avg-label">15min</div>
+          </div>
+        </div>
+        <table class="process-table" id="process-table">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="panel" id="panel-chefsbook">
+        <div class="panel-title accent-red">ChefsBook Health</div>
+        <div class="pm2-list" id="pm2-list"></div>
+        <div style="font-size: 11px; opacity: 0.5; margin: 12px 0 8px;">PORTS</div>
+        <div class="port-grid" id="port-grid">
+          <div class="port-chip inactive">3000 WEB</div>
+          <div class="port-chip inactive">3001 STG</div>
+          <div class="port-chip inactive">8000 SUPA</div>
+          <div class="port-chip inactive">5432 PG</div>
+        </div>
+        <div style="font-size: 11px; opacity: 0.5;">Docker: <span id="docker-count">0</span> containers</div>
+      </div>
+
+      <div class="panel" id="panel-live">
+        <div class="panel-title accent-purple">Live Connections</div>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-value accent-green" id="kpi-online">?</div>
+            <div class="kpi-label">Online Now</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value accent-blue" id="kpi-sessions">?</div>
+            <div class="kpi-label">Auth Sessions</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value accent-purple" id="kpi-users">?</div>
+            <div class="kpi-label">Total Users</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value accent-cyan" id="kpi-realtime">?</div>
+            <div class="kpi-label">Realtime Conns</div>
+          </div>
+        </div>
+        <div class="today-stats" id="today-stats">
+          <div class="kv-row"><span class="kv-label">Recipes Added</span><span class="kv-value">?</span></div>
+          <div class="kv-row"><span class="kv-label">AI Calls (24h)</span><span class="kv-value">?</span></div>
+          <div class="kv-row"><span class="kv-label">AI Calls (1h)</span><span class="kv-value">?</span></div>
+          <div class="kv-row"><span class="kv-label">AI Cost (24h)</span><span class="kv-value">?</span></div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="panel" id="panel-network">
+        <div class="panel-title accent-blue">Network</div>
+        <div id="network-content"></div>
+      </div>
+
+      <div class="panel" id="panel-supabase">
+        <div class="panel-title accent-cyan">Supabase</div>
+        <div id="supabase-content"></div>
+      </div>
+
+      <div class="panel" id="panel-infrastructure">
+        <div class="panel-title accent-amber">Infrastructure</div>
+        <div>
+          <div style="font-size: 11px; opacity: 0.5; margin-bottom: 4px;">DISK</div>
+          <div class="progress-bar">
+            <div class="progress-fill green" id="disk-bar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div class="kv-row">
+          <span class="kv-label">CPU Temp</span>
+          <span class="kv-value" id="cpu-temp">—°C</span>
+        </div>
+        <div style="font-size: 11px; opacity: 0.5; margin: 12px 0 8px;">SERVICES</div>
+        <div id="services-list"></div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="panel" id="panel-activity">
+        <div class="panel-title accent-purple">Activity Feed <span class="heartbeat"></span></div>
+        <div class="activity-list" id="activity-feed"></div>
+      </div>
+
+      <div class="panel" id="panel-alerts">
+        <div class="panel-title accent-red">Alerts</div>
+        <div id="alerts-content"></div>
+      </div>
+
+      <div class="panel" id="panel-log">
+        <div class="panel-title accent-green">System Log</div>
+        <div style="font-size: 11px; opacity: 0.5; margin-bottom: 8px;">RECENT LOGINS</div>
+        <div class="log-list" id="login-log"></div>
+        <div style="font-size: 11px; opacity: 0.5; margin: 12px 0 8px;">PM2 LOGS</div>
+        <div class="log-list" id="pm2-log"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Screensaver -->
+  <div id="screensaver">
+    <div class="screensaver-content">
+      <div class="screensaver-clock" id="ss-clock">--:--:--</div>
+      <div class="screensaver-date" id="ss-date">—</div>
+      <div class="screensaver-stats" id="ss-stats">—</div>
+    </div>
+    <div class="screensaver-hint">move mouse to wake</div>
+  </div>
+
+  <script>
+    // State
+    let data = {};
+    let idleTimer = null;
+    let screensaverActive = false;
+    const IDLE_TIMEOUT = 3 * 60 * 1000; // 3 minutes
+
+    // Pixel drift positions (8-position random walk)
+    const driftPositions = [
+      [0, 0], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]
+    ];
+    let driftIndex = 0;
+
+    // Panel spotlight rotation
+    const panels = ['panel-system', 'panel-chefsbook', 'panel-live', 'panel-network',
+                    'panel-supabase', 'panel-infrastructure', 'panel-activity', 'panel-alerts', 'panel-log'];
+    let spotlightIndex = 0;
+
+    // Clock update
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      document.getElementById('header-clock').textContent = timeStr;
+      document.getElementById('ss-clock').textContent = timeStr;
+
+      const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('ss-date').textContent = dateStr.toUpperCase();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Fetch API data
+    async function fetchData(endpoint) {
+      try {
+        const res = await fetch(`/api/${endpoint}`);
+        return await res.json();
+      } catch (err) {
+        console.error(`Failed to fetch /api/${endpoint}:`, err);
+        return null;
+      }
+    }
+
+    // Update System panel
+    function updateSystem(d) {
+      if (!d) return;
+
+      // CPU bar
+      const cpuPct = d.cpu || 0;
+      const cpuBar = document.getElementById('cpu-bar');
+      cpuBar.style.width = `${cpuPct}%`;
+      cpuBar.textContent = `${cpuPct}%`;
+      cpuBar.className = 'progress-fill ' + (cpuPct > 85 ? 'red' : cpuPct > 65 ? 'amber' : 'green');
+
+      // RAM bar
+      const ramPct = d.ram?.pct || 0;
+      const ramBar = document.getElementById('ram-bar');
+      ramBar.style.width = `${ramPct}%`;
+      ramBar.textContent = `${d.ram?.used || 0} / ${d.ram?.total || 0} MB (${ramPct}%)`;
+      ramBar.className = 'progress-fill ' + (ramPct > 90 ? 'red' : ramPct > 75 ? 'amber' : 'green');
+
+      // Load average
+      document.getElementById('load-1m').textContent = (d.load?.['1m'] || 0).toFixed(2);
+      document.getElementById('load-5m').textContent = (d.load?.['5m'] || 0).toFixed(2);
+      document.getElementById('load-15m').textContent = (d.load?.['15m'] || 0).toFixed(2);
+
+      // Processes
+      const tbody = document.querySelector('#process-table tbody');
+      tbody.innerHTML = '';
+      (d.processes || []).forEach(p => {
+        const row = tbody.insertRow();
+        row.innerHTML = `<td style="opacity: 0.6">${p.user}</td><td style="color: #00ff88">${p.cpu}%</td><td style="opacity: 0.7">${p.cmd}</td>`;
+      });
+
+      // Header updates
+      document.getElementById('hostname-label').textContent = d.hostname || 'unknown';
+      document.getElementById('header-uptime').textContent = (d.uptime || '').replace('up ', '');
+    }
+
+    // Update Network panel
+    function updateNetwork(d) {
+      if (!d) return;
+
+      const html = `
+        <div class="kv-row"><span class="kv-label">LAN IP</span><span class="kv-value">${d.lan || '—'}</span></div>
+        <div class="kv-row"><span class="kv-label">Tailscale IP</span><span class="kv-value">${d.tailscale?.ip || '—'}</span></div>
+        <div class="kv-row"><span class="kv-label">TS Peers</span><span class="kv-value">${d.tailscale?.peers || 0}</span></div>
+        <div class="kv-row"><span class="kv-label">Ping 1.1.1.1</span><span class="kv-value">${d.ping?.cloudflare ? d.ping.cloudflare + 'ms' : '—'}</span></div>
+        <div class="kv-row"><span class="kv-label">Ping 8.8.8.8</span><span class="kv-value">${d.ping?.google ? d.ping.google + 'ms' : '—'}</span></div>
+        <div class="kv-row"><span class="kv-label">chefsbk.app</span><span class="kv-value">${d.chefsbkResponseTime ? d.chefsbkResponseTime + 'ms' : '—'}</span></div>
+        <div class="kv-row"><span class="kv-label">SSH Sessions</span><span class="kv-value">${d.sshSessions || 0}</span></div>
+        <div class="kv-row"><span class="kv-label">Bandwidth RX</span><span class="kv-value">${d.bandwidth?.rx || 0} MB</span></div>
+        <div class="kv-row"><span class="kv-label">Bandwidth TX</span><span class="kv-value">${d.bandwidth?.tx || 0} MB</span></div>
+      `;
+      document.getElementById('network-content').innerHTML = html;
+
+      // Header updates
+      document.getElementById('header-lan').textContent = d.lan || '—';
+      document.getElementById('header-ts').textContent = d.tailscale?.ip || '—';
+      document.getElementById('header-ping').textContent = d.ping?.cloudflare ? d.ping.cloudflare + 'ms' : '—';
+      document.getElementById('header-ssh').textContent = d.sshSessions || '0';
+    }
+
+    // Update ChefsBook panel
+    function updateChefsBook(d) {
+      if (!d) return;
+
+      // PM2 list
+      const pm2Html = (d.pm2 || []).map(p =>
+        `<div class="pm2-item">
+          <span class="status-dot ${p.status === 'online' ? 'online' : 'offline'}"></span>
+          <span style="flex: 1">${p.name}</span>
+          <span style="opacity: 0.6">${p.memory}MB</span>
+          <span style="opacity: 0.6">↻${p.restarts}</span>
+        </div>`
+      ).join('');
+      document.getElementById('pm2-list').innerHTML = pm2Html;
+
+      // Ports
+      const portGrid = document.getElementById('port-grid');
+      portGrid.children[0].className = 'port-chip ' + (d.ports?.[3000] ? 'active' : 'inactive');
+      portGrid.children[1].className = 'port-chip ' + (d.ports?.[3001] ? 'active' : 'inactive');
+      portGrid.children[2].className = 'port-chip ' + (d.ports?.[8000] ? 'active' : 'inactive');
+      portGrid.children[3].className = 'port-chip ' + (d.ports?.[5432] ? 'active' : 'inactive');
+
+      // Docker
+      document.getElementById('docker-count').textContent = (d.containers || []).length;
+    }
+
+    // Update Live panel
+    function updateLive(d) {
+      if (!d || d.configured === false) {
+        document.getElementById('kpi-online').textContent = '?';
+        document.getElementById('kpi-sessions').textContent = '?';
+        document.getElementById('kpi-users').textContent = '?';
+        document.getElementById('kpi-realtime').textContent = '?';
+
+        const statsRows = document.querySelectorAll('#today-stats .kv-value');
+        statsRows.forEach(el => el.textContent = '?');
+
+        // Update activity feed
+        document.getElementById('activity-feed').innerHTML = '<div class="setup-msg">DATABASE_URL not configured</div>';
+        return;
+      }
+
+      document.getElementById('kpi-online').textContent = d.onlineNow || 0;
+      document.getElementById('kpi-sessions').textContent = d.activeSessions || 0;
+      document.getElementById('kpi-users').textContent = d.totalUsers || 0;
+      document.getElementById('kpi-realtime').textContent = d.realtimeConns || 0;
+
+      const statsRows = document.querySelectorAll('#today-stats .kv-value');
+      statsRows[0].textContent = d.dailyStats?.recipesAdded || 0;
+      statsRows[1].textContent = d.dailyStats?.aiCalls24h || 0;
+      statsRows[2].textContent = d.dailyStats?.aiCalls1h || 0;
+      statsRows[3].textContent = '$' + (d.dailyStats?.aiCost24h || '0.000');
+
+      // Activity feed
+      const activityHtml = (d.aiActivity || []).map(a => {
+        const timeAgo = new Date(a.created_at);
+        const mins = Math.floor((Date.now() - timeAgo) / 60000);
+        return `<div class="activity-item">${mins}m · ${a.action} · ${a.model} · $${a.cost_usd}</div>`;
+      }).join('');
+      document.getElementById('activity-feed').innerHTML = activityHtml || '<div style="opacity: 0.5">No recent activity</div>';
+    }
+
+    // Update Supabase panel
+    function updateSupabase(d) {
+      if (!d || d.configured === false) {
+        document.getElementById('supabase-content').innerHTML =
+          '<div class="setup-msg">DATABASE_URL not configured.<br>Set environment variable to enable Supabase monitoring.</div>';
+        return;
+      }
+
+      let html = `
+        <div class="kv-row"><span class="kv-label">DB Size</span><span class="kv-value">${d.dbSize || '—'}</span></div>
+        <div class="kv-row"><span class="kv-label">Connections</span><span class="kv-value">${(d.connections || []).reduce((sum, c) => sum + parseInt(c.count), 0)}</span></div>
+      `;
+
+      // Connection dots
+      const totalConns = (d.connections || []).reduce((sum, c) => sum + parseInt(c.count), 0);
+      const activeConns = (d.connections || []).find(c => c.state === 'active')?.count || 0;
+      if (totalConns > 0) {
+        html += '<div class="connection-dots">';
+        for (let i = 0; i < Math.min(totalConns, 50); i++) {
+          html += `<div class="conn-dot ${i < activeConns ? 'active' : 'idle'}"></div>`;
+        }
+        html += '</div>';
+      }
+
+      // Active queries
+      if (d.activeQueries && d.activeQueries.length > 0) {
+        html += '<div style="font-size: 11px; opacity: 0.5; margin: 12px 0 8px;">ACTIVE QUERIES</div>';
+        d.activeQueries.forEach(q => {
+          html += `<div class="kv-row"><span class="kv-label">${q.duration}s</span><span class="kv-value" style="font-size: 10px">${q.query.substring(0, 40)}...</span></div>`;
+        });
+      }
+
+      // Tables
+      if (d.tables && d.tables.length > 0) {
+        html += '<div class="table-list">';
+        d.tables.forEach(t => {
+          const barWidth = Math.min((t.rows / (d.tables[0]?.rows || 1)) * 100, 100);
+          html += `<div class="table-item"><div><div>${t.name}</div><div style="opacity: 0.5">${t.rows} rows · ${t.size}</div></div><div class="table-bar" style="width: ${barWidth}px"></div></div>`;
+        });
+        html += '</div>';
+      }
+
+      document.getElementById('supabase-content').innerHTML = html;
+    }
+
+    // Update Infrastructure panel
+    function updateInfrastructure(d) {
+      if (!d) return;
+
+      // Disk
+      const diskPct = d.disk?.pct || 0;
+      const diskBar = document.getElementById('disk-bar');
+      diskBar.style.width = `${diskPct}%`;
+      diskBar.textContent = `${d.disk?.used || '—'} / ${d.disk?.total || '—'} (${diskPct}%)`;
+      diskBar.className = 'progress-fill ' + (diskPct > 90 ? 'red' : diskPct > 75 ? 'amber' : 'green');
+
+      // Temp
+      const tempC = d.tempC || 0;
+      const tempEl = document.getElementById('cpu-temp');
+      tempEl.textContent = `${tempC}°C`;
+      tempEl.style.color = tempC > 80 ? '#ff3b5c' : tempC > 65 ? '#ffb830' : '#00ff88';
+
+      // Services
+      const servicesHtml = (d.services || []).map(s =>
+        `<div class="pm2-item">
+          <span class="status-dot ${s.active ? 'online' : 'offline'}"></span>
+          <span style="flex: 1">${s.name}</span>
+        </div>`
+      ).join('');
+      document.getElementById('services-list').innerHTML = servicesHtml;
+    }
+
+    // Update Alerts panel
+    function updateAlerts(d) {
+      if (!d) return;
+
+      if (d.level === 'ok') {
+        document.getElementById('alerts-content').innerHTML =
+          '<div class="alert-badge ok">✓ All systems nominal</div>';
+        return;
+      }
+
+      const alertsHtml = (d.alerts || []).map(a =>
+        `<div class="alert-badge ${a.level}">${a.level.toUpperCase()}: ${a.msg}</div>`
+      ).join('');
+      document.getElementById('alerts-content').innerHTML = alertsHtml;
+    }
+
+    // Update Activity panel
+    function updateActivity(d) {
+      if (!d) return;
+
+      // Logins
+      const loginHtml = (d.logins || []).slice(0, 6).map(l =>
+        `<div class="log-item">${l}</div>`
+      ).join('');
+      document.getElementById('login-log').innerHTML = loginHtml || '<div class="log-item">No recent logins</div>';
+
+      // PM2 logs
+      const logHtml = (d.logs || []).slice(-5).map(l =>
+        `<div class="log-item">${l}</div>`
+      ).join('');
+      document.getElementById('pm2-log').innerHTML = logHtml || '<div class="log-item">No logs available</div>';
+    }
+
+    // Fetch all data
+    async function fetchAll() {
+      const [system, network, chefsbook, infrastructure, supabase, live, alerts, activity] = await Promise.allSettled([
+        fetchData('system'),
+        fetchData('network'),
+        fetchData('chefsbook'),
+        fetchData('infrastructure'),
+        fetchData('supabase'),
+        fetchData('live'),
+        fetchData('alerts'),
+        fetchData('activity'),
+      ]);
+
+      if (system.status === 'fulfilled') updateSystem(system.value);
+      if (network.status === 'fulfilled') updateNetwork(network.value);
+      if (chefsbook.status === 'fulfilled') updateChefsBook(chefsbook.value);
+      if (infrastructure.status === 'fulfilled') updateInfrastructure(infrastructure.value);
+      if (supabase.status === 'fulfilled') updateSupabase(supabase.value);
+      if (live.status === 'fulfilled') { updateLive(live.value); data.live = live.value; }
+      if (alerts.status === 'fulfilled') updateAlerts(alerts.value);
+      if (activity.status === 'fulfilled') updateActivity(activity.value);
+
+      data.system = system.value;
+      data.network = network.value;
+    }
+
+    // Staggered refresh intervals
+    fetchAll(); // Initial load
+    setInterval(() => fetchData('system').then(updateSystem), 5000);
+    setInterval(() => fetchData('network').then(updateNetwork), 10000);
+    setInterval(() => fetchData('chefsbook').then(updateChefsBook), 8000);
+    setInterval(() => fetchData('live').then(d => { updateLive(d); data.live = d; }), 8000);
+    setInterval(() => fetchData('supabase').then(updateSupabase), 15000);
+    setInterval(() => fetchData('infrastructure').then(updateInfrastructure), 15000);
+    setInterval(() => fetchData('alerts').then(updateAlerts), 20000);
+    setInterval(() => fetchData('activity').then(updateActivity), 30000);
+
+    // Pixel drift (every 2 minutes)
+    function applyPixelDrift() {
+      driftIndex = (driftIndex + 1) % driftPositions.length;
+      const [x, y] = driftPositions[driftIndex];
+      document.getElementById('app-container').style.transform = `translate(${x}px, ${y}px)`;
+    }
+    setInterval(applyPixelDrift, 2 * 60 * 1000);
+
+    // Panel spotlight rotation (every 45 seconds)
+    function rotateSpotlight() {
+      panels.forEach(p => document.getElementById(p).classList.remove('spotlight'));
+      spotlightIndex = (spotlightIndex + 1) % panels.length;
+      document.getElementById(panels[spotlightIndex]).classList.add('spotlight');
+    }
+    setInterval(rotateSpotlight, 45000);
+
+    // Screensaver
+    function resetIdleTimer() {
+      if (screensaverActive) {
+        dismissScreensaver();
+      }
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(activateScreensaver, IDLE_TIMEOUT);
+    }
+
+    function activateScreensaver() {
+      screensaverActive = true;
+      const ss = document.getElementById('screensaver');
+      ss.classList.add('active');
+
+      // Update screensaver stats
+      function updateSSStats() {
+        const cpu = data.system?.cpu || '—';
+        const ram = data.system?.ram?.pct || '—';
+        const ts = data.network?.tailscale?.ip || '—';
+        document.getElementById('ss-stats').textContent = `CPU ${cpu}% · RAM ${ram}% · TS ${ts}`;
+      }
+      updateSSStats();
+      setInterval(updateSSStats, 5000);
+    }
+
+    function dismissScreensaver() {
+      screensaverActive = false;
+      const ss = document.getElementById('screensaver');
+      ss.classList.add('dismissing');
+      setTimeout(() => {
+        ss.classList.remove('active', 'dismissing');
+      }, 400);
+    }
+
+    // Idle detection
+    ['mousemove', 'keydown', 'touchstart', 'wheel'].forEach(evt => {
+      document.addEventListener(evt, resetIdleTimer);
+    });
+    resetIdleTimer();
+  </script>
+</body>
+</html>

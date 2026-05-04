@@ -1,5 +1,9 @@
 import React from 'react';
 
+// Scheduler types and functions
+export * from './scheduler.types';
+export * from './scheduler';
+
 // Shared theme — single source of truth for both apps
 export { TRATTORIA_COLORS } from './theme';
 export type { TrattoriaColor } from './theme';

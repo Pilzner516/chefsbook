@@ -29,7 +29,8 @@ export async function getPrimaryPhotos(recipeIds: string[]): Promise<Record<stri
 
 /** Check if a URL points to internal storage (safe to save as recipe photo). */
 export function isInternalPhotoUrl(url: string): boolean {
-  return url.includes('100.110.47.62')
+  return url.includes('100.83.66.51')
+    || url.includes('100.110.47.62')
     || url.includes('chefsbk.app')
     || url.includes('supabase')
     || url.includes('localhost');

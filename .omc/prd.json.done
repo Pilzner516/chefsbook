@@ -1,0 +1,142 @@
+{
+  "project": "LuxLabs Dashboard Database Connection Fix",
+  "goal": "Fix the DATABASE_URL connection to reach raw Postgres (bypassing PgBouncer) so /api/supabase and /api/live endpoints return configured: true with real data",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Discover Postgres container port mapping",
+      "priority": 1,
+      "description": "Find the actual Postgres port exposed to the host (not PgBouncer's 5432)",
+      "acceptanceCriteria": [
+        "Run docker ps --format '{{.Names}}\\t{{.Ports}}' on slux and capture output",
+        "Run ss -tlnp | grep -E '543' on slux to see local listeners",
+        "Identify the Postgres container name (likely supabase-db or similar)",
+        "Extract the host port mapping for Postgres 5432 (format: host_port:5432)",
+        "Confirm the discovered port is NOT 5432 (which is PgBouncer)"
+      ],
+      "passes": true,
+      "verificationNotes": "Container supabase-db has NO host port mapping. Accessible via Docker network IP 172.18.0.11:5432. Both localhost:5432 and localhost:6543 confirmed as PgBouncer (return 'Tenant or user not found' error)."
+    },
+    {
+      "id": "US-002",
+      "title": "Extract Postgres password from Supabase .env",
+      "priority": 2,
+      "description": "Read the POSTGRES_PASSWORD from /opt/luxlabs/chefsbook/supabase/.env",
+      "acceptanceCriteria": [
+        "File /opt/luxlabs/chefsbook/supabase/.env exists on slux",
+        "POSTGRES_PASSWORD value is extracted successfully",
+        "Password value is non-empty string"
+      ],
+      "passes": true,
+      "verificationNotes": "Password extracted: apfnVNFXGCyg7ZSIaM9ugTPuLdIGQkM (31 characters)"
+    },
+    {
+      "id": "US-003",
+      "title": "Test direct Postgres connection",
+      "priority": 3,
+      "description": "Verify the connection string works before updating ecosystem.config.js",
+      "acceptanceCriteria": [
+        "Run Node.js test script on slux using pg Pool with discovered port and password",
+        "Connection string format: postgresql://postgres:PASSWORD@localhost:REAL_PORT/postgres",
+        "Test query 'SELECT version()' executes successfully",
+        "Response includes PostgreSQL version string",
+        "No 'Tenant or user not found' error (confirms bypassed PgBouncer)"
+      ],
+      "passes": true,
+      "verificationNotes": "Connection successful to postgresql://postgres:apfnVNFXGCyg7ZSIaM9ugTPuLdIGQkM@172.18.0.11:5432/postgres. Returns PostgreSQL 15.8. No PgBouncer error."
+    },
+    {
+      "id": "US-004",
+      "title": "Update ecosystem.config.js with working DATABASE_URL",
+      "priority": 4,
+      "description": "Update the PM2 ecosystem config with the verified connection string",
+      "acceptanceCriteria": [
+        "File ~/luxlabs-dashboard/ecosystem.config.js is read successfully",
+        "DATABASE_URL in env section is updated with working connection string",
+        "File is written back with correct syntax (valid JavaScript)",
+        "Fresh read of the file confirms DATABASE_URL contains the new value"
+      ],
+      "passes": true,
+      "verificationNotes": "Updated DATABASE_URL from localhost:5432 to 172.18.0.11:5432. File syntax verified correct."
+    },
+    {
+      "id": "US-005",
+      "title": "Restart dashboard PM2 process",
+      "priority": 5,
+      "description": "Restart the luxlabs-dashboard process to load new DATABASE_URL",
+      "acceptanceCriteria": [
+        "pm2 stop luxlabs-dashboard executes successfully",
+        "pm2 delete luxlabs-dashboard executes successfully",
+        "pm2 start ~/luxlabs-dashboard/ecosystem.config.js executes successfully",
+        "pm2 list shows luxlabs-dashboard with status 'online'",
+        "pm2 save completes successfully",
+        "Process has been running for less than 60 seconds (confirms fresh start)"
+      ],
+      "passes": true,
+      "verificationNotes": "Process restarted successfully. Status: online, PID: 1080862, uptime: 2s. pm2 save completed."
+    },
+    {
+      "id": "US-006",
+      "title": "Verify /api/supabase endpoint returns real data",
+      "priority": 6,
+      "description": "Confirm the Supabase stats endpoint returns configured: true with actual DB metrics",
+      "acceptanceCriteria": [
+        "curl -s http://localhost:9000/api/supabase returns valid JSON",
+        "Response contains '\"configured\": true' (exact match)",
+        "Response contains 'dbSize' field with non-null value",
+        "Response contains 'tables' array with at least 1 table",
+        "Response does NOT contain 'configured: false'",
+        "No 'Tenant or user not found' in pm2 logs after this request"
+      ],
+      "passes": true,
+      "verificationNotes": "Response: configured: true, dbSize: 21 MB, tables: 8. No PgBouncer errors in logs. Also updated server.js to include configured: true in success response."
+    },
+    {
+      "id": "US-007",
+      "title": "Verify /api/live endpoint returns real data",
+      "priority": 7,
+      "description": "Confirm the live activity endpoint returns configured: true with actual user metrics",
+      "acceptanceCriteria": [
+        "curl -s http://localhost:9000/api/live returns valid JSON",
+        "Response contains '\"configured\": true' (exact match)",
+        "Response contains 'onlineUsers' field (may be 0, but must exist)",
+        "Response contains 'totalUsers' field with numeric value",
+        "Response does NOT contain 'configured: false'",
+        "No 'Tenant or user not found' in pm2 logs after this request"
+      ],
+      "passes": true,
+      "verificationNotes": "Response: configured: true, totalUsers: 10, onlineNow: 0. No PgBouncer errors. Also updated server.js to include configured: true in success response."
+    },
+    {
+      "id": "US-008",
+      "title": "Verify no database errors in PM2 logs",
+      "priority": 8,
+      "description": "Confirm the dashboard is running cleanly with no connection errors",
+      "acceptanceCriteria": [
+        "pm2 logs luxlabs-dashboard --lines 20 --nostream contains no 'Tenant or user not found' errors",
+        "Logs contain no 'ECONNREFUSED' errors",
+        "Logs contain no 'authentication failed' errors",
+        "Process uptime is greater than 0 seconds (still running)",
+        "No error-level log entries related to database connection in last 20 lines"
+      ],
+      "passes": true,
+      "verificationNotes": "Logs show [DB] PostgreSQL pool: CONFIGURED with no Tenant/user errors. Only non-DB errors are port 3001 checks (expected - staging not running). Process running cleanly."
+    }
+  ],
+  "technicalNotes": {
+    "server": "pilzner@slux via SSH/Tailscale",
+    "dashboardPath": "~/luxlabs-dashboard/",
+    "supabasePath": "/opt/luxlabs/chefsbook/supabase/",
+    "pm2Process": "luxlabs-dashboard",
+    "rootCause": "DATABASE_URL is pointing to PgBouncer port instead of raw Postgres port",
+    "initialSolution": "Connected via Docker network IP 172.18.0.11:5432 (REJECTED by architect - fragile, breaks on container recreation)",
+    "finalSolution": "Added host port mapping 5433:5432 in docker-compose.yml, updated DATABASE_URL to localhost:5433 (stable, survives container recreation)",
+    "architecturalFix": "Modified /opt/luxlabs/chefsbook/supabase/docker-compose.yml to expose Postgres on host port 5433. Tested resilience via full container recreation (stop/rm/up) - connection persists.",
+    "filesChanged": [
+      "~/luxlabs-dashboard/ecosystem.config.js (DATABASE_URL: localhost:5432 → localhost:5433)",
+      "~/luxlabs-dashboard/server.js (added configured: true to success responses)",
+      "/opt/luxlabs/chefsbook/supabase/docker-compose.yml (added ports: 5433:5432 to db service)",
+      "/opt/luxlabs/chefsbook/supabase/docker-compose.yml.bak (backup created)"
+    ]
+  }
+}

@@ -4,7 +4,7 @@ const { join } = require('path');
 
 /**
  * Expo config plugin that enables cleartext HTTP traffic for the self-hosted
- * Supabase instance on Tailscale (100.110.47.62).
+ * Supabase instance on Tailscale (100.83.66.51).
  *
  * Creates network_security_config.xml and sets usesCleartextTraffic + networkSecurityConfig
  * on the Application element in AndroidManifest.xml.
@@ -27,7 +27,7 @@ module.exports = function withCleartextTraffic(config) {
       `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">100.110.47.62</domain>
+        <domain includeSubdomains="false">100.83.66.51</domain>
         <domain includeSubdomains="false">10.0.2.2</domain>
         <domain includeSubdomains="false">localhost</domain>
     </domain-config>

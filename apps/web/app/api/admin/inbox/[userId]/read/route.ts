@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin } from '@chefsbook/db';
 
 interface RouteParams {
   params: Promise<{ userId: string }>;
 }
 
+async function verifyAdmin(req: NextRequest): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return null;
+  const { data } = await supabaseAdmin.from('admin_users').select('role').eq('user_id', user.id).single();
+  return data ? user.id : null;
+}
+
 // POST: Mark all messages in conversation as read by admin
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const adminId = await verifyAdmin(request);
+    if (!adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { userId } = await params;
 
     // Get all admin user IDs

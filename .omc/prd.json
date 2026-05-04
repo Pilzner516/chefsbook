@@ -1,0 +1,55 @@
+{
+  "title": "Fix mobile app crash caused by Expo Router conflict and TypeScript error",
+  "description": "The mobile app crashed on launch due to conflicting route patterns. Root causes: (1) Expo Router route conflict in cook-menu directory, (2) UIKit Input component TypeScript type error.",
+  "created_at": "2026-05-04T00:00:00.000Z",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Fix TypeScript type error in UIKit Input component",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Input component style prop type changed from ViewStyle to TextStyle in apps/mobile/components/UIKit.tsx line 116",
+        "TypeScript compilation passes: cd apps/mobile && npx tsc --noEmit returns 0 errors",
+        "No other TypeScript errors introduced by the change"
+      ]
+    },
+    {
+      "id": "US-001B",
+      "title": "Fix Expo Router conflicting route patterns",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Delete conflicting file apps/mobile/app/cook-menu/[id].tsx",
+        "Keep directory structure apps/mobile/app/cook-menu/[id]/index.tsx and other files",
+        "Route pattern 'cook-menu/:id' now resolves to only one screen",
+        "No Expo Router 'conflicting screens' error on app launch"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Verify app launches without crash",
+      "priority": 2,
+      "passes": true,
+      "acceptanceCriteria": [
+        "App launches and shows landing screen without crash",
+        "No 'conflicting screens' error in logcat",
+        "Navigation works without immediate crash",
+        "App is stable and usable"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Rebuild and install APK with fixes",
+      "priority": 3,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Deep clean performed (.expo, android/app/build, android/.gradle deleted)",
+        "APK builds successfully with both fixes applied",
+        "APK installs on device via adb",
+        "Build includes TypeScript fix (ViewStyle → TextStyle)",
+        "Build includes route fix (cook-menu/[id].tsx deleted)"
+      ]
+    }
+  ]
+}

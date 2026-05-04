@@ -1,0 +1,471 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777837812049,
+  "projectRoot": "C:\\Users\\seblu\\aiproj\\chefsbook",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.1.0",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.1.0",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "turbo dev",
+      "build": "turbo build",
+      "mobile": "turbo dev --filter=@chefsbook/mobile",
+      "web": "turbo dev --filter=@chefsbook/web"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [
+      "apps/*",
+      "packages/*"
+    ],
+    "mainDirectories": [
+      "docs",
+      "scripts"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "apps": {
+      "path": "apps",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777837811993,
+      "keyFiles": []
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 11,
+      "lastAccessed": 1777837811993,
+      "keyFiles": [
+        "AGENT-ARCHITECTURE.md",
+        "AI-COST-REPORT-2026-04-16.md",
+        "AUDIT-REPORT-2026-04-14.md",
+        "context-audit.md",
+        "functional-test-findings.md"
+      ]
+    },
+    "luxlabs-dashboard": {
+      "path": "luxlabs-dashboard",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1777837812004,
+      "keyFiles": [
+        "DEPLOY.md",
+        "DEPLOYMENT-VERIFICATION.md",
+        "display-setup.sh",
+        "package.json",
+        "server.js"
+      ]
+    },
+    "packages": {
+      "path": "packages",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777837812004,
+      "keyFiles": []
+    },
+    "screenshots": {
+      "path": "screenshots",
+      "purpose": null,
+      "fileCount": 60,
+      "lastAccessed": 1777837812005,
+      "keyFiles": [
+        "cb_142_boot.png",
+        "cb_afterlogin.png",
+        "cb_afterlogin2.png",
+        "cb_afterlogin3.png",
+        "cb_afterlogin4.png"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 23,
+      "lastAccessed": 1777837812006,
+      "keyFiles": [
+        "apply-watermarks.mjs",
+        "backfill-descriptions.mjs",
+        "backfill-recipe-categories.mjs",
+        "backfill-step-timings.mjs",
+        "backfill-title-translations.mjs"
+      ]
+    },
+    "supabase": {
+      "path": "supabase",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777837812006,
+      "keyFiles": []
+    },
+    "luxlabs-dashboard\\public": {
+      "path": "luxlabs-dashboard\\public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1777837812010,
+      "keyFiles": [
+        "index.html"
+      ]
+    },
+    "supabase\\migrations": {
+      "path": "supabase\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 86,
+      "lastAccessed": 1777837812013,
+      "keyFiles": [
+        "20250327_001_core.sql",
+        "20250327_002_functions.sql",
+        "20250327_003_storage.sql"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "progress.txt",
+      "accessCount": 46,
+      "lastAccessed": 1777845387166,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 40,
+      "lastAccessed": 1777897085729,
+      "type": "file"
+    },
+    {
+      "path": "DONE.md",
+      "accessCount": 26,
+      "lastAccessed": 1777897120063,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\feature-registry.md",
+      "accessCount": 18,
+      "lastAccessed": 1777905918611,
+      "type": "file"
+    },
+    {
+      "path": "packages\\db\\src\\queries\\recipes.ts",
+      "accessCount": 12,
+      "lastAccessed": 1777906231749,
+      "type": "file"
+    },
+    {
+      "path": "apps/web",
+      "accessCount": 8,
+      "lastAccessed": 1777906142467,
+      "type": "directory"
+    },
+    {
+      "path": "packages\\db\\src\\client.ts",
+      "accessCount": 7,
+      "lastAccessed": 1777829617618,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 7,
+      "lastAccessed": 1777829641491,
+      "type": "directory"
+    },
+    {
+      "path": "apps\\web\\app\\api\\image\\route.ts",
+      "accessCount": 6,
+      "lastAccessed": 1777779322391,
+      "type": "file"
+    },
+    {
+      "path": "docs\\prompts\\ChefsBook-PC-Server-Migration-Plan.md",
+      "accessCount": 5,
+      "lastAccessed": 1777768388504,
+      "type": "file"
+    },
+    {
+      "path": "apps\\mobile",
+      "accessCount": 5,
+      "lastAccessed": 1777825670975,
+      "type": "directory"
+    },
+    {
+      "path": ".claude\\agents\\testing.md",
+      "accessCount": 5,
+      "lastAccessed": 1777905917855,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\deployment.md",
+      "accessCount": 5,
+      "lastAccessed": 1777905918966,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\auth\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777779463922,
+      "type": "file"
+    },
+    {
+      "path": "apps\\mobile\\plugins\\withCleartextTraffic.js",
+      "accessCount": 3,
+      "lastAccessed": 1777779490105,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\auth\\verify-turnstile\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777780034480,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\recipes\\[id]\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777780086306,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\admin\\system-health\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777809899945,
+      "type": "file"
+    },
+    {
+      "path": "scripts\\fix-storage-xattr.js",
+      "accessCount": 3,
+      "lastAccessed": 1777819437371,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\lib\\recipeImage.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777778855683,
+      "type": "file"
+    },
+    {
+      "path": "apps\\mobile\\.env.staging",
+      "accessCount": 2,
+      "lastAccessed": 1777779486307,
+      "type": "file"
+    },
+    {
+      "path": "apps\\mobile\\android\\app\\src\\main\\res\\xml\\network_security_config.xml",
+      "accessCount": 2,
+      "lastAccessed": 1777779487991,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\recipe\\[id]\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777779488320,
+      "type": "file"
+    },
+    {
+      "path": "packages\\db\\src\\queries\\recipePhotos.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777779512256,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/app/dashboard/menus/[id]/page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777779531956,
+      "type": "directory"
+    },
+    {
+      "path": "apps/web/app/recipe/[id]/page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777779548819,
+      "type": "directory"
+    },
+    {
+      "path": "apps\\web\\app\\api\\user\\heartbeat\\route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777779571857,
+      "type": "file"
+    },
+    {
+      "path": "packages\\db\\src\\queries\\shopping.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777779876091,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\dashboard\\shop\\page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777779877075,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\shopping\\add-items\\route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777779877205,
+      "type": "file"
+    },
+    {
+      "path": "packages\\db\\src\\queries\\likesComments.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777779983326,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\auth\\login-success\\route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777780033754,
+      "type": "file"
+    },
+    {
+      "path": "scripts\\sync-storage-metadata.sh",
+      "accessCount": 2,
+      "lastAccessed": 1777819411257,
+      "type": "file"
+    },
+    {
+      "path": "scripts\\fix-storage-xattr.sh",
+      "accessCount": 2,
+      "lastAccessed": 1777819411406,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/lib",
+      "accessCount": 2,
+      "lastAccessed": 1777839401720,
+      "type": "directory"
+    },
+    {
+      "path": "apps/web/app/auth",
+      "accessCount": 1,
+      "lastAccessed": 1777777534138,
+      "type": "directory"
+    },
+    {
+      "path": "apps\\web\\lib\\turnstile.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777777931407,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\publishing.md",
+      "accessCount": 1,
+      "lastAccessed": 1777779447933,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\pdf-design.md",
+      "accessCount": 1,
+      "lastAccessed": 1777779455766,
+      "type": "file"
+    },
+    {
+      "path": "apps\\mobile\\app.staging.json",
+      "accessCount": 1,
+      "lastAccessed": 1777779459829,
+      "type": "file"
+    },
+    {
+      "path": "apps\\mobile\\app.json",
+      "accessCount": 1,
+      "lastAccessed": 1777779460269,
+      "type": "file"
+    },
+    {
+      "path": "packages",
+      "accessCount": 1,
+      "lastAccessed": 1777779468148,
+      "type": "directory"
+    },
+    {
+      "path": "apps\\web\\app\\dashboard\\search\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777779475571,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\dashboard\\plan\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777779481885,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\scan\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777779488734,
+      "type": "file"
+    },
+    {
+      "path": "packages\\db\\src\\queries\\follows.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777779503397,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\recipe\\[id]\\like\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777779504611,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\admin\\audit\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777779525433,
+      "type": "file"
+    },
+    {
+      "path": "apps",
+      "accessCount": 1,
+      "lastAccessed": 1777779533332,
+      "type": "directory"
+    },
+    {
+      "path": "apps\\web\\app",
+      "accessCount": 1,
+      "lastAccessed": 1777779534942,
+      "type": "directory"
+    }
+  ],
+  "userDirectives": []
+}

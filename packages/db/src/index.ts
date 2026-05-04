@@ -24,3 +24,5 @@ export * from './shopping/deduplication';
 export * from './queries/aiUsage';
 export * from './queries/duplicates';
 export * from './queries/menus';
+export * from './queries/cookingSessions';
+export * from './queries/cookingKnowledge';

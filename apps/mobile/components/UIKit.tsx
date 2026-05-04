@@ -7,7 +7,6 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  StyleSheet,
   ViewStyle,
   TextStyle,
 } from 'react-native';
@@ -112,7 +111,7 @@ interface InputProps {
   keyboardType?: TextInput['props']['keyboardType'];
   secureTextEntry?: boolean;
   autoCapitalize?: TextInput['props']['autoCapitalize'];
-  style?: ViewStyle;
+  style?: TextStyle;
 }
 
 export function Input({ value, onChangeText, placeholder, multiline, keyboardType, secureTextEntry, autoCapitalize, style }: InputProps) {

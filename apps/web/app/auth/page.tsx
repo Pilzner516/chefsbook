@@ -63,31 +63,33 @@ export default function AuthPage() {
       return;
     }
 
-    // Turnstile verification
-    if (!turnstileToken) {
-      setError('Please complete the verification challenge.');
-      setLoading(false);
-      return;
-    }
-
-    // Verify Turnstile token server-side
-    try {
-      const verifyRes = await fetch('/api/auth/verify-turnstile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: turnstileToken }),
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        setError('Verification failed. Please try again.');
-        setTurnstileToken(''); // Reset token to force re-verification
+    // Turnstile verification (only if configured)
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+      if (!turnstileToken) {
+        setError('Please complete the verification challenge.');
         setLoading(false);
         return;
       }
-    } catch (err) {
-      setError('Verification failed. Please try again.');
-      setLoading(false);
-      return;
+
+      // Verify Turnstile token server-side
+      try {
+        const verifyRes = await fetch('/api/auth/verify-turnstile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: turnstileToken }),
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyData.success) {
+          setError('Verification failed. Please try again.');
+          setTurnstileToken(''); // Reset token to force re-verification
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        setError('Verification failed. Please try again.');
+        setLoading(false);
+        return;
+      }
     }
 
     if (mode === 'signup') {

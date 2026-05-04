@@ -1,0 +1,275 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777845886483,
+  "projectRoot": "C:\\Users\\seblu\\aiproj\\chefsbook\\apps\\mobile",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.1.0",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.1.0",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "cd C:/Users/seblu/aiproj/chefsbook/apps/mobile && npx tsc --noEmit 2>&1 | tail -20",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "expo start --dev-client",
+      "android": "expo run:android",
+      "ios": "expo run:ios",
+      "build:android": "eas build --platform android",
+      "build:ios": "eas build --platform ios",
+      "type-check": "tsc --noEmit"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "assets",
+      "components",
+      "docs",
+      "lib"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "agents": {
+      "path": "agents",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1777845886443,
+      "keyFiles": [
+        "CLAUDE.md"
+      ]
+    },
+    "android": {
+      "path": "android",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1777845886444,
+      "keyFiles": [
+        "build.gradle",
+        "chefsbook-release.keystore",
+        "gradle.properties",
+        "gradlew",
+        "gradlew.bat"
+      ]
+    },
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 6,
+      "lastAccessed": 1777845886455,
+      "keyFiles": [
+        "index.tsx",
+        "messages.tsx",
+        "modal.tsx",
+        "plans.tsx",
+        "speak.tsx"
+      ]
+    },
+    "apps": {
+      "path": "apps",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777845886456,
+      "keyFiles": []
+    },
+    "assets": {
+      "path": "assets",
+      "purpose": "Static assets",
+      "fileCount": 4,
+      "lastAccessed": 1777845886458,
+      "keyFiles": [
+        "adaptive-icon.png",
+        "favicon.png",
+        "icon.png",
+        "splash.png"
+      ]
+    },
+    "components": {
+      "path": "components",
+      "purpose": "UI components",
+      "fileCount": 33,
+      "lastAccessed": 1777845886458,
+      "keyFiles": [
+        "AddToMenuSheet.tsx",
+        "AiImageGenerationModal.tsx",
+        "AskSousChefSheet.tsx",
+        "ChefsBookHeader.tsx",
+        "ChefsDialog.tsx"
+      ]
+    },
+    "constants": {
+      "path": "constants",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1777845886459,
+      "keyFiles": [
+        "themes.ts"
+      ]
+    },
+    "context": {
+      "path": "context",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1777845886460,
+      "keyFiles": [
+        "ThemeContext.tsx"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1777845886460,
+      "keyFiles": [
+        "metadata.json"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 0,
+      "lastAccessed": 1777845886461,
+      "keyFiles": []
+    },
+    "lib": {
+      "path": "lib",
+      "purpose": "Library code",
+      "fileCount": 6,
+      "lastAccessed": 1777845886462,
+      "keyFiles": [
+        "i18n.ts",
+        "image.ts",
+        "sharing.ts",
+        "shoppingCache.ts",
+        "timers.ts"
+      ]
+    },
+    "locales": {
+      "path": "locales",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1777845886462,
+      "keyFiles": [
+        "de.json",
+        "en.json",
+        "es.json",
+        "fr.json",
+        "it.json"
+      ]
+    },
+    "plugins": {
+      "path": "plugins",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1777845886463,
+      "keyFiles": [
+        "withCleartextTraffic.js"
+      ]
+    },
+    "android\\app": {
+      "path": "android\\app",
+      "purpose": "Application code",
+      "fileCount": 3,
+      "lastAccessed": 1777845886465,
+      "keyFiles": [
+        "build.gradle",
+        "debug.keystore",
+        "proguard-rules.pro"
+      ]
+    },
+    "android\\build": {
+      "path": "android\\build",
+      "purpose": "Build output",
+      "fileCount": 0,
+      "lastAccessed": 1777845886465,
+      "keyFiles": []
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 45,
+      "lastAccessed": 1777845886469,
+      "keyFiles": [
+        "017bc6ba3fc25503e5eb5e53826d48a8",
+        "02bc1fa7c0313217bde2d65ccbff40c9",
+        "069d99eb1fa6712c0b9034a58c6b57dd"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "components\\UIKit.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1777901571655,
+      "type": "file"
+    },
+    {
+      "path": "app\\index.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777904461495,
+      "type": "file"
+    },
+    {
+      "path": "app\\auth\\signin.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777904684758,
+      "type": "file"
+    },
+    {
+      "path": "lib\\zustand\\authStore.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777897137100,
+      "type": "file"
+    },
+    {
+      "path": "app\\cook-menu\\[id].tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777899775936,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

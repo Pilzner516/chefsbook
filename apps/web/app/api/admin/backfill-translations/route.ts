@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, saveTitleOnlyTranslations } from '@chefsbook/db';
+import { supabase, supabaseAdmin, saveTitleOnlyTranslations } from '@chefsbook/db';
 import { translateRecipeTitle } from '@chefsbook/ai';
 
 export const maxDuration = 300; // 5 minutes
 
+async function verifyAdmin(req: NextRequest): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return null;
+  const { data } = await supabaseAdmin.from('admin_users').select('role').eq('user_id', user.id).single();
+  return data ? user.id : null;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const adminId = await verifyAdmin(req);
+    if (!adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     // Get all recipes without French translations
     const { data: allRecipes } = await supabaseAdmin
       .from('recipes')

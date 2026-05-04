@@ -17,8 +17,8 @@ export function configureStorage(adapter: {
 
 function getSupabaseClient(): SupabaseClient {
   if (!_client) {
-    const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-    const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
     if (!url || !key) {
       console.warn('Supabase env vars missing — returning placeholder client');
     }
@@ -45,7 +45,7 @@ let _adminClient: SupabaseClient | null = null;
 
 function getSupabaseAdminClient(): SupabaseClient {
   if (!_adminClient) {
-    const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
     if (!url || !serviceKey) {
       console.warn('Supabase service role env vars missing — admin client unavailable');

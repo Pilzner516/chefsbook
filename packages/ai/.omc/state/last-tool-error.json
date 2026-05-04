@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd apps/web && npm list @anthropic-ai/sdk 2>&1 | head -3\",\"description\":\"Check if SDK is installed in apps/web\"}",
+  "error": "Exit code 1\n/usr/bin/bash: line 1: cd: apps/web: No such file or directory",
+  "timestamp": "2026-05-03T21:24:23.695Z",
+  "retry_count": 1
+}

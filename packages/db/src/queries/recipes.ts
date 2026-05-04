@@ -216,6 +216,7 @@ export async function createRecipe(
       source_url: recipe.source_url,
       // Never store external image URLs (copyright risk) — only Supabase storage URLs
       image_url: recipe.image_url && (
+        recipe.image_url.includes('100.83.66.51') ||
         recipe.image_url.includes('100.110.47.62') ||
         recipe.image_url.includes('chefsbk.app') ||
         recipe.image_url.includes('supabase') ||
@@ -371,6 +372,32 @@ export async function replaceSteps(
   }
 
   return (data ?? []) as RecipeStep[];
+}
+
+export async function updateStepTimings(
+  stepId: string,
+  timings: {
+    duration_min: number | null;
+    duration_max: number | null;
+    is_passive: boolean;
+    uses_oven: boolean;
+    oven_temp_celsius: number | null;
+    phase: 'prep' | 'cook' | 'rest' | 'plate';
+    timing_confidence: 'low' | 'medium' | 'high';
+    technique?: string | null;
+    ingredient_category?: string | null;
+  }
+): Promise<void> {
+  // Use admin client — called from server-side fire-and-forget context (saveWithModeration)
+  const { error } = await supabaseAdmin
+    .from('recipe_steps')
+    .update({
+      ...timings,
+      timings_inferred_at: new Date().toISOString(),
+      classified_at: timings.technique ? new Date().toISOString() : undefined,
+    })
+    .eq('id', stepId);
+  if (error) throw error;
 }
 
 export async function deleteRecipe(id: string): Promise<void> {

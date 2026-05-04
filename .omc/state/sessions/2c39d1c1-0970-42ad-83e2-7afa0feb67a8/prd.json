@@ -1,0 +1,113 @@
+{
+  "title": "Add Move button to menu recipe rows (web + mobile)",
+  "description": "Add a Move button to each recipe row in menu detail view that opens a course selector (popover on web, bottom sheet on mobile) to change the recipe's course assignment",
+  "created_at": "2026-05-03T22:00:00.000Z",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Add Move button to web menu recipe rows",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Move button appears on each recipe row in apps/web/app/dashboard/menus/[id]/page.tsx",
+        "Button shows between the recipe info and the remove (X) button",
+        "Button uses icon (arrows or move icon) + 'Move' label",
+        "Button has hover state matching ChefsBook theme (cb-primary on hover)",
+        "Clicking Move button opens a popover anchored to the button"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Create course selector popover component (web)",
+      "priority": 2,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Popover component created (can be inline or separate file in apps/web/components/)",
+        "Shows all 9 course options from COURSE_ORDER: starter, soup, salad, main, side, cheese, dessert, drink, other",
+        "Current course is greyed out (disabled, lower opacity, or visual indicator)",
+        "Each course is a clickable button/option with clear hover state",
+        "Clicking outside popover or pressing Escape closes it without changes",
+        "Popover uses ChefsDialog or similar modal pattern for consistency"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Wire up course change on web",
+      "priority": 3,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Clicking a course option calls updateMenuItem(itemId, { course: newCourse }) from @chefsbook/db",
+        "Popover closes immediately after selection",
+        "Menu view refreshes to show recipe in new course section (calls loadMenu())",
+        "Recipe appears in correct alphabetical/sort order in new course section",
+        "Error handling: if update fails, show error message and keep popover open or show alert"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Add Move button to mobile menu recipe rows",
+      "priority": 4,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Move button appears on each recipe row in apps/mobile/app/menu/[id].tsx",
+        "Button is TouchableOpacity with icon (Ionicons arrow or move icon)",
+        "Button positioned between recipe info and remove button",
+        "Button uses theme colors from useTheme().colors",
+        "Tapping Move button opens bottom sheet with course selector"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Create course selector bottom sheet (mobile)",
+      "priority": 5,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Bottom sheet Modal created following mobile patterns (see existing modals in file)",
+        "Shows all 9 courses from COURSE_ORDER with COURSE_LABELS for display names",
+        "Current course is visually disabled (greyed out, lower opacity, or checkmark + disabled)",
+        "Each course option is TouchableOpacity with clear press feedback",
+        "Sheet uses useSafeAreaInsets() for paddingBottom (ui-guardian.md rule)",
+        "Tapping outside or drag-down gesture closes sheet without changes"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Wire up course change on mobile",
+      "priority": 6,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Tapping a course calls updateMenuItem from @chefsbook/db via menuStore action or direct call",
+        "Bottom sheet closes immediately after selection",
+        "Menu refreshes via fetchMenu(id) to show recipe in new course section",
+        "Success toast shows confirmation (e.g. 'Moved to Starter')",
+        "Error handling: if update fails, show Alert with error message"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Add i18n keys for Move button (all 5 locales)",
+      "priority": 7,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Key menus.moveRecipe added to all 5 locale files: en.json, fr.json, es.json, it.json, de.json in apps/web/locales/",
+        "Key menus.moveRecipe added to all 5 locale files in apps/mobile/locales/",
+        "Key menus.movedTo added (for success toast: 'Moved to {course}')",
+        "Key menus.selectCourse added (for bottom sheet title: 'Select course')",
+        "All translations are accurate and natural for each language"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Type check both apps",
+      "priority": 8,
+      "passes": true,
+      "acceptanceCriteria": [
+        "cd apps/web && npx tsc --noEmit passes with 0 errors",
+        "cd apps/mobile && npx tsc --noEmit passes with 0 errors",
+        "No new TypeScript errors introduced by changes",
+        "updateMenuItem type signature from @chefsbook/db is used correctly",
+        "MenuCourse type is imported and used correctly for course parameter"
+      ]
+    }
+  ]
+}

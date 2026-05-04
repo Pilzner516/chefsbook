@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChefsBook Strategic Plan 2026</title>
+  <style>
+    :root {
+      --cb-red: #ce2b37;
+      --cb-green: #009246;
+      --cb-cream: #faf7f0;
+      --cb-dark: #1a1a1a;
+      --cb-gray: #6b7280;
+      --cb-light-gray: #e5e7eb;
+      --cb-border: #d1d5db;
+      --sidebar-width: 280px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--cb-cream);
+      color: var(--cb-dark);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: linear-gradient(180deg, var(--cb-dark) 0%, #2d2d2d 100%);
+      padding: 24px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--cb-red);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .sidebar-logo-text {
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-logo-subtitle {
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      color: rgba(255,255,255,0.4);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .nav-link {
+      display: block;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .nav-link.active {
+      background: var(--cb-red);
+      color: white;
+    }
+
+    /* Main Content */
+    .main {
+      margin-left: var(--sidebar-width);
+      padding: 48px 64px;
+      max-width: 1200px;
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 64px;
+      scroll-margin-top: 24px;
+    }
+
+    h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 8px;
+      color: var(--cb-dark);
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: var(--cb-gray);
+      margin-bottom: 48px;
+    }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid var(--cb-red);
+      display: inline-block;
+    }
+
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--cb-dark);
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: var(--cb-dark);
+    }
+
+    /* Executive Summary Cards */
+    .exec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .exec-card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border: 1px solid var(--cb-light-gray);
+    }
+
+    .exec-card-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--cb-gray);
+      margin-bottom: 8px;
+    }
+
+    .exec-card-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--cb-red);
+      letter-spacing: -1px;
+    }
+
+    .exec-card-value.green {
+      color: var(--cb-green);
+    }
+
+    .exec-card-note {
+      font-size: 13px;
+      color: var(--cb-gray);
+      margin-top: 8px;
+    }
+
+    /* Key Differentiators */
+    .diff-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .diff-item {
+      background: white;
+      padding: 20px 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      border: 1px solid var(--cb-light-gray);
+    }
+
+    .diff-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--cb-red) 0%, #e85a64 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .diff-text h4 {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .diff-text p {
+      font-size: 13px;
+      color: var(--cb-gray);
+      margin: 0;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border: 1px solid var(--cb-light-gray);
+      margin-bottom: 32px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--cb-dark);
+      color: white;
+      text-align: left;
+      padding: 16px 20px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--cb-light-gray);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: rgba(206, 43, 55, 0.03);
+    }
+
+    .status-dead {
+      background: #fecaca;
+      color: #991b1b;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-active {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .checkmark {
+      color: var(--cb-green);
+      font-weight: bold;
+    }
+
+    .xmark {
+      color: #dc2626;
+    }
+
+    /* Revenue Projections */
+    .revenue-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    .revenue-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--cb-light-gray);
+    }
+
+    .revenue-card h3 {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .revenue-total {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--cb-green);
+      margin-bottom: 24px;
+      letter-spacing: -1px;
+    }
+
+    .revenue-breakdown {
+      list-style: none;
+    }
+
+    .revenue-breakdown li {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--cb-light-gray);
+      font-size: 14px;
+    }
+
+    .revenue-breakdown li:last-child {
+      border-bottom: none;
+    }
+
+    .revenue-breakdown .amount {
+      font-weight: 600;
+      color: var(--cb-dark);
+    }
+
+    .revenue-breakdown .percent {
+      color: var(--cb-gray);
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 32px;
+      margin-top: 32px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--cb-red) 0%, var(--cb-green) 100%);
+    }
+
+    .timeline-phase {
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    .timeline-phase::before {
+      content: '';
+      position: absolute;
+      left: -32px;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border: 3px solid var(--cb-red);
+      border-radius: 50%;
+    }
+
+    .timeline-phase.phase-2::before {
+      border-color: #f59e0b;
+    }
+
+    .timeline-phase.phase-3::before {
+      border-color: var(--cb-green);
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .phase-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cb-dark);
+    }
+
+    .phase-time {
+      font-size: 13px;
+      color: var(--cb-gray);
+      background: var(--cb-light-gray);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .phase-items {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 24px;
+      border: 1px solid var(--cb-light-gray);
+    }
+
+    .phase-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--cb-light-gray);
+    }
+
+    .phase-item:last-child {
+      border-bottom: none;
+    }
+
+    .phase-item-icon {
+      width: 24px;
+      height: 24px;
+      background: rgba(206, 43, 55, 0.1);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cb-red);
+      font-size: 12px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .phase-item-text {
+      font-size: 14px;
+    }
+
+    /* Sprint Plan */
+    .sprint-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .sprint-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--cb-light-gray);
+    }
+
+    .sprint-header {
+      background: var(--cb-dark);
+      color: white;
+      padding: 20px 24px;
+    }
+
+    .sprint-header h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .sprint-header .weeks {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .sprint-body {
+      padding: 24px;
+    }
+
+    .sprint-goal {
+      font-size: 13px;
+      color: var(--cb-gray);
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--cb-light-gray);
+    }
+
+    .sprint-tasks {
+      list-style: none;
+    }
+
+    .sprint-tasks li {
+      padding: 8px 0;
+      font-size: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .sprint-tasks li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--cb-red);
+      border-radius: 50%;
+      margin-top: 7px;
+      flex-shrink: 0;
+    }
+
+    .sprint-metrics {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--cb-light-gray);
+    }
+
+    .sprint-metrics h5 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--cb-gray);
+      margin-bottom: 12px;
+    }
+
+    .metric-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 6px 0;
+    }
+
+    .metric-item .value {
+      font-weight: 600;
+      color: var(--cb-green);
+    }
+
+    /* Social Features */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid var(--cb-light-gray);
+    }
+
+    .feature-card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--cb-red) 0%, #e85a64 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+    }
+
+    .feature-card h4 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--cb-gray);
+      margin-bottom: 16px;
+    }
+
+    .impact-tag {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .impact-high {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .impact-very-high {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    /* Tier Comparison */
+    .tier-table th:not(:first-child),
+    .tier-table td:not(:first-child) {
+      text-align: center;
+    }
+
+    .tier-price {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--cb-dark);
+    }
+
+    .tier-price span {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--cb-gray);
+    }
+
+    /* Print Styles */
+    @media print {
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 24px;
+      }
+
+      section {
+        page-break-inside: avoid;
+      }
+
+      .exec-grid,
+      .sprint-grid,
+      .feature-grid,
+      .revenue-section {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      body {
+        font-size: 12px;
+        background: white;
+      }
+
+      h1 { font-size: 28px; }
+      h2 { font-size: 20px; }
+      h3 { font-size: 16px; }
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 32px;
+      }
+
+      .sprint-grid,
+      .revenue-section {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">CB</div>
+      <div>
+        <div class="sidebar-logo-text">ChefsBook</div>
+        <div class="sidebar-logo-subtitle">Strategic Plan 2026</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Overview</div>
+      <a href="#executive-summary" class="nav-link active">Executive Summary</a>
+      <a href="#key-metrics" class="nav-link">Key Metrics</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Market Analysis</div>
+      <a href="#competitive-landscape" class="nav-link">Competitive Landscape</a>
+      <a href="#market-gaps" class="nav-link">Market Gaps</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Strategy</div>
+      <a href="#ai-roadmap" class="nav-link">AI Roadmap</a>
+      <a href="#monetisation" class="nav-link">Monetisation</a>
+      <a href="#social-platform" class="nav-link">Social Platform</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Execution</div>
+      <a href="#sprint-plan" class="nav-link">90-Day Sprint Plan</a>
+      <a href="#12-month-roadmap" class="nav-link">12-Month Roadmap</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Executive Summary -->
+    <section id="executive-summary">
+      <h1>ChefsBook Strategic Plan</h1>
+      <p class="subtitle">The intelligent cooking platform that actually helps people cook</p>
+
+      <p>ChefsBook is positioned to become the dominant global cooking platform by doing what no competitor does: <strong>actually helping people cook</strong>. While competitors focus on recipe browsing (NYT Cooking), meal kit delivery (HelloFresh), or social sharing (Cookpad), ChefsBook combines all three with a unique technical advantage: an AI-powered cooking scheduler that coordinates multi-course dinner parties with timing precision no human could achieve.</p>
+
+      <p>The recipe app market is in flux. Yummly (Whirlpool) and AllRecipes (Dotdash Meredith) discontinued their mobile apps in 2024-2025, leaving a gap for a modern, AI-native platform.</p>
+    </section>
+
+    <!-- Key Metrics -->
+    <section id="key-metrics">
+      <h2>Key Metrics</h2>
+
+      <div class="exec-grid">
+        <div class="exec-card">
+          <div class="exec-card-label">12-Month Revenue</div>
+          <div class="exec-card-value">$106,500</div>
+          <div class="exec-card-note">Projected at 10,000 users</div>
+        </div>
+        <div class="exec-card">
+          <div class="exec-card-label">36-Month Revenue</div>
+          <div class="exec-card-value green">$1.35M</div>
+          <div class="exec-card-note">Projected at 100,000 users</div>
+        </div>
+        <div class="exec-card">
+          <div class="exec-card-label">AI Functions</div>
+          <div class="exec-card-value">40+</div>
+          <div class="exec-card-note">More than any competitor</div>
+        </div>
+        <div class="exec-card">
+          <div class="exec-card-label">Database Tables</div>
+          <div class="exec-card-value">50+</div>
+          <div class="exec-card-note">Rich cooking behavior data</div>
+        </div>
+      </div>
+
+      <h3>Key Differentiators</h3>
+      <div class="diff-list">
+        <div class="diff-item">
+          <div class="diff-icon">T</div>
+          <div class="diff-text">
+            <h4>Cooking Scheduler</h4>
+            <p>Pure TypeScript scheduler with reverse-scheduling, oven conflict resolution, and multi-chef coordination</p>
+          </div>
+        </div>
+        <div class="diff-item">
+          <div class="diff-icon">K</div>
+          <div class="diff-text">
+            <h4>Knowledge Graph</h4>
+            <p>cooking_action_timings table learns from real cooking sessions with compounding accuracy</p>
+          </div>
+        </div>
+        <div class="diff-item">
+          <div class="diff-icon">P</div>
+          <div class="diff-text">
+            <h4>Personal Versions</h4>
+            <p>Ask Sous Chef creates personalized recipe modifications tracked per user</p>
+          </div>
+        </div>
+        <div class="diff-item">
+          <div class="diff-icon">B</div>
+          <div class="diff-text">
+            <h4>Print Publishing</h4>
+            <p>Lulu integration for print-on-demand family cookbook publishing</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Competitive Landscape -->
+    <section id="competitive-landscape">
+      <h2>Competitive Landscape</h2>
+
+      <p>The recipe app market is consolidating. Two major players have exited, and remaining competitors are fragmented across subscription content, utility tools, and social platforms. No competitor combines all three.</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Competitor</th>
+              <th>Status</th>
+              <th>Pricing</th>
+              <th>AI Features</th>
+              <th>Social</th>
+              <th>Fatal Weakness</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Yummly</strong></td>
+              <td><span class="status-dead">Dead</span></td>
+              <td>Was $0.99/mo</td>
+              <td>Taste Profile ML</td>
+              <td>Minimal</td>
+              <td>Whirlpool killed it (Dec 2024)</td>
+            </tr>
+            <tr>
+              <td><strong>AllRecipes</strong></td>
+              <td><span class="status-dead">App Dead</span></td>
+              <td>Free (web only)</td>
+              <td>None</td>
+              <td>Comments</td>
+              <td>Moved to ad-heavy web</td>
+            </tr>
+            <tr>
+              <td><strong>NYT Cooking</strong></td>
+              <td><span class="status-active">Active</span></td>
+              <td>$5/mo</td>
+              <td>None</td>
+              <td>Comments only</td>
+              <td>Paywalled, no AI, no planning</td>
+            </tr>
+            <tr>
+              <td><strong>Samsung Food</strong></td>
+              <td><span class="status-active">Active</span></td>
+              <td>$6.99/mo</td>
+              <td>Recipe suggestions</td>
+              <td>Health integration</td>
+              <td>Locked to Samsung ecosystem</td>
+            </tr>
+            <tr>
+              <td><strong>Paprika</strong></td>
+              <td><span class="status-active">Active</span></td>
+              <td>$4.99 one-time</td>
+              <td>AI scanning</td>
+              <td>None</td>
+              <td>No social, dated UI</td>
+            </tr>
+            <tr>
+              <td><strong>Cookpad</strong></td>
+              <td><span class="status-active">Active</span></td>
+              <td>Free</td>
+              <td>AI photo import</td>
+              <td>Strong (100M users)</td>
+              <td>Recipe quality varies</td>
+            </tr>
+            <tr>
+              <td><strong>SideChef</strong></td>
+              <td><span class="status-active">Active</span></td>
+              <td>Free / Premium</td>
+              <td>RecipeGen AI</td>
+              <td>Minimal</td>
+              <td>B2B appliance focus</td>
+            </tr>
+            <tr>
+              <td><strong>Mealime</strong></td>
+              <td><span class="status-active">Active</span></td>
+              <td>$5.99/mo</td>
+              <td>Diet filtering</td>
+              <td>None</td>
+              <td>Dinner-only, no social</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>ChefsBook Competitive Advantages</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ChefsBook Has</th>
+              <th>Competitors Don't</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cooking scheduler with oven conflict resolution</td>
+              <td>Static timers only</td>
+            </tr>
+            <tr>
+              <td>Knowledge graph that learns from real cooks</td>
+              <td>Fixed timing estimates</td>
+            </tr>
+            <tr>
+              <td>Personal recipe versions with Ask Sous Chef</td>
+              <td>No modification tracking</td>
+            </tr>
+            <tr>
+              <td>Multi-course dinner party coordination</td>
+              <td>Single recipe focus</td>
+            </tr>
+            <tr>
+              <td>Print cookbook publishing via Lulu</td>
+              <td>Separate services required</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Market Gaps -->
+    <section id="market-gaps">
+      <h2>Top 10 Unmet Market Needs</h2>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 50px;">Rank</th>
+              <th>Need</th>
+              <th>Market Size</th>
+              <th>ChefsBook Position</th>
+              <th>Build Effort</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>AI that learns my cooking style</td>
+              <td>Massive (every cook)</td>
+              <td>70% built (knowledge graph exists)</td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>"What can I make with what I have?"</td>
+              <td>Massive</td>
+              <td>60% built (suggestRecipes exists)</td>
+              <td>Low</td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Real cook mode with timing coordination</td>
+              <td>Large (serious cooks)</td>
+              <td>90% built (scheduler done)</td>
+              <td>Low (UI)</td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>Family recipe inheritance/sharing</td>
+              <td>Large (emotional value)</td>
+              <td>Tables exist, UI pending</td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td><strong>5</strong></td>
+              <td>Video recipe import from TikTok/IG</td>
+              <td>Large (Gen Z)</td>
+              <td>YouTube done, social pending</td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td><strong>6</strong></td>
+              <td>Cost estimation per recipe</td>
+              <td>Large (budget cooks)</td>
+              <td>Not built</td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td><strong>7</strong></td>
+              <td>Grocery delivery integration</td>
+              <td>Large</td>
+              <td>Not built</td>
+              <td>High (partnerships)</td>
+            </tr>
+            <tr>
+              <td><strong>8</strong></td>
+              <td>Live cook-alongs</td>
+              <td>Medium (community)</td>
+              <td>Not built</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td><strong>9</strong></td>
+              <td>Skill progression/learning paths</td>
+              <td>Medium</td>
+              <td>Techniques table exists</td>
+              <td>Medium</td>
+            </tr>
+            <tr>
+              <td><strong>10</strong></td>
+              <td>Restaurant dish recreation</td>
+              <td>Medium</td>
+              <td>reanalyseDish exists</td>
+              <td>Low</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- AI Roadmap -->
+    <section id="ai-roadmap">
+      <h2>AI Roadmap</h2>
+
+      <p>ChefsBook has 40+ AI functions - more than any competitor. The foundation is strong. The next step is evolving from <strong>reactive AI</strong> (user asks, AI responds) to <strong>proactive AI</strong> (Chef anticipates, suggests, learns).</p>
+
+      <h3>Current AI Capabilities</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Functions</th>
+              <th>Model</th>
+              <th>Cost/Call</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Import & Extraction</strong></td>
+              <td>scanRecipe, importFromUrl, importFromYouTube, extractJsonLdRecipe</td>
+              <td>Sonnet / None</td>
+              <td>$0.005 - $0.02</td>
+            </tr>
+            <tr>
+              <td><strong>Timing & Scheduling</strong></td>
+              <td>inferStepTimings, generateChefBriefing, createCookingPlan</td>
+              <td>Haiku / None</td>
+              <td>$0 - $0.001</td>
+            </tr>
+            <tr>
+              <td><strong>Personalization</strong></td>
+              <td>askSousChef, suggestRecipes, generateVariation, generateMealPlan</td>
+              <td>Sonnet</td>
+              <td>$0.003 - $0.01</td>
+            </tr>
+            <tr>
+              <td><strong>Content & Moderation</strong></td>
+              <td>moderateComment/Recipe/Message, generateNutrition, translateRecipe</td>
+              <td>Haiku / Sonnet</td>
+              <td>$0.0002 - $0.005</td>
+            </tr>
+            <tr>
+              <td><strong>Dish Intelligence</strong></td>
+              <td>analyseScannedImage, reanalyseDish, generateDishRecipe</td>
+              <td>Sonnet</td>
+              <td>$0.005 - $0.01</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Chef Capability Phases</h3>
+      <div class="timeline">
+        <div class="timeline-phase">
+          <div class="phase-header">
+            <span class="phase-name">Phase 1: Foundation</span>
+            <span class="phase-time">0-3 months</span>
+          </div>
+          <div class="phase-items">
+            <div class="phase-item">
+              <div class="phase-item-icon">P0</div>
+              <div class="phase-item-text"><strong>Predictive Scheduling</strong> - User timing factors applied to cooking plans</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P1</div>
+              <div class="phase-item-text"><strong>Seasonal Intelligence</strong> - Calendar-aware ingredient suggestions</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P1</div>
+              <div class="phase-item-text"><strong>Restaurant Recreation UI</strong> - Connect existing AI to user flow</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P2</div>
+              <div class="phase-item-text"><strong>Personalized Recommendations</strong> - "Chef suggests for tonight"</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-phase phase-2">
+          <div class="phase-header">
+            <span class="phase-name">Phase 2: Learning</span>
+            <span class="phase-time">3-6 months</span>
+          </div>
+          <div class="phase-items">
+            <div class="phase-item">
+              <div class="phase-item-icon">P0</div>
+              <div class="phase-item-text"><strong>Skill Assessment</strong> - Track mastery per technique and cuisine</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P1</div>
+              <div class="phase-item-text"><strong>Nutritional Intelligence</strong> - Weekly nutrition summaries from cooked recipes</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P1</div>
+              <div class="phase-item-text"><strong>Skill Progression</strong> - Technique trees and badge unlocks</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P2</div>
+              <div class="phase-item-text"><strong>Waste Reduction</strong> - Alert for unused purchased ingredients</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-phase phase-3">
+          <div class="phase-header">
+            <span class="phase-name">Phase 3: Magic</span>
+            <span class="phase-time">6-12 months</span>
+          </div>
+          <div class="phase-items">
+            <div class="phase-item">
+              <div class="phase-item-icon">P0</div>
+              <div class="phase-item-text"><strong>Voice Cook Mode</strong> - TTS step reading and voice commands</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P1</div>
+              <div class="phase-item-text"><strong>Social Intelligence</strong> - Influence scoring and creator analytics</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P1</div>
+              <div class="phase-item-text"><strong>Proactive Chef</strong> - Push suggestions based on all signals</div>
+            </div>
+            <div class="phase-item">
+              <div class="phase-item-icon">P2</div>
+              <div class="phase-item-text"><strong>Equipment-aware</strong> - Recommendations based on user's appliances</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Success Metrics</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Phase 1 Target</th>
+              <th>Phase 2 Target</th>
+              <th>Phase 3 Target</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Chef suggestions clicked</td>
+              <td>5%</td>
+              <td>15%</td>
+              <td>30%</td>
+            </tr>
+            <tr>
+              <td>User timing factors calculated</td>
+              <td>100</td>
+              <td>5,000</td>
+              <td>50,000</td>
+            </tr>
+            <tr>
+              <td>Skills assessed</td>
+              <td>0</td>
+              <td>1,000</td>
+              <td>20,000</td>
+            </tr>
+            <tr>
+              <td>Voice commands processed</td>
+              <td>0</td>
+              <td>0</td>
+              <td>10,000/day</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Monetisation -->
+    <section id="monetisation">
+      <h2>Monetisation Strategy</h2>
+
+      <h3>Subscription Tiers</h3>
+      <div class="table-wrapper">
+        <table class="tier-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Free<br><span style="font-weight:400;text-transform:none;">$0</span></th>
+              <th>Chef<br><span style="font-weight:400;text-transform:none;">$4.99/mo</span></th>
+              <th>Family<br><span style="font-weight:400;text-transform:none;">$9.99/mo</span></th>
+              <th>Pro<br><span style="font-weight:400;text-transform:none;">$14.99/mo</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Own recipes</td>
+              <td>0</td>
+              <td>75</td>
+              <td>200</td>
+              <td>Unlimited</td>
+            </tr>
+            <tr>
+              <td>Import/Scan/AI</td>
+              <td class="xmark">No</td>
+              <td class="checkmark">Yes</td>
+              <td class="checkmark">Yes</td>
+              <td class="checkmark">Yes</td>
+            </tr>
+            <tr>
+              <td>Shopping lists</td>
+              <td>1</td>
+              <td>5</td>
+              <td>5</td>
+              <td>Unlimited</td>
+            </tr>
+            <tr>
+              <td>Cookbooks</td>
+              <td>0</td>
+              <td>10</td>
+              <td>25</td>
+              <td>Unlimited</td>
+            </tr>
+            <tr>
+              <td>Images per recipe</td>
+              <td>0</td>
+              <td>1</td>
+              <td>1</td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td>Follow/Comment</td>
+              <td class="xmark">No</td>
+              <td class="checkmark">Yes</td>
+              <td class="checkmark">Yes</td>
+              <td class="checkmark">Yes</td>
+            </tr>
+            <tr>
+              <td>PDF export</td>
+              <td class="xmark">No</td>
+              <td class="xmark">No</td>
+              <td class="xmark">No</td>
+              <td class="checkmark">Yes</td>
+            </tr>
+            <tr>
+              <td>Print cookbook</td>
+              <td class="xmark">No</td>
+              <td class="checkmark">Yes</td>
+              <td class="checkmark">Yes</td>
+              <td class="checkmark">Yes</td>
+            </tr>
+            <tr>
+              <td>Family members</td>
+              <td>0</td>
+              <td>0</td>
+              <td>3</td>
+              <td>0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Revenue Projections</h3>
+      <div class="revenue-section">
+        <div class="revenue-card">
+          <h3>12-Month Projection<br><small style="font-weight:400;color:var(--cb-gray);">10,000 users</small></h3>
+          <div class="revenue-total">$106,500</div>
+          <ul class="revenue-breakdown">
+            <li>
+              <span>Subscriptions</span>
+              <span><span class="amount">$53,500</span><span class="percent">50%</span></span>
+            </li>
+            <li>
+              <span>Grocery affiliate</span>
+              <span><span class="amount">$20,000</span><span class="percent">19%</span></span>
+            </li>
+            <li>
+              <span>Print cookbooks</span>
+              <span><span class="amount">$18,000</span><span class="percent">17%</span></span>
+            </li>
+            <li>
+              <span>Creator economy</span>
+              <span><span class="amount">$10,000</span><span class="percent">9%</span></span>
+            </li>
+            <li>
+              <span>Other affiliate</span>
+              <span><span class="amount">$5,000</span><span class="percent">5%</span></span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="revenue-card">
+          <h3>36-Month Projection<br><small style="font-weight:400;color:var(--cb-gray);">100,000 users</small></h3>
+          <div class="revenue-total">$1,350,000</div>
+          <ul class="revenue-breakdown">
+            <li>
+              <span>Subscriptions</span>
+              <span><span class="amount">$535,000</span><span class="percent">40%</span></span>
+            </li>
+            <li>
+              <span>Grocery affiliate</span>
+              <span><span class="amount">$200,000</span><span class="percent">15%</span></span>
+            </li>
+            <li>
+              <span>Creator economy</span>
+              <span><span class="amount">$180,000</span><span class="percent">13%</span></span>
+            </li>
+            <li>
+              <span>Brand partnerships</span>
+              <span><span class="amount">$150,000</span><span class="percent">11%</span></span>
+            </li>
+            <li>
+              <span>Print cookbooks</span>
+              <span><span class="amount">$100,000</span><span class="percent">7%</span></span>
+            </li>
+            <li>
+              <span>Data licensing</span>
+              <span><span class="amount">$90,000</span><span class="percent">7%</span></span>
+            </li>
+            <li>
+              <span>B2B licenses</span>
+              <span><span class="amount">$75,000</span><span class="percent">6%</span></span>
+            </li>
+            <li>
+              <span>Other affiliate</span>
+              <span><span class="amount">$20,000</span><span class="percent">1%</span></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Platform -->
+    <section id="social-platform">
+      <h2>Social Platform Strategy</h2>
+
+      <p>ChefsBook has social infrastructure (follows, likes, comments, DMs) but lacks the <strong>identity layer</strong> that makes Strava sticky. Strava users open the app 35+ times/month because it validates their athletic identity. ChefsBook must validate cooking identity.</p>
+
+      <h3>The Strava Playbook for Cooking</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Strava</th>
+              <th>ChefsBook Equivalent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kudos (one-tap validation)</td>
+              <td>"Looks delicious!" reaction</td>
+            </tr>
+            <tr>
+              <td>Segments (competitive routes)</td>
+              <td>Recipe ratings / leaderboards</td>
+            </tr>
+            <tr>
+              <td>Clubs (group identity)</td>
+              <td>Cuisine communities (Thai food lovers)</td>
+            </tr>
+            <tr>
+              <td>Year in Review</td>
+              <td>"Your Year in Cooking"</td>
+            </tr>
+            <tr>
+              <td>Activity feed</td>
+              <td>Discover feed with "Cooked it!" posts</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Key Social Features</h3>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-card-header">
+            <div class="feature-icon">C</div>
+            <h4>"Cooked it!" Posts</h4>
+          </div>
+          <p>Social proof that a recipe was actually made. User finishes Cook Mode, shares a photo, original creator gets notified, recipe shows "X people cooked this".</p>
+          <span class="impact-tag impact-very-high">Very High Impact</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-header">
+            <div class="feature-icon">S</div>
+            <h4>Cooking Streaks</h4>
+          </div>
+          <p>Duolingo-style daily consistency tracking. Milestones at 7, 30, 100, 365 days. Push notifications to prevent streak breaks.</p>
+          <span class="impact-tag impact-very-high">Very High Impact</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-header">
+            <div class="feature-icon">E</div>
+            <h4>Challenges & Events</h4>
+          </div>
+          <p>Platform challenges ("30-day vegetarian"), seasonal events ("Thanksgiving menu"), user-created and brand-sponsored challenges.</p>
+          <span class="impact-tag impact-high">High Impact</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-header">
+            <div class="feature-icon">F</div>
+            <h4>Family Recipe Vaults</h4>
+          </div>
+          <p>Private family cookbooks with recipe stories ("Grandma made this every Christmas"), photo archives, member invites, and legacy planning.</p>
+          <span class="impact-tag impact-high">High Impact</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-header">
+            <div class="feature-icon">R</div>
+            <h4>Reputation System</h4>
+          </div>
+          <p>Stack Overflow-style karma. Points for recipes cooked (+10), saves (+2), likes (+1), challenges (+50), streaks (+100). Profile badges and leaderboards.</p>
+          <span class="impact-tag impact-high">High Impact</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-header">
+            <div class="feature-icon">M</div>
+            <h4>Collaborative Menus</h4>
+          </div>
+          <p>Dinner party planning with friends. Host creates menu, guests claim courses, dietary restrictions aggregated, combined shopping list.</p>
+          <span class="impact-tag impact-high">High Impact</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sprint Plan -->
+    <section id="sprint-plan">
+      <h2>90-Day Sprint Plan</h2>
+
+      <div class="sprint-grid">
+        <div class="sprint-card">
+          <div class="sprint-header">
+            <h4>Sprint 1: Cook Mode Foundation</h4>
+            <div class="weeks">Weeks 1-4</div>
+          </div>
+          <div class="sprint-body">
+            <div class="sprint-goal">Complete Cook Mode UI and begin collecting step_actuals data.</div>
+            <ul class="sprint-tasks">
+              <li>Migration 084: step_actuals table</li>
+              <li>Cook Mode UI: Step timer with actual tracking</li>
+              <li>Cook Mode UI: Mark step complete/skip</li>
+              <li>Web Cook Mode: Match mobile functionality</li>
+              <li>Background job: promoteObservedTimings()</li>
+              <li>Chef Briefing: Pre-cook summary screen</li>
+            </ul>
+            <div class="sprint-metrics">
+              <h5>Success Metrics</h5>
+              <div class="metric-item">
+                <span>step_actuals records (week 1)</span>
+                <span class="value">100+</span>
+              </div>
+              <div class="metric-item">
+                <span>Knowledge graph entries with observed data</span>
+                <span class="value">5+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sprint-card">
+          <div class="sprint-header">
+            <h4>Sprint 2: Stripe + Cooked It!</h4>
+            <div class="weeks">Weeks 5-8</div>
+          </div>
+          <div class="sprint-body">
+            <div class="sprint-goal">Enable payments and launch social "Cooked it!" feature.</div>
+            <ul class="sprint-tasks">
+              <li>Stripe integration: Checkout flow</li>
+              <li>Stripe integration: Subscription management</li>
+              <li>Stripe webhooks: Subscription events</li>
+              <li>Migration 085: cook_posts table</li>
+              <li>"Cooked it!" post-cook prompt</li>
+              <li>Recipe detail: cook_posts gallery</li>
+            </ul>
+            <div class="sprint-metrics">
+              <h5>Success Metrics</h5>
+              <div class="metric-item">
+                <span>First paid subscription</span>
+                <span class="value">Processed</span>
+              </div>
+              <div class="metric-item">
+                <span>"Cooked it!" posts (week 1)</span>
+                <span class="value">50+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sprint-card">
+          <div class="sprint-header">
+            <h4>Sprint 3: Streaks + Recommendations</h4>
+            <div class="weeks">Weeks 9-12</div>
+          </div>
+          <div class="sprint-body">
+            <div class="sprint-goal">Gamification and personalization.</div>
+            <ul class="sprint-tasks">
+              <li>Cooking streaks: Schema + tracking</li>
+              <li>Cooking streaks: Profile display</li>
+              <li>Streak notifications: "Don't break it!"</li>
+              <li>Predictive scheduling: User timing factors</li>
+              <li>Personalized recommendations: "Chef suggests"</li>
+              <li>Recipe detail: "X people cooked this"</li>
+            </ul>
+            <div class="sprint-metrics">
+              <h5>Success Metrics</h5>
+              <div class="metric-item">
+                <span>Users with 7+ day streak</span>
+                <span class="value">20%</span>
+              </div>
+              <div class="metric-item">
+                <span>"Chef suggests" CTR</span>
+                <span class="value">&gt;5%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12-Month Roadmap -->
+    <section id="12-month-roadmap">
+      <h2>12-Month Roadmap</h2>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Quarter</th>
+              <th>Theme</th>
+              <th>Key Deliverables</th>
+              <th>Milestone</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Q1</strong><br>Months 1-3</td>
+              <td><strong>Foundation</strong><br>Make cooking work better</td>
+              <td>
+                Month 1: step_actuals, timer UI, knowledge graph loop<br>
+                Month 2: Stripe, subscriptions, annual pricing<br>
+                Month 3: "Cooked it!", streaks, notifications
+              </td>
+              <td>First 1,000 paying subscribers</td>
+            </tr>
+            <tr>
+              <td><strong>Q2</strong><br>Months 4-6</td>
+              <td><strong>Intelligence</strong><br>Chef becomes smart</td>
+              <td>
+                Month 4: User timing factors, skill assessment<br>
+                Month 5: "Chef suggests", waste reduction alerts<br>
+                Month 6: Weekly nutrition summaries, goal tracking
+              </td>
+              <td>50% say "Chef helped me cook better"</td>
+            </tr>
+            <tr>
+              <td><strong>Q3</strong><br>Months 7-9</td>
+              <td><strong>Community</strong><br>Cooking becomes social</td>
+              <td>
+                Month 7: Platform challenges, badge system<br>
+                Month 8: Family vaults, invite system<br>
+                Month 9: Collaborative menus, shared shopping
+              </td>
+              <td>10% in active challenge; 100 family vaults</td>
+            </tr>
+            <tr>
+              <td><strong>Q4</strong><br>Months 10-12</td>
+              <td><strong>Scale</strong><br>Revenue diversification</td>
+              <td>
+                Month 10: Instacart integration, shopping buy button<br>
+                Month 11: Premium collections, creator payouts<br>
+                Month 12: Voice Cook Mode, basic voice commands
+              </td>
+              <td>Non-subscription revenue &gt;20%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Risk Register</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Risk</th>
+              <th>Likelihood</th>
+              <th>Impact</th>
+              <th>Mitigation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Stripe integration delays</td>
+              <td>Medium</td>
+              <td>High</td>
+              <td>Start immediately, fallback to manual onboarding</td>
+            </tr>
+            <tr>
+              <td>Low Cook Mode adoption</td>
+              <td>Medium</td>
+              <td>High</td>
+              <td>Prominent UI placement, tutorial, incentives</td>
+            </tr>
+            <tr>
+              <td>Social features feel empty</td>
+              <td>High</td>
+              <td>Medium</td>
+              <td>Seed with team content, invite beta testers early</td>
+            </tr>
+            <tr>
+              <td>AI costs exceed budget</td>
+              <td>Medium</td>
+              <td>Medium</td>
+              <td>Aggressive Haiku usage, caching, rate limits</td>
+            </tr>
+            <tr>
+              <td>Knowledge graph data quality</td>
+              <td>Medium</td>
+              <td>Medium</td>
+              <td>Manual review of first 100 entries, confidence thresholds</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The Single Most Important Thing</h3>
+      <div class="exec-card" style="background: linear-gradient(135deg, var(--cb-red) 0%, #e85a64 100%); color: white; margin-top: 24px;">
+        <div class="exec-card-label" style="color: rgba(255,255,255,0.8);">Priority Zero</div>
+        <div class="exec-card-value" style="color: white; font-size: 28px;">Build Cook Mode UI with step_actuals tracking THIS WEEK</div>
+        <div class="exec-card-note" style="color: rgba(255,255,255,0.9); margin-top: 16px; font-size: 15px;">
+          <strong>Why:</strong> It's 90% backend-ready. It unlocks the knowledge graph learning loop (competitive moat). It enables personalized timing (differentiation). It creates the foundation for "Cooked it!" social posts. It proves the core value proposition: ChefsBook helps you actually cook. <strong>Everything else depends on users actually cooking with the app.</strong>
+        </div>
+      </div>
+    </section>
+
+    <footer style="margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--cb-light-gray); color: var(--cb-gray); font-size: 13px;">
+      <p><strong>ChefsBook Strategic Plan 2026</strong></p>
+      <p>Created: May 4, 2026 | Last Updated: May 4, 2026</p>
+      <p style="margin-top: 8px;">This document is specific to ChefsBook's actual codebase, tables, and capabilities. Every recommendation references real features in the repository.</p>
+    </footer>
+  </main>
+
+  <script>
+    // Smooth scrolling for navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+          // Update active state
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+        }
+      });
+    });
+
+    // Update active nav on scroll
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

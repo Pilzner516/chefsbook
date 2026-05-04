@@ -48,6 +48,8 @@ export { moderateTag } from './moderateTag';
 export type { TagModerationResult } from './moderateTag';
 export { moderateCategoricalFields } from './moderateCategoricalFields';
 export type { CategoricalFields, ModerationResult as CategoricalModerationResult } from './moderateCategoricalFields';
+export { suggestRecipeCategories } from './suggestRecipeCategories';
+export type { CategorySuggestion } from './suggestRecipeCategories';
 export { moderateProfile } from './moderateProfile';
 export type { ProfileModerationResult } from './moderateProfile';
 export { isUsernameFamilyFriendly } from './usernameCheck';
@@ -68,6 +70,9 @@ export type { ImageTheme, ThemeDefinition, RegenPill } from './imageThemes';
 export { suggestTagsForRecipe } from './suggestTagsForRecipe';
 export type { TagSuggestion } from './suggestTagsForRecipe';
 export { importFromText } from './importFromText';
+export { inferStepTimings } from './inferStepTimings';
+export type { StepTimings } from './inferStepTimings';
+export { generateChefBriefing } from './chefBriefing';
 export { AUDIT_RULES_VERSION, STANDARD_RULES, DEEP_RULES } from './auditRules';
 export {
   bulkModerateTags,

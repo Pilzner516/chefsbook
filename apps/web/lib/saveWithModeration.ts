@@ -1,6 +1,6 @@
-import { createRecipe, updateRecipe, freezeUserRecipes, supabase, supabaseAdmin } from '@chefsbook/db';
+import { createRecipe, updateRecipe, freezeUserRecipes, supabase, supabaseAdmin, updateStepTimings } from '@chefsbook/db';
 import type { RecipeWithDetails, ScannedRecipe, Recipe } from '@chefsbook/db';
-import { moderateRecipe, rewriteRecipeSteps } from '@chefsbook/ai';
+import { moderateRecipe, rewriteRecipeSteps, inferStepTimings } from '@chefsbook/ai';
 import type { RecipeModerationResult } from '@chefsbook/ai';
 
 export type SaveResult = {
@@ -159,8 +159,9 @@ export async function createRecipeWithModeration(
       .then(async (rewritten) => {
         // Update steps in DB using admin client (bypasses RLS)
         await supabaseAdmin.from('recipe_steps').delete().eq('recipe_id', created.id);
+        let insertedSteps: { id: string; instruction: string }[] = [];
         if (rewritten.length > 0) {
-          await supabaseAdmin.from('recipe_steps').insert(
+          const { data } = await supabaseAdmin.from('recipe_steps').insert(
             rewritten.map((s) => ({
               recipe_id: created.id,
               user_id: userId,
@@ -169,7 +170,8 @@ export async function createRecipeWithModeration(
               timer_minutes: s.timer_minutes ?? null,
               group_label: s.group_label ?? null,
             })),
-          );
+          ).select('id, instruction');
+          insertedSteps = data ?? [];
         }
         await supabaseAdmin
           .from('recipes')
@@ -178,6 +180,18 @@ export async function createRecipeWithModeration(
             steps_rewritten_at: new Date().toISOString(),
           })
           .eq('id', created.id);
+
+        // Fire-and-forget: infer step timings for Kitchen Conductor scheduling
+        // Uses Haiku (~$0.0003/step) — runs on rewritten text, stores via updateStepTimings()
+        for (const step of insertedSteps) {
+          inferStepTimings(step.instruction)
+            .then((timings) => {
+              if (timings) {
+                updateStepTimings(step.id, timings).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {
         // Silent fail — original steps kept if rewrite fails

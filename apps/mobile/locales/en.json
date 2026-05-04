@@ -64,6 +64,9 @@
     "noRecipesInCourse": "No recipes yet",
     "removeRecipe": "Remove Recipe?",
     "removeRecipeBody": "Remove this recipe from the menu?",
+    "selectCourse": "Select course",
+    "moveRecipe": "Move",
+    "movedTo": "Moved to {{course}}",
     "addToShoppingList": "Add All to Shopping List",
     "addingToList": "Adding...",
     "addedToList": "Added to",
@@ -987,5 +990,41 @@
     "planRequired": "Ask Sous Chef requires Chef plan or above",
     "versionSaved": "Version saved",
     "renamed": "Version renamed"
+  },
+  "chef": {
+    "setup": {
+      "title": "Let's Set Up",
+      "whosCooking": "Who's cooking?",
+      "addChef": "Add chef",
+      "enterName": "Enter name",
+      "atLeastOne": "At least one chef required",
+      "ovens": "Ovens available",
+      "oneOven": "1 oven",
+      "twoOvens": "2 ovens",
+      "noneNeeded": "None needed",
+      "servingStyle": "Serving style",
+      "plated": "Plated courses",
+      "buffet": "Buffet style",
+      "eatingAtTable": "Eating at table?",
+      "serveTime": "Serve time",
+      "startNow": "Start now",
+      "startBy": "Start cooking by {{time}}",
+      "meetChef": "Meet Chef"
+    },
+    "briefing": {
+      "title": "Chef's Briefing",
+      "letsGo": "Let's go.",
+      "startCooking": "Start cooking"
+    },
+    "active": {
+      "doneChef": "Done, Chef",
+      "upNext": "Up next",
+      "parallel": "Also happening",
+      "runningLate": "Running {{minutes}} min late",
+      "anotherDeviceUpdated": "Another device updated",
+      "stepComplete": "Step complete",
+      "allDone": "All done!",
+      "wellCooked": "Well cooked."
+    }
   }
 }

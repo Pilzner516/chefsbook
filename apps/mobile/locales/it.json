@@ -63,6 +63,9 @@
     "noRecipesInCourse": "Nessuna ricetta ancora",
     "removeRecipe": "Rimuovere Ricetta?",
     "removeRecipeBody": "Rimuovere questa ricetta dal menu?",
+    "selectCourse": "Seleziona portata",
+    "moveRecipe": "Sposta",
+    "movedTo": "Spostato in {{course}}",
     "addToShoppingList": "Aggiungi alla Lista della Spesa",
     "addingToList": "Aggiunta in corso...",
     "addedToList": "Aggiunto a",
@@ -763,5 +766,41 @@
     "planRequired": "Chiedi al Sous Chef richiede il piano Chef o superiore",
     "versionSaved": "Versione salvata",
     "renamed": "Versione rinominata"
+  },
+  "chef": {
+    "setup": {
+      "title": "Preparazione",
+      "whosCooking": "Chi cucina?",
+      "addChef": "Aggiungi cuoco",
+      "enterName": "Inserisci nome",
+      "atLeastOne": "È richiesto almeno un cuoco",
+      "ovens": "Forni disponibili",
+      "oneOven": "1 forno",
+      "twoOvens": "2 forni",
+      "noneNeeded": "Non necessario",
+      "servingStyle": "Stile di servizio",
+      "plated": "Piatti individuali",
+      "buffet": "Stile buffet",
+      "eatingAtTable": "Mangiare a tavola?",
+      "serveTime": "Ora di servizio",
+      "startNow": "Inizia ora",
+      "startBy": "Iniziare a cucinare alle {{time}}",
+      "meetChef": "Incontra lo Chef"
+    },
+    "briefing": {
+      "title": "Briefing dello Chef",
+      "letsGo": "Andiamo.",
+      "startCooking": "Inizia a cucinare"
+    },
+    "active": {
+      "doneChef": "Fatto, Chef",
+      "upNext": "Prossimo",
+      "parallel": "In parallelo",
+      "runningLate": "{{minutes}} min in ritardo",
+      "anotherDeviceUpdated": "Un altro dispositivo ha aggiornato",
+      "stepComplete": "Passaggio completato",
+      "allDone": "Tutto fatto!",
+      "wellCooked": "Ben cucinato."
+    }
   }
 }

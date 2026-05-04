@@ -63,6 +63,9 @@
     "noRecipesInCourse": "Noch keine Rezepte",
     "removeRecipe": "Rezept Entfernen?",
     "removeRecipeBody": "Dieses Rezept vom Menü entfernen?",
+    "selectCourse": "Gang auswählen",
+    "moveRecipe": "Verschieben",
+    "movedTo": "Verschoben nach {{course}}",
     "addToShoppingList": "Zur Einkaufsliste Hinzufügen",
     "addingToList": "Wird hinzugefügt...",
     "addedToList": "Hinzugefügt zu",
@@ -763,5 +766,41 @@
     "planRequired": "Sous Chef fragen erfordert den Chef-Plan oder höher",
     "versionSaved": "Version gespeichert",
     "renamed": "Version umbenannt"
+  },
+  "chef": {
+    "setup": {
+      "title": "Vorbereitung",
+      "whosCooking": "Wer kocht?",
+      "addChef": "Koch hinzufügen",
+      "enterName": "Name eingeben",
+      "atLeastOne": "Mindestens ein Koch erforderlich",
+      "ovens": "Verfügbare Öfen",
+      "oneOven": "1 Ofen",
+      "twoOvens": "2 Öfen",
+      "noneNeeded": "Nicht benötigt",
+      "servingStyle": "Servierstil",
+      "plated": "Einzelne Teller",
+      "buffet": "Buffet-Stil",
+      "eatingAtTable": "Am Tisch essen?",
+      "serveTime": "Servierzeit",
+      "startNow": "Jetzt starten",
+      "startBy": "Mit dem Kochen beginnen um {{time}}",
+      "meetChef": "Chef treffen"
+    },
+    "briefing": {
+      "title": "Chef-Briefing",
+      "letsGo": "Los geht's.",
+      "startCooking": "Kochen starten"
+    },
+    "active": {
+      "doneChef": "Fertig, Chef",
+      "upNext": "Als nächstes",
+      "parallel": "Parallel",
+      "runningLate": "{{minutes}} Min. Verspätung",
+      "anotherDeviceUpdated": "Ein anderes Gerät hat aktualisiert",
+      "stepComplete": "Schritt abgeschlossen",
+      "allDone": "Alles fertig!",
+      "wellCooked": "Gut gekocht."
+    }
   }
 }

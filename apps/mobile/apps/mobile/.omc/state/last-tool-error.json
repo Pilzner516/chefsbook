@@ -1,0 +1,7 @@
+{
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"Get-ChildItem \\\"apps\\\\mobile\\\\app\\\" -Directory | Select-Object Name\",\"description\":\"List all directories in app folder\"}",
+  "error": "Exit code 1\n\u001b[31;1mGet-ChildItem: \u001b[31;1mCannot find path 'C:\\Users\\seblu\\aiproj\\chefsbook\\apps\\mobile\\apps\\mobile\\apps\\mobile\\app' because it does not exist.\u001b[0m",
+  "timestamp": "2026-05-04T14:25:20.575Z",
+  "retry_count": 2
+}

@@ -331,6 +331,24 @@
 
 ---
 
+## CHEF KITCHEN CONDUCTOR
+| Feature | Status | Platform | Owner Files | Session | Notes |
+|---------|--------|----------|-------------|---------|-------|
+| Step timing inference | LIVE | Backend | packages/ai/src/inferStepTimings.ts, apps/web/lib/saveWithModeration.ts, migration 080 (recipe_steps timing cols) | CHEF-BUILD-BACKEND | Haiku ~$0.0003/step; wired into import pipeline via saveWithModeration.ts, cached to DB |
+| Chef briefing generation | BACKEND_ONLY | Backend | packages/ai/src/chefBriefing.ts | CHEF-BUILD-BACKEND | Haiku ~$0.001/session; function exists, no UI caller yet |
+| Cooking scheduler | BACKEND_ONLY | Shared | packages/ui/src/scheduler.ts, packages/ui/src/scheduler.types.ts | CHEF-BUILD-BACKEND | Pure TS; reverse-schedule from serve time; 6 constraints; function exists, no UI caller yet |
+| Cooking sessions DB | LIVE | Backend | migration 081 (cooking_sessions table), packages/db/src/queries/cookingSessions.ts | CHEF-BUILD-BACKEND | JSONB plan storage; optimistic locking via version column; Supabase Realtime enabled |
+| Web setup modal | PENDING | Web | - | - | Not implemented (existing cook/page.tsx is Menu Mode from MENU-04, not Chef Kitchen Conductor) |
+| Web briefing screen | PENDING | Web | - | - | Not implemented (existing cook/briefing/page.tsx is Menu Mode from MENU-04, not Chef Kitchen Conductor) |
+| Web active cooking | PENDING | Web | - | - | Not implemented (existing cook/active/page.tsx is Menu Mode from MENU-04, not Chef Kitchen Conductor) |
+| Mobile setup flow | PENDING | Mobile | - | - | Not implemented (existing cook-menu files are Menu Mode from MENU-04, not Chef Kitchen Conductor) |
+| Mobile briefing screen | PENDING | Mobile | - | - | Not implemented (existing cook-menu/briefing.tsx is Menu Mode from MENU-04, not Chef Kitchen Conductor) |
+| Mobile active cooking | PENDING | Mobile | - | - | Not implemented (existing cook-menu/active.tsx is Menu Mode from MENU-04, not Chef Kitchen Conductor) |
+| Chef i18n keys | PENDING | Both | - | - | Not implemented (0 chef.* keys found in locales) |
+| Step timings backfill script | LIVE | Backend | scripts/backfill-step-timings.mjs | CHEF-BUILD-BACKEND | CONCURRENT_BATCH=3, 3s delay between batches (rate limit fix ~50 req/min), retry on JSON parse errors |
+
+---
+
 ## INFRASTRUCTURE
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|

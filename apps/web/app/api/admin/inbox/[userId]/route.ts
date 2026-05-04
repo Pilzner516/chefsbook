@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@chefsbook/db';
+import { supabase, supabaseAdmin } from '@chefsbook/db';
 
 interface RouteParams {
   params: Promise<{ userId: string }>;
 }
 
+async function verifyAdmin(req: NextRequest): Promise<string | null> {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const token = authHeader.slice(7);
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return null;
+  const { data } = await supabaseAdmin.from('admin_users').select('role').eq('user_id', user.id).single();
+  return data ? user.id : null;
+}
+
 // GET: Fetch all messages with a specific user
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const adminId = await verifyAdmin(request);
+    if (!adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { userId } = await params;
 
     // Get all admin user IDs
@@ -68,28 +81,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // POST: Send a message to the user
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const adminUserId = await verifyAdmin(request);
+    if (!adminUserId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { userId } = await params;
     const body = await request.json();
-    const { content, adminUserId } = body;
+    const { content } = body;
 
-    if (!content || !adminUserId) {
+    if (!content) {
       return NextResponse.json(
-        { error: 'Content and adminUserId are required' },
+        { error: 'Content is required' },
         { status: 400 }
-      );
-    }
-
-    // Verify the sender is an admin
-    const { data: adminCheck } = await supabaseAdmin
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', adminUserId)
-      .single();
-
-    if (!adminCheck) {
-      return NextResponse.json(
-        { error: 'Unauthorized - not an admin' },
-        { status: 403 }
       );
     }
 

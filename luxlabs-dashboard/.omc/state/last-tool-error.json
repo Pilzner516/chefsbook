@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"wc -l public/index.html && echo \\\"\\\" && grep -c \\\"console\\\\\\\\.log\\\" public/index.html && echo \\\"console.log statements\\\" && grep -c \\\"// \\\" public/index.html && echo \\\"comment lines\\\"\",\"de...",
+  "error": "Exit code 1\n989 public/index.html\n\n0",
+  "timestamp": "2026-05-03T15:15:44.891Z",
+  "retry_count": 1
+}

@@ -44,7 +44,7 @@ export function getRecipeImageUrl(
  */
 export function proxyIfNeeded(url: string): string {
   const isSupabase = SUPABASE_URL && url.startsWith(SUPABASE_URL);
-  const isLocalIp = url.includes('100.110.47.62:8000');
+  const isLocalIp = url.includes('100.83.66.51:8000') || url.includes('100.110.47.62:8000');
   if (isSupabase || isLocalIp) {
     return `/api/image?url=${encodeURIComponent(url)}`;
   }

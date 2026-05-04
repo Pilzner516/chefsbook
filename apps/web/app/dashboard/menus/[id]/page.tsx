@@ -10,6 +10,7 @@ import {
   deleteMenu,
   addMenuItem,
   removeMenuItem,
+  updateMenuItem,
   reorderMenuItems,
   listRecipes,
   getPrimaryPhotos,
@@ -82,6 +83,11 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
 
   // Cook mode
   const [showCookMode, setShowCookMode] = useState(false);
+
+  // Move recipe state
+  const [moveItemId, setMoveItemId] = useState<string | null>(null);
+  const [moveFromCourse, setMoveFromCourse] = useState<MenuCourse | null>(null);
+  const [movingItem, setMovingItem] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -317,6 +323,26 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
     return OCCASIONS.find((o) => o.value === value)?.label ?? value;
   };
 
+  const openMovePopover = (itemId: string, currentCourse: MenuCourse) => {
+    setMoveItemId(itemId);
+    setMoveFromCourse(currentCourse);
+  };
+
+  const handleMoveToCourse = async (newCourse: MenuCourse) => {
+    if (!moveItemId || !moveFromCourse) return;
+    setMovingItem(true);
+    try {
+      await updateMenuItem(moveItemId, { course: newCourse });
+      setMoveItemId(null);
+      setMoveFromCourse(null);
+      loadMenu();
+    } catch (err) {
+      console.error('Failed to move recipe:', err);
+      showAlert({ title: 'Error', body: 'Failed to move recipe. Please try again.' });
+    }
+    setMovingItem(false);
+  };
+
   const filteredRecipes = recipes.filter((r) =>
     r.title.toLowerCase().includes(recipeSearch.toLowerCase())
   );
@@ -481,6 +507,16 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
                       )}
                     </div>
                   </div>
+                  <button
+                    onClick={() => openMovePopover(item.id, course)}
+                    className="text-cb-secondary hover:text-cb-primary transition p-2 opacity-0 group-hover:opacity-100 flex items-center gap-1"
+                    title="Move to different course"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                    <span className="text-xs font-medium">Move</span>
+                  </button>
                   <button
                     onClick={() => handleRemoveItem(item.id)}
                     className="text-cb-muted hover:text-red-500 transition p-2 opacity-0 group-hover:opacity-100"
@@ -714,6 +750,34 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
 
       <ConfirmDialog />
       <AlertDialog />
+
+      {/* Move Recipe Course Selector */}
+      <ChefsDialog
+        open={!!moveItemId}
+        onClose={() => { setMoveItemId(null); setMoveFromCourse(null); }}
+        title="Move to Course"
+      >
+        <div className="space-y-2">
+          {COURSE_ORDER.map((course) => {
+            const isCurrent = course === moveFromCourse;
+            return (
+              <button
+                key={course}
+                onClick={() => !isCurrent && handleMoveToCourse(course)}
+                disabled={isCurrent || movingItem}
+                className={`w-full text-left px-4 py-3 rounded-input text-sm font-medium transition ${
+                  isCurrent
+                    ? 'bg-cb-bg text-cb-muted cursor-not-allowed opacity-60'
+                    : 'bg-cb-card border border-cb-border hover:border-cb-primary hover:bg-cb-primary-soft'
+                }`}
+              >
+                {COURSE_LABELS[course]}
+                {isCurrent && <span className="ml-2 text-xs">(current)</span>}
+              </button>
+            );
+          })}
+        </div>
+      </ChefsDialog>
 
       {/* Cook Mode Timeline Panel */}
       {showCookMode && (

@@ -1,0 +1,20 @@
+{
+  "name": "luxlabs-dashboard",
+  "version": "1.0.0",
+  "description": "LuxLabs System Monitor Dashboard - Real-time monitoring for luxlabs-pc infrastructure",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["monitoring", "dashboard", "luxlabs"],
+  "author": "LuxLabs",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "pg": "^8.11.3"
+  }
+}

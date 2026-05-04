@@ -492,5 +492,46 @@
     "planRequired": "Preguntar al Sous Chef requiere el plan Chef o superior",
     "versionSaved": "Versión guardada",
     "renamed": "Versión renombrada"
+  },
+  "chef": {
+    "setup": {
+      "title": "Preparación",
+      "whosCooking": "¿Quién cocina?",
+      "addChef": "Añadir cocinero",
+      "enterName": "Introducir nombre",
+      "atLeastOne": "Se requiere al menos un cocinero",
+      "ovens": "Hornos disponibles",
+      "oneOven": "1 horno",
+      "twoOvens": "2 hornos",
+      "noneNeeded": "No se necesita",
+      "servingStyle": "Estilo de servicio",
+      "plated": "Platos individuales",
+      "buffet": "Estilo buffet",
+      "eatingAtTable": "¿Comer en la mesa?",
+      "serveTime": "Hora de servir",
+      "startNow": "Empezar ahora",
+      "startBy": "Empezar a cocinar a las {{time}}",
+      "meetChef": "Conocer al Chef"
+    },
+    "briefing": {
+      "title": "Briefing del Chef",
+      "letsGo": "¡Vamos!",
+      "startCooking": "Empezar a cocinar"
+    },
+    "active": {
+      "doneChef": "Listo, Chef",
+      "upNext": "A continuación",
+      "parallel": "También ocurriendo",
+      "runningLate": "{{minutes}} min de retraso",
+      "anotherDeviceUpdated": "Otro dispositivo actualizó",
+      "stepComplete": "Paso completado",
+      "allDone": "¡Todo listo!",
+      "wellCooked": "Bien cocinado."
+    }
+  },
+  "menus": {
+    "selectCourse": "Seleccionar plato",
+    "moveRecipe": "Mover",
+    "movedTo": "Movido a {{course}}"
   }
 }

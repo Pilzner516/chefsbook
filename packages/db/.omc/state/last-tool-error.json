@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd C:/Users/seblu/aiproj/chefsbook/apps/web && npx tsc --noEmit 2>&1\",\"timeout\":120000,\"description\":\"Run TypeScript type check on web app\"}",
+  "error": "Exit code 2\n../../packages/ui/src/scheduler.types.ts(87,10): error TS1205: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.",
+  "timestamp": "2026-05-03T17:46:43.659Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{"t":0,"agent":"ad30232","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a52840e","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a94e9a0","agent_type":"architect","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a94e9a0","agent_type":"architect","event":"agent_stop","success":true,"duration_ms":101323}
+{"t":0,"agent":"aaff538","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a60053a","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"ai-slop-cleaner"}

@@ -1,0 +1,41 @@
+ChefsBook slux Setup - Ready to Execute
+==========================================
+
+WAITING FOR: SSH credentials for Pilzner@slux
+
+SETUP INFO GATHERED:
+- Git Repo: https://github.com/Pilzner516/chefsbook.git
+- SSH Public Key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHjb0+JmsAo50u0rEH4782It8fc1t+xnAht/eOuLNSIh timelapse-dev
+- Tailscale IP: 100.83.66.51
+- Target Static IP: 192.168.1.236
+
+SCRIPTS VALIDATED:
+✓ .omc/slux-setup.sh (syntax checked)
+✓ .omc/verify-slux-setup.sh (syntax checked)
+✓ Git repo URL updated in script
+
+EXECUTION PLAN (once SSH works):
+1. SSH into slux as Pilzner
+2. Create directory structure (/opt/luxlabs/chefsbook)
+3. Add Pilzner to docker group
+4. Install git and postgresql-client
+5. Clone repository
+6. Copy Supabase config from rpi5-eth
+7. Copy .env.local from rpi5-eth
+8. Configure static IP 192.168.1.236
+9. Start Supabase Docker stack
+10. Install Node dependencies
+11. Run verification script
+12. Mark all PRD stories as passed
+13. Request architect review
+14. Run deslop pass
+15. Cancel Ralph session
+
+FILES FROM RPI5 TO COPY:
+- /mnt/chefsbook/supabase/docker-compose.yml
+- /mnt/chefsbook/repo/.env.local (may need path adjustment)
+
+SSH KEY TO ADD TO SLUX:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHjb0+JmsAo50u0rEH4782It8fc1t+xnAht/eOuLNSIh timelapse-dev
+
+STATUS: Ready to execute immediately upon receiving credentials
