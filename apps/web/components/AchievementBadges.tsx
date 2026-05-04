@@ -32,7 +32,7 @@ export default function AchievementBadges({ userId }: Props) {
           .select(`
             badge_id,
             earned_at,
-            badge_definitions (
+            badge_definitions!inner (
               name,
               description,
               icon,
@@ -42,7 +42,7 @@ export default function AchievementBadges({ userId }: Props) {
           .eq('user_id', userId)
           .order('earned_at', { ascending: false });
 
-        setBadges((data || []) as UserBadge[]);
+        setBadges((data || []) as unknown as UserBadge[]);
       } catch (error) {
         console.error('Failed to load badges:', error);
       } finally {
