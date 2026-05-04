@@ -10,6 +10,8 @@ import FollowButton from '@/components/FollowButton';
 import MessageButton from '@/components/MessageButton';
 import FollowTabs from '@/components/FollowTabs';
 import UserBadges from '@/components/UserBadges';
+import PointsDisplay from '@/components/PointsDisplay';
+import AchievementBadges from '@/components/AchievementBadges';
 import { proxyIfNeeded, CHEFS_HAT_URL, getRecipeImageUrl } from '@/lib/recipeImage';
 
 interface Profile {
@@ -307,6 +309,12 @@ export default function ChefPage() {
             )}
           </div>
         </div>
+
+        {/* Points (private - only visible to profile owner) */}
+        <PointsDisplay userId={profile.id} isOwnProfile={isOwnProfile} />
+
+        {/* Achievement Badges (public) */}
+        <AchievementBadges userId={profile.id} />
 
         {/* Tabs */}
         <div className="flex border-b border-cb-border mb-6">

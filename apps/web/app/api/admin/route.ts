@@ -633,6 +633,52 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ settings: settingsMap });
   }
 
+  if (page === 'knowledge-gaps') {
+    const status = searchParams.get('status') || 'all';
+    const { data, error } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .select('*')
+      .order('priority', { ascending: false })
+      .order('detected_at', { ascending: false });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const filtered = status === 'all' ? data : (data ?? []).filter((g: any) => g.status === status);
+    return NextResponse.json({ gaps: filtered });
+  }
+
+  if (page === 'knowledge-gaps-stats') {
+    const { count: totalGaps } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .select('id', { count: 'exact', head: true })
+      .not('status', 'in', '(dismissed,filled)');
+    const { count: activeRequests } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active');
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const { count: filledThisMonth } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'filled')
+      .gte('filled_at', startOfMonth.toISOString());
+    const { data: avgData } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .select('observation_count')
+      .not('status', 'in', '(dismissed,filled)');
+    const avgObservations = avgData && avgData.length > 0
+      ? Math.round(avgData.reduce((sum: number, g: any) => sum + g.observation_count, 0) / avgData.length)
+      : 0;
+    return NextResponse.json({
+      stats: {
+        total_gaps: totalGaps || 0,
+        active_requests: activeRequests || 0,
+        filled_this_month: filledThisMonth || 0,
+        avg_observations: avgObservations,
+      },
+    });
+  }
+
   return NextResponse.json({ error: 'Unknown page' }, { status: 400 });
 }
 
@@ -1156,6 +1202,77 @@ export async function POST(req: NextRequest) {
     ).catch(() => {});
 
     return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'approveGap') {
+    const { gapId, requestTitle, requestBody, fillThreshold } = body;
+    const { error } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .update({
+        status: 'approved',
+        request_title: requestTitle,
+        request_body: requestBody,
+        fill_threshold: fillThreshold,
+        approved_at: new Date().toISOString(),
+        approved_by: adminId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', gapId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'activateGap') {
+    const { error } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .update({ status: 'active', updated_at: new Date().toISOString() })
+      .eq('id', body.gapId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'dismissGap') {
+    const { error } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .update({
+        status: 'dismissed',
+        dismissed_at: new Date().toISOString(),
+        dismissed_by: adminId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', body.gapId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'findGapRecipes') {
+    const { gapId } = body;
+    // Get the gap details
+    const { data: gap } = await supabaseAdmin
+      .from('knowledge_gaps')
+      .select('technique, ingredient_category')
+      .eq('id', gapId)
+      .single();
+
+    if (!gap) {
+      return NextResponse.json({ error: 'Gap not found' }, { status: 404 });
+    }
+
+    // Find recipe candidates
+    const { findGapRecipes } = await import('@chefsbook/ai');
+    const urls = await findGapRecipes(gap.technique, gap.ingredient_category);
+
+    // Update gap with suggested URLs and set status to agent_hunting
+    await supabaseAdmin
+      .from('knowledge_gaps')
+      .update({
+        suggested_urls: urls,
+        status: 'agent_hunting',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', gapId);
+
+    return NextResponse.json({ urls });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

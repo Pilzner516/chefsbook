@@ -28,3 +28,4 @@ export * from './queries/cookingSessions';
 export * from './queries/cookingKnowledge';
 export * from './queries/points';
 export * from './queries/gapContributions';
+export * from './queries/knowledgeGaps';

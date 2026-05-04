@@ -21,6 +21,7 @@ const DEFAULT_REORDERABLE_NAV: AdminNavItem[] = [
   { key: 'tags', href: '/admin/tags', label: 'Tags' },
   { key: 'audit', href: '/admin/audit', label: 'Content Audit' },
   { key: 'recipes', href: '/admin/recipes', label: 'Recipes' },
+  { key: 'knowledge-gaps', href: '/admin/knowledge-gaps', label: 'Knowledge Gaps' },
   { key: 'promos', href: '/admin/promos', label: 'Promo Codes' },
   { key: 'limits', href: '/admin/limits', label: 'Plan Limits' },
   { key: 'feedback', href: '/admin/feedback', label: 'User Feedback' },

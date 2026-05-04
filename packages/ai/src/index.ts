@@ -103,5 +103,7 @@ export { askSousChef } from './askSousChef';
 export type { SousChefFeedbackResult } from './askSousChef';
 export { detectKnowledgeGaps } from './detectKnowledgeGaps';
 export type { GapDetectionResult } from './detectKnowledgeGaps';
+export { findGapRecipes } from './findGapRecipes';
+export type { GapRecipeCandidate } from './findGapRecipes';
 export { POINTS } from './points';
 export type { PointAction } from './points';
