@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-05-04T18:03:11.925Z",
+  "original_prompt": "/autopilot \"Read and execute docs/prompts/community-knowledge.md fully and autonomously from pre-flight through deployment and wrapup. ultrawork. Do not stop for questions unless you hit a genuine blocker.\"",
+  "session_id": "75be78f9-635a-4764-a28a-c346ba79a643",
+  "project_path": "C:\\Users\\seblu\\aiproj\\chefsbook",
+  "reinforcement_count": 0,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-05-04T18:03:11.925Z",
+  "last_checked_at": "2026-05-04T18:03:11.925Z"
+}

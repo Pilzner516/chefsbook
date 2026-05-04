@@ -101,3 +101,7 @@ export { generateMenuRecipe, generateMenuRecipes } from './generateMenuRecipes';
 export type { MenuRecipeInput, GeneratedMenuRecipe } from './generateMenuRecipes';
 export { askSousChef } from './askSousChef';
 export type { SousChefFeedbackResult } from './askSousChef';
+export { detectKnowledgeGaps } from './detectKnowledgeGaps';
+export type { GapDetectionResult } from './detectKnowledgeGaps';
+export { POINTS } from './points';
+export type { PointAction } from './points';

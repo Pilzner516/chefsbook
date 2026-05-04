@@ -802,5 +802,14 @@
       "allDone": "¡Todo listo!",
       "wellCooked": "Bien cocinado."
     }
+    },
+    "gapRequest": {
+      "title": "Nuestro Sous Chef está buscando...",
+      "body": "Ayuda a enseñar algo nuevo a ChefsBook",
+      "cta": "¡Tengo uno!",
+      "dismiss": "Ahora no",
+      "doublePoints": "Gana 40 puntos",
+      "successToast": "¡Gracias! Ganaste {{points}} puntos"
+    }
   }
 }

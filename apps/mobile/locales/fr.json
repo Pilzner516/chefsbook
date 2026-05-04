@@ -799,5 +799,14 @@
       "allDone": "Tout est terminé !",
       "wellCooked": "Bien cuisiné."
     }
+    },
+    "gapRequest": {
+      "title": "Notre Sous-Chef recherche...",
+      "body": "Aidez à enseigner quelque chose de nouveau à ChefsBook",
+      "cta": "J'en ai un !",
+      "dismiss": "Pas maintenant",
+      "doublePoints": "Gagnez 40 points",
+      "successToast": "Merci ! Vous avez gagné {{points}} points"
+    }
   }
 }

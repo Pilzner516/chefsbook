@@ -1025,6 +1025,14 @@
       "stepComplete": "Step complete",
       "allDone": "All done!",
       "wellCooked": "Well cooked."
+    },
+    "gapRequest": {
+      "title": "Our Sous Chef is looking for...",
+      "body": "Help teach ChefsBook something new",
+      "cta": "I have one!",
+      "dismiss": "Not now",
+      "doublePoints": "Earn 40 points",
+      "successToast": "Thanks! You earned {{points}} points"
     }
   }
 }

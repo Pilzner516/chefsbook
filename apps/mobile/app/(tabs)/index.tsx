@@ -12,6 +12,7 @@ import { useTabBarHeight } from '../../lib/useTabBarHeight';
 import { ChefsBookHeader } from '../../components/ChefsBookHeader';
 import { RecipeCard, EmptyState, Loading, Card } from '../../components/UIKit';
 import { FeedbackCard } from '../../components/FeedbackCard';
+import { GapRequestCard } from '../../components/GapRequestCard';
 import { AddToMenuSheet } from '../../components/AddToMenuSheet';
 import { getRecipeVersions, getPrimaryPhotos, getBatchTranslatedTitles, getVerifiedUserIds } from '@chefsbook/db';
 
@@ -274,7 +275,12 @@ export default function RecipesTab() {
         data={sorted}
         extraData={{ selectMode, selected }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: selectMode ? tabBarHeight + 70 : tabBarHeight }}
-        ListHeaderComponent={<FeedbackCard />}
+        ListHeaderComponent={
+          <>
+            <FeedbackCard />
+            <GapRequestCard />
+          </>
+        }
         renderItem={({ item }) => {
           const vc = item.is_parent ? (versionCounts[item.id] ?? 1) : undefined;
           return (

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { addIngredientsToList } from '@/lib/addToShoppingList';
 import { getRecipeImageUrl, CHEFS_HAT_URL } from '@/lib/recipeImage';
 import FeedbackCard from '@/components/FeedbackCard';
+import GapRequestCard from '@/components/GapRequestCard';
 import NotificationBell from '@/components/NotificationBell';
 import IncompleteRecipesBanner from '@/components/IncompleteRecipesBanner';
 import VisibilityHintBanner from '@/components/VisibilityHintBanner';
@@ -641,6 +642,7 @@ export default function DashboardPage() {
           {!selectMode && userInfo && (
             <FeedbackCard userId={userInfo.id} username={userInfo.username} email={userInfo.email} />
           )}
+          {!selectMode && <GapRequestCard />}
           {sorted.map((recipe) => {
             const isSelected = selected.has(recipe.id);
             const Wrapper = selectMode ? 'div' as const : Link;

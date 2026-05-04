@@ -1,3 +1,1 @@
-{"t":0,"agent":"a9861bf","agent_type":"architect","event":"agent_start","parent_mode":"none"}
-{"t":0,"agent":"a9861bf","agent_type":"architect","event":"agent_stop","success":true,"duration_ms":76867}
-{"t":0,"agent":"system","event":"skill_invoked","skill_name":"ai-slop-cleaner"}
+{"t":0,"agent":"ab87b08","agent_type":"unknown","event":"agent_stop","success":true}

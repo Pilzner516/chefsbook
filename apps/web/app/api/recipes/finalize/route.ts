@@ -7,12 +7,15 @@ import {
   applyAiVerdict,
   extractDomain,
   logAiCall,
+  createGapContribution,
+  awardPoints,
+  checkGapFillStatus,
 } from '@chefsbook/db';
-import { isActuallyARecipe, consumeLastUsage } from '@chefsbook/ai';
+import { isActuallyARecipe, consumeLastUsage, POINTS } from '@chefsbook/ai';
 
 export async function POST(req: NextRequest) {
   try {
-    const { recipeId, userId, url, source, isNewDiscovery } = await req.json();
+    const { recipeId, userId, url, source, isNewDiscovery, gapId } = await req.json();
     if (!recipeId) return Response.json({ error: 'recipeId required' }, { status: 400 });
 
     const { data: recipe } = await supabaseAdmin
@@ -115,6 +118,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Handle gap contribution if gapId is present
+    let pointsAwarded = 0;
+    let newBadges: string[] = [];
+    let gapFilled = false;
+
+    if (gapId && userId && completeness.isComplete && aiVerdict === 'approved') {
+      try {
+        // Create gap contribution
+        const contribution = await createGapContribution({
+          gap_id: gapId,
+          recipe_id: recipeId,
+          user_id: userId,
+          points_awarded: POINTS.GAP_CONTRIBUTION,
+        });
+
+        // Award points (40 points for gap-filling)
+        const result = await awardPoints(
+          userId,
+          'gap_contribution',
+          POINTS.GAP_CONTRIBUTION,
+          contribution.id,
+          'Contributed recipe to fill knowledge gap (2× bonus)'
+        );
+
+        pointsAwarded = POINTS.GAP_CONTRIBUTION;
+        newBadges = result.newBadges;
+
+        // Check if gap should be marked as filled
+        gapFilled = await checkGapFillStatus(gapId);
+      } catch (error) {
+        // Log but don't fail the whole request if gap contribution fails
+        console.error('Gap contribution error:', error);
+      }
+    } else if (userId && completeness.isComplete && aiVerdict === 'approved') {
+      // Normal import (10 points)
+      try {
+        const result = await awardPoints(
+          userId,
+          'recipe_import',
+          POINTS.RECIPE_IMPORT,
+          recipeId,
+          'Imported recipe'
+        );
+        pointsAwarded = POINTS.RECIPE_IMPORT;
+        newBadges = result.newBadges;
+      } catch (error) {
+        console.error('Points award error:', error);
+      }
+    }
+
     return Response.json({
       isComplete: completeness.isComplete,
       missingFields: completeness.missingFields,
@@ -122,6 +175,9 @@ export async function POST(req: NextRequest) {
       aiReason,
       needsReview: !completeness.isComplete || aiVerdict !== 'approved',
       source: source ?? null,
+      pointsAwarded,
+      newBadges,
+      gapFilled,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'unknown error';

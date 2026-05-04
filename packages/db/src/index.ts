@@ -26,3 +26,5 @@ export * from './queries/duplicates';
 export * from './queries/menus';
 export * from './queries/cookingSessions';
 export * from './queries/cookingKnowledge';
+export * from './queries/points';
+export * from './queries/gapContributions';

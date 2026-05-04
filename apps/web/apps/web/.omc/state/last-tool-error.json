@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git add apps/web/app/api/admin/library-accounts && git commit -m \\\"fix: Next.js 15 async params in library token routes\\\"\",\"description\":\"Commit params fix\"}",
-  "error": "Exit code 128\nwarning: could not open directory 'apps/web/apps/web/apps/web/app/api/admin/': No such file or directory\nfatal: pathspec 'apps/web/app/api/admin/library-accounts' did not match any files",
-  "timestamp": "2026-05-04T17:49:57.676Z",
+  "tool_input_preview": "{\"command\":\"cd /d C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook && powershell \\\"Get-Content CLAUDE.md | Measure-Object -Line | Select-Object -ExpandProperty Lines\\\"\",\"description\":\"Get line count with PowerShel...",
+  "error": "Exit code 1\n/usr/bin/bash: line 1: cd: too many arguments",
+  "timestamp": "2026-05-04T17:58:49.364Z",
   "retry_count": 1
 }

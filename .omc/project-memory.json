@@ -186,8 +186,8 @@
     },
     {
       "path": ".claude\\agents\\feature-registry.md",
-      "accessCount": 19,
-      "lastAccessed": 1777916410444,
+      "accessCount": 20,
+      "lastAccessed": 1777917822984,
       "type": "file"
     },
     {
@@ -215,21 +215,21 @@
       "type": "file"
     },
     {
-      "path": "apps\\web\\app\\api\\image\\route.ts",
-      "accessCount": 6,
-      "lastAccessed": 1777779322391,
-      "type": "file"
-    },
-    {
       "path": ".claude\\agents\\testing.md",
-      "accessCount": 6,
-      "lastAccessed": 1777916410109,
+      "accessCount": 7,
+      "lastAccessed": 1777917822266,
       "type": "file"
     },
     {
       "path": ".claude\\agents\\deployment.md",
+      "accessCount": 7,
+      "lastAccessed": 1777917825563,
+      "type": "file"
+    },
+    {
+      "path": "apps\\web\\app\\api\\image\\route.ts",
       "accessCount": 6,
-      "lastAccessed": 1777916412466,
+      "lastAccessed": 1777779322391,
       "type": "file"
     },
     {
