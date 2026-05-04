@@ -1275,5 +1275,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ urls });
   }
 
+  if (action === 'knowledge-gaps-detect') {
+    try {
+      const { detectKnowledgeGaps } = await import('@chefsbook/ai');
+      const result = await detectKnowledgeGaps();
+      return NextResponse.json(result);
+    } catch (err: any) {
+      console.error('[admin] knowledge-gaps-detect failed:', err);
+      return NextResponse.json({ error: err?.message ?? 'Detection failed' }, { status: 500 });
+    }
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
 }
