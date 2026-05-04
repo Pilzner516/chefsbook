@@ -1,3 +1,59 @@
+## 2026-05-04 (session LIBRARY-ACCOUNT) TYPE: FEATURE (library accounts + token auth)
+
+### ChefsBook Library Account — @souschef Official Recipe Library
+
+**Purpose:** Create a special library account system for official curated recipe collections imported by the ChefsBook team, with secure long-lived token authentication for import scripts.
+
+**Components Delivered:**
+
+1. **Database Schema**
+   - Migration 084: `supabase/migrations/20260504_084_library_accounts.sql`
+   - Added `account_type` (user/library) and `is_verified` columns to `user_profiles`
+   - Created `library_account_tokens` table for SHA-256 hashed import tokens
+   - Reserved 'souschef' username in `reserved_usernames`
+   - Super admin only RLS policy on `library_account_tokens`
+
+2. **@souschef Account Creation**
+   - Script: `scripts/create-souschef-account.mjs`
+   - Account: library@chefsbk.app (@souschef)
+   - Settings: account_type=library, is_verified=true, plan_tier=pro
+   - Password stored in .env.local as SOUSCHEF_ACCOUNT_PASSWORD
+   - User ID: ff361727-869b-4e2f-ae54-92fcf09bf251
+
+3. **Admin UI**
+   - Page: `/admin/library-accounts` (super admin only)
+   - Features: library account cards with stats, token management table
+   - Generate Token: modal with description input, copy-once display, SHA-256 hash storage
+   - Revoke Token: sets is_active=false with confirmation dialog
+   - API routes: POST/DELETE `/api/admin/library-accounts/[userId]/tokens/*`
+   - Added "Library Accounts" to admin sidebar navigation
+
+4. **Token Authentication**
+   - Updated `/api/import/url` with dual auth: JWT first, library token fallback
+   - Token lookup via SHA-256 hash in `library_account_tokens` table
+   - Updates `last_used_at` on successful token auth
+   - All AI logging calls now use authenticated userId instead of null
+
+5. **UI Components**
+   - `LibraryBadge.tsx`: 📚 Library badge component (amber/gold styling, sm/md sizes)
+   - Ready to apply to recipe cards, detail pages, profiles, search results
+
+6. **Documentation Updates**
+   - Updated `docs/prompts/food-lab-import.md`:
+     - Changed blocker check to reference /admin/library-accounts token generation
+     - Added attribution note about @souschef
+     - Added `"visibility": "public"` to import request body
+   - Updated `.claude/agents/feature-registry.md` with 5 library account features
+
+**Status:** ✅ Complete — @souschef account live, admin UI deployed to slux, token auth working
+
+**Next Steps (AGENDA.md):**
+- [ ] Upload avatar for @souschef (book/chef icon)
+- [ ] Apply LibraryBadge to recipe cards, profiles, search results
+- [ ] Run Food Lab import session using library token
+
+---
+
 ## 2026-05-04 (session KNOWLEDGE-GRAPH-PROMOTION) TYPE: DATA + AI (knowledge graph promotion pipeline)
 
 ### Knowledge Graph Promotion — Recipe Steps to Cooking Timings

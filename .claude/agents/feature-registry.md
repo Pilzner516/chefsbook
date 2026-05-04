@@ -299,6 +299,11 @@
 | Admin overview overhaul | LIVE | /admin page.tsx | 174 | Command center: 6 health KPIs, MRR/AI cost/margin, plan distribution, quick action links |
 | Template management dashboard | LIVE | /admin/templates, /api/admin/templates/* | PHASE2-ADMIN-TEMPLATES | Admin-only; system template list; preview panel; upload flow; enable/disable |
 | AI template generation | LIVE | /api/admin/templates/generate, /api/admin/templates/save, /admin/templates | PHASE3-AI-TEMPLATE-GENERATION | Admin-only; 5/day rate limit; Sonnet ~$0.10-$0.15/call; style options + color pickers; validation + draft status |
+| Library accounts system | LIVE | migration 084, user_profiles (account_type, is_verified), library_account_tokens table | LIBRARY-ACCOUNT | Special accounts (e.g. @souschef) for curated recipe collections; account_type='library', always verified |
+| Library account tokens | LIVE | library_account_tokens table, /api/admin/library-accounts/[userId]/tokens/* | LIBRARY-ACCOUNT | Long-lived import tokens for library accounts; SHA-256 hashed storage; super admin only generation/revocation |
+| Library accounts admin page | LIVE | /admin/library-accounts, /api/admin?page=library-accounts | LIBRARY-ACCOUNT | Super admin UI for managing library accounts and tokens; generate/revoke token flows with copy-once modal |
+| Library token authentication | LIVE | /api/import/url authenticateRequest() | LIBRARY-ACCOUNT | Import route accepts both JWT and library tokens; updates last_used_at on successful auth; userId logging for AI calls |
+| LibraryBadge component | LIVE | apps/web/components/LibraryBadge.tsx | LIBRARY-ACCOUNT | 📚 Library badge for account_type='library' users; amber/gold styling; sm/md sizes |
 
 ---
 
