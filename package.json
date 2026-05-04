@@ -17,6 +17,9 @@
     "react-dom": "19.1.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
+    "@supabase/supabase-js": "^2.105.2",
+    "dotenv": "^17.4.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native-worklets": "^0.8.1",

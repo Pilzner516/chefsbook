@@ -31,59 +31,7 @@ async function main() {
   console.log('📊 Aggregating classified recipe steps...\n');
   console.log(`Min observations threshold: ${minObservations}\n`);
 
-  // Aggregation query with percentiles and modes
-  const { data: aggregated, error } = await supabase.rpc('aggregate_step_timings', {
-    min_obs: minObservations,
-  });
-
-  if (error) {
-    // If the RPC doesn't exist, fall back to raw SQL via pg
-    console.log('⚠️  RPC not found, using direct SQL query...\n');
-
-    const query = `
-      SELECT
-        technique,
-        ingredient_category,
-        technique || ':' || COALESCE(ingredient_category, '_none') AS canonical_key,
-        COUNT(*)                                    AS observation_count,
-        PERCENTILE_CONT(0.25) WITHIN GROUP
-          (ORDER BY duration_min)::INTEGER          AS duration_min_agg,
-        PERCENTILE_CONT(0.75) WITHIN GROUP
-          (ORDER BY duration_max)::INTEGER          AS duration_max_agg,
-        MODE() WITHIN GROUP (ORDER BY is_passive)   AS is_passive_agg,
-        MODE() WITHIN GROUP (ORDER BY uses_oven)    AS uses_oven_agg,
-        MODE() WITHIN GROUP
-          (ORDER BY oven_temp_celsius
-           NULLS LAST)                              AS oven_temp_agg,
-        MODE() WITHIN GROUP (ORDER BY phase)        AS phase_agg,
-        AVG(CASE
-          WHEN timing_confidence = 'high' THEN 0.9
-          WHEN timing_confidence = 'medium' THEN 0.6
-          ELSE 0.3
-        END)                                        AS avg_confidence_score
-      FROM recipe_steps
-      WHERE technique IS NOT NULL
-        AND timings_inferred_at IS NOT NULL
-        AND timing_confidence IS NOT NULL
-      GROUP BY technique, ingredient_category
-      HAVING COUNT(*) >= ${minObservations}
-      ORDER BY COUNT(*) DESC
-    `;
-
-    const { data: rawData, error: rawError } = await supabase.rpc('exec_sql', { sql: query });
-
-    if (rawError) {
-      console.error('❌ Aggregation query failed:', rawError.message);
-      console.log('\nTrying direct postgres query via docker...\n');
-
-      // This won't work from local dev, but will work when run on slux
-      console.error('❌ Cannot run postgres query from local script.');
-      console.error('📝 Run this script on slux instead, or create the RPC function first.');
-      process.exit(1);
-    }
-  }
-
-  // For now, we'll use a simpler approach: fetch all classified steps and aggregate in JS
+  // Fetch all classified steps and aggregate in JavaScript
   console.log('📦 Fetching all classified steps for aggregation...\n');
 
   const { data: steps, error: fetchError } = await supabase
@@ -186,17 +134,13 @@ async function main() {
     // Check if exists
     const { data: existing } = await supabase
       .from('cooking_action_timings')
-      .select('source, observations_count')
+      .select('source, observed_count')
       .eq('canonical_key', agg.canonical_key)
       .maybeSingle();
 
     if (existing) {
       // Update only if new observation count is higher
-      if (agg.observation_count > (existing.observations_count || 0)) {
-        const newSource = existing.source === 'wikipedia'
-          ? 'wikipedia+recipe_steps'
-          : 'recipe_steps_promotion';
-
+      if (agg.observation_count > (existing.observed_count || 0)) {
         const { error: updateError } = await supabase
           .from('cooking_action_timings')
           .update({
@@ -207,8 +151,8 @@ async function main() {
             oven_temp_celsius: agg.oven_temp_agg,
             phase: agg.phase_agg,
             confidence: agg.confidence,
-            observations_count: agg.observation_count,
-            source: newSource,
+            observed_count: agg.observation_count,
+            source: 'observed',
           })
           .eq('canonical_key', agg.canonical_key);
 
@@ -234,8 +178,8 @@ async function main() {
           oven_temp_celsius: agg.oven_temp_agg,
           phase: agg.phase_agg,
           confidence: agg.confidence,
-          source: 'recipe_steps_promotion',
-          observations_count: agg.observation_count,
+          source: 'observed',
+          observed_count: agg.observation_count,
         });
 
       if (!insertError) {

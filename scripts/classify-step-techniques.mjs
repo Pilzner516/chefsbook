@@ -44,13 +44,18 @@ async function classifyStep(instruction) {
   const prompt = HAIKU_PROMPT.replace('{STEP_INSTRUCTION}', instruction.replace(/"/g, '\\"'));
 
   const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-20250514',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 100,
     messages: [{ role: 'user', content: prompt }],
   });
 
   const text = message.content[0].text;
-  return JSON.parse(text);
+
+  // Extract JSON from markdown code blocks if present
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
+  const jsonText = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : text;
+
+  return JSON.parse(jsonText);
 }
 
 async function sleep(ms) {
