@@ -1,3 +1,52 @@
+## 2026-05-04 (session KNOWLEDGE-GRAPH-PROMOTION) TYPE: DATA + AI (knowledge graph promotion pipeline)
+
+### Knowledge Graph Promotion — Recipe Steps to Cooking Timings
+
+**Purpose:** Promote classified recipe step timings into the cooking_action_timings knowledge graph to improve Chef scheduler accuracy and reduce AI costs.
+
+**Components Delivered:**
+
+1. **Database Schema**
+   - Migration 082: `supabase/migrations/20260504_082_recipe_steps_technique.sql` — adds technique, ingredient_category, classified_at columns to recipe_steps; includes two partial indexes for KG lookup and promotion queries
+
+2. **Classification Script**
+   - `scripts/classify-step-techniques.mjs` — Haiku-powered batch classifier for existing timed steps; processes 10 steps/batch with 1s delays; includes JSON extraction from markdown blocks, error recovery, --dry-run support
+   - Fixed issues: correct Haiku model ID (claude-haiku-4-5-20251001), markdown code fence extraction
+
+3. **Promotion Script**
+   - `scripts/promote-step-timings.mjs` — aggregates classified steps into cooking_action_timings; uses 25th percentile for duration_min, 75th for duration_max, mode for categorical fields; upserts with observation-count gating
+   - Fixed issues: removed unreachable RPC code, correct column names (observed_count), valid source values, confidence schema compliance, boolean mode aggregation
+
+4. **Code Updates**
+   - `packages/ai/src/inferStepTimings.ts` — returns technique and ingredient_category fields in StepTimings interface; KG lookup checks these fields first
+   - `packages/db/src/queries/recipes.ts` — updateStepTimings() writes technique fields and always stamps classified_at
+
+5. **Validation Fixes** (post-review)
+   - Removed very_high confidence (schema constraint violation)
+   - Fixed boolean mode aggregation (null filtering, boolean comparison)
+   - Unified classified_at semantics across live and offline paths
+
+**Results:**
+- 1,000 recipe steps classified (876 with technique, 124 prep-only)
+- 154 new knowledge graph entries + 3 Wikipedia enrichments
+- cooking_action_timings: 40 → 194 total rows
+- Top techniques: sauté (60), bake (58), mix (53), rest (46), season (43)
+
+**Impact:**
+- Future recipe imports capture technique automatically via inferStepTimings()
+- Knowledge graph hit rate increases as more steps are classified
+- AI costs decrease as lookups replace Haiku calls
+- Chef scheduler has 4.85× more timing data for predictions
+
+**Validation:**
+- Architect review: functionally complete for backfill (gaps: mobile imports, recurring promotion)
+- Security review: LOW risk, prompt injection hardening recommended
+- Code review: 4 HIGH issues identified and fixed
+
+**Status:** ✅ Complete — pipeline operational, 1,228 timed steps ready for future classification runs
+
+---
+
 ## 2026-05-04 (session STRATEGIC-REVIEW-2026) TYPE: STRATEGY (full strategic plan)
 
 ### ChefsBook Strategic Review 2026
