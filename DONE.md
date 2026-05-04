@@ -1,3 +1,36 @@
+## 2026-05-04 (session STRATEGIC-REVIEW-2026) TYPE: STRATEGY (full strategic plan)
+
+### ChefsBook Strategic Review 2026
+
+**Purpose:** Complete strategic review to position ChefsBook as the dominant global cooking platform. All recommendations reference actual codebase features and tables.
+
+**Documents Produced:**
+
+1. **`.omc/planning/01-competitive-landscape.md`** — Competitive matrix for 11 competitors (Yummly DEAD Dec 2024, AllRecipes app DEAD, NYT Cooking, Samsung Food, Paprika, Cookpad 100M users, SideChef). Top 10 unmet market needs ranked. ChefsBook advantages: cooking scheduler, knowledge graph, personal versions, multi-course coordination.
+
+2. **`.omc/planning/02-data-strategy.md`** — Full 50+ table audit across 83 migrations. Data compounding model (10k→100k→1M users). Critical gap identified: `step_actuals` table needed for knowledge graph learning loop. Promotion pipeline: recipe_steps → cooking_action_timings.
+
+3. **`.omc/planning/03-ai-roadmap.md`** — 40+ current AI functions documented. 10 Chef capabilities designed with feasibility/complexity ratings. Phased roadmap: v1 (predictive scheduling, seasonal intelligence), v2 (skill assessment, waste reduction), v3 (voice cooking, proactive Chef).
+
+4. **`.omc/planning/04-monetisation.md`** — 7 revenue vectors: subscriptions, grocery affiliate, creator economy, print cookbooks, data licensing, B2B, brand partnerships. 12-month projection: $106,500 (10k users). 36-month projection: $1,350,000 (100k users). Blocker: Stripe not integrated.
+
+5. **`.omc/planning/05-social-platform.md`** — "Cooked it!" identity layer (Strava-inspired). Cooking streaks, challenges, family vaults, collaborative menus, reputation system. Viral mechanics: cook→share→inspire loop.
+
+6. **`.omc/planning/06-implementation-roadmap.md`** — 90-day sprint plan (Cook Mode → Stripe → Gamification). 12-month quarterly milestones. Risk register (5 risks). OMC agent file structure for future features.
+
+7. **`.omc/planning/chefsbook-strategy-2026.md`** — Final compiled document with executive summary, table of contents, all 6 sections merged. Investor/engineer/marketing-ready.
+
+**Key Insights:**
+
+- ChefsBook's competitive moat: pure TypeScript scheduler + knowledge graph learning loop (no competitor has this)
+- `inferStepTimings()` checks knowledge graph BEFORE calling Haiku — as graph grows, AI costs decrease
+- "Cooked it!" = ChefsBook equivalent of Strava kudos for cooking identity validation
+- Single most important thing to build next: **Cook Mode UI with step_actuals tracking**
+
+**Status:** ✅ Complete — strategic plan ready for execution
+
+---
+
 ## 2026-05-03 (session SEED-COOKING-KNOWLEDGE) TYPE: DATA (cooking timing knowledge graph)
 
 ### Cooking Action Timings - Wikipedia Knowledge Graph Seeding
