@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '@chefsbook/db';
-import { callClaude } from './client';
-import { KNOWN_RECIPE_SITES } from './siteList';
+import { callClaude, HAIKU } from './client';
 
 export interface GapRecipeCandidate {
   url: string;
@@ -10,19 +9,78 @@ export interface GapRecipeCandidate {
   confidence: 'high' | 'medium' | 'low';
 }
 
+interface SearchResult {
+  url: string;
+  title: string;
+  domain: string;
+}
+
 /**
- * Find recipe URLs to fill a knowledge gap using AI-guided search.
+ * Scrape Google search results to extract recipe URLs.
+ * Uses a simple HTTP fetch + HTML parsing approach.
+ */
+async function scrapeGoogleSearch(query: string, siteDomain?: string): Promise<SearchResult[]> {
+  const searchQuery = siteDomain ? `${query} site:${siteDomain}` : query;
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&num=10`;
+
+  try {
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`Google search failed: ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+
+    // Use Claude to extract URLs and titles from the search results HTML
+    const prompt = `Extract recipe URLs from this Google search results HTML. Return only actual recipe pages (not search pages, category pages, or blog homepages).
+
+For each recipe URL found, provide:
+- url: the direct recipe page URL
+- title: the page title
+- domain: the domain name (e.g., "bonappetit.com")
+
+Return as JSON array:
+[{"url": "https://...", "title": "...", "domain": "..."}]
+
+HTML excerpt (first 15000 chars):
+${html.slice(0, 15000)}`;
+
+    const claudeResponse = await callClaude({
+      prompt,
+      model: HAIKU,
+      maxTokens: 2000,
+    });
+
+    // Extract JSON from response
+    const jsonMatch = claudeResponse.match(/```json\s*([\s\S]*?)```/) ?? claudeResponse.match(/(\[[\s\S]*\])/);
+    if (!jsonMatch) {
+      console.warn('No JSON found in Claude response for URL extraction');
+      return [];
+    }
+
+    const results = JSON.parse(jsonMatch[1] ?? jsonMatch[0]);
+    return Array.isArray(results) ? results.slice(0, 5) : [];
+  } catch (error) {
+    console.error('Google search scraping failed:', error);
+    return [];
+  }
+}
+
+/**
+ * Find recipe URLs to fill a knowledge gap using web search.
  *
  * Strategy:
  * 1. Get high-quality recipe sites from import_site_tracker
- * 2. Use Claude to generate search queries for the technique+ingredient
- * 3. Construct search URLs for top sites
+ * 2. Scrape Google search results for each site
+ * 3. Use Claude to extract actual recipe URLs from HTML
  * 4. Check which URLs aren't already in the recipes table
  * 5. Return top 5 candidates
- *
- * Note: This is a simplified implementation. A full version would use
- * a web search API (Google Custom Search, Bing, etc.) to find actual URLs.
- * For now, we construct likely URLs based on site patterns.
  */
 export async function findGapRecipes(
   technique: string,
@@ -33,83 +91,69 @@ export async function findGapRecipes(
   // Step 1: Get high-quality recipe sites (rating >= 4)
   const { data: sites } = await supabaseAdmin
     .from('import_site_tracker')
-    .select('domain, rating, status')
+    .select('domain, rating')
     .gte('rating', 4)
     .eq('status', 'working')
     .order('rating', { ascending: false })
-    .limit(10);
+    .limit(5);
 
-  if (!sites || sites.length === 0) {
-    // Fallback to known high-quality sites
-    const fallbackDomains = [
-      'seriouseats.com',
-      'bonappetit.com',
-      'smittenkitchen.com',
-      'kingarthurbaking.com',
-      'cookieandkate.com',
-    ];
+  const fallbackDomains = [
+    'seriouseats.com',
+    'bonappetit.com',
+    'smittenkitchen.com',
+    'kingarthurbaking.com',
+    'cookieandkate.com',
+  ];
 
-    for (const domain of fallbackDomains) {
-      candidates.push({
-        url: `https://${domain}/search?q=${encodeURIComponent(technique + (ingredientCategory ? ' ' + ingredientCategory : ''))}`,
-        title: `Search results for ${technique} ${ingredientCategory || ''}`,
-        source_domain: domain,
-        quality_rating: 5,
-        confidence: 'medium',
-      });
+  const targetDomains = sites && sites.length > 0
+    ? sites.map(s => ({ domain: s.domain, rating: s.rating }))
+    : fallbackDomains.map(d => ({ domain: d, rating: 5 }));
+
+  // Step 2: Construct search query
+  const ingredient = ingredientCategory ? ` ${ingredientCategory}` : '';
+  const baseQuery = `${technique}${ingredient} recipe`;
+
+  // Step 3: Scrape Google for each target domain
+  const allResults: (SearchResult & { rating: number })[] = [];
+
+  for (const site of targetDomains.slice(0, 3)) {
+    const results = await scrapeGoogleSearch(baseQuery, site.domain);
+
+    for (const result of results) {
+      allResults.push({ ...result, rating: site.rating });
     }
-  } else {
-    // Step 2: Use Claude to generate likely recipe titles/URLs
-    const ingredient = ingredientCategory ? ` with ${ingredientCategory}` : '';
-    const prompt = `Given the cooking technique "${technique}"${ingredient}, suggest 3 likely recipe titles that would teach someone this technique well. Format as JSON array of strings. Be specific and realistic - these should sound like actual recipe titles from cooking blogs.
 
-Example format:
-["Perfect Pan-Seared Chicken Breast", "Crispy Roasted Chicken Thighs", "One-Pan Chicken Dinner"]`;
-
-    try {
-      const response = await callClaude({
-        prompt,
-        model: 'claude-haiku-4-5-20251001',
-        maxTokens: 500,
-      });
-
-      const recipeTitles = JSON.parse(response);
-
-      // Step 3: Construct search URLs for each site + recipe title combo
-      for (const site of sites.slice(0, 5)) {
-        for (const title of recipeTitles.slice(0, 2)) {
-          const searchQuery = `${title} site:${site.domain}`;
-          candidates.push({
-            url: `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
-            title: title,
-            source_domain: site.domain,
-            quality_rating: site.rating,
-            confidence: 'high',
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to generate recipe titles:', error);
-      // Fallback to simple search URLs
-      for (const site of sites.slice(0, 5)) {
-        const searchQuery = `${technique}${ingredient}`;
-        candidates.push({
-          url: `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:' + site.domain)}`,
-          title: `${technique}${ingredient} recipe`,
-          source_domain: site.domain,
-          quality_rating: site.rating,
-          confidence: 'low',
-        });
-      }
+    // Delay between searches to be respectful to Google
+    if (site !== targetDomains[2]) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 
   // Step 4: Check which URLs aren't already imported
-  // Note: We're returning Google search URLs, not direct recipe URLs,
-  // so this check is less relevant. In a full implementation, we'd
-  // fetch the actual recipe URLs from search results.
+  const urls = allResults.map(r => r.url);
+  const { data: existing } = await supabaseAdmin
+    .from('recipes')
+    .select('source_url')
+    .in('source_url', urls);
 
-  // Step 5: Return top 5 candidates
+  const existingUrls = new Set((existing || []).map(r => r.source_url));
+
+  // Step 5: Build candidates from new URLs
+  for (const result of allResults) {
+    if (existingUrls.has(result.url)) {
+      continue; // Skip already imported recipes
+    }
+
+    candidates.push({
+      url: result.url,
+      title: result.title,
+      source_domain: result.domain,
+      quality_rating: result.rating,
+      confidence: result.rating >= 4 ? 'high' : 'medium',
+    });
+  }
+
+  // Step 6: Sort by quality and return top 5
   return candidates
     .sort((a, b) => {
       // Sort by quality rating first, then confidence
@@ -121,16 +165,3 @@ Example format:
     })
     .slice(0, 5);
 }
-
-/**
- * TODO: Full implementation would:
- * 1. Use Google Custom Search API or Bing Web Search API
- * 2. Execute actual searches for "technique + ingredient + recipe"
- * 3. Filter results to known high-quality recipe domains
- * 4. Extract recipe URLs from search results
- * 5. Check each URL against recipes.source_url_normalized
- * 6. Return only URLs that haven't been imported yet
- *
- * Cost: ~$0.005 per search (Google Custom Search) + $0.001 (Claude Haiku)
- * Total: ~$0.01 per gap
- */
