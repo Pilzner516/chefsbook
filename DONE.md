@@ -1,3 +1,11 @@
+## 2026-05-05 (session ENV-AUDIT-DOCS) TYPE: CHORE
+
+Documentation hardening to prevent URL construction bug recurrence. Follow-up to IMAGE-GEN-FIX (ecaf2f2) which fixed mobile's port-replacement hack. Added EXPO_PUBLIC_WEB_URL gotcha entry to CLAUDE.md "Known issues" section (placed after the port-replacement fix entry) to explicitly warn against deriving web URLs from Supabase URLs. Created new POST-FLIGHT CHECKLIST section in .claude/agents/wrapup.md with URL audit checklist item requiring all URL constructions to use correct env vars (EXPO_PUBLIC_SUPABASE_URL for Supabase services, EXPO_PUBLIC_WEB_URL for web API routes). No code changes — docs-only preventative measure to ensure this bug class is never repeated in future sessions.
+
+Commit: 6a629ac
+
+---
+
 ## 2026-05-05 (session MOBILE-IMAGE-GEN-FIX) TYPE: CODE FIX
 
 Mobile AI Image Generation — Theme Selection Error Fix
