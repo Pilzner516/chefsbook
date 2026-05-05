@@ -187,8 +187,15 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
   // handleStepComplete
   // ---------------------------------------------------------------------------
   const handleStepComplete = async () => {
+    console.log('🔴 STEP COMPLETE CALLED');
+    console.log('Session object:', JSON.stringify(session, null, 2));
+    console.log('Current step object:', JSON.stringify(currentStep, null, 2));
+    console.log('Completing flag:', completing);
+
     if (!session || !currentStep || completing) return;
     setCompleting(true);
+
+    try {
 
     const actualEnd = new Date();
     const plannedEnd = currentStep.planned_end;
@@ -240,15 +247,25 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
         return;
       }
 
-      // 4. Speak next step
-      const upcomingStep = updatedPlan.steps[nextIndex];
-      if (upcomingStep) {
-        const callout = buildStepCallout(upcomingStep, upcomingStep.chef_name);
-        speakText(callout);
+        // 4. Speak next step
+        const upcomingStep = updatedPlan.steps[nextIndex];
+        if (upcomingStep) {
+          const callout = buildStepCallout(upcomingStep, upcomingStep.chef_name);
+          speakText(callout);
+        }
       }
+    } catch (err) {
+      console.error('🔴 STEP COMPLETE FAILED - Full error details:');
+      console.error('Error object:', err);
+      console.error('Error stringified:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
+      console.error('Error message:', err instanceof Error ? err.message : String(err));
+      console.error('Error name:', err instanceof Error ? err.name : typeof err);
+      // Show error to user - TODO: add toast/alert mechanism for web
+      alert('Failed to advance step. Please try again.');
+    } finally {
+      setCompleting(false);
     }
-
-    setCompleting(false);
   };
 
   // ---------------------------------------------------------------------------
@@ -308,7 +325,7 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
       <div className="flex-1 flex flex-col px-6 py-4">
         <div className="bg-white/5 border border-white/10 rounded-card p-6 flex-1 flex flex-col">
           {/* Instruction */}
-          <p className="text-white text-2xl font-semibold leading-snug flex-1">
+          <p className="text-white text-2xl font-semibold leading-snug">
             {currentStep.step.instruction}
           </p>
 
