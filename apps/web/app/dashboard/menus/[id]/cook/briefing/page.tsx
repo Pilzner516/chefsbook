@@ -6,9 +6,30 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function speakChef(text: string) {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
+
   const utt = new SpeechSynthesisUtterance(text);
-  utt.rate = 0.95;
-  utt.pitch = 1.0;
+
+  // Select a natural-sounding voice (prefer Google, Microsoft, or Apple voices)
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(
+    (v) =>
+      v.name.includes('Google') ||
+      v.name.includes('Microsoft') ||
+      v.name.includes('Samantha') || // macOS/iOS
+      v.name.includes('Karen') || // macOS/iOS
+      v.name.includes('Daniel') || // macOS/iOS
+      v.name.includes('Zira') || // Windows
+      v.name.includes('David') // Windows
+  );
+
+  if (preferredVoice) {
+    utt.voice = preferredVoice;
+  }
+
+  // Adjust rate and pitch for more natural sound
+  utt.rate = 0.9; // Slightly slower than default
+  utt.pitch = 1.1; // Slightly higher pitch
+
   window.speechSynthesis.speak(utt);
 }
 

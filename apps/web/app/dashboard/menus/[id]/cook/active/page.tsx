@@ -17,9 +17,30 @@ import type { CookingSession, ScheduledStep } from '@chefsbook/ui';
 function speakText(text: string) {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
+
   const utt = new SpeechSynthesisUtterance(text);
-  utt.rate = 0.95;
-  utt.pitch = 1.0;
+
+  // Select a natural-sounding voice (prefer Google, Microsoft, or Apple voices)
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(
+    (v) =>
+      v.name.includes('Google') ||
+      v.name.includes('Microsoft') ||
+      v.name.includes('Samantha') || // macOS/iOS
+      v.name.includes('Karen') || // macOS/iOS
+      v.name.includes('Daniel') || // macOS/iOS
+      v.name.includes('Zira') || // Windows
+      v.name.includes('David') // Windows
+  );
+
+  if (preferredVoice) {
+    utt.voice = preferredVoice;
+  }
+
+  // Adjust rate and pitch for more natural sound
+  utt.rate = 0.9; // Slightly slower than default
+  utt.pitch = 1.1; // Slightly higher pitch
+
   window.speechSynthesis.speak(utt);
 }
 
@@ -191,7 +212,6 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
     setCompleting(true);
 
     try {
-
     const actualEnd = new Date();
     const plannedEnd = currentStep.planned_end;
     const overrunMinutes = plannedEnd
@@ -214,21 +234,9 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
     let updatedPlan = session.plan;
     if (overrunMinutes > 2) {
       updatedPlan = recomputeFromOverrun(session.plan, currentStep.step.id, actualEnd);
-      const persistSuccess = await persistRecomputedPlan(session.id, updatedPlan, session.version);
-
-      if (!persistSuccess) {
-        // Version conflict during plan persist — refetch and let user retry
-        const fresh = await getCookingSession(session.id);
-        if (fresh) {
-          setSession(fresh);
-          stepStartRef.current = new Date();
-        }
-        alert('Another device updated the session. Please try again.');
-        return;
-      }
     }
 
-    // 3. Update session: advance step index and record actuals
+    // 3. Single atomic update: advance step index, record actuals, and update plan
     const newStatus = isLastStep ? 'complete' : session.status;
     const result = await updateCookingSession(
       session.id,
