@@ -1,3 +1,42 @@
+## 2026-05-04 (session COOK-MODE-UI) TYPE: FEATURE
+
+Chef Kitchen Conductor UI + step_actuals learning loop implemented on web and mobile. Full 4-screen cooking experience: Setup (serve time, oven count, Chef briefing with typewriter), Plan (reverse-scheduled timeline), Active (step-by-step timer with pause/resume), Completion (time summary, 5 points awarded). Records actual step timings to step_actuals table. Fire-and-forget knowledge graph feedback loop updates cooking_action_timings with weighted averages. Entry points added to recipe detail pages on both platforms (gated: is_complete + 3+ timed steps). Mobile excludes /cook from FloatingTabBar, uses expo-keep-awake and TTS. i18n complete for 5 mobile locales. Web deployed to slux. TYPE: FEATURE.
+
+**Backend (from prior commit c2e460b):**
+- Migration 087: step_actuals table with technique/ingredient_category denormalization
+- POST /api/cook/sessions (creates session, calls chefBriefing Haiku ~$0.001, runs scheduler)
+- POST /api/cook/sessions/[id]/step-actual (records actual, fires updateKnowledgeFromActuals)
+- POST /api/cook/sessions/[id]/complete (awards 5 points, checks badges)
+- packages/ai/src/updateKnowledgeFromActuals.ts (weighted average, fills knowledge_gaps)
+
+**Frontend (this session d48d135):**
+- apps/web/app/cook/[recipeId]/page.tsx (629 lines, Wake Lock API integration)
+- apps/mobile/app/cook/[id].tsx (713 lines, expo-keep-awake, TTS, SafeAreaInsets)
+- Entry buttons: apps/web/app/recipe/[id]/page.tsx, apps/mobile/app/recipe/[id].tsx
+- apps/mobile/app/_layout.tsx (FloatingTabBar exclusion for /cook)
+- i18n: cookMode keys added to en/fr/es/it/de.json (17 keys each: setup, plan, step, complete)
+
+**Verified:**
+- Migration applied: psql \d step_actuals shows schema ✓
+- TypeScript: packages/ai passes ✓, apps/web passes ✓
+- Web deployed: Next.js build successful, pm2 restarted, route in manifest ✓
+- Committed d48d135, pushed to GitHub, pulled on slux ✓
+
+**INCOMPLETE:**
+- Plan gating (Chef+ requirement) — NOT implemented, free users can access
+- Manual testing — NOT done, no step_actuals data to verify knowledge graph update
+- Web i18n — apps/web/locales/ doesn't exist, English strings hardcoded
+- Mobile APK build — NOT built, deployment was web-only
+
+**RECOMMENDED NEXT STEPS:**
+1. Manual test: create cook session, verify step_actuals recorded, confirm knowledge graph updated
+2. Implement Chef+ plan gate on /cook/[recipeId] and /cook/[id]
+3. Create apps/web/locales/ and add cookMode translations
+4. Build and test mobile APK with Cook Mode
+5. Monitor step_actuals growth over 30 days for cooking streak feature planning
+
+---
+
 ## 2026-05-04 (session RALPH-MOBILE-LOGIN-FIX) TYPE: BUGFIX
 
 Fixed mobile app login failure: auth requests returned "Network request failed" on sign-in. Root cause: `apps/mobile/.env.local` overrides root `.env.local` for mobile Expo builds and had `EXPO_PUBLIC_SUPABASE_URL=http://100.110.47.62:8000` (dead RPi5 Tailscale IP from before slux migration). Fix: updated `apps/mobile/.env.local` to `https://api.chefsbk.app` (Cloudflare Tunnel to slux Supabase). Also fixed root `.env.local` which had `http://localhost:8000`. Rebuilt APK with cleared bundle cache. Verified end-to-end: auth request reaches Supabase — responds HTTP 400 "Invalid login credentials" (not "Network request failed"), proving network path is live. Architect APPROVED. Non-blocking secondary finding: `speak.tsx:180` port-replacement hack (`.replace(':8000', ':3000')`) now is dead code with new URL but produces correct hostname by coincidence — recommend explicit `EXPO_PUBLIC_WEB_URL` env var in follow-up session. TYPE: BUGFIX.
