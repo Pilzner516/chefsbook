@@ -3,24 +3,46 @@
 import { use, useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-function speakChef(text: string) {
+// ---------------------------------------------------------------------------
+// Speech helper with voice cache
+// ---------------------------------------------------------------------------
+let cachedVoices: SpeechSynthesisVoice[] = [];
+let voicesLoaded = false;
+
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  // Cache voices on first voiceschanged event
+  window.speechSynthesis.addEventListener('voiceschanged', () => {
+    cachedVoices = window.speechSynthesis.getVoices();
+    voicesLoaded = true;
+  });
+}
+
+async function speakChef(text: string) {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
 
+  // Wait for voices to load if not yet ready
+  if (!voicesLoaded) {
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(resolve, 1000); // Safety net
+      window.speechSynthesis.addEventListener('voiceschanged', () => {
+        clearTimeout(timeout);
+        cachedVoices = window.speechSynthesis.getVoices();
+        voicesLoaded = true;
+        resolve();
+      }, { once: true });
+    });
+  }
+
   const utt = new SpeechSynthesisUtterance(text);
 
-  // Select a natural-sounding voice (prefer Google, Microsoft, or Apple voices)
-  const voices = window.speechSynthesis.getVoices();
-  const preferredVoice = voices.find(
-    (v) =>
-      v.name.includes('Google') ||
-      v.name.includes('Microsoft') ||
-      v.name.includes('Samantha') || // macOS/iOS
-      v.name.includes('Karen') || // macOS/iOS
-      v.name.includes('Daniel') || // macOS/iOS
-      v.name.includes('Zira') || // Windows
-      v.name.includes('David') // Windows
-  );
+  // Select natural-sounding voice with priority order
+  const preferredVoice =
+    cachedVoices.find((v) => v.name.includes('Google')) || // Prefer Google voices
+    cachedVoices.find((v) => v.name.includes('Zira')) || // Windows Zira
+    cachedVoices.find((v) => v.name.includes('Samantha')) || // macOS Samantha
+    cachedVoices.find((v) => v.name.includes('Microsoft')) || // Any Microsoft
+    cachedVoices.find((v) => v.name.includes('Karen') || v.name.includes('Daniel') || v.name.includes('David')); // Other quality voices
 
   if (preferredVoice) {
     utt.voice = preferredVoice;

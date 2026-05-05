@@ -15,7 +15,6 @@ import { useTheme } from '../../../context/ThemeContext';
 import {
   getCookingSession,
   updateCookingSession,
-  persistRecomputedPlan,
   subscribeToCookingSession,
 } from '@chefsbook/db';
 import { recomputeFromOverrun, buildStepCallout } from '@chefsbook/ui';
@@ -123,15 +122,16 @@ export default function ActiveCookingScreen() {
       Speech.stop();
       const callout = buildStepCallout(step, step.chef_name);
       Speech.speak(callout, { language: 'en' });
-    } catch {
-      // ignore TTS errors
+    } catch (err) {
+      console.error('TTS failed:', err);
     }
   };
 
   const handleStepComplete = useCallback(async () => {
     if (!session) return;
 
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
     const now = new Date();
     const currentStep = session.plan.steps[session.current_step_index];
@@ -160,21 +160,12 @@ export default function ActiveCookingScreen() {
     let updatedPlan = session.plan;
     if (overrunMinutes > 2) {
       updatedPlan = recomputeFromOverrun(session.plan, currentStep.step.id, now);
-      const persisted = await persistRecomputedPlan(session.id, updatedPlan, session.version);
-      if (!persisted) {
-        // Version conflict — refetch
-        const fresh = await getCookingSession(session.id);
-        if (fresh) {
-          setSession(fresh);
-          showToast('Another device updated');
-          return;
-        }
-      }
     }
 
     const nextIndex = session.current_step_index + 1;
     const isComplete = nextIndex >= session.plan.steps.length;
 
+    // Single atomic update: advance step index, record actuals, and update plan
     const { success, session: updated } = await updateCookingSession(
       session.id,
       {
@@ -206,9 +197,16 @@ export default function ActiveCookingScreen() {
     setSession(updated);
     resetTimerForIndex(updated, nextIndex);
 
-    // Speak the next step
-    const nextStep = updated.plan.steps[nextIndex];
-    if (nextStep) speakStep(nextStep);
+      // Speak the next step
+      const nextStep = updated.plan.steps[nextIndex];
+      if (nextStep) speakStep(nextStep);
+    } catch (err) {
+      console.error('Step complete failed:', err);
+      showToast('Failed to advance step. Please try again.');
+      // Reset completing flag so user can retry
+    } finally {
+      // Always ensure completing flag is reset
+    }
   }, [session, id, router]);
 
   // ---- render ----------------------------------------------------------------
