@@ -88,7 +88,6 @@ Return ONLY a JSON array, no other text:
       return [];
     }
 
-    // Parse JSON array from response text
     const jsonMatch =
       fullText.match(/```json\s*([\s\S]*?)```/) ??
       fullText.match(/(\[[\s\S]*\])/);
