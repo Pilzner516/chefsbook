@@ -1,7 +1,7 @@
 {
   "tool_name": "PowerShell",
-  "tool_input_preview": "{\"command\":\"Get-ChildItem \\\"apps\\\\mobile\\\\app\\\" -Directory | Select-Object Name\",\"description\":\"List all directories in app folder\"}",
-  "error": "Exit code 1\n\u001b[31;1mGet-ChildItem: \u001b[31;1mCannot find path 'C:\\Users\\seblu\\aiproj\\chefsbook\\apps\\mobile\\apps\\mobile\\apps\\mobile\\app' because it does not exist.\u001b[0m",
-  "timestamp": "2026-05-04T14:25:20.575Z",
-  "retry_count": 2
+  "tool_input_preview": "{\"command\":\"cd packages/ai && npx tsc --noEmit 2>&1 | Select-Object -First 30\",\"description\":\"TypeScript check on packages/ai\"}",
+  "error": "Exit code 1\n\u001b[31;1mSet-Location: \u001b[31;1mCannot find path 'C:\\Users\\seblu\\aiproj\\chefsbook\\apps\\mobile\\apps\\mobile\\packages\\ai' because it does not exist.\u001b[0m",
+  "timestamp": "2026-05-05T02:17:06.124Z",
+  "retry_count": 1
 }

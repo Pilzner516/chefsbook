@@ -37,7 +37,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd packages/ai && npx tsc --noEmit 2>&1 && echo \"TypeScript: OK\" || echo \"TypeScript: ERRORS\"",
+    "buildCommand": "cd C:/Users/seblu/aiproj/chefsbook/apps/mobile && npx tsc --noEmit 2>&1 | tail -30",
     "testCommand": null,
     "lintCommand": null,
     "devCommand": "npm run dev",
@@ -168,26 +168,26 @@
   "hotPaths": [
     {
       "path": "progress.txt",
-      "accessCount": 51,
-      "lastAccessed": 1777928958004,
+      "accessCount": 57,
+      "lastAccessed": 1777949515175,
       "type": "file"
     },
     {
       "path": "CLAUDE.md",
-      "accessCount": 42,
-      "lastAccessed": 1777909274888,
+      "accessCount": 46,
+      "lastAccessed": 1777947940044,
       "type": "file"
     },
     {
       "path": "DONE.md",
-      "accessCount": 32,
-      "lastAccessed": 1777919110617,
+      "accessCount": 34,
+      "lastAccessed": 1777947821833,
       "type": "file"
     },
     {
       "path": ".claude\\agents\\feature-registry.md",
-      "accessCount": 21,
-      "lastAccessed": 1777946464324,
+      "accessCount": 23,
+      "lastAccessed": 1777985421414,
       "type": "file"
     },
     {
@@ -198,9 +198,27 @@
     },
     {
       "path": "",
-      "accessCount": 10,
-      "lastAccessed": 1777940411854,
+      "accessCount": 13,
+      "lastAccessed": 1777947522959,
       "type": "directory"
+    },
+    {
+      "path": "apps\\mobile",
+      "accessCount": 10,
+      "lastAccessed": 1777949990350,
+      "type": "directory"
+    },
+    {
+      "path": ".claude\\agents\\testing.md",
+      "accessCount": 10,
+      "lastAccessed": 1777985420695,
+      "type": "file"
+    },
+    {
+      "path": ".claude\\agents\\deployment.md",
+      "accessCount": 9,
+      "lastAccessed": 1777985421459,
+      "type": "file"
     },
     {
       "path": "apps/web",
@@ -215,15 +233,9 @@
       "type": "file"
     },
     {
-      "path": ".claude\\agents\\testing.md",
-      "accessCount": 8,
-      "lastAccessed": 1777946463344,
-      "type": "file"
-    },
-    {
-      "path": ".claude\\agents\\deployment.md",
-      "accessCount": 8,
-      "lastAccessed": 1777946492386,
+      "path": "apps\\web\\app\\recipe\\[id]\\page.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1777947009874,
       "type": "file"
     },
     {
@@ -237,12 +249,6 @@
       "accessCount": 5,
       "lastAccessed": 1777768388504,
       "type": "file"
-    },
-    {
-      "path": "apps\\mobile",
-      "accessCount": 5,
-      "lastAccessed": 1777825670975,
-      "type": "directory"
     },
     {
       "path": "apps\\web\\app\\auth\\page.tsx",
@@ -296,12 +302,6 @@
       "path": "apps\\mobile\\.env.staging",
       "accessCount": 2,
       "lastAccessed": 1777779486307,
-      "type": "file"
-    },
-    {
-      "path": "apps\\web\\app\\recipe\\[id]\\page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777779488320,
       "type": "file"
     },
     {

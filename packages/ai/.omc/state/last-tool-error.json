@@ -1,7 +1,7 @@
 {
   "tool_name": "PowerShell",
-  "tool_input_preview": "{\"command\":\"cd C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook\\\\packages\\\\ai; npm run build 2>&1 | Select-Object -Last 10\",\"description\":\"Build packages/ai\"}",
-  "error": "Exit code 1\n\u001b[31;1mnpm error Lifecycle script `build` failed with error:\u001b[0m\r\n\u001b[31;1mnpm error workspace @chefsbook/ai@0.0.1\u001b[0m\r\n\u001b[31;1mnpm error location C:\\Users\\seblu\\aiproj\\chefsbook\\packages\\ai\u001b[0m\r\n\u001b[31;1mnpm error Missing script: \"build\"\u001b[0m\r\n\u001b[31;1mnpm error\u001b[0m\r\n\u001b[31;1mnpm error To see a list of scripts, run:\u001b[0m\r\n\u001b[31;1mnpm error   npm run --workspace=@chefsbook/ai@0.0.1\u001b[0m",
-  "timestamp": "2026-05-05T00:15:30.740Z",
+  "tool_input_preview": "{\"command\":\"cd C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook && node --input-type=module <<'EOF'\\nimport { config } from 'dotenv';\\nimport { readFileSync } from 'fs';\\n\\n// Load env vars from .env.local\\nconst ...",
+  "error": "Exit code 1\n\u001b[31;1mParserError: \u001b[0m\r\n\u001b[31;1m\u001b[36;1mLine |\u001b[0m\r\n\u001b[31;1m\u001b[36;1m\u001b[36;1m   1 | \u001b[0m … d C:\\Users\\seblu\\aiproj\\chefsbook && node --input-type=module <\u001b[36;1m<\u001b[0m'EOF'\u001b[0m\r\n\u001b[31;1m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1m                                                                  ~\u001b[0m\r\n\u001b[31;1m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[31;1m\u001b[31;1m\u001b[36;1m     | \u001b[31;1mMissing file specification after redirection operator.\u001b[0m",
+  "timestamp": "2026-05-05T02:10:30.491Z",
   "retry_count": 1
 }

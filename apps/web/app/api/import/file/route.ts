@@ -1,4 +1,5 @@
 import { callClaude, extractJSON, detectLanguage, translateRecipeContent, moderateCategoricalFields } from '@chefsbook/ai';
+import { scanFile } from '@/lib/scanFile';
 
 const EXTRACT_PROMPT = `You are a recipe extraction expert. The following text was extracted from a file.
 Find ALL recipes in this content. For each recipe found, extract:
@@ -37,6 +38,23 @@ export async function POST(req: Request) {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   const mimeType = file.type;
 
+  // Scan file for viruses and validate MIME type
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const scan = await scanFile(buffer, file.type);
+
+  if (!scan.ok) {
+    if (scan.reason === 'too_large') {
+      return Response.json({ error: 'File too large (max 20 MB)' }, { status: 413 });
+    }
+    if (scan.reason === 'bad_mime') {
+      return Response.json({ error: 'File type not allowed' }, { status: 422 });
+    }
+    if (scan.reason === 'virus_detected') {
+      return Response.json({ error: 'File rejected for security reasons' }, { status: 422 });
+    }
+    // scan_error falls through (graceful degradation already handled in scanFile)
+  }
+
   try {
     let text = '';
     let fileType = '';
@@ -52,7 +70,6 @@ export async function POST(req: Request) {
       fileType = 'PDF';
       const pdfParseModule = await import('pdf-parse');
       const pdfParse = (pdfParseModule as any).default ?? pdfParseModule;
-      const buffer = Buffer.from(await file.arrayBuffer());
       const pdf = await pdfParse(buffer);
       text = pdf.text;
       if (text.length < 100) {
@@ -61,7 +78,6 @@ export async function POST(req: Request) {
     } else if (ext === 'docx' || ext === 'doc' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       fileType = 'Word Document';
       const mammoth = await import('mammoth');
-      const buffer = Buffer.from(await file.arrayBuffer());
       const result = await mammoth.extractRawText({ buffer });
       text = result.value;
     } else if (ext === 'txt' || ext === 'rtf' || mimeType === 'text/plain') {

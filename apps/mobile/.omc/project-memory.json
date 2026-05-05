@@ -37,7 +37,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": null,
+    "buildCommand": "cd /c/Users/seblu/aiproj/chefsbook/apps/mobile && npx tsc --noEmit 2>&1 | tail -20",
     "testCommand": null,
     "lintCommand": null,
     "devCommand": "npm run dev",
@@ -241,6 +241,30 @@
   },
   "hotPaths": [
     {
+      "path": "locales\\fr.json",
+      "accessCount": 4,
+      "lastAccessed": 1777947387752,
+      "type": "file"
+    },
+    {
+      "path": "locales\\es.json",
+      "accessCount": 4,
+      "lastAccessed": 1777947393754,
+      "type": "file"
+    },
+    {
+      "path": "locales\\it.json",
+      "accessCount": 4,
+      "lastAccessed": 1777947397854,
+      "type": "file"
+    },
+    {
+      "path": "locales\\de.json",
+      "accessCount": 4,
+      "lastAccessed": 1777947402664,
+      "type": "file"
+    },
+    {
       "path": ".env.local",
       "accessCount": 3,
       "lastAccessed": 1777942931205,
@@ -250,6 +274,12 @@
       "path": "plugins\\withCleartextTraffic.js",
       "accessCount": 2,
       "lastAccessed": 1777942942603,
+      "type": "file"
+    },
+    {
+      "path": "components\\BadgeCelebration.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777949623047,
       "type": "file"
     },
     {
@@ -268,6 +298,18 @@
       "path": "app\\speak.tsx",
       "accessCount": 1,
       "lastAccessed": 1777942942132,
+      "type": "file"
+    },
+    {
+      "path": "locales\\en.json",
+      "accessCount": 1,
+      "lastAccessed": 1777947181496,
+      "type": "file"
+    },
+    {
+      "path": "components\\FloatingTabBar.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777981154450,
       "type": "file"
     }
   ],

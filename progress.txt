@@ -140,3 +140,45 @@ The Expo Router doesn't allow both `[id].tsx` and `[id]/index.tsx` in the same p
 - Always do deep clean (.expo + build dirs) when fixing routing issues
 - TypeScript errors can mask deeper runtime problems
 - Logcat history can be misleading - always clear before fresh testing
+
+---
+
+## SESSION: Ralph — Rewrite findGapRecipes() to use Anthropic web_search tool
+## Started: 2026-05-05
+## Status: ✅ COMPLETE
+
+### Problem
+findGapRecipes() was returning 0 results because Google blocks HTML scraping. The architect flagged this as a production risk in the last session.
+
+### Solution
+Replaced Google HTML scraping with Anthropic API web_search_20250305 tool call.
+- Model: claude-haiku-4-5-20251001
+- Tool: web_search_20250305 (server-side execution by Anthropic)
+- Header: anthropic-beta: web-search-2025-03-05
+- Response format: server_tool_use + web_search_tool_result blocks; extract text blocks only
+
+### Test Results
+findGapRecipes('roast', 'chicken') returned 7 real recipe URLs:
+- bonappetit.com/recipe/no-fail-roast-chicken-with-lemon-and-garlic
+- bonappetit.com/recipe/slow-roast-gochujang-chicken
+- bonappetit.com/recipe/cast-iron-roast-chicken-with-crispy-potatoes
+- smittenkitchen.com/2012/01/buttermilk-roast-chicken/
+- smittenkitchen.com/2008/12/zuni-cafe-roast-chicken-bread-salad/
+- davidlebovitz.com/roast-chicken-recipe-caramelized-s/
+- smittenkitchen.com/2020/04/roast-chicken-with-schmaltzy-cabbage/
+
+### Files Changed
+1. `packages/ai/src/findGapRecipes.ts` — complete rewrite using web_search_20250305
+2. `apps/web/app/api/cook/sessions/[id]/complete/route.ts` — Next.js 15 params Promise fix
+3. `apps/web/app/api/cook/sessions/[id]/step-actual/route.ts` — Next.js 15 params Promise fix
+4. `packages/ui/src/scheduler.types.ts` — added technique/ingredient_category fields
+5. `packages/db/src/types.ts` — added optional timing fields to RecipeStep
+6. `apps/web/lib/supabase/client.ts` — created missing supabase client wrapper
+
+### Learnings
+- Anthropic web_search_20250305 returns server_tool_use + web_search_tool_result blocks (not tool_use)
+- Only need to extract text blocks from response — Claude puts JSON array in text block at end
+- /s regex flag requires ES2018 target; use [\s\S] instead (works without flag)
+- Next.js 15: all dynamic route params must be Promise<{...}> in route handlers
+- Next.js build stops at first TypeScript error — fix iteratively
+- Bash tool path issues on Windows: use PowerShell for all commands

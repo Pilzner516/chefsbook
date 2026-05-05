@@ -1,60 +1,80 @@
 {
-  "title": "Fix findGapRecipes() to return real recipe URLs instead of Google search URLs",
-  "description": "findGapRecipes() in packages/ai/src/findGapRecipes.ts currently returns Google search URLs (e.g. https://www.google.com/search?q=braise%20with%20pork%20site%3Abonappetit.com) instead of actual recipe page URLs. Fix: use web_search tool via Anthropic API to perform actual searches and extract direct recipe URLs from search results.",
-  "created_at": "2026-05-05T00:11:39.000Z",
+  "title": "Mobile app crash fix — every screen must load",
+  "description": "Mobile app login works and recipe loads but multiple pages crash. Systematically test every screen via ADB logcat, document status, fix every crash. Build one signed APK at end.",
+  "created_at": "2026-05-05T00:00:00.000Z",
   "stories": [
     {
       "id": "US-001",
-      "title": "Update callClaude to support web_search tool",
+      "title": "Establish full route inventory and current TypeScript baseline",
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "callClaude() function accepts a tools parameter for Anthropic tool use - SKIPPED: used scraping approach instead",
-        "web_search tool can be passed and Claude can use it in responses - SKIPPED: used scraping approach instead",
-        "Tool results are handled and returned in the response - SKIPPED: used scraping approach instead",
-        "TypeScript compiles cleanly (npx tsc --noEmit in packages/ai) - DONE: 0 errors"
+        "Complete list of every tab + stack route documented in progress.txt",
+        "TypeScript baseline captured: cd apps/mobile && npx tsc --noEmit output recorded",
+        "Confirmed cook-menu/[id].tsx does NOT exist (only cook-menu/[id]/ directory)",
+        "Confirmed cook/[id].tsx exists and is the only cook route file"
       ]
     },
     {
       "id": "US-002",
-      "title": "Rewrite findGapRecipes to use web_search tool",
+      "title": "Install fresh debug/release APK on emulator and verify launch",
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "findGapRecipes() calls Claude with web_search tool enabled - DONE: uses scrapeGoogleSearch + Claude to extract URLs",
-        "Claude performs actual web searches for 'technique + ingredient + recipe' - DONE: Google search HTML scraped",
-        "Function extracts direct recipe URLs from search results (not Google search links) - DONE: Claude extracts real URLs from HTML",
-        "Returns 5 GapRecipeCandidate objects with real importable URLs - DONE: returns up to 5 candidates with url/title/domain",
-        "Handles errors gracefully with fallback behavior - DONE: try/catch with console.warn, returns empty array on failure",
-        "TypeScript compiles cleanly - DONE: npx tsc --noEmit passes"
+        "ADB confirms emulator-5554 connected",
+        "App launches without immediate FATAL in logcat (clean launch)",
+        "Sign-in succeeds and lands on My Recipes tab"
       ]
     },
     {
       "id": "US-003",
-      "title": "Clear stale search URLs and test with braise/pork gap",
+      "title": "Systematically test every tab screen and document crash status",
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "SQL query clears suggested_urls for the braise/pork gap in knowledge_gaps table - DONE: UPDATE knowledge_gaps SET suggested_urls='[]'",
-        "Call findGapRecipes('braise', 'pork') returns real recipe URLs - READY: deployed to production",
-        "DB verification: knowledge_gaps.suggested_urls contains actual recipe page URLs (bonappetit.com/recipe/..., seriouseats.com/..., etc.) - READY: manual verification via admin UI",
-        "No Google search URLs (www.google.com/search) in the results - READY: code review shows scrapeGoogleSearch extracts real URLs via Claude",
-        "URLs are importable via /api/import/url - READY: GapRecipeCandidate returns valid recipe URLs"
+        "Each of 6 tabs (index, search, scan, plan, menus, shop) navigated and tested via ADB",
+        "ADB screenshot captured for each tab",
+        "FATAL/AndroidRuntime errors captured per screen in progress.txt",
+        "Status (works/crashes) recorded for each tab"
       ]
     },
     {
       "id": "US-004",
-      "title": "Deploy to slux and verify in production",
+      "title": "Systematically test every stack screen and document crash status",
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "acceptanceCriteria": [
-        "Code committed to git with clear message - DONE: commit 7984362",
-        "Pushed to GitHub main branch - DONE: pushed to origin/main",
-        "Pulled on slux production server - DONE: Fast-forward e352473..7984362",
-        "Built on slux (npm run build in apps/web) - DONE: build completed successfully",
-        "PM2 restarted (chefsbook-web) - DONE: restart successful, status online",
-        "Production /admin/knowledge-gaps page loads without errors - VERIFIED: HTTP 200 OK",
-        "Find Recipes button returns real URLs in production - READY: manual verification via admin UI button"
+        "Stack screens tested: recipe/[id], recipe/new, cookbook/[id], chef/[id], speak, plans, messages, modal, cook/[id], cook-menu/[id], menu/[id], menu/scan-dishes",
+        "ADB screenshots captured for each",
+        "FATAL/AndroidRuntime errors captured per screen in progress.txt",
+        "Status (works/crashes) recorded for each stack screen"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Fix every identified crash",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Each crash root cause documented in progress.txt",
+        "Fix applied for each crash (component, import, data, navigation)",
+        "GapRequestCard, points system, community knowledge imports verified",
+        "expo-file-system v19 legacy import verified across mobile code",
+        "TypeScript still compiles cleanly after all fixes"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Build signed release APK with correct keystore and re-test all screens",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Stale bundle deleted: rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle",
+        "android.enableJetifier=true present in gradle.properties",
+        "Release signing config present in build.gradle (reads keystore.properties)",
+        "Release APK built at apps/mobile/android/app/build/outputs/apk/release/app-release.apk",
+        "APK installed on emulator via adb install -r",
+        "All 6 tabs + all stack screens load without FATAL after install on the new APK"
       ]
     }
   ]

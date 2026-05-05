@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-05-05T12:49:53.582Z",
+  "original_prompt": "/autopilot Read and execute docs/prompts/virus-scan.md fully and autonomously, from pre-flight through deployment and /wrapup. Do not stop for questions unless you hit a genuine blocker.",
+  "session_id": "c0f08a43-7041-45d3-b8e7-c16fecff0016",
+  "project_path": "C:\\Users\\seblu\\aiproj\\chefsbook",
+  "reinforcement_count": 0,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-05-05T12:49:53.582Z",
+  "last_checked_at": "2026-05-05T12:49:53.582Z"
+}

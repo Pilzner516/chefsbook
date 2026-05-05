@@ -357,6 +357,7 @@
 ## INFRASTRUCTURE
 | Feature | Status | Owner Files | Session | Notes |
 |---------|--------|-------------|---------|-------|
+| Virus scanning | LIVE | apps/web/lib/scanFile.ts, /api/import/file, /api/print-cookbooks/upload-cover | VIRUS-SCAN | ClamAV daemon on slux; scanFile() called in both upload routes; 20MB cap; magic-byte MIME check; graceful degradation if daemon unreachable |
 | supabaseAdmin (service role client) | LIVE | packages/db/src/client.ts | 87 | Bypasses RLS; server-side only |
 | SMTP via Resend | LIVE | RPi5 supabase .env | 91 | smtp.resend.com, noreply@chefsbk.app |
 | Cloudflare Tunnel | LIVE | RPi5 systemd cloudflared | 25 | chefsbk.app + api.chefsbk.app |

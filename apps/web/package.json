@@ -20,6 +20,7 @@
     "@stripe/stripe-js": "^4.0.0",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "^2.49.0",
+    "clamdjs": "^1.0.2",
     "i18next": "^26.0.4",
     "jszip": "^3.10.1",
     "lucide-react": "^1.11.0",

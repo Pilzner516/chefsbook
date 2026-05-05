@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"adb shell \\\"screencap -d 4619827259835644672 /sdcard/screen.png\\\" && adb pull \\\"/sdcard/screen.png\\\" \\\"C:/Users/seblu/AppData/Local/Temp/screen.png\\\" 2>&1\",\"description\":\"Capture screensho...",
-  "error": "Exit code 1\nadb: error: failed to stat remote object 'C:/Program Files/Git/sdcard/screen.png': No such file or directory",
-  "timestamp": "2026-05-05T00:43:36.219Z",
-  "retry_count": 3
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"Set-Location C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook\\\\apps\\\\mobile; npx tsc --noEmit 2>&1 | Select-Object -First 30\",\"description\":\"TypeScript check on apps/mobile\"}",
+  "error": "Exit code 2\ncomponents/BadgeCelebration.tsx(23,71): error TS1005: ',' expected.\r\ncomponents/BadgeCelebration.tsx(23,73): error TS1005: ',' expected.\r\ncomponents/BadgeCelebration.tsx(23,85): error TS1005: ',' expected.\r\ncomponents/BadgeCelebration.tsx(23,86): error TS1003: Identifier expected.\r\ncomponents/BadgeCelebration.tsx(23,88): error TS1002: Unterminated string literal.\r\ncomponents/BadgeCelebration.tsx(24,3): error TS1005: ':' expected.\r\ncomponents/BadgeCelebration.tsx(24,17): error TS1005:...",
+  "timestamp": "2026-05-05T02:17:55.158Z",
+  "retry_count": 1
 }

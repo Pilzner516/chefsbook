@@ -121,6 +121,7 @@ ssh pilzner@slux "docker exec supabase-db psql -U postgres -c '\d tablename'"
 - **Admin accounts**: pilzner (a@aol.com) + seblux (seblux100@gmail.com) — both super_admin in admin_users table
 - **NOT using**: supabase.com cloud — everything is self-hosted
 - **Migrations**: SQL files in `supabase/migrations/` — apply manually via docker exec on slux (no Supabase CLI migration runner; self-hosted)
+- **Virus scanning**: ClamAV daemon on slux, socket at /var/run/clamav/clamd.ctl. All user file uploads scanned via `apps/web/lib/scanFile.ts` before parsing or storage. `CLAMAV_SOCKET` env var sets socket path (omit to skip in dev — graceful degradation). If daemon is unreachable, uploads log a warning and proceed (never hard-blocks users). Check daemon health: `ssh pilzner@slux "systemctl status clamav-daemon --no-pager"` Signatures auto-updated daily by `clamav-freshclam` systemd service.
 
 ## Public URLs
 
@@ -170,6 +171,7 @@ REPLICATE_API_TOKEN=<key>                   # Replicate Flux Dev (AI image gener
 PEXELS_API_KEY=<key>                        # Pexels API (recipe image search picker; EXPO_PUBLIC_ prefix for mobile)
 UNSPLASH_ACCESS_KEY=<key>                   # Unsplash API (optional — falls back to source URL without key)
 RESEND_API_KEY=<key>                        # Resend email API (welcome emails; optional — gracefully skips if not set)
+CLAMAV_SOCKET=/var/run/clamav/clamd.ctl     # ClamAV daemon socket (slux only; omit in dev)
 ```
 
 ## Moderation Permission Model

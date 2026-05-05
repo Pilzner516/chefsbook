@@ -42,7 +42,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd apps/web && npx tsc --noEmit 2>&1 | head -30",
+    "buildCommand": "cd apps/web && npx tsc --noEmit 2>&1 | tail -50",
     "testCommand": null,
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",
@@ -169,6 +169,43 @@
       "keyFiles": []
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "app\\cook\\[recipeId]\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777947356515,
+      "type": "file"
+    },
+    {
+      "path": "app\\api\\import\\file\\route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1777985589784,
+      "type": "file"
+    },
+    {
+      "path": "app\\api\\print-cookbooks\\upload-cover\\route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1777985607458,
+      "type": "file"
+    },
+    {
+      "path": "app\\recipe\\[id]\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777947313936,
+      "type": "directory"
+    },
+    {
+      "path": "lib\\supabase\\client.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777947405508,
+      "type": "file"
+    },
+    {
+      "path": "lib\\scanFile.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777985547643,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@chefsbook/db';
 import sharp from 'sharp';
+import { scanFile } from '@/lib/scanFile';
 
 async function getUserFromRequest(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
@@ -26,8 +27,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
 
-  // Convert to buffer and then to JPEG (bucket may reject PNG)
+  // Scan file for viruses and validate MIME type
   const rawBuffer = Buffer.from(await file.arrayBuffer());
+  const scan = await scanFile(rawBuffer, file.type);
+
+  if (!scan.ok) {
+    if (scan.reason === 'too_large') {
+      return NextResponse.json({ error: 'File too large (max 20 MB)' }, { status: 413 });
+    }
+    if (scan.reason === 'bad_mime') {
+      return NextResponse.json({ error: 'File type not allowed' }, { status: 422 });
+    }
+    if (scan.reason === 'virus_detected') {
+      return NextResponse.json({ error: 'File rejected for security reasons' }, { status: 422 });
+    }
+    // scan_error falls through (graceful degradation already handled in scanFile)
+  }
+
+  // Convert to buffer and then to JPEG (bucket may reject PNG)
   const jpegBuffer = await sharp(rawBuffer)
     .jpeg({ quality: 90 })
     .toBuffer();

@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"ssh pilzner@slux \\\"docker exec supabase-db psql -U postgres -f /opt/luxlabs/chefsbook/repo/supabase/migrations/20260504_087_step_actuals.sql\\\"\",\"description\":\"Apply migration 087 on slux\"}",
-  "error": "Exit code 1\npsql: error: /opt/luxlabs/chefsbook/repo/supabase/migrations/20260504_087_step_actuals.sql: No such file or directory",
-  "timestamp": "2026-05-05T02:06:43.509Z",
-  "retry_count": 1
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"cd C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook\\\\apps\\\\web && npx tsc --noEmit 2>&1 | Select-Object -First 20\",\"timeout\":60000,\"description\":\"TypeScript check for apps/web\"}",
+  "error": "Exit code 2\napp/cook/[recipeId]/page.tsx(5,30): error TS2307: Cannot find module '@/lib/supabase/client' or its corresponding type declarations.\r\napp/cook/[recipeId]/page.tsx(214,39): error TS2339: Property 'technique' does not exist on type 'RecipeStepWithTimings'.\r\napp/cook/[recipeId]/page.tsx(215,49): error TS2339: Property 'ingredient_category' does not exist on type 'RecipeStepWithTimings'.\r\napp/cook/[recipeId]/page.tsx(542,33): error TS2339: Property 'technique' does not exist on type 'Rec...",
+  "timestamp": "2026-05-05T02:14:14.016Z",
+  "retry_count": 2
 }
