@@ -459,7 +459,7 @@ export default function MenuDetailPage({ params }: { params: Promise<{ id: strin
           </button>
           {menu.menu_items.length > 0 && (
             <button
-              onClick={() => setShowCookMode(true)}
+              onClick={() => router.push(`/dashboard/menus/${params.id}/cook`)}
               className="px-4 py-2 bg-cb-primary text-white rounded-input text-sm font-semibold hover:opacity-90 transition flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
