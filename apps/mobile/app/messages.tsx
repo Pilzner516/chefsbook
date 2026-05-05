@@ -76,11 +76,14 @@ export default function MessagesScreen() {
       .catch(() => setLoading(false));
   }, [userId]);
 
-  // Realtime subscription
+  // Realtime subscription — unique channel name per mount/effect to avoid
+  // colliding with a still-subscribed channel of the same name (Supabase
+  // throws "cannot add postgres_changes callbacks ... after subscribe()").
+  const dmChannelKeyRef = useRef(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   useEffect(() => {
     if (!userId) return;
     const channel = supabase
-      .channel('dm-realtime-mobile')
+      .channel(`dm-realtime-mobile-${userId}-${dmChannelKeyRef.current}`)
       .on(
         'postgres_changes',
         {

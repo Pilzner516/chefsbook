@@ -19,42 +19,42 @@ interface TabDef {
 const TABS: TabDef[] = [
   {
     name: 'index',
-    route: '/(tabs)/',
+    route: '/(tabs)',
     labelKey: 'nav.recipes',
     icon: 'book-outline',
     iconActive: 'book',
   },
   {
     name: 'search',
-    route: '/(tabs)/search',
+    route: '/search',
     labelKey: 'nav.search',
     icon: 'search-outline',
     iconActive: 'search',
   },
   {
     name: 'scan',
-    route: '/(tabs)/scan',
+    route: '/scan',
     labelKey: 'nav.scan',
     icon: 'camera-outline',
     iconActive: 'camera',
   },
   {
     name: 'plan',
-    route: '/(tabs)/plan',
+    route: '/plan',
     labelKey: 'nav.plan',
     icon: 'calendar-outline',
     iconActive: 'calendar',
   },
   {
     name: 'menus',
-    route: '/(tabs)/menus',
+    route: '/menus',
     labelKey: 'nav.menus',
     icon: 'restaurant-outline',
     iconActive: 'restaurant',
   },
   {
     name: 'shop',
-    route: '/(tabs)/shop',
+    route: '/shop',
     labelKey: 'nav.cart',
     icon: 'cart-outline',
     iconActive: 'cart',
@@ -121,7 +121,7 @@ export function FloatingTabBar() {
           return (
             <TouchableOpacity
               key={tab.name}
-              onPress={() => router.push(tab.route as any)}
+              onPress={() => router.navigate(tab.route as any)}
               activeOpacity={0.7}
               style={{
                 flex: 1,

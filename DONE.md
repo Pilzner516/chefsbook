@@ -1,3 +1,18 @@
+## 2026-05-05 (session FLOATING-TABBAR-FIX) TYPE: FIX
+
+FloatingTabBar tab navigation hardened. User reported Plan/Menus/Cart tabs would not load when tapped on the floating menu. On emulator the tabs all worked, but the underlying handler used `router.push()` with `(tabs)` group-prefixed paths — `push` always stacks a new screen rather than switching to the live tab, which can fail intermittently when invoked from a Stack screen on top of the Tabs navigator.
+
+**Changes (apps/mobile/components/FloatingTabBar.tsx):**
+- Switched onPress from `router.push()` to `router.navigate()` (canonical Expo Router pattern for tab switching — switches to existing screen if mounted, otherwise pushes)
+- Dropped `/(tabs)/` group prefix from URL paths for search/scan/plan/menus/shop (use clean URL form `/plan` etc.)
+- Kept `/(tabs)` for the index tab to avoid the landing-page redirect that would happen with `/`
+
+**Verified:** TypeScript compiles. All 6 tabs verified loading on emulator (My Recipes, Search, Scan, Plan, Menus, Cart) from both within-tabs and from stack screens (recipe/[id], menu/[id]). User confirmed working.
+
+**Note:** APK not rebuilt this session; the user-confirmed test was against the previous APK already on device. Next APK build will pick up the navigate() change.
+
+---
+
 ## 2026-05-04 (session COOK-MODE-UI) TYPE: FEATURE
 
 Chef Kitchen Conductor UI + step_actuals learning loop implemented on web and mobile. Full 4-screen cooking experience: Setup (serve time, oven count, Chef briefing with typewriter), Plan (reverse-scheduled timeline), Active (step-by-step timer with pause/resume), Completion (time summary, 5 points awarded). Records actual step timings to step_actuals table. Fire-and-forget knowledge graph feedback loop updates cooking_action_timings with weighted averages. Entry points added to recipe detail pages on both platforms (gated: is_complete + 3+ timed steps). Mobile excludes /cook from FloatingTabBar, uses expo-keep-awake and TTS. i18n complete for 5 mobile locales. Web deployed to slux. TYPE: FEATURE.

@@ -20,7 +20,7 @@ interface Props {
 const CELEBRATION_MESSAGES: Record<string, string> = {
   first_contribution: 'You taught our Sous Chef something new for the first time.',
   gap_filler_5: 'Five gaps filled. The whole community cooks a little better now.',
-  gap_filler_25: 'Twenty-five gaps filled. You are building ChefsBook's intelligence.',
+  gap_filler_25: "Twenty-five gaps filled. You are building ChefsBook's intelligence.",
   gap_filler_100: 'One hundred gaps filled. Your contributions shape how thousands cook.',
   first_import: 'You imported your first recipe into ChefsBook.',
   import_10: 'Ten recipes imported. Your collection is growing.',
@@ -115,7 +115,7 @@ export default function BadgeCelebration({ userId, onClose }: Props) {
       <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
         <Animated.View
           style={{
-            backgroundColor: colors.card,
+            backgroundColor: colors.bgCard,
             borderRadius: 12,
             padding: 32,
             width: '100%',
@@ -128,12 +128,12 @@ export default function BadgeCelebration({ userId, onClose }: Props) {
           <Text style={{ fontSize: 64, marginBottom: 16 }}>{badge.icon}</Text>
 
           {/* Badge Name */}
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.text, marginBottom: 12, textAlign: 'center' }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' }}>
             {badge.name}
           </Text>
 
           {/* Personal Message */}
-          <Text style={{ fontSize: 16, color: colors.secondary, marginBottom: 24, textAlign: 'center', lineHeight: 24 }}>
+          <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: 24, textAlign: 'center', lineHeight: 24 }}>
             {message}
           </Text>
 
@@ -141,7 +141,7 @@ export default function BadgeCelebration({ userId, onClose }: Props) {
           <TouchableOpacity
             onPress={handleClose}
             style={{
-              backgroundColor: colors.primary,
+              backgroundColor: colors.accent,
               paddingHorizontal: 32,
               paddingVertical: 12,
               borderRadius: 8,

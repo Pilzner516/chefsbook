@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@/lib/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { supabase } from '@chefsbook/db';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Speech from 'expo-speech';
@@ -53,7 +53,9 @@ export default function CookMode() {
   useEffect(() => {
     if (screen === 'active') {
       activateKeepAwake();
-      return () => deactivateKeepAwake();
+      return () => {
+        deactivateKeepAwake();
+      };
     }
   }, [screen]);
 
@@ -121,7 +123,7 @@ export default function CookMode() {
     if (screen === 'active' && !isPaused) {
       timerRef.current = setInterval(() => {
         setTimer((t) => t + 1);
-      }, 1000);
+      }, 1000) as unknown as NodeJS.Timeout;
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -299,7 +301,7 @@ export default function CookMode() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: colors.textPrimary }}>Loading...</Text>
       </View>
     );
@@ -311,7 +313,7 @@ export default function CookMode() {
   if (screen === 'setup') {
     return (
       <ScrollView
-        style={{ flex: 1, backgroundColor: colors.background }}
+        style={{ flex: 1, backgroundColor: colors.bgScreen }}
         contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 20 }}
       >
         <Text style={{ fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 16 }}>
@@ -319,13 +321,13 @@ export default function CookMode() {
         </Text>
 
         {briefing && (
-          <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, marginBottom: 16, minHeight: 100 }}>
+          <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, padding: 16, marginBottom: 16, minHeight: 100 }}>
             <Text style={{ color: colors.textPrimary, lineHeight: 24 }}>{typewriterText}</Text>
           </View>
         )}
 
         {briefingLoading && (
-          <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <View style={{ backgroundColor: colors.bgCard, borderRadius: 12, padding: 16, marginBottom: 16 }}>
             <Text style={{ color: colors.textSecondary }}>Preparing briefing...</Text>
           </View>
         )}
@@ -346,9 +348,9 @@ export default function CookMode() {
             }}
             placeholder="HH:MM"
             style={{
-              backgroundColor: colors.card,
+              backgroundColor: colors.bgCard,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: colors.borderDefault,
               borderRadius: 8,
               padding: 12,
               fontSize: 16,
@@ -366,11 +368,11 @@ export default function CookMode() {
               onPress={() => setOvenCount(1)}
               style={{
                 flex: 1,
-                backgroundColor: ovenCount === 1 ? colors.accent : colors.card,
+                backgroundColor: ovenCount === 1 ? colors.accent : colors.bgCard,
                 padding: 16,
                 borderRadius: 8,
                 borderWidth: ovenCount === 1 ? 0 : 1,
-                borderColor: colors.border,
+                borderColor: colors.borderDefault,
               }}
             >
               <Text style={{
@@ -385,11 +387,11 @@ export default function CookMode() {
               onPress={() => setOvenCount(2)}
               style={{
                 flex: 1,
-                backgroundColor: ovenCount === 2 ? colors.accent : colors.card,
+                backgroundColor: ovenCount === 2 ? colors.accent : colors.bgCard,
                 padding: 16,
                 borderRadius: 8,
                 borderWidth: ovenCount === 2 ? 0 : 1,
-                borderColor: colors.border,
+                borderColor: colors.borderDefault,
               }}
             >
               <Text style={{
@@ -408,7 +410,7 @@ export default function CookMode() {
             onPress={handleStartCooking}
             disabled={briefingLoading}
             style={{
-              backgroundColor: briefingLoading ? colors.border : colors.accentGreen,
+              backgroundColor: briefingLoading ? colors.borderDefault : colors.accentGreen,
               padding: 16,
               borderRadius: 8,
               marginTop: 8,
@@ -440,7 +442,7 @@ export default function CookMode() {
   // Screen 2: Plan
   if (screen === 'plan' && sessionData) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
         <ScrollView
           contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 80 }}
         >
@@ -459,7 +461,7 @@ export default function CookMode() {
               <View
                 key={step.step.id}
                 style={{
-                  backgroundColor: colors.card,
+                  backgroundColor: colors.bgCard,
                   borderRadius: 8,
                   padding: 12,
                   borderLeftWidth: step.is_critical_path ? 4 : 0,
@@ -517,9 +519,9 @@ export default function CookMode() {
           right: 0,
           padding: 20,
           paddingBottom: insets.bottom + 20,
-          backgroundColor: colors.background,
+          backgroundColor: colors.bgScreen,
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: colors.borderDefault,
         }}>
           <TouchableOpacity
             onPress={() => {
@@ -553,7 +555,7 @@ export default function CookMode() {
     const progress = Math.min(100, (timer / maxSeconds) * 100);
 
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen }}>
         {/* Header */}
         <View style={{
           flexDirection: 'row',
@@ -562,7 +564,7 @@ export default function CookMode() {
           padding: 16,
           paddingTop: insets.top + 16,
           borderBottomWidth: 1,
-          borderBottomColor: colors.border,
+          borderBottomColor: colors.borderDefault,
         }}>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={{ color: colors.textSecondary }}>Exit</Text>
@@ -602,7 +604,7 @@ export default function CookMode() {
           </Text>
 
           {/* Progress Bar */}
-          <View style={{ width: '100%', height: 8, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }}>
+          <View style={{ width: '100%', height: 8, backgroundColor: colors.borderDefault, borderRadius: 4, marginBottom: 20 }}>
             <View style={{
               width: `${Math.min(100, progress)}%`,
               height: '100%',
@@ -640,7 +642,7 @@ export default function CookMode() {
           padding: 16,
           paddingBottom: insets.bottom + 16,
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: colors.borderDefault,
         }}>
           <TouchableOpacity
             onPress={() => {
@@ -653,7 +655,7 @@ export default function CookMode() {
             }}
             disabled={currentStepIndex === 0}
           >
-            <Text style={{ color: currentStepIndex === 0 ? colors.border : colors.textSecondary }}>
+            <Text style={{ color: currentStepIndex === 0 ? colors.borderDefault : colors.textSecondary }}>
               ← Previous
             </Text>
           </TouchableOpacity>
@@ -677,7 +679,7 @@ export default function CookMode() {
   // Screen 4: Complete
   if (screen === 'complete' && recipe) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <View style={{ flex: 1, backgroundColor: colors.bgScreen, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <Text style={{ fontSize: 32, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 16 }}>
           You cooked {recipe.title}!
         </Text>

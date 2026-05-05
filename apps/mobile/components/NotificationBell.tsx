@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -74,13 +74,19 @@ export default function NotificationBell() {
   const [tab, setTab] = useState('all');
   const [verifiedUserIds, setVerifiedUserIds] = useState<Set<string>>(new Set());
 
+  // Per-mount unique channel suffix so multiple NotificationBell instances
+  // (e.g. tabs header + recipe header) don't collide on the same channel name.
+  // Reusing a name returns the already-subscribed channel, and Supabase throws
+  // when .on() is called after .subscribe().
+  const channelKeyRef = useRef(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+
   // Initial unread count + realtime subscription
   useEffect(() => {
     if (!userId) return;
     getUnreadCount(userId).then(setCount).catch(() => {});
 
     const channel = supabase
-      .channel(`notifications-${userId}`)
+      .channel(`notifications-${userId}-${channelKeyRef.current}`)
       .on(
         'postgres_changes',
         {

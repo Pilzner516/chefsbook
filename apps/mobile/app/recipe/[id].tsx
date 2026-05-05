@@ -2155,7 +2155,7 @@ function RecipeDetailInner() {
         {/* Start Cooking Button */}
         {recipe.is_complete && steps.length >= 3 && steps.some((s: any) => s.duration_max) && (
           <TouchableOpacity
-            onPress={() => router.push(`/cook/${recipe.id}`)}
+            onPress={() => router.push(`/cook/${recipe.id}` as any)}
             style={{
               backgroundColor: colors.accentGreen,
               padding: 16,
