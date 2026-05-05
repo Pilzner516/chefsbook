@@ -280,7 +280,7 @@ function RootNav() {
         const isAuth = firstSegment === 'auth';
         const isModal = firstSegment === 'modal' || firstSegment === 'messages';
         // Wizard/flow screens with their own bottom navigation — hide tab bar
-        const isWizard = firstSegment === 'speak' || firstSegment === 'cook-menu';
+        const isWizard = firstSegment === 'speak' || firstSegment === 'cook-menu' || firstSegment === 'cook';
         const showTabBar = isAuthenticated && !isLanding && !isAuth && !isModal && !isWizard;
         return showTabBar ? <FloatingTabBar /> : null;
       })()}

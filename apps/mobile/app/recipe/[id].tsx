@@ -2152,6 +2152,23 @@ function RecipeDetailInner() {
 
         <Divider />
 
+        {/* Start Cooking Button */}
+        {recipe.is_complete && steps.length >= 3 && steps.some((s: any) => s.duration_max) && (
+          <TouchableOpacity
+            onPress={() => router.push(`/cook/${recipe.id}`)}
+            style={{
+              backgroundColor: colors.accentGreen,
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ textAlign: 'center', color: '#ffffff', fontWeight: '700', fontSize: 18 }}>
+              Start Cooking →
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Steps with auto-detected timers (feature #1) */}
         {steps.length > 0 && (
           <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 12 }}>{t('recipe.steps')}</Text>

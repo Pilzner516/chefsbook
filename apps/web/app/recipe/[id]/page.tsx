@@ -2563,6 +2563,18 @@ export default function RecipePage() {
           )}
         </section>
 
+        {/* Start Cooking Button */}
+        {recipe.is_complete && recipe.steps?.length >= 3 && recipe.steps.some(s => s.duration_max) && (
+          <div className="mb-10">
+            <Link
+              href={`/cook/${recipe.id}`}
+              className="block w-full bg-cb-green text-white py-4 rounded-lg font-bold text-lg text-center hover:opacity-90"
+            >
+              Start Cooking →
+            </Link>
+          </div>
+        )}
+
         {/* Steps */}
         <section className="mb-10">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-cb-border">

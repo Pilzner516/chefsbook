@@ -810,5 +810,31 @@
       "doublePoints": "40 Punkte verdienen",
       "successToast": "Danke! Sie haben {{points}} Punkte verdient"
     }
+  },
+  "cookMode": {
+    "setup": {
+      "title": "Bereit zum Kochen?",
+      "serveTimeLabel": "Wann möchtest du essen?",
+      "ovenCountLabel": "Wie viele Öfen?",
+      "startButton": "Kochen beginnen"
+    },
+    "plan": {
+      "title": "Dein Kochplan",
+      "startNow": "Jetzt starten",
+      "ovenWarning": "Ofen auf {{temp}}°C vorheizen"
+    },
+    "step": {
+      "pause": "Pause",
+      "resume": "Fortsetzen",
+      "done": "Fertig",
+      "next": "Weiter",
+      "activeNow": "Jetzt aktiv"
+    },
+    "complete": {
+      "title": "Kochsitzung abgeschlossen!",
+      "timeLabel": "Benötigte Zeit",
+      "pointsLabel": "Verdiente Punkte",
+      "closeButton": "Schließen"
+    }
   }
 }

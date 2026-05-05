@@ -921,6 +921,33 @@
     "thankYou": "Feedback submitted — thank you!",
     "submitError": "Failed to submit feedback. Please try again."
   },
+  "cookMode": {
+    "setup": {
+      "title": "Ready to cook?",
+      "serveTime": "When do you want to eat?",
+      "ovens": "How many ovens?",
+      "start": "Start Cooking"
+    },
+    "plan": {
+      "title": "Your cooking plan",
+      "go": "Let's Go"
+    },
+    "step": {
+      "of": "Step {{current}} of {{total}}",
+      "passive": "This step runs in the background",
+      "parallel": "Parallel step",
+      "done": "Done — Next Step",
+      "pause": "Pause",
+      "resume": "Resume",
+      "overtime": "Over time"
+    },
+    "complete": {
+      "title": "You cooked it!",
+      "prediction": "Predicted {{predicted}}m · Took {{actual}}m",
+      "done": "Done"
+    },
+    "startCooking": "Start Cooking"
+  },
   "imageManager": {
     "changeImage": "Change Image",
     "takePhoto": "Take a Photo",

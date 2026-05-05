@@ -807,5 +807,31 @@
       "doublePoints": "Gagnez 40 points",
       "successToast": "Merci ! Vous avez gagné {{points}} points"
     }
+  },
+  "cookMode": {
+    "setup": {
+      "title": "Prêt à cuisiner?",
+      "serveTimeLabel": "Quand voulez-vous manger?",
+      "ovenCountLabel": "Combien de fours?",
+      "startButton": "Commencer à cuisiner"
+    },
+    "plan": {
+      "title": "Votre plan de cuisine",
+      "startNow": "Commencer maintenant",
+      "ovenWarning": "Préchauffez le four à {{temp}}°C"
+    },
+    "step": {
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "done": "Terminé",
+      "next": "Suivant",
+      "activeNow": "Actif maintenant"
+    },
+    "complete": {
+      "title": "Session de cuisine terminée!",
+      "timeLabel": "Temps pris",
+      "pointsLabel": "Points gagnés",
+      "closeButton": "Fermer"
+    }
   }
 }
