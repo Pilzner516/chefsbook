@@ -33,7 +33,9 @@ export default function SignInScreen() {
       await signIn(email.trim(), password);
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message ?? t('auth.signInFailed'));
+      const msg = e.message ?? t('auth.signInFailed');
+      setError(msg);
+      Alert.alert(t('auth.signInFailed'), msg);
     } finally {
       setLoading(false);
     }

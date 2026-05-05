@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777837812049,
+  "lastScanned": 1777924248988,
   "projectRoot": "C:\\Users\\seblu\\aiproj\\chefsbook",
   "techStack": {
     "languages": [
@@ -37,7 +37,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npm run build",
+    "buildCommand": "cd packages/ai && npx tsc --noEmit 2>&1 && echo \"TypeScript: OK\" || echo \"TypeScript: ERRORS\"",
     "testCommand": null,
     "lintCommand": null,
     "devCommand": "npm run dev",
@@ -75,14 +75,14 @@
       "path": "apps",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777837811993,
+      "lastAccessed": 1777924248938,
       "keyFiles": []
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 11,
-      "lastAccessed": 1777837811993,
+      "lastAccessed": 1777924248941,
       "keyFiles": [
         "AGENT-ARCHITECTURE.md",
         "AI-COST-REPORT-2026-04-16.md",
@@ -95,7 +95,7 @@
       "path": "luxlabs-dashboard",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1777837812004,
+      "lastAccessed": 1777924248953,
       "keyFiles": [
         "DEPLOY.md",
         "DEPLOYMENT-VERIFICATION.md",
@@ -108,14 +108,14 @@
       "path": "packages",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777837812004,
+      "lastAccessed": 1777924248953,
       "keyFiles": []
     },
     "screenshots": {
       "path": "screenshots",
       "purpose": null,
       "fileCount": 60,
-      "lastAccessed": 1777837812005,
+      "lastAccessed": 1777924248956,
       "keyFiles": [
         "cb_142_boot.png",
         "cb_afterlogin.png",
@@ -127,8 +127,8 @@
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
-      "fileCount": 23,
-      "lastAccessed": 1777837812006,
+      "fileCount": 27,
+      "lastAccessed": 1777924248957,
       "keyFiles": [
         "apply-watermarks.mjs",
         "backfill-descriptions.mjs",
@@ -141,14 +141,14 @@
       "path": "supabase",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777837812006,
+      "lastAccessed": 1777924248957,
       "keyFiles": []
     },
     "luxlabs-dashboard\\public": {
       "path": "luxlabs-dashboard\\public",
       "purpose": "Public files",
       "fileCount": 1,
-      "lastAccessed": 1777837812010,
+      "lastAccessed": 1777924248959,
       "keyFiles": [
         "index.html"
       ]
@@ -156,8 +156,8 @@
     "supabase\\migrations": {
       "path": "supabase\\migrations",
       "purpose": "Database migrations",
-      "fileCount": 86,
-      "lastAccessed": 1777837812013,
+      "fileCount": 91,
+      "lastAccessed": 1777924248962,
       "keyFiles": [
         "20250327_001_core.sql",
         "20250327_002_functions.sql",
@@ -168,8 +168,8 @@
   "hotPaths": [
     {
       "path": "progress.txt",
-      "accessCount": 46,
-      "lastAccessed": 1777845387166,
+      "accessCount": 51,
+      "lastAccessed": 1777928958004,
       "type": "file"
     },
     {
@@ -180,14 +180,14 @@
     },
     {
       "path": "DONE.md",
-      "accessCount": 29,
-      "lastAccessed": 1777916423224,
+      "accessCount": 32,
+      "lastAccessed": 1777919110617,
       "type": "file"
     },
     {
       "path": ".claude\\agents\\feature-registry.md",
-      "accessCount": 20,
-      "lastAccessed": 1777917822984,
+      "accessCount": 21,
+      "lastAccessed": 1777946464324,
       "type": "file"
     },
     {
@@ -198,8 +198,8 @@
     },
     {
       "path": "",
-      "accessCount": 9,
-      "lastAccessed": 1777916606994,
+      "accessCount": 10,
+      "lastAccessed": 1777940411854,
       "type": "directory"
     },
     {
@@ -210,20 +210,20 @@
     },
     {
       "path": "packages\\db\\src\\client.ts",
-      "accessCount": 7,
-      "lastAccessed": 1777829617618,
+      "accessCount": 8,
+      "lastAccessed": 1777924271214,
       "type": "file"
     },
     {
       "path": ".claude\\agents\\testing.md",
-      "accessCount": 7,
-      "lastAccessed": 1777917822266,
+      "accessCount": 8,
+      "lastAccessed": 1777946463344,
       "type": "file"
     },
     {
       "path": ".claude\\agents\\deployment.md",
-      "accessCount": 7,
-      "lastAccessed": 1777917825563,
+      "accessCount": 8,
+      "lastAccessed": 1777946492386,
       "type": "file"
     },
     {
@@ -252,8 +252,8 @@
     },
     {
       "path": "apps\\mobile\\plugins\\withCleartextTraffic.js",
-      "accessCount": 3,
-      "lastAccessed": 1777779490105,
+      "accessCount": 4,
+      "lastAccessed": 1777924272430,
       "type": "file"
     },
     {
@@ -281,6 +281,12 @@
       "type": "file"
     },
     {
+      "path": "apps\\mobile\\android\\app\\src\\main\\res\\xml\\network_security_config.xml",
+      "accessCount": 3,
+      "lastAccessed": 1777924272010,
+      "type": "file"
+    },
+    {
       "path": "apps\\web\\lib\\recipeImage.ts",
       "accessCount": 2,
       "lastAccessed": 1777778855683,
@@ -290,12 +296,6 @@
       "path": "apps\\mobile\\.env.staging",
       "accessCount": 2,
       "lastAccessed": 1777779486307,
-      "type": "file"
-    },
-    {
-      "path": "apps\\mobile\\android\\app\\src\\main\\res\\xml\\network_security_config.xml",
-      "accessCount": 2,
-      "lastAccessed": 1777779487991,
       "type": "file"
     },
     {

@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-05-05T02:00:36.164Z",
+  "original_prompt": "/autopilot \"Read and execute docs/prompts/cook-mode-ui.md fully and autonomously from pre-flight through deployment and wrapup. Do not stop for questions unless you hit a genuine blocker.\"",
+  "session_id": "7ff2422b-45af-422d-9b48-db8c79bc3055",
+  "project_path": "C:\\Users\\seblu\\aiproj\\chefsbook",
+  "reinforcement_count": 0,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-05-05T02:00:36.164Z",
+  "last_checked_at": "2026-05-05T02:00:36.164Z"
+}

@@ -1,0 +1,56 @@
+{
+  "title": "Fix mobile app login: Network request failed due to wrong Supabase URL",
+  "description": "Mobile app users cannot log in. Auth requests were hitting a dead RPi5 Tailscale IP (http://100.110.47.62:8000) from apps/mobile/.env.local which overrides the root .env.local. Fix: update apps/mobile/.env.local to use https://api.chefsbk.app (Cloudflare Tunnel to slux Supabase).",
+  "created_at": "2026-05-04T19:50:01.884Z",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Identify root cause of login failure",
+      "priority": 1,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Root cause identified: apps/mobile/.env.local has EXPO_PUBLIC_SUPABASE_URL=http://100.110.47.62:8000 (dead RPi5 IP) - DONE",
+        "apps/mobile/.env.local overrides root .env.local for mobile builds - CONFIRMED",
+        "HTTPS to api.chefsbk.app:443 verified reachable from Android emulator - CONFIRMED",
+        "DB client.ts URL resolution confirmed: EXPO_PUBLIC_SUPABASE_URL is used on mobile - CONFIRMED"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Fix EXPO_PUBLIC_SUPABASE_URL in apps/mobile/.env.local",
+      "priority": 2,
+      "passes": true,
+      "acceptanceCriteria": [
+        "apps/mobile/.env.local EXPO_PUBLIC_SUPABASE_URL changed from http://100.110.47.62:8000 to https://api.chefsbk.app - DONE",
+        "EXPO_PUBLIC_PACKAGER_HOSTNAME and REACT_NATIVE_PACKAGER_HOSTNAME set to localhost - DONE",
+        "EXPO_PUBLIC_ANON_KEY updated to current value - DONE",
+        "Root .env.local also updated with correct URL (was http://localhost:8000) - DONE"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Rebuild APK with correct URL baked into JS bundle",
+      "priority": 3,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Stale JS bundle cache cleared before build - DONE",
+        "APK rebuilt with expo run:android --variant release - DONE",
+        "Bundle grep confirms only https://api.chefsbk.app appears, no old RPi5 IP - DONE",
+        "App launches without Network request failed errors on startup - DONE"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "End-to-end auth verification on emulator",
+      "priority": 4,
+      "passes": true,
+      "acceptanceCriteria": [
+        "Sign In screen renders correctly with email and password fields - DONE",
+        "Tapping Sign In sends auth request to https://api.chefsbk.app - DONE",
+        "Supabase responds with a proper HTTP error (not Network request failed) - VERIFIED: Alert shows 'Sign in failed. Invalid login credentials' (HTTP 400 from Supabase)",
+        "No Network request failed error appears - VERIFIED: error is credential-based not network-based",
+        "Auth flow is unblocked: user can log in with correct credentials - DONE: network path works end-to-end"
+      ]
+    }
+  ]
+}

@@ -107,3 +107,4 @@ export { findGapRecipes } from './findGapRecipes';
 export type { GapRecipeCandidate } from './findGapRecipes';
 export { POINTS } from './points';
 export type { PointAction } from './points';
+export { updateKnowledgeFromActuals } from './updateKnowledgeFromActuals';

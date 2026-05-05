@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777845886483,
+  "lastScanned": 1777940053835,
   "projectRoot": "C:\\Users\\seblu\\aiproj\\chefsbook\\apps\\mobile",
   "techStack": {
     "languages": [
@@ -37,7 +37,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd C:/Users/seblu/aiproj/chefsbook/apps/mobile && npx tsc --noEmit 2>&1 | tail -20",
+    "buildCommand": null,
     "testCommand": null,
     "lintCommand": null,
     "devCommand": "npm run dev",
@@ -77,7 +77,7 @@
       "path": "agents",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1777845886443,
+      "lastAccessed": 1777940053786,
       "keyFiles": [
         "CLAUDE.md"
       ]
@@ -86,7 +86,7 @@
       "path": "android",
       "purpose": null,
       "fileCount": 8,
-      "lastAccessed": 1777845886444,
+      "lastAccessed": 1777940053794,
       "keyFiles": [
         "build.gradle",
         "chefsbook-release.keystore",
@@ -99,7 +99,7 @@
       "path": "app",
       "purpose": "Application code",
       "fileCount": 6,
-      "lastAccessed": 1777845886455,
+      "lastAccessed": 1777940053795,
       "keyFiles": [
         "index.tsx",
         "messages.tsx",
@@ -112,14 +112,14 @@
       "path": "apps",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777845886456,
+      "lastAccessed": 1777940053796,
       "keyFiles": []
     },
     "assets": {
       "path": "assets",
       "purpose": "Static assets",
       "fileCount": 4,
-      "lastAccessed": 1777845886458,
+      "lastAccessed": 1777940053796,
       "keyFiles": [
         "adaptive-icon.png",
         "favicon.png",
@@ -130,21 +130,21 @@
     "components": {
       "path": "components",
       "purpose": "UI components",
-      "fileCount": 33,
-      "lastAccessed": 1777845886458,
+      "fileCount": 35,
+      "lastAccessed": 1777940053797,
       "keyFiles": [
         "AddToMenuSheet.tsx",
         "AiImageGenerationModal.tsx",
         "AskSousChefSheet.tsx",
-        "ChefsBookHeader.tsx",
-        "ChefsDialog.tsx"
+        "BadgeCelebration.tsx",
+        "ChefsBookHeader.tsx"
       ]
     },
     "constants": {
       "path": "constants",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1777845886459,
+      "lastAccessed": 1777940053798,
       "keyFiles": [
         "themes.ts"
       ]
@@ -153,7 +153,7 @@
       "path": "context",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1777845886460,
+      "lastAccessed": 1777940053798,
       "keyFiles": [
         "ThemeContext.tsx"
       ]
@@ -162,7 +162,7 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1777845886460,
+      "lastAccessed": 1777940053799,
       "keyFiles": [
         "metadata.json"
       ]
@@ -171,14 +171,14 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 0,
-      "lastAccessed": 1777845886461,
+      "lastAccessed": 1777940053800,
       "keyFiles": []
     },
     "lib": {
       "path": "lib",
       "purpose": "Library code",
       "fileCount": 6,
-      "lastAccessed": 1777845886462,
+      "lastAccessed": 1777940053800,
       "keyFiles": [
         "i18n.ts",
         "image.ts",
@@ -191,7 +191,7 @@
       "path": "locales",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1777845886462,
+      "lastAccessed": 1777940053801,
       "keyFiles": [
         "de.json",
         "en.json",
@@ -204,7 +204,7 @@
       "path": "plugins",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1777845886463,
+      "lastAccessed": 1777940053802,
       "keyFiles": [
         "withCleartextTraffic.js"
       ]
@@ -213,7 +213,7 @@
       "path": "android\\app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1777845886465,
+      "lastAccessed": 1777940053803,
       "keyFiles": [
         "build.gradle",
         "debug.keystore",
@@ -224,14 +224,14 @@
       "path": "android\\build",
       "purpose": "Build output",
       "fileCount": 0,
-      "lastAccessed": 1777845886465,
+      "lastAccessed": 1777940053804,
       "keyFiles": []
     },
     "dist\\assets": {
       "path": "dist\\assets",
       "purpose": "Static assets",
       "fileCount": 45,
-      "lastAccessed": 1777845886469,
+      "lastAccessed": 1777940053807,
       "keyFiles": [
         "017bc6ba3fc25503e5eb5e53826d48a8",
         "02bc1fa7c0313217bde2d65ccbff40c9",
@@ -241,39 +241,33 @@
   },
   "hotPaths": [
     {
-      "path": "components\\UIKit.tsx",
-      "accessCount": 9,
-      "lastAccessed": 1777901571655,
+      "path": ".env.local",
+      "accessCount": 3,
+      "lastAccessed": 1777942931205,
       "type": "file"
     },
     {
-      "path": "app\\_layout.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1777909510089,
-      "type": "file"
-    },
-    {
-      "path": "lib\\zustand\\authStore.ts",
-      "accessCount": 4,
-      "lastAccessed": 1777909561680,
-      "type": "file"
-    },
-    {
-      "path": "app\\index.tsx",
+      "path": "plugins\\withCleartextTraffic.js",
       "accessCount": 2,
-      "lastAccessed": 1777904461495,
+      "lastAccessed": 1777942942603,
       "type": "file"
     },
     {
       "path": "app\\auth\\signin.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777904684758,
+      "accessCount": 1,
+      "lastAccessed": 1777942576472,
       "type": "file"
     },
     {
-      "path": "app\\cook-menu\\[id].tsx",
+      "path": "",
       "accessCount": 1,
-      "lastAccessed": 1777899775936,
+      "lastAccessed": 1777942938175,
+      "type": "directory"
+    },
+    {
+      "path": "app\\speak.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777942942132,
       "type": "file"
     }
   ],

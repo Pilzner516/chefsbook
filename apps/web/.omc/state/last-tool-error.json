@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git add apps/web/app/api/admin/route.ts && git commit -m \\\"refactor(admin): improve error type safety in knowledge-gaps-detect\\n\\nUse unknown instead of any for caught errors per TypeScrip...",
-  "error": "Exit code 128\nfatal: pathspec 'apps/web/app/api/admin/route.ts' did not match any files",
-  "timestamp": "2026-05-04T20:29:26.719Z",
+  "tool_input_preview": "{\"command\":\"ssh pilzner@slux \\\"docker exec supabase-db psql -U postgres -f /opt/luxlabs/chefsbook/repo/supabase/migrations/20260504_087_step_actuals.sql\\\"\",\"description\":\"Apply migration 087 on slux\"}",
+  "error": "Exit code 1\npsql: error: /opt/luxlabs/chefsbook/repo/supabase/migrations/20260504_087_step_actuals.sql: No such file or directory",
+  "timestamp": "2026-05-05T02:06:43.509Z",
   "retry_count": 1
 }

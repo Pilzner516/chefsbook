@@ -1,7 +1,7 @@
 {
-  "tool_name": "PowerShell",
-  "tool_input_preview": "{\"command\":\"cd C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook\\\\apps\\\\mobile; npx tsc --noEmit 2>&1 | Select-String -Pattern \\\"(authStore|_layout)\\\" | Select-Object -First 10; Write-Output \\\"---\\\"; npx tsc --noEm...",
-  "error": "Exit code 2\n---\r\n1",
-  "timestamp": "2026-05-04T17:45:47.528Z",
-  "retry_count": 1
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"adb shell \\\"screencap -d 4619827259835644672 /sdcard/screen.png\\\" && adb pull \\\"/sdcard/screen.png\\\" \\\"C:/Users/seblu/AppData/Local/Temp/screen.png\\\" 2>&1\",\"description\":\"Capture screensho...",
+  "error": "Exit code 1\nadb: error: failed to stat remote object 'C:/Program Files/Git/sdcard/screen.png': No such file or directory",
+  "timestamp": "2026-05-05T00:43:36.219Z",
+  "retry_count": 3
 }
