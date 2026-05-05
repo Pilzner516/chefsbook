@@ -1,3 +1,30 @@
+## 2026-05-04 (session RALPH-FINDGAPRECIPES-FIX) TYPE: BUGFIX
+
+Fixed `findGapRecipes()` returning Google search URLs instead of real recipe URLs. Root cause: function constructed search URLs like `https://www.google.com/search?q=braise%20with%20pork%20site:bonappetit.com` and returned them as if they were recipe pages. Rewrote to scrape Google search HTML and use Claude Haiku to extract actual recipe URLs from results. Searches top 3 quality sites with 2s delay between requests. Filters out already-imported recipes via DB lookup. Returns up to 5 real, importable recipe page URLs. Deployed to slux production (commit 7984362). Architect verified with 5 recommendations (Google blocking concern flagged as production risk). Deslop pass: CLEAN. TypeScript: 0 errors. PM2 restarted successfully.
+
+**Files modified:**
+- `packages/ai/src/findGapRecipes.ts` (152 insertions, 115 deletions)
+
+**Implementation:**
+```typescript
+// Before: Returned Google search URLs
+url: `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
+
+// After: Scrapes Google HTML, uses Claude to extract real recipe URLs
+const html = await response.text();
+const claudeResponse = await callClaude({ prompt: extractionPrompt, model: HAIKU });
+return parsedResults.slice(0, 5); // Real recipe page URLs
+```
+
+**Architect Recommendations:**
+1. CRITICAL: Add ScrapingBee fallback (Google will block direct scraping after 10-50 requests)
+2. High: Add post-extraction URL validation to filter category/collection pages
+3. Medium: Add AI usage logging via `logAiCall()`
+4. Medium: Parallelize searches with rate limiting (reduce 6s blocking time)
+5. Low: Search until 5 candidates found (not hard-coded 3 sites)
+
+---
+
 ## 2026-05-04 (session RALPH-DETECT-GAPS-FIX) TYPE: BUGFIX
 
 Fixed "Detect Gaps" button on `/admin/knowledge-gaps` page returning "Failed to detect gaps: Unknown page" error. Root cause: button called `adminFetch({ page: 'knowledge-gaps-detect', method: 'POST' })` (GET request with query param) instead of `adminPost({ action: 'knowledge-gaps-detect' })` (POST request with body). Handler in `/api/admin/route.ts` expects POST with `action` parameter. Fix applied at `apps/web/app/admin/knowledge-gaps/page.tsx:62`, matches pattern of all other action buttons in the same file. Deployed to slux production (commit e352473). Verified: TypeScript passes ✓, architect approved ✓, deslop clean ✓, PM2 restarted successfully ✓.
