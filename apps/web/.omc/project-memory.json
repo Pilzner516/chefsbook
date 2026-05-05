@@ -42,7 +42,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd apps/web && npx tsc --noEmit 2>&1 | tail -50",
+    "buildCommand": "ssh pilzner@slux \"cd /opt/luxlabs/chefsbook/repo/apps/web && NODE_OPTIONS=--max-old-space-size=1536 npm run build 2>&1 | tail -30\"",
     "testCommand": null,
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",

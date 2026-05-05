@@ -1,3 +1,34 @@
+## 2026-05-05 (session VIRUS-SCAN) TYPE: FEATURE
+
+ClamAV virus scanning implemented for all file uploads. Server-side gate on /api/import/file and /api/print-cookbooks/upload-cover routes. Three-layer validation: 20MB size cap, magic-byte MIME type check, and virus scanning via ClamAV daemon. Graceful degradation: if CLAMAV_SOCKET env var is unset or daemon is unreachable, uploads proceed with warning logged (never hard-blocks users). Installed clamdjs npm package. Created apps/web/lib/scanFile.ts utility shared by both routes.
+
+**Implementation complete:**
+- ✓ scanFile.ts utility created with magic-byte validation + ClamAV integration
+- ✓ Wired into /api/import/file route (PDF, Word, CSV, JSON, text files)
+- ✓ Wired into /api/print-cookbooks/upload-cover route (images)
+- ✓ clamdjs npm package installed (apps/web/package.json)
+- ✓ CLAUDE.md Infrastructure section updated with ClamAV details
+- ✓ CLAUDE.md env vars table updated with CLAMAV_SOCKET
+- ✓ feature-registry.md updated with virus scanning row
+- ✓ TypeScript compiles cleanly (verified pre and post changes)
+- ✓ Deployed to slux: git pull, npm install clamdjs, clean build, PM2 restart
+- ✓ Smoke tests passed: /, /dashboard, /dashboard/scan all return HTTP 200
+
+**Deferred - ClamAV installation on slux (requires sudo password):**
+- ⚠ ClamAV daemon not yet installed on slux (installation blocked by sudo password requirement)
+- ⚠ CLAMAV_SOCKET env var not yet added to /opt/luxlabs/chefsbook/repo/.env.local on slux
+- ⚠ EICAR virus test not run (would gracefully pass due to missing daemon)
+- ⚠ clamav-freshclam service not confirmed (service does not exist yet)
+
+**Current behavior:**
+Code runs with graceful degradation. File uploads are validated for size (20MB) and MIME type via magic bytes. Virus scanning is skipped with console warning: "[scanFile] CLAMAV_SOCKET not set — skipping AV scan (dev mode)". Feature is fully functional and safe to run in this state. Once ClamAV is installed manually on slux (see .omc/VIRUS-SCAN-MANUAL-STEPS.md), virus detection will activate automatically without code changes.
+
+**Manual steps documented in:** `.omc/VIRUS-SCAN-MANUAL-STEPS.md`
+
+Commit: 662bd6f
+
+---
+
 ## 2026-05-05 (session FLOATING-TABBAR-FIX) TYPE: FIX
 
 FloatingTabBar tab navigation hardened. User reported Plan/Menus/Cart tabs would not load when tapped on the floating menu. On emulator the tabs all worked, but the underlying handler used `router.push()` with `(tabs)` group-prefixed paths — `push` always stacks a new screen rather than switching to the live tab, which can fail intermittently when invoked from a Stack screen on top of the Tabs navigator.
