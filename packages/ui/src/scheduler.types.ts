@@ -16,6 +16,8 @@ export interface RecipeStepWithTimings {
   oven_temp_celsius: number | null;
   phase: StepPhase;
   timing_confidence: TimingConfidence;
+  technique?: string | null;
+  ingredient_category?: string | null;
 }
 
 export interface ChefSetup {

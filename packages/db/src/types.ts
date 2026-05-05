@@ -170,6 +170,13 @@ export interface RecipeStep {
   timer_minutes: number | null;
   group_label: string | null;
   timestamp_seconds: number | null;
+  duration_min?: number | null;
+  duration_max?: number | null;
+  timing_confidence?: string | null;
+  phase?: string | null;
+  technique?: string | null;
+  ingredient_category?: string | null;
+  is_passive?: boolean | null;
 }
 
 export interface MealPlan {

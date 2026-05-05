@@ -91,7 +91,7 @@ Return ONLY a JSON array, no other text:
     // Parse JSON array from response text
     const jsonMatch =
       fullText.match(/```json\s*([\s\S]*?)```/) ??
-      fullText.match(/(\[[\s\S]*?\])/s);
+      fullText.match(/(\[[\s\S]*\])/);
 
     if (!jsonMatch) {
       console.warn('[findGapRecipes] No JSON array found in response:', fullText.slice(0, 500));

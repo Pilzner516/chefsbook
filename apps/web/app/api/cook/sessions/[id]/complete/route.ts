@@ -5,7 +5,7 @@ const COOKED_IT_POINTS = 5;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify authentication
@@ -24,7 +24,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const sessionId = params.id;
+    const { id: sessionId } = await params;
 
     // Mark session as complete
     const { error: updateError } = await supabaseAdmin
