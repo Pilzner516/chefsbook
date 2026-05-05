@@ -2,8 +2,6 @@
 
 import { use, useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getCookingSession } from '@chefsbook/db';
-import { generateChefBriefing } from '@chefsbook/ai';
 
 function speakChef(text: string) {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -33,14 +31,18 @@ function BriefingContent({ menuId }: { menuId: string }) {
 
     async function load() {
       try {
-        const session = await getCookingSession(sessionId!);
-        if (!session) {
-          setError('Session not found.');
-          setLoading(false);
-          return;
+        // Call API route instead of calling AI function directly from client
+        const res = await fetch('/api/cook/briefing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to generate briefing');
         }
 
-        const text = await generateChefBriefing(session.plan);
+        const { briefing: text } = await res.json();
         setBriefing(text);
         setLoading(false);
 
