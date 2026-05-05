@@ -219,8 +219,19 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
     let updatedPlan = session.plan;
     if (overrunMinutes > 2) {
       updatedPlan = recomputeFromOverrun(session.plan, currentStep.step.id, actualEnd);
-      await persistRecomputedPlan(session.id, updatedPlan, session.version);
-      // version has incremented — fetch fresh
+      const persistSuccess = await persistRecomputedPlan(session.id, updatedPlan, session.version);
+
+      if (!persistSuccess) {
+        // Version conflict during plan persist — refetch and let user retry
+        const fresh = await getCookingSession(session.id);
+        if (fresh) {
+          setSession(fresh);
+          stepStartRef.current = new Date();
+          console.warn('🔴 Version conflict during plan persist, session refetched');
+        }
+        alert('Another device updated the session. Please try again.');
+        return;
+      }
     }
 
     // 3. Update session: advance step index and record actuals
@@ -231,29 +242,40 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
         current_step_index: isLastStep ? currentIndex : nextIndex,
         step_actuals: updatedActuals,
         status: newStatus,
+        plan: updatedPlan,
         ...(isLastStep ? { completed_at: new Date().toISOString() } : {}),
-        ...(overrunMinutes > 2 ? { plan: updatedPlan } : {}),
       },
-      overrunMinutes > 2 ? session.version + 1 : session.version
+      session.version
     );
 
-    if (result.session) {
-      setSession(result.session);
-      stepStartRef.current = new Date();
-
-      if (isLastStep) {
-        window.speechSynthesis?.cancel();
-        router.push(`/dashboard/menus/${menuId}?cooked=1`);
-        return;
+    if (!result.success || !result.session) {
+      // Version conflict — refetch fresh session and let user retry
+      const fresh = await getCookingSession(session.id);
+      if (fresh) {
+        setSession(fresh);
+        stepStartRef.current = new Date();
+        console.warn('🔴 Version conflict during step update, session refetched');
       }
+      alert('Another device updated the session. Please try again.');
+      return;
+    }
 
-        // 4. Speak next step
-        const upcomingStep = updatedPlan.steps[nextIndex];
-        if (upcomingStep) {
-          const callout = buildStepCallout(upcomingStep, upcomingStep.chef_name);
-          speakText(callout);
-        }
-      }
+    // Success! Update local state
+    setSession(result.session);
+    stepStartRef.current = new Date();
+
+    if (isLastStep) {
+      window.speechSynthesis?.cancel();
+      router.push(`/dashboard/menus/${menuId}?cooked=1`);
+      return;
+    }
+
+    // 4. Speak next step
+    const nextStep = result.session.plan.steps[nextIndex];
+    if (nextStep) {
+      const callout = buildStepCallout(nextStep, nextStep.chef_name);
+      speakText(callout);
+    }
     } catch (err) {
       console.error('🔴 STEP COMPLETE FAILED - Full error details:');
       console.error('Error object:', err);
