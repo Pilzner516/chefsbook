@@ -15,6 +15,17 @@ You run AFTER all work is done, BEFORE /wrapup.
 
 ---
 
+## POST-FLIGHT CHECKLIST
+
+Run these checks after completing all work, before starting the wrapup sequence:
+
+- [ ] URL audit: for every URL constructed in this session, confirm it uses the correct env var for the correct service:
+    - Supabase (DB, auth, storage) → EXPO_PUBLIC_SUPABASE_URL (https://api.chefsbk.app)
+    - Web app API routes → EXPO_PUBLIC_WEB_URL (https://chefsbk.app)
+    - Never derive one from the other. Never use port-replacement hacks.
+
+---
+
 ## MANDATORY PRE-WRAPUP SEQUENCE
 
 ### Step 1 — Read the prompt file that was executed this session
