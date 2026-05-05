@@ -1,3 +1,20 @@
+## 2026-05-04 (session RALPH-DETECT-GAPS-FIX) TYPE: BUGFIX
+
+Fixed "Detect Gaps" button on `/admin/knowledge-gaps` page returning "Failed to detect gaps: Unknown page" error. Root cause: button called `adminFetch({ page: 'knowledge-gaps-detect', method: 'POST' })` (GET request with query param) instead of `adminPost({ action: 'knowledge-gaps-detect' })` (POST request with body). Handler in `/api/admin/route.ts` expects POST with `action` parameter. Fix applied at `apps/web/app/admin/knowledge-gaps/page.tsx:62`, matches pattern of all other action buttons in the same file. Deployed to slux production (commit e352473). Verified: TypeScript passes ✓, architect approved ✓, deslop clean ✓, PM2 restarted successfully ✓.
+
+**Files modified:**
+- `apps/web/app/admin/knowledge-gaps/page.tsx` (line 62: adminFetch → adminPost)
+
+**Fix:**
+```typescript
+// Before:
+const result = await adminFetch({ page: 'knowledge-gaps-detect', method: 'POST' });
+// After:
+const result = await adminPost({ action: 'knowledge-gaps-detect' });
+```
+
+---
+
 ## 2026-05-04 (session AUTOPILOT-KNOWLEDGE-GAPS-DETECT) TYPE: FEATURE
 
 Added POST handler for `knowledge-gaps-detect` action to admin API (`/api/admin`). Handler calls `detectKnowledgeGaps()` from `@chefsbook/ai` and returns `{ detected, updated, filled }`. Implemented via full autopilot workflow: Phase 0 (analyst + architect expansion), Phase 1 (planning), Phase 2 (executor implementation), Phase 3 (QA + deployment), Phase 4 (parallel validation by architect/security/code-reviewer - all approved), Phase 5 (cleanup). Applied code-reviewer suggestion to improve error type safety (any → unknown). Dynamic import pattern matches sibling handlers. Deployed to slux production at commits eaa3ef3 + 7df2838. PM2 restarted clean, unauthorized test returns 401 ✓, TypeScript passes ✓.
