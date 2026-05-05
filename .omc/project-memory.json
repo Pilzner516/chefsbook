@@ -186,8 +186,8 @@
     },
     {
       "path": ".claude\\agents\\feature-registry.md",
-      "accessCount": 23,
-      "lastAccessed": 1777985421414,
+      "accessCount": 24,
+      "lastAccessed": 1777991206716,
       "type": "file"
     },
     {
@@ -203,28 +203,28 @@
       "type": "directory"
     },
     {
+      "path": ".claude\\agents\\testing.md",
+      "accessCount": 11,
+      "lastAccessed": 1777991206331,
+      "type": "file"
+    },
+    {
       "path": "apps\\mobile",
       "accessCount": 10,
       "lastAccessed": 1777949990350,
       "type": "directory"
     },
     {
-      "path": ".claude\\agents\\testing.md",
+      "path": "apps/web",
       "accessCount": 10,
-      "lastAccessed": 1777985420695,
-      "type": "file"
+      "lastAccessed": 1777991267817,
+      "type": "directory"
     },
     {
       "path": ".claude\\agents\\deployment.md",
       "accessCount": 9,
       "lastAccessed": 1777985421459,
       "type": "file"
-    },
-    {
-      "path": "apps/web",
-      "accessCount": 8,
-      "lastAccessed": 1777906142467,
-      "type": "directory"
     },
     {
       "path": "packages\\db\\src\\client.ts",

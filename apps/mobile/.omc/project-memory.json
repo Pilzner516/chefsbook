@@ -241,6 +241,12 @@
   },
   "hotPaths": [
     {
+      "path": "app\\cook\\[id].tsx",
+      "accessCount": 6,
+      "lastAccessed": 1777991367186,
+      "type": "file"
+    },
+    {
       "path": "locales\\fr.json",
       "accessCount": 4,
       "lastAccessed": 1777947387752,
@@ -271,6 +277,12 @@
       "type": "file"
     },
     {
+      "path": "app\\speak.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777991361494,
+      "type": "file"
+    },
+    {
       "path": "plugins\\withCleartextTraffic.js",
       "accessCount": 2,
       "lastAccessed": 1777942942603,
@@ -283,21 +295,21 @@
       "type": "file"
     },
     {
-      "path": "app\\auth\\signin.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777942576472,
-      "type": "file"
-    },
-    {
       "path": "",
-      "accessCount": 1,
-      "lastAccessed": 1777942938175,
+      "accessCount": 2,
+      "lastAccessed": 1777991400331,
       "type": "directory"
     },
     {
-      "path": "app\\speak.tsx",
+      "path": "app.json",
+      "accessCount": 2,
+      "lastAccessed": 1777991406946,
+      "type": "file"
+    },
+    {
+      "path": "app\\auth\\signin.tsx",
       "accessCount": 1,
-      "lastAccessed": 1777942942132,
+      "lastAccessed": 1777942576472,
       "type": "file"
     },
     {
@@ -310,6 +322,12 @@
       "path": "components\\FloatingTabBar.tsx",
       "accessCount": 1,
       "lastAccessed": 1777981154450,
+      "type": "file"
+    },
+    {
+      "path": "TESTING-IMAGE-GEN.md",
+      "accessCount": 1,
+      "lastAccessed": 1777991648065,
       "type": "file"
     }
   ],

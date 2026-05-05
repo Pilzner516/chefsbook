@@ -1,3 +1,23 @@
+## 2026-05-05 (session MOBILE-IMAGE-GEN-FIX) TYPE: CODE FIX
+
+Mobile AI Image Generation — Theme Selection Error Fix
+
+**Root Cause**: Mobile app constructed `WEB_API_URL` as `SUPABASE_URL.replace(':8000', ':3000')`. With `SUPABASE_URL = https://api.chefsbk.app`, the replace did nothing (no `:8000` to replace), resulting in API calls to `https://api.chefsbk.app/api/recipes/mobile-generate-image` (Supabase Kong gateway) instead of `https://chefsbk.app/api/recipes/mobile-generate-image` (Next.js web app). All image generation attempts failed with generic "Something went wrong" error because network calls to wrong endpoint returned Kong 404/routing errors.
+
+**Fix**: Replaced port-replacement hack with proper env var `EXPO_PUBLIC_WEB_URL=https://chefsbk.app`. Fixed URL construction in 4 files: AiImageGenerationModal.tsx, speak.tsx, cook/[id].tsx (3 occurrences). Added debug logging to surface real errors.
+
+**Verified**:
+- ✓ TypeScript passes (0 errors)
+- ✓ Web API endpoint accessible at correct URL (405 = POST-only, expected)
+- ✓ All port-replacement hacks removed (0 occurrences remaining)
+- ⚠️ Manual device test PENDING (emulator setup issues, requires next build)
+
+**Pending**: Manual verification per apps/mobile/TESTING-IMAGE-GEN.md — test all 8 themes, verify real errors surface, regression check. Remove debug logging after verification.
+
+**Cost**: $0
+
+---
+
 ## 2026-05-05 (session VIRUS-SCAN) TYPE: FEATURE
 
 ClamAV virus scanning implemented for all file uploads. Server-side gate on /api/import/file and /api/print-cookbooks/upload-cover routes. Three-layer validation: 20MB size cap, magic-byte MIME type check, and virus scanning via ClamAV daemon. Graceful degradation: if CLAMAV_SOCKET env var is unset or daemon is unreachable, uploads proceed with warning logged (never hard-blocks users). Installed clamdjs npm package. Created apps/web/lib/scanFile.ts utility shared by both routes.

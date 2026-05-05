@@ -1,7 +1,7 @@
 {
   "tool_name": "PowerShell",
-  "tool_input_preview": "{\"command\":\"Set-Location C:\\\\Users\\\\seblu\\\\aiproj\\\\chefsbook\\\\apps\\\\mobile; npx tsc --noEmit 2>&1 | Select-Object -First 30\",\"description\":\"TypeScript check on apps/mobile\"}",
-  "error": "Exit code 2\ncomponents/BadgeCelebration.tsx(23,71): error TS1005: ',' expected.\r\ncomponents/BadgeCelebration.tsx(23,73): error TS1005: ',' expected.\r\ncomponents/BadgeCelebration.tsx(23,85): error TS1005: ',' expected.\r\ncomponents/BadgeCelebration.tsx(23,86): error TS1003: Identifier expected.\r\ncomponents/BadgeCelebration.tsx(23,88): error TS1002: Unterminated string literal.\r\ncomponents/BadgeCelebration.tsx(24,3): error TS1005: ':' expected.\r\ncomponents/BadgeCelebration.tsx(24,17): error TS1005:...",
-  "timestamp": "2026-05-05T02:17:55.158Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"adb shell monkey -p com.chefsbook.app -c android.intent.category.LAUNCHER 1 2>&1 | Select-String \\\"Events|No activities\\\"\",\"description\":\"Launch app using monkey\"}",
+  "error": "Exit code 252\n** \u001b[7mNo activities\u001b[0m found to run, monkey aborted.",
+  "timestamp": "2026-05-05T14:33:17.367Z",
+  "retry_count": 2
 }

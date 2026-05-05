@@ -1,0 +1,11 @@
+{
+  "active": true,
+  "started_at": "2026-05-05T14:26:31.124Z",
+  "original_prompt": "ralph: Read and execute docs/prompts/mobile-image-gen-fix.md fully and autonomously, from pre-flight through verification and /wrapup. Do not stop for questions unless you hit a genuine blocker.",
+  "session_id": "721605d6-957f-4717-8086-0252859ceaa4",
+  "project_path": "C:\\Users\\seblu\\aiproj\\chefsbook",
+  "reinforcement_count": 0,
+  "awaiting_confirmation": true,
+  "awaiting_confirmation_set_at": "2026-05-05T14:26:31.124Z",
+  "last_checked_at": "2026-05-05T14:26:31.124Z"
+}

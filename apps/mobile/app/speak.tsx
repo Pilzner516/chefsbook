@@ -177,7 +177,7 @@ export default function SpeakScreen() {
         } catch {} // non-blocking
       } else if (planTier !== 'free' && session.access_token) {
         // Feature C: auto-generate AI image in background for Chef+ accounts
-        const WEB_API_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'http://100.83.66.51:8000').replace(':8000', ':3000');
+        const WEB_API_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://chefsbk.app';
         const token = session.access_token;
         const recipeId = saved.id;
         fetch(`${WEB_API_URL}/api/recipes/mobile-generate-image`, {

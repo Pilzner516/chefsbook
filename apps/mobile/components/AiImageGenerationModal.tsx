@@ -14,8 +14,8 @@ import { supabase } from '@chefsbook/db';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
-// Web API URL: same host as Supabase but on port 3000
-const WEB_API_URL = SUPABASE_URL.replace(':8000', ':3000');
+// Web API URL: dedicated env var for the Next.js web app
+const WEB_API_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://chefsbk.app';
 
 const THEMES = Object.values(IMAGE_THEMES);
 const REGEN_LIMIT = 5;
@@ -88,6 +88,9 @@ export function AiImageGenerationModal({ visible, recipeId, onClose, onImageGene
       setRegenCount(data.regenCount ?? 0);
       setHasGenerated(true);
     } catch (err: any) {
+      console.error('[IMAGE-GEN-DEBUG] Real error:', err);
+      console.error('[IMAGE-GEN-DEBUG] Error message:', err.message);
+      console.error('[IMAGE-GEN-DEBUG] Error stack:', err.stack);
       Alert.alert(t('common.errorTitle'), err.message ?? t('imageManager.generationFailed'));
     } finally {
       setGenerating(false);

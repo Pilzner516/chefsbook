@@ -170,7 +170,7 @@ export default function CookMode() {
         return;
       }
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(':8000', ':3000')}/api/cook/sessions`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_WEB_URL ?? 'https://chefsbk.app'}/api/cook/sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ export default function CookMode() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const apiUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(':8000', ':3000');
+      const apiUrl = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://chefsbk.app';
       await fetch(`${apiUrl}/api/cook/sessions/${sessionData.sessionId}/step-actual`, {
         method: 'POST',
         headers: {
@@ -266,7 +266,7 @@ export default function CookMode() {
         return;
       }
 
-      const apiUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(':8000', ':3000');
+      const apiUrl = process.env.EXPO_PUBLIC_WEB_URL ?? 'https://chefsbk.app';
       const response = await fetch(`${apiUrl}/api/cook/sessions/${sessionData.sessionId}/complete`, {
         method: 'POST',
         headers: {
