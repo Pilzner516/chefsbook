@@ -404,6 +404,7 @@ Session history lives in DONE.md; upcoming work lives in AGENDA.md. Do not dupli
 - APK rebuild note: always delete cached JS bundle before rebuilding (`rm -f android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle`) or Gradle uses stale code
 - Jetifier: `android.enableJetifier=true` must be added to `android/gradle.properties` after every `expo prebuild --clean` (it gets wiped)
 - **Personal versions UI pending** — Backend complete (migrations 077-078, API routes, AI function). UI components pending: web version tab switcher on recipe detail, web modifier pills on attribution row, mobile version switcher + modifier pills, orphan cascade on original deletion.
+- **Cook Mode (Kitchen Conductor) launched incomplete (session COOK-MODE-UI 2026-05-04)** — Full 4-screen UI live on web (/cook/[recipeId]) and mobile (/cook/[id]). Backend complete: step_actuals table, 3 API routes, knowledge graph feedback loop. INCOMPLETE: (1) Plan gating not implemented — free users can access, should require Chef+; (2) Web i18n missing — no apps/web/locales/ directory exists, English hardcoded; (3) Manual testing not done — no step_actuals data to verify knowledge graph updates; (4) Mobile APK not built. See AGENDA.md tasks 40-45 for follow-ups.
 
 See `AGENDA.md` for the full prioritized backlog with effort estimates and recommended build order.
 
