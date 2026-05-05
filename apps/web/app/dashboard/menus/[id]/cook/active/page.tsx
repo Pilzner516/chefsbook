@@ -187,11 +187,6 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
   // handleStepComplete
   // ---------------------------------------------------------------------------
   const handleStepComplete = async () => {
-    console.log('🔴 STEP COMPLETE CALLED');
-    console.log('Session object:', JSON.stringify(session, null, 2));
-    console.log('Current step object:', JSON.stringify(currentStep, null, 2));
-    console.log('Completing flag:', completing);
-
     if (!session || !currentStep || completing) return;
     setCompleting(true);
 
@@ -227,7 +222,6 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
         if (fresh) {
           setSession(fresh);
           stepStartRef.current = new Date();
-          console.warn('🔴 Version conflict during plan persist, session refetched');
         }
         alert('Another device updated the session. Please try again.');
         return;
@@ -254,7 +248,6 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
       if (fresh) {
         setSession(fresh);
         stepStartRef.current = new Date();
-        console.warn('🔴 Version conflict during step update, session refetched');
       }
       alert('Another device updated the session. Please try again.');
       return;
@@ -277,13 +270,7 @@ function ActiveCookingContent({ menuId }: { menuId: string }) {
       speakText(callout);
     }
     } catch (err) {
-      console.error('🔴 STEP COMPLETE FAILED - Full error details:');
-      console.error('Error object:', err);
-      console.error('Error stringified:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
-      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
-      console.error('Error message:', err instanceof Error ? err.message : String(err));
-      console.error('Error name:', err instanceof Error ? err.name : typeof err);
-      // Show error to user - TODO: add toast/alert mechanism for web
+      console.error('handleStepComplete failed:', err);
       alert('Failed to advance step. Please try again.');
     } finally {
       setCompleting(false);
