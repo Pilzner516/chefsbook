@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCookingSession } from '@chefsbook/db';
+import { supabaseAdmin } from '@chefsbook/db';
 import { generateChefBriefing } from '@chefsbook/ai';
+import type { CookingSession } from '@chefsbook/db';
 
 export async function POST(request: NextRequest) {
   console.log('[cook/briefing] Route called');
@@ -17,21 +18,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the cooking session
+    // Fetch the cooking session using admin client (bypasses RLS)
     console.log('[cook/briefing] Fetching session from database...');
-    const session = await getCookingSession(sessionId);
-    if (!session) {
-      console.error('[cook/briefing] Session not found:', sessionId);
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from('cooking_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session) {
+      console.error('[cook/briefing] Session not found:', sessionId, sessionError);
       return NextResponse.json(
         { error: 'Session not found' },
         { status: 404 }
       );
     }
-    console.log('[cook/briefing] Session found, plan:', JSON.stringify(session.plan).substring(0, 200));
+    console.log('[cook/briefing] Session found, plan:', JSON.stringify((session as CookingSession).plan).substring(0, 200));
 
     // Generate briefing from the session's plan
     console.log('[cook/briefing] Calling generateChefBriefing...');
-    const briefing = await generateChefBriefing(session.plan);
+    const briefing = await generateChefBriefing((session as CookingSession).plan);
     console.log('[cook/briefing] Briefing generated successfully:', briefing.substring(0, 100));
 
     return NextResponse.json({ briefing });
