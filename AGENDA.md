@@ -189,6 +189,21 @@ Focus: Meal planning (the big homepage promise)
 
 ---
 
+## COOK MODE FOLLOW-UPS (session COOK-MODE-UI 2026-05-04)
+
+Feature launched incomplete. Monitoring and improvements needed:
+
+| # | Task | Why | Effort |
+|---|------|-----|--------|
+| 40 | Monitor step_actuals growth over first 30 days | Verify users are cooking and data is recording correctly | S |
+| 41 | Compare inferStepTimings() Haiku call volume before/after | Measure if step_actuals feedback reduces AI calls as knowledge graph improves | S |
+| 42 | Implement Chef+ plan gate on Cook Mode | Free users can currently access - should require Chef tier or above | S |
+| 43 | Add web i18n for Cook Mode | English strings hardcoded, no locale files exist for web | M |
+| 44 | Manual test full cook session flow | Verify step_actuals records, knowledge graph updates, points awarded | S |
+| 45 | Consider "Cooking streak" feature | Build once step_actuals has 30 days of data showing usage patterns | M |
+
+---
+
 ## EFFORT KEY
 
 S = half day | M = 1-2 days | L = 3-5 days | XL = 1+ week
