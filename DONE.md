@@ -1,3 +1,13 @@
+## 2026-05-04 (session RALPH-MOBILE-LOGIN-FIX) TYPE: BUGFIX
+
+Fixed mobile app login failure: auth requests returned "Network request failed" on sign-in. Root cause: `apps/mobile/.env.local` overrides root `.env.local` for mobile Expo builds and had `EXPO_PUBLIC_SUPABASE_URL=http://100.110.47.62:8000` (dead RPi5 Tailscale IP from before slux migration). Fix: updated `apps/mobile/.env.local` to `https://api.chefsbk.app` (Cloudflare Tunnel to slux Supabase). Also fixed root `.env.local` which had `http://localhost:8000`. Rebuilt APK with cleared bundle cache. Verified end-to-end: auth request reaches Supabase — responds HTTP 400 "Invalid login credentials" (not "Network request failed"), proving network path is live. Architect APPROVED. Non-blocking secondary finding: `speak.tsx:180` port-replacement hack (`.replace(':8000', ':3000')`) now is dead code with new URL but produces correct hostname by coincidence — recommend explicit `EXPO_PUBLIC_WEB_URL` env var in follow-up session. TYPE: BUGFIX.
+
+**Files modified:**
+- `apps/mobile/.env.local` (EXPO_PUBLIC_SUPABASE_URL: http://100.110.47.62:8000 → https://api.chefsbk.app; packager hostnames → localhost)
+- `.env.local` (EXPO_PUBLIC_SUPABASE_URL: http://localhost:8000 → https://api.chefsbk.app)
+
+---
+
 ## 2026-05-04 (session RALPH-FINDGAPRECIPES-FIX) TYPE: BUGFIX
 
 Fixed `findGapRecipes()` returning Google search URLs instead of real recipe URLs. Root cause: function constructed search URLs like `https://www.google.com/search?q=braise%20with%20pork%20site:bonappetit.com` and returned them as if they were recipe pages. Rewrote to scrape Google search HTML and use Claude Haiku to extract actual recipe URLs from results. Searches top 3 quality sites with 2s delay between requests. Filters out already-imported recipes via DB lookup. Returns up to 5 real, importable recipe page URLs. Deployed to slux production (commit 7984362). Architect verified with 5 recommendations (Google blocking concern flagged as production risk). Deslop pass: CLEAN. TypeScript: 0 errors. PM2 restarted successfully.
